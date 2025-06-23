@@ -1,6 +1,7 @@
 #-----
 # BUILD
 #-----
+    
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 WORKDIR /app
@@ -14,12 +15,13 @@ RUN dotnet publish -c Release -o out
 #-----
 # RUN
 #-----
+
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 
 WORKDIR /app
 
 COPY --from=build /app/out .
 
-EXPOSE 80
+EXPOSE 5238
 
-ENTRYPOINT ["dotnet", "game.dll"]
+ENTRYPOINT ["dotnet", "auth.dll"]

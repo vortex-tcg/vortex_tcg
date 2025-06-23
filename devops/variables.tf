@@ -1,5 +1,5 @@
-variable "AWS_ACCES_KEY_ID" {
-  description = "AWS Acces key"
+variable "AWS_ACCESS_KEY_ID" {
+  description = "AWS Access key"
   type = string
   sensitive = true
 }
