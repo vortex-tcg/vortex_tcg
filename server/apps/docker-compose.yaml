@@ -24,6 +24,8 @@ services:
   db: 
     image: mariadb
     restart: always
+    ports:
+      - "3307:3306"  # Changement ici : port externe 3307
     environment:
       MARIADB_ROOT_PASSWORD: example
       MARIADB_DATABASE: vortexdb
