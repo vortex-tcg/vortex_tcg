@@ -13,7 +13,6 @@ MemoryCaptures/
 .vscode/
 .idea/
 *.sln
-*.csproj
 *.user
 *.unityproj
 *.pidb
