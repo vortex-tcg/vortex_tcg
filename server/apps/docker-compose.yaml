@@ -12,7 +12,9 @@ services:
       - db
       
   game:
-    build: ./game
+    build: 
+      context: ./server
+      dockerfile: ./apps/game/Dockerfile
     ports: 
       - "80:8000"
     environment:
@@ -24,6 +26,8 @@ services:
   db: 
     image: mariadb
     restart: always
+    ports:
+      - "3307:3306" 
     environment:
       MARIADB_ROOT_PASSWORD: example
       MARIADB_DATABASE: vortexdb
