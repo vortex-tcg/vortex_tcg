@@ -1,7 +1,17 @@
+using Microsoft.EntityFrameworkCore;
+using Pomelo.EntityFrameworkCore.MySql;
+using DataAccess;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+
+builder.Services.AddDbContext<VortexDbContext>(options =>
+    options.UseMySql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
+    ));
 
 var app = builder.Build();
 
