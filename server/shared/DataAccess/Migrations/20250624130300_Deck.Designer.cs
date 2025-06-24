@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VortexTCG.DataAccess;
 
@@ -11,9 +12,11 @@ using VortexTCG.DataAccess;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(VortexDbContext))]
-    partial class VortexDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250624130300_Deck")]
+    partial class Deck
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -86,70 +89,6 @@ namespace DataAccess.Migrations
                     b.ToTable("Deck");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.FriendsList", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("FriendsList");
-                });
-
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Game", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("TurnNumber")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Game");
-                });
-
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Gamelog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Gamelog");
-                });
-
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Rank", b =>
                 {
                     b.Property<int>("Id")
@@ -209,9 +148,6 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("GameId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Language")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -238,13 +174,11 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("CollectionId");
 
-                    b.HasIndex("GameId");
-
                     b.HasIndex("RankId");
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("User");
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Booster", b =>
@@ -267,37 +201,11 @@ namespace DataAccess.Migrations
                     b.Navigation("Users");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.FriendsList", b =>
-                {
-                    b.HasOne("VortexTCG.DataAccess.Models.User", "User")
-                        .WithMany("FriendsLists")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Gamelog", b =>
-                {
-                    b.HasOne("VortexTCG.DataAccess.Models.User", "Users")
-                        .WithMany("Gamelog")
-                        .HasForeignKey("UserId");
-
-                    b.Navigation("Users");
-                });
-
             modelBuilder.Entity("VortexTCG.DataAccess.Models.User", b =>
                 {
                     b.HasOne("VortexTCG.DataAccess.Models.Collection", "Collection")
                         .WithMany("Users")
                         .HasForeignKey("CollectionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("VortexTCG.DataAccess.Models.Game", "Game")
-                        .WithMany("User")
-                        .HasForeignKey("GameId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -315,8 +223,6 @@ namespace DataAccess.Migrations
 
                     b.Navigation("Collection");
 
-                    b.Navigation("Game");
-
                     b.Navigation("Rank");
 
                     b.Navigation("Role");
@@ -325,11 +231,6 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Collection", b =>
                 {
                     b.Navigation("Users");
-                });
-
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Game", b =>
-                {
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Rank", b =>
@@ -347,10 +248,6 @@ namespace DataAccess.Migrations
                     b.Navigation("Boosters");
 
                     b.Navigation("Deck");
-
-                    b.Navigation("FriendsLists");
-
-                    b.Navigation("Gamelog");
                 });
 #pragma warning restore 612, 618
         }

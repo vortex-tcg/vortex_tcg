@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VortexTCG.DataAccess;
 
@@ -11,9 +12,11 @@ using VortexTCG.DataAccess;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(VortexDbContext))]
-    partial class VortexDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250624135215_Gamelog")]
+    partial class Gamelog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -84,28 +87,6 @@ namespace DataAccess.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Deck");
-                });
-
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.FriendsList", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("FriendsList");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Game", b =>
@@ -267,17 +248,6 @@ namespace DataAccess.Migrations
                     b.Navigation("Users");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.FriendsList", b =>
-                {
-                    b.HasOne("VortexTCG.DataAccess.Models.User", "User")
-                        .WithMany("FriendsLists")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Gamelog", b =>
                 {
                     b.HasOne("VortexTCG.DataAccess.Models.User", "Users")
@@ -347,8 +317,6 @@ namespace DataAccess.Migrations
                     b.Navigation("Boosters");
 
                     b.Navigation("Deck");
-
-                    b.Navigation("FriendsLists");
 
                     b.Navigation("Gamelog");
                 });

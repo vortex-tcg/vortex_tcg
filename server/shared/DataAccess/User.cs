@@ -1,10 +1,10 @@
 using System.Collections.Generic; //Permet l’utilisation des listes (ICollection<T>) pour les relations 1-N ou N-N.
 using System.ComponentModel.DataAnnotations; //Permet d’utiliser les attributs [Key], [Required], [EmailAddress], etc.
 using System.ComponentModel.DataAnnotations.Schema; //Utilisé pour des attributs comme [ForeignKey] ou [Table] si nécessaire.
+using VortexTCG.DataAccess.Models;
 
 
-
-namespace VortexTCG.Models
+namespace VortexTCG.DataAccess.Models
 {
     public class User //Cette classe deviendra une table Users (par convention, EF Core met le nom de la classe au pluriel pour la table).
     {
@@ -12,7 +12,10 @@ namespace VortexTCG.Models
         public int Id { get; set; }
 
         [Required]
-        public string Name { get; set; }
+        public string FirstName { get; set; }
+
+        [Required]
+        public string LastName { get; set; }
 
         [Required]
         public string Username { get; set; }
@@ -34,12 +37,16 @@ namespace VortexTCG.Models
         public Role Role { get; set; }
         public int RankId { get; set; }
         public Rank Rank { get; set; }
+        public int CollectionId { get; set; }
+        public Collection Collection { get; set; }
+        public int GameId { get; set; }
+        public Game Game { get; set; }
 
         public ICollection<Booster> Boosters { get; set; }
 
-        public ICollection<Game> GamesAsPlayer { get; set; }
+        public ICollection<Deck> Deck { get; set; }
 
-        public ICollection<Game> GamesAsCurrentPlayer { get; set; }
+        public ICollection<Gamelog> Gamelog { get; set; }
 
         public ICollection<FriendsList> FriendsLists { get; set; }
     }
