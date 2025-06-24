@@ -1,25 +1,14 @@
-#-----
-# BUILD
-#-----
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 WORKDIR /app
 
-COPY . ./
-
+COPY *.csproj ./
 RUN dotnet restore
 
-RUN dotnet publish -c Release -o out
-
-#-----
-# RUN
-#-----
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
-
-WORKDIR /app
-
-COPY --from=build /app/out .
+COPY . ./
 
 EXPOSE 8000
 
-ENTRYPOINT ["dotnet", "game.dll"]
+RUN apt-get update && apt-get install -y inotify-tools
+
+CMD ["sh", "-c", "while true; do dotnet run --urls http://0.0.0.0:8000 & PID=$!; inotifywait -r -e modify /app --exclude '(bin|obj)'; kill $PID; wait $PID; echo 'Restarting...'; done"]

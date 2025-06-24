@@ -1,11 +1,11 @@
 services:
   auth:
     build: ./apps/auth
-    ports:
-      - "5238:5238"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - DOTNET_USE_POLLING_FILE_WATCHER=true
+    ports:
+      - "5238:5238"
     volumes:
       - ./apps/auth:/app
       - /app/obj
@@ -15,11 +15,15 @@ services:
       
   game:
     build: ./apps/game
-    ports: 
-      - "80:8000"
     environment:
       - ASPNETCORE_ENVIRONMENT=Dev
       - ASPNETCORE_URLS=http://+:8000
+    ports: 
+      - "80:8000"
+    volumes:
+      - ./apps/game:/app
+      - /app/obj
+      - /app/bin
     depends_on:
       - db
       
@@ -31,6 +35,8 @@ services:
       MARIADB_DATABASE: vortexdb
     ports:
       - "3307:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
     
   adminer: 
     image: adminer
