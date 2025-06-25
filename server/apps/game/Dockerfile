@@ -2,10 +2,13 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 WORKDIR /app
 
-COPY *.csproj ./
+COPY ./apps/game/*.csproj ./
+COPY ./shared/DataAccess/*.csproj ./shared/DataAccess/
+
 RUN dotnet restore
 
-COPY . ./
+COPY ./apps/game/ ./
+COPY ./shared/ ./shared/
 
 EXPOSE 8000
 

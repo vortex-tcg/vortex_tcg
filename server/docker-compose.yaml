@@ -15,10 +15,8 @@ services:
       
   game:
     build: 
-      context: ./server
+      context: .
       dockerfile: ./apps/game/Dockerfile
-    ports: 
-      - "80:8000"
     environment:
       - ASPNETCORE_ENVIRONMENT=Dev
       - ASPNETCORE_URLS=http://+:8000
@@ -26,6 +24,7 @@ services:
       - "80:8000"
     volumes:
       - ./apps/game:/app
+      - ./shared:/app/shared
       - /app/obj
       - /app/bin
     depends_on:
@@ -34,8 +33,6 @@ services:
   db: 
     image: mariadb
     restart: always
-    ports:
-      - "3307:3306" 
     environment:
       MARIADB_ROOT_PASSWORD: example
       MARIADB_DATABASE: vortexdb
@@ -51,3 +48,6 @@ services:
       - "8000:8080"
     environment:
       ADMINER_DEFAULT_SERVER: db
+
+volumes:
+  mariadb_data:
