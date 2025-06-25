@@ -8,6 +8,9 @@
 [Bb]uilds/
 [Ll]ogs/
 MemoryCaptures/
+[Uu]serSettings/
+Assets/AssetStoreTools*
+Packages/packages-lock.json
 
 # Visual Studio / Rider
 .vscode/
@@ -26,7 +29,6 @@ MemoryCaptures/
 *.pdb
 
 # Rider specific
-.idea/
 *.sln.iml
 *.DotSettings.user
 
@@ -34,9 +36,11 @@ MemoryCaptures/
 ExportedObj/
 .consulo/
 *.svd
+*.booproj
 
 # Unity generated meta files
 *.pidb.meta
+*.pdb.meta
 
 # Unity3D generated file on crash reports
 sysinfo.txt
@@ -57,6 +61,7 @@ obj/
 .vs/
 *.userosscache
 *.sln.docstates
+.vsconfig
 
 # Secrets and certificates
 secrets.json
@@ -75,8 +80,6 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 .terraform.lock.hcl
-
-# AWS credentials (if stored locally - better avoid)
 *.auto.tfvars
 *.tfvars
 
@@ -95,10 +98,7 @@ TestResults/
 # ===========================
 # OS Files
 # ===========================
-# macOS
 .DS_Store
-
-# Windows
 Thumbs.db
 desktop.ini
 
@@ -114,3 +114,7 @@ desktop.ini
 .env.*
 *.tmp
 *.temp
+
+# Ignore manually added packages
+com.*
+upm-xr*

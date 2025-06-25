@@ -14,7 +14,11 @@ services:
       - db
       
   game:
-    build: ./apps/game
+    build: 
+      context: ./server
+      dockerfile: ./apps/game/Dockerfile
+    ports: 
+      - "80:8000"
     environment:
       - ASPNETCORE_ENVIRONMENT=Dev
       - ASPNETCORE_URLS=http://+:8000
@@ -30,6 +34,8 @@ services:
   db: 
     image: mariadb
     restart: always
+    ports:
+      - "3307:3306" 
     environment:
       MARIADB_ROOT_PASSWORD: example
       MARIADB_DATABASE: vortexdb
