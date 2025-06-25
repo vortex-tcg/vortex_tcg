@@ -23,10 +23,10 @@ services:
     ports: 
       - "80:8000"
     volumes:
-      - ./apps/game:/app
-      - ./shared:/app/shared
-      - /app/obj
-      - /app/bin
+      - .:/workspace  
+      - /workspace/apps/game/obj
+      - /workspace/apps/game/bin
+    working_dir: /workspace/apps/game
     depends_on:
       - db
       
