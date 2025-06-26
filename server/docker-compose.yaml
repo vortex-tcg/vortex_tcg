@@ -29,6 +29,9 @@ services:
     working_dir: /workspace/apps/game
     depends_on:
       - db
+    
+    # Working_dir define the dir where commands will be execute
+    # Remove bin / obj from the working dir to avoid potential errors
       
   db: 
     image: mariadb
