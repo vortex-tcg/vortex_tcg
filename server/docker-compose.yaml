@@ -5,7 +5,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - DOTNET_USE_POLLING_FILE_WATCHER=true
     ports:
-      - "5238:5238"
+      - "${AUTH_PORT}:5238"
     volumes:
       - ./apps/auth:/app
       - /app/obj
@@ -21,7 +21,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Dev
       - ASPNETCORE_URLS=http://+:8000
     ports: 
-      - "80:8000"
+      - "${GAME_PORT}:8000"
     volumes:
       - .:/workspace  
       - /workspace/apps/game/obj
@@ -37,10 +37,12 @@ services:
     image: mariadb
     restart: always
     environment:
-      MARIADB_ROOT_PASSWORD: example
+      MARIADB_RANDOM_ROOT_PASSWORD: "yes"
+      MARIADB_USER: "${DB_USERNAME}"
+      MARIADB_PASSWORD: "${DB_PASSWORD}"
       MARIADB_DATABASE: vortexdb
     ports:
-      - "3307:3306"
+      - "${DB_PORT}:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
     
@@ -48,7 +50,7 @@ services:
     image: adminer
     restart: always
     ports:
-      - "8000:8080"
+      - "${DB_ADMINER_PORT}:8080"
     environment:
       ADMINER_DEFAULT_SERVER: db
 

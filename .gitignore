@@ -111,7 +111,8 @@ desktop.ini
 # Ignore environment files
 # ===========================
 .env
-.env.*
+.env.production
+.env.development
 *.tmp
 *.temp
 
