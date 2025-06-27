@@ -1,12 +1,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
-WORKDIR /app
+WORKDIR /workspace
 
-COPY *.csproj ./
+COPY . .
+
+WORKDIR /workspace/apps/auth
+
 RUN dotnet restore
 # Install the deps
-
-COPY . ./
 
 EXPOSE 5238
 
