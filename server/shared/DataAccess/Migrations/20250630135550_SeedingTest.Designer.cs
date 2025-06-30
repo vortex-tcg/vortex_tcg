@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VortexTCG.DataAccess;
 
@@ -11,9 +12,11 @@ using VortexTCG.DataAccess;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(VortexDbContext))]
-    partial class VortexDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250630135550_SeedingTest")]
+    partial class SeedingTest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,7 +39,7 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ActionTypes");
+                    b.ToTable("ActionType");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Booster", b =>
@@ -118,7 +121,7 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("RarityId");
 
-                    b.ToTable("Cards");
+                    b.ToTable("Card");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.CardType", b =>
@@ -135,7 +138,7 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CardTypes");
+                    b.ToTable("CardType");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Champion", b =>
@@ -173,7 +176,7 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("FactionId");
 
-                    b.ToTable("Champions");
+                    b.ToTable("Champion");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Class", b =>
@@ -195,7 +198,7 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("CardId");
 
-                    b.ToTable("Classes");
+                    b.ToTable("Class");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Collection", b =>
@@ -281,7 +284,7 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("EffectCardId");
 
-                    b.ToTable("Conditions");
+                    b.ToTable("Condition");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.ConditionType", b =>
@@ -298,7 +301,7 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ConditionTypes");
+                    b.ToTable("ConditionType");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Deck", b =>
@@ -346,7 +349,7 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("DeckId");
 
-                    b.ToTable("DeckCards");
+                    b.ToTable("DeckCard");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.EffectCard", b =>
@@ -380,7 +383,7 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("EffectTypeId");
 
-                    b.ToTable("EffectCards");
+                    b.ToTable("EffectCard");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.EffectChampion", b =>
@@ -404,7 +407,7 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EffectChampions");
+                    b.ToTable("EffectChampion");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.EffectDescription", b =>
@@ -430,7 +433,7 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("EffectCardId");
 
-                    b.ToTable("EffectDescriptions");
+                    b.ToTable("EffectDescription");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.EffectType", b =>
@@ -451,7 +454,7 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EffectTypes");
+                    b.ToTable("EffectType");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Extension", b =>
@@ -468,7 +471,7 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Extensions");
+                    b.ToTable("Extension");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Faction", b =>
@@ -497,7 +500,7 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("CardId");
 
-                    b.ToTable("Factions");
+                    b.ToTable("Faction");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.FriendsList", b =>
@@ -519,7 +522,7 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("FriendsLists");
+                    b.ToTable("FriendsList");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Game", b =>
@@ -566,7 +569,7 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Gamelogs");
+                    b.ToTable("Gamelog");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Rank", b =>
@@ -603,7 +606,7 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Rarities");
+                    b.ToTable("Rarity");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Role", b =>
@@ -621,18 +624,6 @@ namespace DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Roles");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Label = "Admin"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Label = "Player"
-                        });
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.User", b =>

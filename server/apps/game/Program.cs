@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql;
 using VortexTCG.DataAccess;
+using VortexTCG.DataAccess.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
