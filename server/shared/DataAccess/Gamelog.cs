@@ -13,5 +13,7 @@ namespace VortexTCG.DataAccess.Models
 
         public int? UserId { get; set; }
         public User? Users { get; set; }
+        public int ActionTypeId { get; set; }
+        public ActionType ActionType { get; set; }
     }
 }

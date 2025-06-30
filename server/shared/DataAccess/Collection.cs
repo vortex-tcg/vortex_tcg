@@ -11,6 +11,16 @@ namespace VortexTCG.DataAccess.Models
 
         public string Label { get; set; }
 
+        public int CollectionCardId { get; set; }
+
+        public CollectionCard CollectionCard { get; set; }
+
         public ICollection<User> Users { get; set; }
+
+        public ICollection<DeckCard> DeckCard { get; set; }
+
+        public int? ChampionId { get; set; }
+        public Champion? Champions { get; set; }
+
     }
 }
