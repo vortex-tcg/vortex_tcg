@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialisationDB : Migration
+    public partial class InitDb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,7 +17,7 @@ namespace DataAccess.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "ActionType",
+                name: "ActionTypes",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -25,12 +27,12 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ActionType", x => x.Id);
+                    table.PrimaryKey("PK_ActionTypes", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "CardType",
+                name: "CardTypes",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -40,12 +42,12 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CardType", x => x.Id);
+                    table.PrimaryKey("PK_CardTypes", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "ConditionType",
+                name: "ConditionTypes",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -55,12 +57,12 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ConditionType", x => x.Id);
+                    table.PrimaryKey("PK_ConditionTypes", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "EffectChampion",
+                name: "EffectChampions",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -73,12 +75,12 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EffectChampion", x => x.Id);
+                    table.PrimaryKey("PK_EffectChampions", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "EffectType",
+                name: "EffectTypes",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -90,12 +92,12 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EffectType", x => x.Id);
+                    table.PrimaryKey("PK_EffectTypes", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Extension",
+                name: "Extensions",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -105,12 +107,12 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Extension", x => x.Id);
+                    table.PrimaryKey("PK_Extensions", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Game",
+                name: "Games",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -121,12 +123,12 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Game", x => x.Id);
+                    table.PrimaryKey("PK_Games", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Rank",
+                name: "Ranks",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -137,12 +139,12 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Rank", x => x.Id);
+                    table.PrimaryKey("PK_Ranks", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Rarity",
+                name: "Rarities",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -152,12 +154,12 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Rarity", x => x.Id);
+                    table.PrimaryKey("PK_Rarities", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Role",
+                name: "Roles",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -167,12 +169,12 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Role", x => x.Id);
+                    table.PrimaryKey("PK_Roles", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Card",
+                name: "Cards",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -193,30 +195,30 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Card", x => x.Id);
+                    table.PrimaryKey("PK_Cards", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Card_CardType_CardTypeId",
+                        name: "FK_Cards_CardTypes_CardTypeId",
                         column: x => x.CardTypeId,
-                        principalTable: "CardType",
+                        principalTable: "CardTypes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Card_Extension_ExtensionId",
+                        name: "FK_Cards_Extensions_ExtensionId",
                         column: x => x.ExtensionId,
-                        principalTable: "Extension",
+                        principalTable: "Extensions",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Card_Rarity_RarityId",
+                        name: "FK_Cards_Rarities_RarityId",
                         column: x => x.RarityId,
-                        principalTable: "Rarity",
+                        principalTable: "Rarities",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Class",
+                name: "Classes",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -227,11 +229,11 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Class", x => x.Id);
+                    table.PrimaryKey("PK_Classes", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Class_Card_CardId",
+                        name: "FK_Classes_Cards_CardId",
                         column: x => x.CardId,
-                        principalTable: "Card",
+                        principalTable: "Cards",
                         principalColumn: "Id");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
@@ -252,16 +254,16 @@ namespace DataAccess.Migrations
                 {
                     table.PrimaryKey("PK_CollectionCard", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_CollectionCard_Card_CardId",
+                        name: "FK_CollectionCard_Cards_CardId",
                         column: x => x.CardId,
-                        principalTable: "Card",
+                        principalTable: "Cards",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "EffectCard",
+                name: "EffectCards",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -276,23 +278,23 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EffectCard", x => x.Id);
+                    table.PrimaryKey("PK_EffectCards", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_EffectCard_Card_CardId",
+                        name: "FK_EffectCards_Cards_CardId",
                         column: x => x.CardId,
-                        principalTable: "Card",
+                        principalTable: "Cards",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_EffectCard_EffectType_EffectTypeId",
+                        name: "FK_EffectCards_EffectTypes_EffectTypeId",
                         column: x => x.EffectTypeId,
-                        principalTable: "EffectType",
+                        principalTable: "EffectTypes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Faction",
+                name: "Factions",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -306,17 +308,17 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Faction", x => x.Id);
+                    table.PrimaryKey("PK_Factions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Faction_Card_CardId",
+                        name: "FK_Factions_Cards_CardId",
                         column: x => x.CardId,
-                        principalTable: "Card",
+                        principalTable: "Cards",
                         principalColumn: "Id");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Condition",
+                name: "Conditions",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -330,22 +332,22 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Condition", x => x.Id);
+                    table.PrimaryKey("PK_Conditions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Condition_ConditionType_ConditionTypeId",
+                        name: "FK_Conditions_ConditionTypes_ConditionTypeId",
                         column: x => x.ConditionTypeId,
-                        principalTable: "ConditionType",
+                        principalTable: "ConditionTypes",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Condition_EffectCard_EffectCardId",
+                        name: "FK_Conditions_EffectCards_EffectCardId",
                         column: x => x.EffectCardId,
-                        principalTable: "EffectCard",
+                        principalTable: "EffectCards",
                         principalColumn: "Id");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "EffectDescription",
+                name: "EffectDescriptions",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -358,17 +360,17 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EffectDescription", x => x.Id);
+                    table.PrimaryKey("PK_EffectDescriptions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_EffectDescription_EffectCard_EffectCardId",
+                        name: "FK_EffectDescriptions_EffectCards_EffectCardId",
                         column: x => x.EffectCardId,
-                        principalTable: "EffectCard",
+                        principalTable: "EffectCards",
                         principalColumn: "Id");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Champion",
+                name: "Champions",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -385,24 +387,24 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Champion", x => x.Id);
+                    table.PrimaryKey("PK_Champions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Champion_EffectChampion_EffectChampionId",
+                        name: "FK_Champions_EffectChampions_EffectChampionId",
                         column: x => x.EffectChampionId,
-                        principalTable: "EffectChampion",
+                        principalTable: "EffectChampions",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Champion_Faction_FactionId",
+                        name: "FK_Champions_Factions_FactionId",
                         column: x => x.FactionId,
-                        principalTable: "Faction",
+                        principalTable: "Factions",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Collection",
+                name: "Collections",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -414,14 +416,14 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Collection", x => x.Id);
+                    table.PrimaryKey("PK_Collections", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Collection_Champion_ChampionId",
+                        name: "FK_Collections_Champions_ChampionId",
                         column: x => x.ChampionId,
-                        principalTable: "Champion",
+                        principalTable: "Champions",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Collection_CollectionCard_CollectionCardId",
+                        name: "FK_Collections_CollectionCard_CollectionCardId",
                         column: x => x.CollectionCardId,
                         principalTable: "CollectionCard",
                         principalColumn: "Id",
@@ -430,7 +432,7 @@ namespace DataAccess.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "User",
+                name: "Users",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -455,36 +457,36 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_User", x => x.Id);
+                    table.PrimaryKey("PK_Users", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_User_Collection_CollectionId",
+                        name: "FK_Users_Collections_CollectionId",
                         column: x => x.CollectionId,
-                        principalTable: "Collection",
+                        principalTable: "Collections",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_User_Game_GameId",
+                        name: "FK_Users_Games_GameId",
                         column: x => x.GameId,
-                        principalTable: "Game",
+                        principalTable: "Games",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_User_Rank_RankId",
+                        name: "FK_Users_Ranks_RankId",
                         column: x => x.RankId,
-                        principalTable: "Rank",
+                        principalTable: "Ranks",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_User_Role_RoleId",
+                        name: "FK_Users_Roles_RoleId",
                         column: x => x.RoleId,
-                        principalTable: "Role",
+                        principalTable: "Roles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Booster",
+                name: "Boosters",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -497,23 +499,23 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Booster", x => x.Id);
+                    table.PrimaryKey("PK_Boosters", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Booster_Card_CardId",
+                        name: "FK_Boosters_Cards_CardId",
                         column: x => x.CardId,
-                        principalTable: "Card",
+                        principalTable: "Cards",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Booster_User_UserId",
+                        name: "FK_Boosters_Users_UserId",
                         column: x => x.UserId,
-                        principalTable: "User",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Deck",
+                name: "Decks",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -524,17 +526,17 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Deck", x => x.Id);
+                    table.PrimaryKey("PK_Decks", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Deck_User_UserId",
+                        name: "FK_Decks_Users_UserId",
                         column: x => x.UserId,
-                        principalTable: "User",
+                        principalTable: "Users",
                         principalColumn: "Id");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "FriendsList",
+                name: "FriendsLists",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -545,18 +547,18 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_FriendsList", x => x.Id);
+                    table.PrimaryKey("PK_FriendsLists", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_FriendsList_User_UserId",
+                        name: "FK_FriendsLists_Users_UserId",
                         column: x => x.UserId,
-                        principalTable: "User",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Gamelog",
+                name: "Gamelogs",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -568,23 +570,23 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Gamelog", x => x.Id);
+                    table.PrimaryKey("PK_Gamelogs", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Gamelog_ActionType_ActionTypeId",
+                        name: "FK_Gamelogs_ActionTypes_ActionTypeId",
                         column: x => x.ActionTypeId,
-                        principalTable: "ActionType",
+                        principalTable: "ActionTypes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Gamelog_User_UserId",
+                        name: "FK_Gamelogs_Users_UserId",
                         column: x => x.UserId,
-                        principalTable: "User",
+                        principalTable: "Users",
                         principalColumn: "Id");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "DeckCard",
+                name: "DeckCards",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -595,70 +597,74 @@ namespace DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DeckCard", x => x.Id);
+                    table.PrimaryKey("PK_DeckCards", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_DeckCard_Collection_CollectionId",
+                        name: "FK_DeckCards_Collections_CollectionId",
                         column: x => x.CollectionId,
-                        principalTable: "Collection",
+                        principalTable: "Collections",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_DeckCard_Deck_DeckId",
+                        name: "FK_DeckCards_Decks_DeckId",
                         column: x => x.DeckId,
-                        principalTable: "Deck",
+                        principalTable: "Decks",
                         principalColumn: "Id");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
+            migrationBuilder.InsertData(
+                table: "Ranks",
+                columns: new[] { "Id", "Label", "nbVictory" },
+                values: new object[] { 1, "Wood", 0 });
+
+            migrationBuilder.InsertData(
+                table: "Roles",
+                columns: new[] { "Id", "Label" },
+                values: new object[,]
+                {
+                    { 1, "Admin" },
+                    { 2, "User" }
+                });
+
             migrationBuilder.CreateIndex(
-                name: "IX_Booster_CardId",
-                table: "Booster",
+                name: "IX_Boosters_CardId",
+                table: "Boosters",
                 column: "CardId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Booster_UserId",
-                table: "Booster",
+                name: "IX_Boosters_UserId",
+                table: "Boosters",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Card_CardTypeId",
-                table: "Card",
+                name: "IX_Cards_CardTypeId",
+                table: "Cards",
                 column: "CardTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Card_ExtensionId",
-                table: "Card",
+                name: "IX_Cards_ExtensionId",
+                table: "Cards",
                 column: "ExtensionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Card_RarityId",
-                table: "Card",
+                name: "IX_Cards_RarityId",
+                table: "Cards",
                 column: "RarityId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Champion_EffectChampionId",
-                table: "Champion",
+                name: "IX_Champions_EffectChampionId",
+                table: "Champions",
                 column: "EffectChampionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Champion_FactionId",
-                table: "Champion",
+                name: "IX_Champions_FactionId",
+                table: "Champions",
                 column: "FactionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Class_CardId",
-                table: "Class",
+                name: "IX_Classes_CardId",
+                table: "Classes",
                 column: "CardId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Collection_ChampionId",
-                table: "Collection",
-                column: "ChampionId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Collection_CollectionCardId",
-                table: "Collection",
-                column: "CollectionCardId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CollectionCard_CardId",
@@ -666,83 +672,93 @@ namespace DataAccess.Migrations
                 column: "CardId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Condition_ConditionTypeId",
-                table: "Condition",
+                name: "IX_Collections_ChampionId",
+                table: "Collections",
+                column: "ChampionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Collections_CollectionCardId",
+                table: "Collections",
+                column: "CollectionCardId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Conditions_ConditionTypeId",
+                table: "Conditions",
                 column: "ConditionTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Condition_EffectCardId",
-                table: "Condition",
+                name: "IX_Conditions_EffectCardId",
+                table: "Conditions",
                 column: "EffectCardId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Deck_UserId",
-                table: "Deck",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_DeckCard_CollectionId",
-                table: "DeckCard",
+                name: "IX_DeckCards_CollectionId",
+                table: "DeckCards",
                 column: "CollectionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DeckCard_DeckId",
-                table: "DeckCard",
+                name: "IX_DeckCards_DeckId",
+                table: "DeckCards",
                 column: "DeckId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EffectCard_CardId",
-                table: "EffectCard",
+                name: "IX_Decks_UserId",
+                table: "Decks",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EffectCards_CardId",
+                table: "EffectCards",
                 column: "CardId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EffectCard_EffectTypeId",
-                table: "EffectCard",
+                name: "IX_EffectCards_EffectTypeId",
+                table: "EffectCards",
                 column: "EffectTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EffectDescription_EffectCardId",
-                table: "EffectDescription",
+                name: "IX_EffectDescriptions_EffectCardId",
+                table: "EffectDescriptions",
                 column: "EffectCardId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Faction_CardId",
-                table: "Faction",
+                name: "IX_Factions_CardId",
+                table: "Factions",
                 column: "CardId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_FriendsList_UserId",
-                table: "FriendsList",
+                name: "IX_FriendsLists_UserId",
+                table: "FriendsLists",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Gamelog_ActionTypeId",
-                table: "Gamelog",
+                name: "IX_Gamelogs_ActionTypeId",
+                table: "Gamelogs",
                 column: "ActionTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Gamelog_UserId",
-                table: "Gamelog",
+                name: "IX_Gamelogs_UserId",
+                table: "Gamelogs",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_User_CollectionId",
-                table: "User",
+                name: "IX_Users_CollectionId",
+                table: "Users",
                 column: "CollectionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_User_GameId",
-                table: "User",
+                name: "IX_Users_GameId",
+                table: "Users",
                 column: "GameId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_User_RankId",
-                table: "User",
+                name: "IX_Users_RankId",
+                table: "Users",
                 column: "RankId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_User_RoleId",
-                table: "User",
+                name: "IX_Users_RoleId",
+                table: "Users",
                 column: "RoleId");
         }
 
@@ -750,79 +766,79 @@ namespace DataAccess.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Booster");
+                name: "Boosters");
 
             migrationBuilder.DropTable(
-                name: "Class");
+                name: "Classes");
 
             migrationBuilder.DropTable(
-                name: "Condition");
+                name: "Conditions");
 
             migrationBuilder.DropTable(
-                name: "DeckCard");
+                name: "DeckCards");
 
             migrationBuilder.DropTable(
-                name: "EffectDescription");
+                name: "EffectDescriptions");
 
             migrationBuilder.DropTable(
-                name: "FriendsList");
+                name: "FriendsLists");
 
             migrationBuilder.DropTable(
-                name: "Gamelog");
+                name: "Gamelogs");
 
             migrationBuilder.DropTable(
-                name: "ConditionType");
+                name: "ConditionTypes");
 
             migrationBuilder.DropTable(
-                name: "Deck");
+                name: "Decks");
 
             migrationBuilder.DropTable(
-                name: "EffectCard");
+                name: "EffectCards");
 
             migrationBuilder.DropTable(
-                name: "ActionType");
+                name: "ActionTypes");
 
             migrationBuilder.DropTable(
-                name: "User");
+                name: "Users");
 
             migrationBuilder.DropTable(
-                name: "EffectType");
+                name: "EffectTypes");
 
             migrationBuilder.DropTable(
-                name: "Collection");
+                name: "Collections");
 
             migrationBuilder.DropTable(
-                name: "Game");
+                name: "Games");
 
             migrationBuilder.DropTable(
-                name: "Rank");
+                name: "Ranks");
 
             migrationBuilder.DropTable(
-                name: "Role");
+                name: "Roles");
 
             migrationBuilder.DropTable(
-                name: "Champion");
+                name: "Champions");
 
             migrationBuilder.DropTable(
                 name: "CollectionCard");
 
             migrationBuilder.DropTable(
-                name: "EffectChampion");
+                name: "EffectChampions");
 
             migrationBuilder.DropTable(
-                name: "Faction");
+                name: "Factions");
 
             migrationBuilder.DropTable(
-                name: "Card");
+                name: "Cards");
 
             migrationBuilder.DropTable(
-                name: "CardType");
+                name: "CardTypes");
 
             migrationBuilder.DropTable(
-                name: "Extension");
+                name: "Extensions");
 
             migrationBuilder.DropTable(
-                name: "Rarity");
+                name: "Rarities");
         }
     }
 }
