@@ -42,8 +42,12 @@ namespace VortexTCG.DataAccess
             base.OnModelCreating(modelBuilder);
             
             modelBuilder.Entity<Role>().HasData(
+                //Roles
                 new Role { Id = 1, Label = "Admin" },
-                new Role { Id = 2, Label = "Player" }
+                new Role { Id = 2, Label = "User" },
+
+                //Ranks
+                new Rank { Id = 1, Label = "Wood", nbVictory = 0}
             );
         }
     }
