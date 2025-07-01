@@ -40,14 +40,16 @@ namespace VortexTCG.DataAccess
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            
-            modelBuilder.Entity<Role>().HasData(
-                //Roles
-                new Role { Id = 1, Label = "Admin" },
-                new Role { Id = 2, Label = "User" },
 
-                //Ranks
-                new Rank { Id = 1, Label = "Wood", nbVictory = 0}
+            //Roles
+            modelBuilder.Entity<Role>().HasData(
+                new Role { Id = 1, Label = "Admin" },
+                new Role { Id = 2, Label = "User" }
+            );
+
+            //Ranks
+            modelBuilder.Entity<Rank>().HasData(
+                new Rank { Id = 1, Label = "Wood", nbVictory = 0 }
             );
         }
     }

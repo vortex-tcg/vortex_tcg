@@ -17,7 +17,7 @@ namespace DataAccess.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.11")
+                .HasAnnotation("ProductVersion", "8.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
@@ -587,6 +587,14 @@ namespace DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Ranks");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Label = "Wood",
+                            nbVictory = 0
+                        });
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Rarity", b =>
@@ -631,7 +639,7 @@ namespace DataAccess.Migrations
                         new
                         {
                             Id = 2,
-                            Label = "Player"
+                            Label = "User"
                         });
                 });
 
