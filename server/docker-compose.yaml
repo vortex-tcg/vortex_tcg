@@ -1,0 +1,62 @@
+services:
+  auth:
+    build:
+      context: .
+      dockerfile: ./apps/auth/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DOTNET_USE_POLLING_FILE_WATCHER=true
+    ports:
+      - "${AUTH_PORT}:5238"
+    volumes:
+      - .:/workspace                      
+      - /workspace/apps/auth/obj
+      - /workspace/apps/auth/bin
+    working_dir: /workspace/apps/auth
+    depends_on:
+      - game
+      - db
+      
+  game:
+    build: 
+      context: .
+      dockerfile: ./apps/game/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Dev
+      - ASPNETCORE_URLS=http://+:8000
+    ports: 
+      - "${GAME_PORT}:8000"
+    volumes:
+      - .:/workspace  
+      - /workspace/apps/game/obj
+      - /workspace/apps/game/bin
+    working_dir: /workspace/apps/game
+    depends_on:
+      - db
+    
+    # Working_dir define the dir where commands will be execute
+    # Remove bin / obj from the working dir to avoid potential errors
+      
+  db: 
+    image: mariadb
+    restart: always
+    environment:
+      MARIADB_RANDOM_ROOT_PASSWORD: "yes"
+      MARIADB_USER: "${DB_USERNAME}"
+      MARIADB_PASSWORD: "${DB_PASSWORD}"
+      MARIADB_DATABASE: vortexdb
+    ports:
+      - "${DB_PORT}:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    
+  adminer: 
+    image: adminer
+    restart: always
+    ports:
+      - "${DB_ADMINER_PORT}:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+
+volumes:
+  mariadb_data:
