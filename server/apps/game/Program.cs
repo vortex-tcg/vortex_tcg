@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql;
 using System.Text.RegularExpressions;
 using VortexTCG.DataAccess;
+using VortexTCG.DataAccess.Models;
 
 Env.Load("../../.env");
 

@@ -1,8 +1,6 @@
 using System.Collections.Generic; //Permet l’utilisation des listes (ICollection<T>) pour les relations 1-N ou N-N.
 using System.ComponentModel.DataAnnotations; //Permet d’utiliser les attributs [Key], [Required], [EmailAddress], etc.
 using System.ComponentModel.DataAnnotations.Schema; //Utilisé pour des attributs comme [ForeignKey] ou [Table] si nécessaire.
-using VortexTCG.DataAccess.Models;
-
 
 namespace VortexTCG.DataAccess.Models
 {

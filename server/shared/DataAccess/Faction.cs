@@ -4,18 +4,20 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VortexTCG.DataAccess.Models
 {
-    public class Booster
+    public class Faction
     {
         [Key]
         public int Id { get; set; }
 
         public string Label { get; set; }
 
-        public int Price { get; set; }
+        public int Currency { get; set; }
 
-        public int UserId { get; set; }
-        public User User { get; set; }
+        public string Condition { get; set; }
+
         public int? CardId { get; set; }
         public Card? Cards { get; set; }
+
+        public ICollection<Champion> Champions { get; set; }
     }
 }
