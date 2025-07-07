@@ -4,18 +4,16 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VortexTCG.DataAccess.Models
 {
-    public class Booster
+    public class EffectType
     {
         [Key]
         public int Id { get; set; }
 
+        [Required]
         public string Label { get; set; }
 
-        public int Price { get; set; }
+        public string Description { get; set; }
 
-        public int UserId { get; set; }
-        public User User { get; set; }
-        public int? CardId { get; set; }
-        public Card? Cards { get; set; }
+        public ICollection<EffectCard> EffectCards { get; set; }
     }
 }

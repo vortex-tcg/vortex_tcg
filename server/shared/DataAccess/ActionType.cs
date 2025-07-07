@@ -4,18 +4,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VortexTCG.DataAccess.Models
 {
-    public class Booster
+    public class ActionType
     {
         [Key]
         public int Id { get; set; }
 
+        [Required]
         public string Label { get; set; }
 
-        public int Price { get; set; }
-
-        public int UserId { get; set; }
-        public User User { get; set; }
-        public int? CardId { get; set; }
-        public Card? Cards { get; set; }
+        public ICollection<Gamelog> Gamelogs { get; set; }
     }
 }
