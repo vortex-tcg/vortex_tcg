@@ -13,5 +13,7 @@ namespace VortexTCG.DataAccess.Models
 
         public int? UserId { get; set; }
         public User? Users { get; set; }
+
+        public ICollection<DeckCard> DeckCard { get; set; }
     }
 }
