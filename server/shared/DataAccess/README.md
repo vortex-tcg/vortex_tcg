@@ -10,7 +10,18 @@ Ensuite, il faut installer EF Core :
 
 Il faut relancer l'éditeur de texte (VSCODE, DataGrip, ...)
 
-Enfin, il faut lancer la commande suivante :
-    dotnet ef database update --startup-project ../../apps/game
-
 **ATTENTION**, il est important de vérifier que votre DB dans Docker a un port.
+
+Ensuite il faut rentrer dans le docker :
+    docker exec -it server-game-1 bash
+
+Puis vérifier que vous êtes bien dans le fichier game.
+
+Maintenant, il faut lancer cette commande à la suite :
+    dotnet tool install --global dotnet-ef --version 8.*
+    export PATH="$PATH:/root/.dotnet/tools"
+    echo 'export PATH="$PATH:/root/.dotnet/tools"' >> ~/.bashrc
+    source ~/.bashrc
+
+Pour update la bdd enfin :
+dotnet ef database update --project /workspace/shared/DataAccess/DataAccess.csproj --startup-project /workspace/apps/game
