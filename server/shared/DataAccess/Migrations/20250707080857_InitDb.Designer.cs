@@ -12,8 +12,8 @@ using VortexTCG.DataAccess;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(VortexDbContext))]
-    [Migration("20250701141510_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250707080857_InitDb")]
+    partial class InitDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
