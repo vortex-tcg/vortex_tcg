@@ -13,10 +13,6 @@ namespace VortexTCG.DataAccess.Models
 
         public CollectionCard CollectionCard { get; set; }
 
-        public int CollectionCardId { get; set; }
-
-        public CollectionCard CollectionCard { get; set; }
-
         public ICollection<User> Users { get; set; }
 
         public ICollection<DeckCard> DeckCard { get; set; }

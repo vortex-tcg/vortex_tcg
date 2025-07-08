@@ -1,6 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using VortexTCG.DataAccess.Models;
 using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace VortexTCG.DataAccess
 {
@@ -45,19 +49,38 @@ namespace VortexTCG.DataAccess
 
             //Roles
             modelBuilder.Entity<Role>().HasData(
-                new Role { Id = 1, Label = "Admin" },
-                new Role { Id = 2, Label = "User" }
+                new Role
+                {
+                    Id = 1,
+                    Label = "Admin",
+                    CreatedBy = "System",
+                    CreatedAtUtc = DateTime.UtcNow
+                },
+                new Role
+                {
+                    Id = 2,
+                    Label = "User",
+                    CreatedBy = "System",
+                    CreatedAtUtc = DateTime.UtcNow
+                }
             );
 
             //Ranks
             modelBuilder.Entity<Rank>().HasData(
-                new Rank { Id = 1, Label = "Wood", nbVictory = 0 }
+                new Rank {
+                    Id = 1,
+                    Label = "Wood",
+                    nbVictory = 0,
+                    CreatedBy = "System",
+                    CreatedAtUtc = DateTime.UtcNow
+                }
             );
 
-            // Configuration des propriétés d'audit pour les entités implémentant IAuditable
+
+            // Configuration des propriétés d'audit pour les entités implémentant AuditableEntity
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
-                if (typeof(IAuditable).IsAssignableFrom(entityType.ClrType))
+                if (typeof(AuditableEntity).IsAssignableFrom(entityType.ClrType))
                 {
                     modelBuilder.Entity(entityType.ClrType)
                         .Property<DateTime>("CreatedAt")
@@ -89,7 +112,7 @@ namespace VortexTCG.DataAccess
 
         private void SetAuditFields()
         {
-            var entries = ChangeTracker.Entries<IAuditable>();
+            var entries = ChangeTracker.Entries<AuditableEntity>();
 
             foreach (var entry in entries)
             {
