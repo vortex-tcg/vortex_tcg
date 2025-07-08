@@ -4,14 +4,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VortexTCG.DataAccess.Models
 {
-    public class Champion
+    public class Champion : AuditableEntity
     {
         [Key]
         public int Id { get; set; }
 
         public string Name { get; set; }
 
-        public string Label { get; set; }
+        public string Description { get; set; }
 
         public int HP { get; set; }
 
