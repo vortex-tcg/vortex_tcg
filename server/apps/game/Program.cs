@@ -4,10 +4,14 @@ using Pomelo.EntityFrameworkCore.MySql;
 using System.Text.RegularExpressions;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
+using VortexTCG.Common.Services;
 
 Env.Load("../../.env");
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // Add services to the container.
 builder.Services.AddRazorPages();

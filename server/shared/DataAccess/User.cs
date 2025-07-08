@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema; //Utilisé pour des attribut
 
 namespace VortexTCG.DataAccess.Models
 {
-    public class User //Cette classe deviendra une table Users (par convention, EF Core met le nom de la classe au pluriel pour la table).
+    public class User : AuditableEntity //Cette classe deviendra une table Users (par convention, EF Core met le nom de la classe au pluriel pour la table).
     {
         [Key] //Primary Key
         public int Id { get; set; }
