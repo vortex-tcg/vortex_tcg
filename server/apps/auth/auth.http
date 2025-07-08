@@ -1,6 +1,19 @@
-@auth_HostAddress = http://localhost:5238
+@auth_HostAddress = http://localhost:5001
 
-GET {{auth_HostAddress}}/weatherforecast/
-Accept: application/json
+### Test login avec identifiants corrects
+POST {{auth_HostAddress}}/api/auth/login
+Content-Type: application/json
 
-###
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### Test login avec identifiants incorrects
+POST {{auth_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "wrong@example.com",
+  "password": "wrongpass"
+}

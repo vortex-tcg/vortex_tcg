@@ -4,7 +4,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VortexTCG.DataAccess.Models
 {
+<<<<<<< HEAD
     public class EffectCard : AuditableEntity
+=======
+    public class EffectCard
+>>>>>>> da57e9f14c6f0f6a6350ee5d614b5fd04eb6296c
     {
         [Key]
         public int Id { get; set; }
