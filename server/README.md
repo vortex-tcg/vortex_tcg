@@ -16,8 +16,11 @@
    - 2.2 : Basics Commands
    - 2.3 : Make migrations
    - 2.4 : Update migrations
- - ### 3 : 
- - ### 4 : Recommand Software (Optionnals)
+ - ### 3 : Error
+   - 3.1 : Where to find error
+   - 3.2 : Common errors
+   - 3.3 : Most particular cases
+ - ### 4 : Recommanded Software (Optionnals)
 
 
 ## 1 : Infrastructure :
@@ -47,9 +50,25 @@
    
    ### 1.5 : Docker Compose
    The docker compose of our app is split in 5 services (details just above) and in volumes to keep data (Database for 
-   example).
-   The basics commands to know are the following : 
-   
+   example). It is also the file that will connect our dockerfile to each others and to our env variables.
+
+
+## 2 : Launch :
+This part will explain how to launch and debug the docker environment by yourselfs in case of errors.
+
+   ### 2.1 : .env
+   The .env file is necessary to launch the docker compose.
+   It must be in the following dir : *server*, you must provide in this one the following variables : 
+   - ```AUTH_PORT``` that correspond to the port where your **auth app** will be expose in your computer
+   - ```GAME_PORT``` that correspond to the port where your **game app** will be expose in your computer
+   - ```SONARQUBE_PORT``` that correspond to the port where your **local Sonarqube** will be expose in your computer
+   - ```DB_PORT``` that correspond to the port where your **database** will be expose in your computer
+   - ``ADMINER_PORT`` that correspond to the port where your **database adminer** will be expose in your computer
+   - ```DB_USERNAME``` correspond to your **default username** for your local database
+   - ```DB_PASSWORD``` correspond to the **password of your default username** for your local database
+  
+   ### 2.2 : Basics Commands
+
    - ```docker compose up -d``` use to execute all the services in order (began with database) you need a docker instance
    to run in your computer to use it
    - ```docker compose down``` use to down all the docker instance, and delete it (delete the instance but **not the volumes**)
@@ -61,3 +80,46 @@
 
    To conclude this part I also advice you to download : **OrbStack** that is a good docker runner and is really good to
    use with commands prompt for example.
+
+   ### 2.3 : Make Migrations
+   The migrations are made by the following dir : ```server > shared > DataAccess``` it is a class library provided by
+   **.NET** and allow data types to be shared between differents apps.
+   To create the migrations file you must access a terminal from any docker app container (game or auth).
+
+   In these you will enter the following commands : 
+   ```bash
+      cd ../../shared/DataAccess
+      dotnet tool restore
+      dotnet ef migrations add InitDb --project /workspace/shared/DataAccess/DataAccess.csproj --startup-project /workspace/apps/game
+   ```
+
+   In order this commands will : 
+   - Checkout to the good directory ```server > shared > DataAccess```
+   - Install differents dotnet tools (like EF Core necessary to interact with our models)
+   - create a new migration (here name : *InitDb*) and start it up from our main projet *Game*
+
+   If anything goes right you must have a success message, you can now go to the next step to apply your migrations.
+
+   ### 2.4 : Update Migrations
+   Once you create your migrations or get it from another branch, you must apply it, if you just finish the step 
+   [2.3 : Make Migrations], you can just enter the following command (still in you docker terminal)
+
+   ```bash
+   dotnet ef database update --project /workspace/shared/DataAccess/DataAccess.csproj --startup-project /workspace/apps/game
+   ```
+   You can see that this commands is quiet similar to the last one, except that this one do not create migrations, but
+   just apply it.
+
+   Once its done, you can reload your database to see the changes.
+
+   ### NB : 
+   The part 2.3 and 2.4 will be remove when the CI/CD will be finish; the migrations (creation and update) will be 
+   automatic.
+
+   If you encounter any trouble with your database migrations and update you can contact @Valentin or @Maxime to help
+   you
+   
+
+## 3 : Errors :
+
+## 4 : Recommanded Software : 
