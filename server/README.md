@@ -24,7 +24,7 @@
 
 
 ## 1 : Infrastructure :
-   The docker structure, is the following : 
+   The docker structure, is the following :   
    Create a workdir : **Workspace** this workdir while containerized all our app as the same structure
    The goal is to reproduce the working environnement.
 
@@ -40,8 +40,9 @@
    
    ### 1.3 : Database & Adminer
    This will run the database (MariaDB) in a container expose on port : **3306** and is the first service to run, it as 
-   a volume connected named : **mariadb_data**.
-   Many other services depends on the database, so we make sur database run correcly.
+   a volume connected named : **mariadb_data**.  
+   Many other services depends on the database, so we make sur database run correctly.  
+
    An Adminer is also provided to acces to the database from local browser, it is expose on docker port : **8080**
 
    ### 1.4 : SonarQube
@@ -78,12 +79,9 @@ This part will explain how to launch and debug the docker environment by yoursel
    - ```docker system prune``` basic commands that will delete all unused docker images (and clear docker cache). Think
    about using it when a build do not work as expected.
 
-   To conclude this part I also advice you to download : **OrbStack** that is a good docker runner and is really good to
-   use with commands prompt for example.
-
    ### 2.3 : Make Migrations
    The migrations are made by the following dir : ```server > shared > DataAccess``` it is a class library provided by
-   **.NET** and allow data types to be shared between differents apps.
+   **.NET** and allow data types to be shared between differents apps.  
    To create the migrations file you must access a terminal from any docker app container (game or auth).
 
    In these you will enter the following commands : 
@@ -114,12 +112,56 @@ This part will explain how to launch and debug the docker environment by yoursel
 
    ### NB : 
    The part 2.3 and 2.4 will be remove when the CI/CD will be finish; the migrations (creation and update) will be 
-   automatic.
+   automatic.  
 
    If you encounter any trouble with your database migrations and update you can contact @Valentin or @Maxime to help
-   you
+   you.
    
 
 ## 3 : Errors :
 
+   ### 3.1 : Where to find errors
+   Thanks to differents *Dockerfile* you can easily find errors depending to which app you are using. You just have to
+   open your Docker logs to see and historic of diffents things that happen on you docker container.  
+   In more a docker software allow to see quiclky which container run or not.
+
+   ### 3.2 : Commons errors
+   This part will cover the most common errors you can found in one of your docker.
+
+   - **Env error** :
+      ```The "ENV" variable is not set. Defaulting to a blank string. ```
+     This error is about a missing environment variable, you must provide one to make it work correcly (reminder, the 
+     .env.example file list every necessary env variable).
+
+   - **Port Already in use** :
+     This error is raise when you try to define a port for one of your container that is already in use, you simply need
+     to switch to an unused port.
+     To easily found which port is in used you can do this commands :  
+
+      #### Windows :
+      ```netstat -an | findstr LISTEN```
+
+      #### MacOs :
+      ```lsof -nP -iTCP -sTCP:LISTEN```
+
+      #### Linux :
+      ```sudo netstat -tulnp```
+
+   - **No docker Daemon is running** :
+     This error explain you that you just forgot to launch your docker software (Docker desktop or OrbStack for example)
+
+   ### 3.3 : Most particular cases
+   It is also possible for you to encounter a specific error that you never saw before, in this case you can contact @maxime
+   he will help you to understand where the error come from.
+
 ## 4 : Recommanded Software : 
+
+To conclude I also advice you to download : **OrbStack** that is a good docker runner and is really good to
+use with commands prompt for example.  
+
+In more, i didn't recommand you to use a database provider, the fact is that adminer is setup in this case.
+I also advice to use a git GUI (github Desktop or Git Kraken) that is really usefull to understand easily our branching 
+strategy.  
+
+Finaly, I recommand you to read the docker documentation or to search a bit on internet if you have questions, this is 
+a good practice to develop skill in docker use.
