@@ -26,11 +26,11 @@
 ## 1 : Infrastructure :
    The docker structure, is the following :   
    Create a workdir : **Workspace** this workdir while containerized all our app as the same structure
-   The goal is to reproduce the working environnement.
+   The goal is to reproduce the working environment.
 
    ### 1.1 : Game
-   This is the first App (WebApp), it as its own **Dockerfile**, it run on docker port : **8000**, the docker will
-   *update* and install *inotify-tools* (this permit to hot reload the container when and update is made in the code
+   This is the first App (WebApp), it has its own **Dockerfile**, it runs on docker port : **8000**, the docker will
+   *update* and install *inotify-tools* (this permit to hot reload the container when an update is made in the code
    base for local development).
    
    ### 1.2 : Auth 
@@ -110,8 +110,8 @@ This part will explain how to launch and debug the docker environment by yoursel
 
    Once its done, you can reload your database to see the changes.
 
-   ### NB : 
-   The part 2.3 and 2.4 will be remove when the CI/CD will be finish; the migrations (creation and update) will be 
+   ### NB :
+   The part 2.3 and 2.4 will be remove when the CI/CD will be finish; the migrations (creation and update) will be
    automatic.  
 
    If you encounter any trouble with your database migrations and update you can contact @Valentin or @Maxime to help
@@ -154,14 +154,13 @@ This part will explain how to launch and debug the docker environment by yoursel
    It is also possible for you to encounter a specific error that you never saw before, in this case you can contact @maxime
    he will help you to understand where the error come from.
 
-## 4 : Recommanded Software : 
-
-To conclude I also advice you to download : **OrbStack** that is a good docker runner and is really good to
-use with commands prompt for example.  
-
-In more, i didn't recommand you to use a database provider, the fact is that adminer is setup in this case.
-I also advice to use a git GUI (github Desktop or Git Kraken) that is really usefull to understand easily our branching 
-strategy.  
-
-Finaly, I recommand you to read the docker documentation or to search a bit on internet if you have questions, this is 
-a good practice to develop skill in docker use.
+## 4 : Recommended Software :
+   To conclude I also advice you to download : **OrbStack** that is a good docker runner and is really good to
+   use with commands prompt for example.  
+   
+   In more, I didn't recommend you to use a database provider, the fact is that adminer is set up in this case.
+   I also advice to use a git GUI (github Desktop or Git Kraken) that is really usefull to understand easily our branching
+   strategy.  
+   
+   Finally, I recommend you to read the docker documentation or to search a bit on the internet if you have questions, this is
+   a good practice to develop skills in docker use.
