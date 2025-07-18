@@ -14,5 +14,4 @@ EXPOSE 5238
 RUN apt-get update && apt-get install -y inotify-tools
 # Install deps to watch files changing
 
-CMD ["sh", "-c", "while true; do dotnet run --urls http://0.0.0.0:5238 & PID=$$!; inotifywait -r -e modify /workspace/apps/auth --exclude '(bin|obj)'; kill $$PID; wait $$PID; echo 'Restarting...'; done"]
-# Check the changes and rerun the container to apply it
+CMD ["sh", "-c", "while true; do echo 'Démarrage API...'; dotnet run --urls http://0.0.0.0:5238 & PID=$!; inotifywait -r -e modify,create,delete /workspace/apps/auth --exclude '(bin|obj)'; echo 'Changement détecté - Redémarrage API...'; kill $PID; wait $PID; done"]
