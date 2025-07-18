@@ -65,6 +65,27 @@ services:
       - "${DB_ADMINER_PORT}:8080"
     environment:
       ADMINER_DEFAULT_SERVER: db
+      
+  sonarqube:
+      image: sonarqube:latest
+      depends_on:
+        - db
+      environment:
+        SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+        SONARQUBE_JDBC_USERNAME: ${DB_USERNAME}
+        SONARQUBE_JDBC_PASSWORD: ${DB_PASSWORD}
+        SONARQUBE_JDBC_URL: jdbc:mariadb://db:3306/vortexdb
+      env_file:
+        - .env
+      ports:
+        - "${SONARQUBE_PORT}:9000"
+      volumes:
+        - sonarqube_data:/opt/sonarqube/data
+        - sonarqube_extensions:/opt/sonarqube/extensions
+        - sonarqube_logs:/opt/sonarqube/logs
 
 volumes:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
   mariadb_data:

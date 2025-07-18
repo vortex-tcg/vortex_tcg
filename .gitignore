@@ -119,3 +119,4 @@ desktop.ini
 # Ignore manually added packages
 com.*
 upm-xr*
+.scannerwork/
