@@ -15,6 +15,11 @@ public static class ConfigLoader
         if (config != null) return config;
 
         TextAsset configText = Resources.Load<TextAsset>("application-properties");
+        if (configText == null)
+        {
+            Debug.LogError("Failed to load configuration file: application-properties");
+            return null;
+        }
         config = JsonUtility.FromJson<AppConfig>(configText.text);
         return config;
     }
