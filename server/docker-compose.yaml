@@ -1,0 +1,91 @@
+services:
+  auth:
+    build:
+      context: .
+      dockerfile: ./apps/auth/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DOTNET_USE_POLLING_FILE_WATCHER=true
+      - ConnectionStrings__DefaultConnection=Server=db;Database=vortexdb;User=${DB_USERNAME};Password=${DB_PASSWORD};
+    ports:
+      - "${AUTH_PORT}:5238"
+    volumes:
+      - .:/workspace                      
+      - /workspace/apps/auth/obj
+      - /workspace/apps/auth/bin
+    working_dir: /workspace/apps/auth
+    depends_on:
+      - game
+      - db
+      
+  game:
+    build: 
+      context: .
+      dockerfile: ./apps/game/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Dev
+      - ASPNETCORE_URLS=http://+:8000
+      - ConnectionStrings__DefaultConnection=Server=db;Database=vortexdb;User=${DB_USERNAME};Password=${DB_PASSWORD};
+    ports: 
+      - "${GAME_PORT}:8000"
+    volumes:
+      - .:/workspace  
+      - /workspace/apps/game/obj
+      - /workspace/apps/game/bin
+    working_dir: /workspace/apps/game
+    depends_on:
+      - db
+    
+    # Working_dir define the dir where commands will be execute
+    # Remove bin / obj from the working dir to avoid potential errors
+      
+  db: 
+    image: mariadb
+    restart: always
+    env_file:
+      - .env
+    environment:
+      MARIADB_RANDOM_ROOT_PASSWORD: "yes"
+      MARIADB_USER: "${DB_USERNAME}"
+      MARIADB_PASSWORD: "${DB_PASSWORD}"
+      MARIADB_DATABASE: vortexdb
+    ports:
+      - "${DB_PORT}:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    
+  adminer: 
+    image: adminer
+    restart: always
+    ports:
+      - "${DB_ADMINER_PORT}:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+      
+  sonarqube:
+      image: sonarqube:latest
+      depends_on:
+        - db
+      environment:
+        SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+        SONARQUBE_JDBC_USERNAME: ${DB_USERNAME}
+        SONARQUBE_JDBC_PASSWORD: ${DB_PASSWORD}
+        SONARQUBE_JDBC_URL: jdbc:mariadb://db:3306/vortexdb
+      env_file:
+        - .env
+      ports:
+        - "${SONARQUBE_PORT}:9000"
+      volumes:
+        - sonarqube_data:/opt/sonarqube/data
+        - sonarqube_extensions:/opt/sonarqube/extensions
+        - sonarqube_logs:/opt/sonarqube/logs
+
+volumes:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  mariadb_data:
