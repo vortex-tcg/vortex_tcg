@@ -1,44 +1,40 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace auth.Controllers
+namespace auth.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+
+public class LoginController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class AuthController : ControllerBase
+    public class LoginData
     {
-        private readonly ILogger<AuthController> _logger;
-
-        public AuthController(ILogger<AuthController> logger)
+        public string Email { get; set; }
+        public string Password { get; set; }
+    }
+    
+    [HttpGet]
+    public IActionResult GetLoginInfo()
+    {
+        var response = new
         {
-            _logger = logger;
-        }
-
-        [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
-        {
-            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
-            {
-                return BadRequest(new { message = "Email et mot de passe requis" });
-            }
-
-            if (request.Email == "test@example.com" && request.Password == "password123")
-            {
-                // Retourne un token simulé (à remplacer par un vrai JWT)
-                return Ok(new 
-                { 
-                    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IlRlc3QgVXNlciIsImlhdCI6MTUxNjIzOTAyMn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-                    email = request.Email,
-                    username = "testuser" 
-                });
-            }
-
-            return Unauthorized(new { message = "Email ou mot de passe incorrect" });
-        }
+            Message = "Salut ! Je suis ton API de connexion",
+            HeureServeur = DateTime.Now,
+            StatutServeur = "En ligne"
+        };
+        return Ok(response);
     }
 
-    public class LoginRequest
+    [HttpPost]
+    public IActionResult Login([FromBody] LoginData data)
     {
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        if (data == null)
+        {
+            return BadRequest("No data provided");
+        }
+        else
+        {
+            return Ok(data);
+        }
     }
 }
