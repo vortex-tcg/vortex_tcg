@@ -12,7 +12,7 @@ Il faut relancer l'éditeur de texte (VSCODE, DataGrip, ...)
 
 **ATTENTION**, il est important de vérifier que votre DB dans Docker a un port.
 
-Ensuite il faut rentrer dans le docker :
+<!-- Ensuite il faut rentrer dans le docker :
     docker exec -it server-game-1 bash
 
 Puis vérifier que vous êtes bien dans le fichier game.
@@ -24,4 +24,4 @@ Maintenant, il faut lancer cette commande à la suite :
     source ~/.bashrc
 
 Pour update la bdd enfin :
-dotnet ef database update --project /workspace/shared/DataAccess/DataAccess.csproj --startup-project /workspace/apps/game
+dotnet ef database update --project /workspace/shared/DataAccess/DataAccess.csproj --startup-project /workspace/apps/game -->

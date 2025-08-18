@@ -4,12 +4,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VortexTCG.DataAccess.Models
 {
-    public class Collection
+    public class Collection : AuditableEntity
     {
         [Key]
         public int Id { get; set; }
-
-        public string Label { get; set; }
 
         public int CollectionCardId { get; set; }
 
