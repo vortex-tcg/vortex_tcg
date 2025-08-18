@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - dev
+      - VOR-173*
 
 jobs:
   test:
@@ -21,3 +22,9 @@ jobs:
           
       - name: Restore Dependencies 
         run : dotnet restore ./server/tests/Tests.csproj
+
+      - name: Build
+        run: dotnet build ./server/tests/Tests.csproj --configuration Release --no-restore
+
+      - name: Run Tests
+        run: dotnet test ./server/tests/Tests.csproj --configuration Release --no-build
