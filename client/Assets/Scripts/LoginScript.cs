@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine.Networking;
 using System.Collections;
 using System.Text.RegularExpressions;
+using UnityEngine.SceneManagement;
 
 
 public class LoginScript : MonoBehaviour
@@ -13,6 +14,7 @@ public class LoginScript : MonoBehaviour
     public TMP_Text emailErrorText;
     public Button loginButton;
     private bool passwordVisible = false;
+
 
     public void TogglePasswordVisibility()
     {
@@ -34,6 +36,8 @@ public class LoginScript : MonoBehaviour
 
     IEnumerator Login()
     {
+        loginButton.interactable = false;
+        string baseUrl = ConfigLoader.Load().apiBaseUrl;
         string email = emailField.text;
         if (!IsValidEmail(email))
         {
@@ -42,8 +46,8 @@ public class LoginScript : MonoBehaviour
         }
 
         string password = passwordField.text;
+        string url = baseUrl + "/api/auth/login";
 
-        string url = "http://localhost:5001/api/auth/login";
         string jsonBody = JsonUtility.ToJson(new LoginData(email, password));
        
 
@@ -59,6 +63,7 @@ public class LoginScript : MonoBehaviour
             if (request.responseCode == 200)
             {
                 Debug.Log("Connexion réussie : " + request.downloadHandler.text);
+                SceneManager.LoadScene("MainPage");
                 //TODO: Redirection TICKET : VOR-143
             }
             else
@@ -75,6 +80,8 @@ public class LoginScript : MonoBehaviour
             Debug.LogError("Erreur de connexion : " + request.error);
             emailErrorText.text = "Connexion avec le serveur impossible.";
         }
+        loginButton.interactable = true;
+
     }
 
     [System.Serializable]
