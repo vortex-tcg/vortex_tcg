@@ -3,11 +3,19 @@ using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql;
 using System.Text.RegularExpressions;
 using VortexTCG.DataAccess;
+using VortexTCG.DataAccess.Models;
+using VortexTCG.Common.Services;
 
 //Chargement du .env plus précise.
 Env.Load(Path.Combine(AppContext.BaseDirectory, "../../../../.env"));
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+// Ajout du Razor pour tester via pages
+builder.Services.AddRazorPages();
 
 // Ajout des variables d'environnement dans la config pour de la sécu et de la facilité
 builder.Configuration.AddEnvironmentVariables();
@@ -50,9 +58,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapRazorPages();
 
 // Ajout d'une route de vérification pour les health checks
 app.MapGet("/health/db", async (VortexDbContext db) =>
