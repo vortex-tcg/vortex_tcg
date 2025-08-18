@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VortexTCG.DataAccess.Models
 {
-    public class CardType
+    public class CardType : AuditableEntity
     {
         [Key]
         public int Id { get; set; }

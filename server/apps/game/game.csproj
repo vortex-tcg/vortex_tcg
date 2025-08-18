@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\shared\DataAccess\DataAccess.csproj" />
+    <ProjectReference Include="..\..\shared\Common\Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>

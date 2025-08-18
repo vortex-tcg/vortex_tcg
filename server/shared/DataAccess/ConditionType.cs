@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VortexTCG.DataAccess.Models
 {
-    public class ConditionType
+    public class ConditionType : AuditableEntity
     {
         [Key]
         public int Id { get; set; }
