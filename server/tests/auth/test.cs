@@ -16,7 +16,7 @@ namespace Tests
         {
             // Test simple pour vérifier que xUnit fonctionne
             int result = 2 + 2;
-            Assert.Equal(4, result);
+            Assert.Equal(5, result);
         }
 
         [Theory]
