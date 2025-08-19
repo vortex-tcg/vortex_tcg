@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace auth.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/auth/[controller]")]
 
 public class LoginController : ControllerBase
 {
