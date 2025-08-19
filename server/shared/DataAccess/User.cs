@@ -40,12 +40,12 @@ namespace VortexTCG.DataAccess.Models
         public int GameId { get; set; }
         public Game Game { get; set; }
 
-        public ICollection<Booster> Boosters { get; set; }
+        public ICollection<Booster>? Boosters { get; set; }
 
-        public ICollection<Deck> Deck { get; set; }
+        public ICollection<Deck>? Deck { get; set; }
 
-        public ICollection<Gamelog> Gamelog { get; set; }
+        public ICollection<Gamelog>? Gamelog { get; set; }
 
-        public ICollection<FriendsList> FriendsLists { get; set; }
+        public ICollection<FriendsList>? FriendsLists { get; set; }
     }
 }
