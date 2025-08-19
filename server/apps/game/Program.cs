@@ -6,32 +6,49 @@ using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.Services;
 
-Env.Load("../../.env");
+//Chargement du .env plus précise.
+Env.Load(Path.Combine(AppContext.BaseDirectory, "../../../../.env"));
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-// Add services to the container.
+// Ajout du Razor pour tester via pages
 builder.Services.AddRazorPages();
 
+// Ajout des variables d'environnement dans la config pour de la sécu et de la facilité
 builder.Configuration.AddEnvironmentVariables();
+
+// Remplacement des placeholders ${VAR} dans appsettings.json car ASP.NET ne le fait pas forcément de base
 var replacedConfig = ReplacePlaceholders(builder.Configuration);
 
+// Construction de la chaîne finale de connexion
+var finalConnStr = replacedConfig.GetConnectionString("DefaultConnection");
+
+// Enregistrement du DbContext avec Pomelo MySQL
 builder.Services.AddDbContext<VortexDbContext>(options =>
     options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        ServerVersion.AutoDetect(replacedConfig.GetConnectionString("DefaultConnection"))
+        finalConnStr,
+        ServerVersion.AutoDetect(finalConnStr)
     ));
 
 var app = builder.Build();
+
+// Vérification de la connexion DB au démarrage (premier health check)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<VortexDbContext>();
+    if (db.Database.CanConnect())
+        app.Logger.LogInformation("✅ Connexion DB OK");
+    else
+        app.Logger.LogError("❌ Impossible de se connecter à la DB");
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -44,9 +61,26 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 
+// Ajout d'une route de vérification pour les health checks
+app.MapGet("/health/db", async (VortexDbContext db) =>
+{
+    try
+    {
+        var canConnect = await db.Database.CanConnectAsync();
+        return canConnect
+            ? Results.Ok(new { status = "UP", message = "✅ DB reachable" })
+            : Results.Problem("❌ DB unreachable");
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"❌ DB error: {ex.Message}");
+    }
+});
+
 app.Run();
 
-// Funtion to replace ${VAR} with true value
+
+// --- Utils ---
 static IConfiguration ReplacePlaceholders(IConfiguration config)
 {
     var dict = new Dictionary<string, string?>();

@@ -3,30 +3,54 @@ using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql;
 using System.Text.RegularExpressions;
 using VortexTCG.DataAccess;
- 
-Env.Load("../../.env");
+using VortexTCG.DataAccess.Models;
+using VortexTCG.Common.Services;
+
+//Chargement du .env plus précise.
+Env.Load(Path.Combine(AppContext.BaseDirectory, "../../../../.env"));
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+// Ajout du Razor pour tester via pages
+builder.Services.AddRazorPages();
+
+// Ajout des variables d'environnement dans la config pour de la sécu et de la facilité
 builder.Configuration.AddEnvironmentVariables();
+
+// Remplacement des placeholders ${VAR} dans appsettings.json car ASP.NET ne le fait pas forcément de base
 var replacedConfig = ReplacePlaceholders(builder.Configuration);
 
+// Construction de la chaîne finale de connexion
+var finalConnStr = replacedConfig.GetConnectionString("DefaultConnection");
+
+// Enregistrement du DbContext avec Pomelo MySQL
 builder.Services.AddDbContext<VortexDbContext>(options =>
     options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        ServerVersion.AutoDetect(replacedConfig.GetConnectionString("DefaultConnection"))
+        finalConnStr,
+        ServerVersion.AutoDetect(finalConnStr)
     ));
 
-// Add services to the container.
-
+// Add services to the container
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Vérification de la connexion DB au démarrage (premier health check)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<VortexDbContext>();
+    if (db.Database.CanConnect())
+        app.Logger.LogInformation("✅ Connexion DB OK");
+    else
+        app.Logger.LogError("❌ Impossible de se connecter à la DB");
+}
+
+// Configure the HTTP request pipeline 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -34,14 +58,34 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
 
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapRazorPages();
+
+// Ajout d'une route de vérification pour les health checks
+app.MapGet("/health/db", async (VortexDbContext db) =>
+{
+    try
+    {
+        var canConnect = await db.Database.CanConnectAsync();
+        return canConnect
+            ? Results.Ok(new { status = "UP", message = "✅ DB reachable" })
+            : Results.Problem("❌ DB unreachable");
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"❌ DB error: {ex.Message}");
+    }
+});
 
 app.Run();
 
-// Funtion to replace ${VAR} with true value
+
+// --- Utils ---
 static IConfiguration ReplacePlaceholders(IConfiguration config)
 {
     var dict = new Dictionary<string, string?>();
