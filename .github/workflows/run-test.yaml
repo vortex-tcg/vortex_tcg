@@ -1,7 +1,7 @@
 name : Run Unit Test
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
   push:
     branches:
       - dev
@@ -9,18 +9,19 @@ on:
 
 jobs:
   test:
+    name: Unit Test
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-        
-      - name: Set up dotnet 
+
+      - name: Set up dotnet
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 8.0
-          
-      - name: Restore Dependencies 
+
+      - name: Restore Dependencies
         run : dotnet restore ./server/tests/Tests.csproj
 
       - name: Build
