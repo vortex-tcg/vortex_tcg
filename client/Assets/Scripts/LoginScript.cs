@@ -46,7 +46,7 @@ public class LoginScript : MonoBehaviour
         }
 
         string password = passwordField.text;
-        string url = baseUrl + "/api/auth/login";
+        string url = baseUrl + "/api/login";
 
         string jsonBody = JsonUtility.ToJson(new LoginData(email, password));
        
@@ -60,11 +60,10 @@ public class LoginScript : MonoBehaviour
         yield return request.SendWebRequest();
         if (request.result == UnityWebRequest.Result.Success)
         {
-            if (request.responseCode == 200)
+           if (request.responseCode == 200)
             {
                 Debug.Log("Connexion réussie : " + request.downloadHandler.text);
-                SceneManager.LoadScene("MainPage");
-                //TODO: Redirection TICKET : VOR-143
+                LoadingScreen.Load("MainPage", loadMenu: true, unloadMenu: false);
             }
             else
             {
