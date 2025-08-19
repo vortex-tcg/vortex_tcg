@@ -16,6 +16,7 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // Ajout du Razor pour tester via pages
 builder.Services.AddRazorPages();
+builder.Services.AddControllers();
 
 // Ajout des variables d'environnement dans la config pour de la sécu et de la facilité
 builder.Configuration.AddEnvironmentVariables();
@@ -61,9 +62,10 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapControllers();
 app.MapRazorPages();
 
 // Ajout d'une route de vérification pour les health checks
