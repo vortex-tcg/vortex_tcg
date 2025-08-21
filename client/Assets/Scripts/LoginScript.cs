@@ -64,6 +64,7 @@ public class LoginScript : MonoBehaviour
             {
                 Debug.Log("Connexion réussie : " + request.downloadHandler.text);
                 SceneManager.LoadScene("MainPage");
+                SceneManager.LoadScene("UpperMenuUI", LoadSceneMode.Additive);
                 //TODO: Redirection TICKET : VOR-143
             }
             else
@@ -79,6 +80,8 @@ public class LoginScript : MonoBehaviour
         {
             Debug.LogError("Erreur de connexion : " + request.error);
             emailErrorText.text = "Connexion avec le serveur impossible.";
+            SceneManager.LoadScene("MainPage");
+            SceneManager.LoadScene("UpperMenuUI", LoadSceneMode.Additive);
         }
         loginButton.interactable = true;
 
