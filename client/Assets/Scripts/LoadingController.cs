@@ -5,66 +5,69 @@ using System.Collections;
 
 public class LoadingController : MonoBehaviour
 {
-    public TMP_Text progressText;          
-    [Range(0f, 2f)] public float minShowTime = 0.5f;
+    public TMP_Text progressText; 
+    public CanvasGroup cg;          
 
-    private void Start()
+    private LoadingRequest req;
+
+    void Start()
     {
-        Debug.Log("[LoadingController] start ok, next = " + LoadingScreen.NextScene);
+        req = Resources.Load<LoadingRequest>("LoadingRequest"); 
+        if (!req) { Debug.LogError("LoadingRequest introuvable dans Resources."); return; }
+
+        if (req.useFade && cg) { cg.alpha = 0f; StartCoroutine(Fade(cg, 0f, 1f, req.fadeDuration)); }
         StartCoroutine(LoadNext());
     }
 
-    private IEnumerator LoadNext()
+    IEnumerator LoadNext()
     {
-        yield return null;
-
-        var op = SceneManager.LoadSceneAsync(LoadingScreen.NextScene);
-        if (op == null)
-        {
-            Debug.LogError("[LoadingController] LoadSceneAsync null (nom de scène invalide ?)");
-            yield break;
-        }
+        yield return null; 
+        var op = SceneManager.LoadSceneAsync(req.targetScene);
+        if (op == null) { Debug.LogError("LoadSceneAsync null. Nom de scène invalide ?"); yield break; }
         op.allowSceneActivation = false;
 
         float elapsed = 0f;
-        while (op.progress < 0.9f) 
+        while (op.progress < 0.9f)
         {
+            elapsed += Time.unscaledDeltaTime;
             if (progressText)
             {
                 float pct = Mathf.Clamp01(op.progress / 0.9f) * 100f;
                 progressText.text = $"Chargement… {pct:0}%";
             }
-            elapsed += Time.unscaledDeltaTime;
             yield return null;
         }
 
-        while (elapsed < minShowTime) { elapsed += Time.unscaledDeltaTime; yield return null; }
+        while (elapsed < req.minShowTime) { elapsed += Time.unscaledDeltaTime; yield return null; }
 
-    
-        if (LoadingScreen.RequestUnloadMenu && LoadingScreen.IsMenuLoaded())
+        if (req.unloadMenu)
         {
-            Debug.Log("[LoadingController] Unload menu overlay…");
-            yield return SceneManager.UnloadSceneAsync(LoadingScreen.MenuSceneName);
+            var menu = SceneManager.GetSceneByName(req.menuSceneName);
+            if (menu.IsValid() && menu.isLoaded)
+                yield return SceneManager.UnloadSceneAsync(req.menuSceneName);
         }
 
-        if (LoadingScreen.RequestLoadMenu)
+        if (req.loadMenu)
         {
         #if UNITY_EDITOR
-            if (!Application.CanStreamedLevelBeLoaded(LoadingScreen.MenuSceneName))
-            {
-                Debug.LogWarning($"[TODO] Menu '{LoadingScreen.MenuSceneName}' introuvable. Ajoutez la scène / Build Profile.");
-            }
+            if (!Application.CanStreamedLevelBeLoaded(req.menuSceneName))
+                Debug.LogWarning($"[TODO] La scène menu '{req.menuSceneName}' n'est pas encore disponible.");
             else
         #endif
-            if (!LoadingScreen.IsMenuLoaded())
             {
-                Debug.Log("[LoadingController] Load menu overlay (additive) …");
-                var menuOp = SceneManager.LoadSceneAsync(LoadingScreen.MenuSceneName, LoadSceneMode.Additive);
-                if (menuOp != null) { while (!menuOp.isDone) yield return null; }
+                var add = SceneManager.LoadSceneAsync(req.menuSceneName, LoadSceneMode.Additive);
+                if (add != null) while (!add.isDone) yield return null;
             }
         }
 
-        Debug.Log("[LoadingController] activation scène cible");
+        if (req.useFade && cg) yield return Fade(cg, 1f, 0f, req.fadeDuration);
         op.allowSceneActivation = true;
+    }
+
+    IEnumerator Fade(CanvasGroup g, float a, float b, float d)
+    {
+        float t = 0f;
+        while (t < d) { t += Time.unscaledDeltaTime; g.alpha = Mathf.Lerp(a, b, t / d); yield return null; }
+        g.alpha = b;
     }
 }
