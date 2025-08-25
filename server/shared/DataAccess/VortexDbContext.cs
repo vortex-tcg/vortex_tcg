@@ -75,6 +75,25 @@ namespace VortexTCG.DataAccess
                 }
             );
 
+            //Users
+            modelBuilder.Entity<User>().HasData(
+                new User
+                {
+                    Id = 1,
+                    FirstName = "John",
+                    LastName = "Doe",
+                    Username = "johndoe",
+                    Email = "johndoe@gmail.com",
+                    Password = "Mdp",
+                    Language = "fr",
+                    CurrencyQuantity = 1000,
+                    RoleId = 2, // User
+                    RankId = 1, // Wood
+                    CreatedBy = "System",
+                    CreatedAtUtc = DateTime.UtcNow
+                }
+            );
+
 
             // Configuration des propriétés d'audit pour les entités implémentant AuditableEntity
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
