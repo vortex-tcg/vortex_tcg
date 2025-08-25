@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
-using BCrypt.Net;
+using Scrypt;
+using System.Text.RegularExpressions;
 
 namespace VortexTCG.Auth.Controllers
 {
@@ -45,6 +46,13 @@ namespace VortexTCG.Auth.Controllers
                 return BadRequest(new { error = "Les mots de passe ne correspondent pas." });
             }
 
+            // Vérif sécurité du mot de passe
+            var passwordPattern = @"^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?""':{}|<>]).{8,}$";
+            if (!Regex.IsMatch(request.Password, passwordPattern))
+            {
+                return BadRequest(new { error = "Le mot de passe doit contenir au minimum 8 caractères, une majuscule, un chiffre et un caractère spécial." });
+            }
+
             // Vérif email ou username déjà utilisés
             if (_db.Users.Any(u => u.Email == request.Email))
             {
@@ -56,8 +64,9 @@ namespace VortexTCG.Auth.Controllers
                 return Conflict(new { error = "Nom d'utilisateur déjà pris." });
             }
 
-            // Hash du password
-            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            // Hash du password avec Scrypt
+            var encoder = new ScryptEncoder();
+            var hashedPassword = encoder.Encode(request.Password);
 
             var user = new User
             {
@@ -69,7 +78,7 @@ namespace VortexTCG.Auth.Controllers
                 Language = "fr", // Langue par défaut
                 CurrencyQuantity = 0, // Quantité de monnaie par défaut
                 RoleId = 2, // Rôle par défaut (utilisateur)
-                RankId = 1, // Rang par défaut (peut être ajusté selon votre logique)
+                RankId = 1, // Rang par défaut
             };
 
             _db.Users.Add(user);
