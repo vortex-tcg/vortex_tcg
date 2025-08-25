@@ -1024,7 +1024,7 @@ namespace DataAccess.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAtUtc = new DateTime(2025, 7, 8, 13, 31, 50, 814, DateTimeKind.Utc).AddTicks(3199),
+                            CreatedAtUtc = new DateTime(2025, 8, 19, 9, 53, 57, 678, DateTimeKind.Utc).AddTicks(8460),
                             CreatedBy = "System",
                             Label = "Wood",
                             nbVictory = 0
@@ -1110,14 +1110,14 @@ namespace DataAccess.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAtUtc = new DateTime(2025, 7, 8, 13, 31, 50, 814, DateTimeKind.Utc).AddTicks(3072),
+                            CreatedAtUtc = new DateTime(2025, 8, 19, 9, 53, 57, 678, DateTimeKind.Utc).AddTicks(8351),
                             CreatedBy = "System",
                             Label = "Admin"
                         },
                         new
                         {
                             Id = 2,
-                            CreatedAtUtc = new DateTime(2025, 7, 8, 13, 31, 50, 814, DateTimeKind.Utc).AddTicks(3074),
+                            CreatedAtUtc = new DateTime(2025, 8, 19, 9, 53, 57, 678, DateTimeKind.Utc).AddTicks(8353),
                             CreatedBy = "System",
                             Label = "User"
                         });
@@ -1131,7 +1131,7 @@ namespace DataAccess.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CollectionId")
+                    b.Property<int?>("CollectionId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1157,7 +1157,7 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("GameId")
+                    b.Property<int?>("GameId")
                         .HasColumnType("int");
 
                     b.Property<string>("Language")
@@ -1410,15 +1410,11 @@ namespace DataAccess.Migrations
                 {
                     b.HasOne("VortexTCG.DataAccess.Models.Collection", "Collection")
                         .WithMany("Users")
-                        .HasForeignKey("CollectionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CollectionId");
 
                     b.HasOne("VortexTCG.DataAccess.Models.Game", "Game")
                         .WithMany("User")
-                        .HasForeignKey("GameId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("GameId");
 
                     b.HasOne("VortexTCG.DataAccess.Models.Rank", "Rank")
                         .WithMany("Users")
