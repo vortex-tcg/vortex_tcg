@@ -1,13 +1,13 @@
 resource "aws_db_instance" "vortex_db" {
   allocated_storage = 10
   # Define the engine and its version
-  engine = ""
-  engine_version = "11.8.2"
+  engine = var.DB_ENGINE
+  engine_version = var.DB_ENGINE_VERSION
   # Define the AWS instance use to run the DB
-  instance_class = "db.t3.micro"
+  instance_class = var.INSTANCE_CLASS
   # Define the DB name
-  db_name = ""
+  db_name = var.DB_NAME
   # Credentials to connect DB instance 
-  username = ""
-  password = ""
+  username = var.DB_USERNAME
+  password = var.DB_PASSWORD
 }
