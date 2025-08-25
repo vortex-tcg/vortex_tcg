@@ -35,17 +35,17 @@ namespace VortexTCG.DataAccess.Models
         public Role Role { get; set; }
         public int RankId { get; set; }
         public Rank Rank { get; set; }
-        public int CollectionId { get; set; }
-        public Collection Collection { get; set; }
-        public int GameId { get; set; }
-        public Game Game { get; set; }
+        public int? CollectionId { get; set; }
+        public Collection? Collection { get; set; }
+        public int? GameId { get; set; }
+        public Game? Game { get; set; }
 
-        public ICollection<Booster> Boosters { get; set; }
+        public ICollection<Booster>? Boosters { get; set; }
 
-        public ICollection<Deck> Deck { get; set; }
+        public ICollection<Deck>? Deck { get; set; }
 
-        public ICollection<Gamelog> Gamelog { get; set; }
+        public ICollection<Gamelog>? Gamelog { get; set; }
 
-        public ICollection<FriendsList> FriendsLists { get; set; }
+        public ICollection<FriendsList>? FriendsLists { get; set; }
     }
 }
