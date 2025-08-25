@@ -9,11 +9,11 @@ namespace VortexTCG.DataAccess
         public VortexDbContext CreateDbContext(string[] args)
         {
             // Récupérer les variables d'environnement
-            var server = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
-            var port = Environment.GetEnvironmentVariable("DB_PORT") ?? "3307";
-            var database = Environment.GetEnvironmentVariable("DB_NAME") ?? "vortexdb";
-            var username = Environment.GetEnvironmentVariable("DB_USERNAME") ?? "Val";
-            var password = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "mdpVal";
+            var server = Environment.GetEnvironmentVariable("DB_HOST");
+            var port = Environment.GetEnvironmentVariable("DB_PORT");
+            var database = Environment.GetEnvironmentVariable("DB_NAME");
+            var username = Environment.GetEnvironmentVariable("DB_USERNAME");
+            var password = Environment.GetEnvironmentVariable("DB_PASSWORD");
 
             // Construire la connection string
             var connectionString = $"Server={server};Port={port};Database={database};User={username};Password={password};";
