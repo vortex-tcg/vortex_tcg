@@ -599,8 +599,8 @@ namespace DataAccess.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     RoleId = table.Column<int>(type: "int", nullable: false),
                     RankId = table.Column<int>(type: "int", nullable: false),
-                    CollectionId = table.Column<int>(type: "int", nullable: false),
-                    GameId = table.Column<int>(type: "int", nullable: false),
+                    CollectionId = table.Column<int>(type: "int", nullable: true),
+                    GameId = table.Column<int>(type: "int", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime(6)", nullable: false),
@@ -617,14 +617,12 @@ namespace DataAccess.Migrations
                         name: "FK_Users_Collections_CollectionId",
                         column: x => x.CollectionId,
                         principalTable: "Collections",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Users_Games_GameId",
                         column: x => x.GameId,
                         principalTable: "Games",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Users_Ranks_RankId",
                         column: x => x.RankId,
@@ -803,15 +801,15 @@ namespace DataAccess.Migrations
             migrationBuilder.InsertData(
                 table: "Ranks",
                 columns: new[] { "Id", "CreatedAtUtc", "CreatedBy", "Label", "UpdatedAt", "UpdatedAtUtc", "UpdatedBy", "nbVictory" },
-                values: new object[] { 1, new DateTime(2025, 7, 8, 13, 31, 50, 814, DateTimeKind.Utc).AddTicks(3199), "System", "Wood", null, null, null, 0 });
+                values: new object[] { 1, new DateTime(2025, 8, 19, 9, 53, 57, 678, DateTimeKind.Utc).AddTicks(8460), "System", "Wood", null, null, null, 0 });
 
             migrationBuilder.InsertData(
                 table: "Roles",
                 columns: new[] { "Id", "CreatedAtUtc", "CreatedBy", "Label", "UpdatedAt", "UpdatedAtUtc", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2025, 7, 8, 13, 31, 50, 814, DateTimeKind.Utc).AddTicks(3072), "System", "Admin", null, null, null },
-                    { 2, new DateTime(2025, 7, 8, 13, 31, 50, 814, DateTimeKind.Utc).AddTicks(3074), "System", "User", null, null, null }
+                    { 1, new DateTime(2025, 8, 19, 9, 53, 57, 678, DateTimeKind.Utc).AddTicks(8351), "System", "Admin", null, null, null },
+                    { 2, new DateTime(2025, 8, 19, 9, 53, 57, 678, DateTimeKind.Utc).AddTicks(8353), "System", "User", null, null, null }
                 });
 
             migrationBuilder.CreateIndex(

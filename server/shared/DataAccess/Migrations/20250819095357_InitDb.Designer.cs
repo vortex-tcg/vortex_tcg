@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VortexTCG.DataAccess;
 
@@ -11,9 +12,11 @@ using VortexTCG.DataAccess;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(VortexDbContext))]
-    partial class VortexDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250819095357_InitDb")]
+    partial class InitDb
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -554,7 +557,7 @@ namespace DataAccess.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CollectionId")
+                    b.Property<int>("CollectionId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1024,7 +1027,7 @@ namespace DataAccess.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAtUtc = new DateTime(2025, 8, 25, 8, 26, 20, 805, DateTimeKind.Utc).AddTicks(46),
+                            CreatedAtUtc = new DateTime(2025, 8, 19, 9, 53, 57, 678, DateTimeKind.Utc).AddTicks(8460),
                             CreatedBy = "System",
                             Label = "Wood",
                             nbVictory = 0
@@ -1110,14 +1113,14 @@ namespace DataAccess.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAtUtc = new DateTime(2025, 8, 25, 8, 26, 20, 804, DateTimeKind.Utc).AddTicks(9956),
+                            CreatedAtUtc = new DateTime(2025, 8, 19, 9, 53, 57, 678, DateTimeKind.Utc).AddTicks(8351),
                             CreatedBy = "System",
                             Label = "Admin"
                         },
                         new
                         {
                             Id = 2,
-                            CreatedAtUtc = new DateTime(2025, 8, 25, 8, 26, 20, 804, DateTimeKind.Utc).AddTicks(9958),
+                            CreatedAtUtc = new DateTime(2025, 8, 19, 9, 53, 57, 678, DateTimeKind.Utc).AddTicks(8353),
                             CreatedBy = "System",
                             Label = "User"
                         });
@@ -1202,23 +1205,6 @@ namespace DataAccess.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("Users");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAtUtc = new DateTime(2025, 8, 25, 8, 26, 20, 805, DateTimeKind.Utc).AddTicks(62),
-                            CreatedBy = "System",
-                            CurrencyQuantity = 1000,
-                            Email = "johndoe@gmail.com",
-                            FirstName = "John",
-                            Language = "fr",
-                            LastName = "Doe",
-                            Password = "Mdp",
-                            RankId = 1,
-                            RoleId = 2,
-                            Username = "johndoe"
-                        });
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Booster", b =>
@@ -1347,7 +1333,9 @@ namespace DataAccess.Migrations
                 {
                     b.HasOne("VortexTCG.DataAccess.Models.Collection", "Collection")
                         .WithMany("DeckCard")
-                        .HasForeignKey("CollectionId");
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("VortexTCG.DataAccess.Models.Deck", "Decks")
                         .WithMany("DeckCard")
