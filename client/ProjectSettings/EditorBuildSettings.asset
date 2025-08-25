@@ -14,5 +14,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scene/UpperMenuUI.unity
     guid: 6aa82142e7331784da5ef5e61cb1f489
+    path: Assets/Scenes/LoadingScene.unity
+    guid: dca2b824c3c133c4ca4a79412c9c0403
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
