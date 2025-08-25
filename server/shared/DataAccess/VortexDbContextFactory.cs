@@ -8,6 +8,8 @@ namespace VortexTCG.DataAccess
     {
         public VortexDbContext CreateDbContext(string[] args)
         {
+            DotNetEnv.Env.Load("../../.env");
+            
             // Récupérer les variables d'environnement
             var server = Environment.GetEnvironmentVariable("DB_HOST");
             var port = Environment.GetEnvironmentVariable("DB_PORT");
