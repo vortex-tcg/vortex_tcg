@@ -40,6 +40,8 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+app.MapControllers(); 
+
 // Vérification de la connexion DB au démarrage (premier health check)
 using (var scope = app.Services.CreateScope())
 {
