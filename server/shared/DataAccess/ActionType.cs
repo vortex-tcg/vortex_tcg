@@ -10,8 +10,8 @@ namespace VortexTCG.DataAccess.Models
         public int Id { get; set; }
 
         [Required]
-        public string Label { get; set; }
+        public string Label { get; set; } = default!;
 
-        public ICollection<Gamelog> Gamelogs { get; set; }
+        public ICollection<Gamelog> Gamelogs { get; set; } = default!;
     }
 }

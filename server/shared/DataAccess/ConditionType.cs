@@ -10,8 +10,8 @@ namespace VortexTCG.DataAccess.Models
         public int Id { get; set; }
 
         [Required]
-        public string Label { get; set; }
+        public string Label { get; set; } = default!;
 
-        public ICollection<Condition> Conditions { get; set; }
+        public ICollection<Condition> Conditions { get; set; } = default!;
     }
 }

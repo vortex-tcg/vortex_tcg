@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VortexTCG.DataAccess;
 
@@ -11,9 +12,11 @@ using VortexTCG.DataAccess;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(VortexDbContext))]
-    partial class VortexDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250826091743_fixWarning2")]
+    partial class fixWarning2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
