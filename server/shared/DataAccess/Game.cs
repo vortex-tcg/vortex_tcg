@@ -9,10 +9,10 @@ namespace VortexTCG.DataAccess.Models
         [Key]
         public int Id { get; set; }
 
-        public string Status { get; set; }
+        public string Status { get; set; } = default!;
 
-        public int TurnNumber { get; set; }
+        public int TurnNumber { get; set; } = default!;
 
-        public ICollection<User> User { get; set; }
+        public ICollection<User> User { get; set; } = default!;
     }
 }
