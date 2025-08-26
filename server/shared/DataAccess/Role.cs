@@ -9,8 +9,8 @@ namespace VortexTCG.DataAccess.Models
         [Key]
         public int Id { get; set; }
 
-        public string Label { get; set; }
+        public string Label { get; set; } = default!;
 
-        public ICollection<User> Users { get; set; }
+        public ICollection<User> Users { get; set; } = default!;
     }
 }
