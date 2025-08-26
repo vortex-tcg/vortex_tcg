@@ -9,11 +9,11 @@ namespace VortexTCG.DataAccess.Models
         [Key]
         public int Id { get; set; }
 
-        public string Label { get; set; }
+        public string Label { get; set; } = default!;
 
-        public int? UserId { get; set; }
-        public User? Users { get; set; }
-        public int ActionTypeId { get; set; }
-        public ActionType ActionType { get; set; }
+        public int? UserId { get; set; } = default!;
+        public User? Users { get; set; } = default!;
+        public int ActionTypeId { get; set; } = default!;
+        public ActionType ActionType { get; set; } = default!;
     }
 }
