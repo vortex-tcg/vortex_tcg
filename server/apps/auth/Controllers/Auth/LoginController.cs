@@ -1,6 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using VortexTCG.DataAccess;
+using VortexTCG.DataAccess.Models;
+using Scrypt;
 
-namespace auth.Controllers;
+namespace VortexTCG.Auth.Controllers;
 
 [ApiController]
 [Route("api/auth/[controller]")]
@@ -12,29 +16,59 @@ public class LoginController : ControllerBase
         public string? Email { get; set; }
         public string? Password { get; set; }
     }
-    
-    [HttpGet]
-    public IActionResult GetLoginInfo()
+
+    public class LoginResponse
     {
-        var response = new
-        {
-            Message = "Salut ! Je suis ton API de connexion",
-            HeureServeur = DateTime.Now,
-            StatutServeur = "En ligne"
-        };
-        return Ok(response);
+        public int Id { get; set; }
+        public string Username { get; set; } = null!;
     }
 
-    [HttpPost]
-    public IActionResult Login([FromBody] LoginData data)
+    private readonly VortexDbContext _db;
+
+    public LoginController(VortexDbContext db)
     {
-        if (data == null)
+        _db = db;
+    }
+    
+    [HttpPost]
+    public async Task<IActionResult> Login([FromBody] LoginData data)
+    {
+        if (data == null ||
+            string.IsNullOrWhiteSpace(data.Email) ||
+            string.IsNullOrWhiteSpace(data.Password))
         {
-            return BadRequest("No data provided");
+            return BadRequest(new { error = "Email ou mot de passe sont requis." });
         }
-        else
+
+        var user = await _db.Users
+            .SingleOrDefaultAsync(u => u.Email == data.Email);
+
+        if (user == null)
         {
-            return Ok(data);
+            return Unauthorized(new { error = "Invalid credentials." });
         }
+
+        var encoder = new ScryptEncoder();
+        var passwordMatches = false;
+
+        try
+        {
+            passwordMatches = encoder.Compare(data.Password, user.Password);
+        }
+        catch (Exception ex)
+        {
+            passwordMatches = false;
+        }
+
+        if (!passwordMatches)
+            return Unauthorized(new { error = $"Invalid password: {ex.Message}" });
+
+        var result = new LoginResponse
+        {
+            Id = user.Id,
+            Username = user.Username,
+        };
+
+        return Ok(result);
     }
 }

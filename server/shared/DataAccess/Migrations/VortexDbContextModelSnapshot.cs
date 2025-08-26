@@ -554,7 +554,7 @@ namespace DataAccess.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CollectionId")
+                    b.Property<int?>("CollectionId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1024,7 +1024,7 @@ namespace DataAccess.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAtUtc = new DateTime(2025, 7, 8, 13, 31, 50, 814, DateTimeKind.Utc).AddTicks(3199),
+                            CreatedAtUtc = new DateTime(2025, 8, 25, 8, 26, 20, 805, DateTimeKind.Utc).AddTicks(46),
                             CreatedBy = "System",
                             Label = "Wood",
                             nbVictory = 0
@@ -1110,14 +1110,14 @@ namespace DataAccess.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAtUtc = new DateTime(2025, 7, 8, 13, 31, 50, 814, DateTimeKind.Utc).AddTicks(3072),
+                            CreatedAtUtc = new DateTime(2025, 8, 25, 8, 26, 20, 804, DateTimeKind.Utc).AddTicks(9956),
                             CreatedBy = "System",
                             Label = "Admin"
                         },
                         new
                         {
                             Id = 2,
-                            CreatedAtUtc = new DateTime(2025, 7, 8, 13, 31, 50, 814, DateTimeKind.Utc).AddTicks(3074),
+                            CreatedAtUtc = new DateTime(2025, 8, 25, 8, 26, 20, 804, DateTimeKind.Utc).AddTicks(9958),
                             CreatedBy = "System",
                             Label = "User"
                         });
@@ -1131,7 +1131,7 @@ namespace DataAccess.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CollectionId")
+                    b.Property<int?>("CollectionId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1157,7 +1157,7 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("GameId")
+                    b.Property<int?>("GameId")
                         .HasColumnType("int");
 
                     b.Property<string>("Language")
@@ -1202,6 +1202,23 @@ namespace DataAccess.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAtUtc = new DateTime(2025, 8, 25, 8, 26, 20, 805, DateTimeKind.Utc).AddTicks(62),
+                            CreatedBy = "System",
+                            CurrencyQuantity = 1000,
+                            Email = "johndoe@gmail.com",
+                            FirstName = "John",
+                            Language = "fr",
+                            LastName = "Doe",
+                            Password = "Mdp",
+                            RankId = 1,
+                            RoleId = 2,
+                            Username = "johndoe"
+                        });
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Booster", b =>
@@ -1330,9 +1347,7 @@ namespace DataAccess.Migrations
                 {
                     b.HasOne("VortexTCG.DataAccess.Models.Collection", "Collection")
                         .WithMany("DeckCard")
-                        .HasForeignKey("CollectionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CollectionId");
 
                     b.HasOne("VortexTCG.DataAccess.Models.Deck", "Decks")
                         .WithMany("DeckCard")
@@ -1410,15 +1425,11 @@ namespace DataAccess.Migrations
                 {
                     b.HasOne("VortexTCG.DataAccess.Models.Collection", "Collection")
                         .WithMany("Users")
-                        .HasForeignKey("CollectionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CollectionId");
 
                     b.HasOne("VortexTCG.DataAccess.Models.Game", "Game")
                         .WithMany("User")
-                        .HasForeignKey("GameId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("GameId");
 
                     b.HasOne("VortexTCG.DataAccess.Models.Rank", "Rank")
                         .WithMany("Users")
