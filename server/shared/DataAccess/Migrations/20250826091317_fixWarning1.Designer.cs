@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VortexTCG.DataAccess;
 
@@ -11,9 +12,11 @@ using VortexTCG.DataAccess;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(VortexDbContext))]
-    partial class VortexDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250826091317_fixWarning1")]
+    partial class fixWarning1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1024,7 +1027,7 @@ namespace DataAccess.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAtUtc = new DateTime(2025, 8, 26, 9, 17, 43, 143, DateTimeKind.Utc).AddTicks(5046),
+                            CreatedAtUtc = new DateTime(2025, 8, 26, 9, 13, 17, 429, DateTimeKind.Utc).AddTicks(468),
                             CreatedBy = "System",
                             Label = "Wood",
                             nbVictory = 0
@@ -1110,14 +1113,14 @@ namespace DataAccess.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAtUtc = new DateTime(2025, 8, 26, 9, 17, 43, 143, DateTimeKind.Utc).AddTicks(4949),
+                            CreatedAtUtc = new DateTime(2025, 8, 26, 9, 13, 17, 429, DateTimeKind.Utc).AddTicks(372),
                             CreatedBy = "System",
                             Label = "Admin"
                         },
                         new
                         {
                             Id = 2,
-                            CreatedAtUtc = new DateTime(2025, 8, 26, 9, 17, 43, 143, DateTimeKind.Utc).AddTicks(4952),
+                            CreatedAtUtc = new DateTime(2025, 8, 26, 9, 13, 17, 429, DateTimeKind.Utc).AddTicks(374),
                             CreatedBy = "System",
                             Label = "User"
                         });
@@ -1207,7 +1210,7 @@ namespace DataAccess.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAtUtc = new DateTime(2025, 8, 26, 9, 17, 43, 143, DateTimeKind.Utc).AddTicks(5064),
+                            CreatedAtUtc = new DateTime(2025, 8, 26, 9, 13, 17, 429, DateTimeKind.Utc).AddTicks(485),
                             CreatedBy = "System",
                             CurrencyQuantity = 1000,
                             Email = "johndoe@gmail.com",
