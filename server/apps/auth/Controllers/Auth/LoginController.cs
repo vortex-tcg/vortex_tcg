@@ -8,6 +8,7 @@ namespace VortexTCG.Auth.Controllers;
 
 [ApiController]
 [Route("api/auth/[controller]")]
+
 public class LoginController : ControllerBase
 {
     public class LoginData
