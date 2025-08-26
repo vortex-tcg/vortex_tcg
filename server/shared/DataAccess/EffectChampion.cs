@@ -9,12 +9,12 @@ namespace VortexTCG.DataAccess.Models
         [Key]
         public int Id { get; set; }
 
-        public string Label { get; set; }
+        public string Label { get; set; } = default!;
 
-        public string Description { get; set; }
+        public string Description { get; set; } = default!;
 
-        public int Cost { get; set; }
+        public int Cost { get; set; } = default!;
 
-        public ICollection<Champion> Champions { get; set; }
+        public ICollection<Champion> Champions { get; set; } = default!;
     }
 }

@@ -9,9 +9,9 @@ namespace VortexTCG.DataAccess
 {
     public class VortexDbContext : DbContext
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IHttpContextAccessor? _httpContextAccessor;
 
-        public VortexDbContext(DbContextOptions<VortexDbContext> options, IHttpContextAccessor httpContextAccessor)
+        public VortexDbContext(DbContextOptions<VortexDbContext> options, IHttpContextAccessor? httpContextAccessor = null)
             : base(options)
         {
             _httpContextAccessor = httpContextAccessor;
@@ -134,7 +134,7 @@ namespace VortexTCG.DataAccess
 
             foreach (var entry in entries)
             {
-                var currentUser = _httpContextAccessor.HttpContext?.User?.Identity?.Name ?? "System";
+                var currentUser = _httpContextAccessor?.HttpContext?.User?.Identity?.Name ?? "System";
 
                 if (entry.State == EntityState.Added)
                 {
