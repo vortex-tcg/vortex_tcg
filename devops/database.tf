@@ -10,4 +10,7 @@ resource "aws_db_instance" "vortex_db" {
   # Credentials to connect DB instance 
   username = var.DB_USERNAME
   password = var.DB_PASSWORD
+  
+  // This param while skip a save, so if terraform is down, db while be deleted
+  skip_final_snapshot = true
 }
