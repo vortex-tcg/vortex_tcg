@@ -1,4 +1,4 @@
-// This data while allow to get the latest ubuntu image 
+// This data will allow to get the latest ubuntu image 
 data "aws_ami" "ubuntu" {
   most_recent = true
   
@@ -12,7 +12,7 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"]
 }
 
-// Create a ressource EC2 of type linux ubuntu
+// Create a resource EC2 of type linux ubuntu
 resource "aws_instance" "truc" {
   ami = data.aws_ami.ubuntu.id
   instance_type = "t3.micro"
