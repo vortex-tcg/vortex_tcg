@@ -14,7 +14,23 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scene/UpperMenuUI.unity
     guid: 6aa82142e7331784da5ef5e61cb1f489
-    path: Assets/Scenes/LoadingScene.unity
+  - enabled: 1
+    path: Assets/Scene/LoadingScene.unity
     guid: dca2b824c3c133c4ca4a79412c9c0403
+  - enabled: 1
+    path: Assets/Scene/FriendsScene.unity
+    guid: 6a507ad47a6f56143b2719d864fc3ad0
+  - enabled: 1
+    path: Assets/Scene/MarketScene.unity
+    guid: 1f5328cadd8f73f488ce892b264d94e9
+  - enabled: 1
+    path: Assets/Scene/OptionScene.unity
+    guid: 47b8a3ab7458f6f45baaf6396e46efe9
+  - enabled: 1
+    path: Assets/Scene/ProfilScene.unity
+    guid: abfe72e268b6a69408ffcaa88c67a3e0
+  - enabled: 1
+    path: Assets/Scene/CollectionScene.unity
+    guid: 728064a9004be7f478fc0b0d339b8eb6
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
