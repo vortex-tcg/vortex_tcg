@@ -25,3 +25,6 @@ Maintenant, il faut lancer cette commande à la suite :
 
 Pour update la bdd enfin :
 dotnet ef database update --project /workspace/shared/DataAccess/DataAccess.csproj --startup-project /workspace/apps/game -->
+
+Pour faire une migration, se mettre shared/DataAccess et faire :
+dotnet ef migrations add InitDb --project . 
