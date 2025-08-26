@@ -11,7 +11,7 @@ namespace VortexTCG.DataAccess
     {
         private readonly IHttpContextAccessor? _httpContextAccessor;
 
-        public VortexDbContext(DbContextOptions<VortexDbContext> options, IHttpContextAccessor httpContextAccessor)
+        public VortexDbContext(DbContextOptions<VortexDbContext> options, IHttpContextAccessor? httpContextAccessor = null)
             : base(options)
         {
             _httpContextAccessor = httpContextAccessor;
