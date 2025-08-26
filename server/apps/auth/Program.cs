@@ -6,7 +6,7 @@ using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.Services;
 
-//Chargement du .env plus précise.
+// Chargement du .env
 Env.Load(Path.Combine(AppContext.BaseDirectory, "../../../../.env"));
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,10 +17,10 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 // Ajout du Razor pour tester via pages
 builder.Services.AddRazorPages();
 
-// Ajout des variables d'environnement dans la config pour de la sécu et de la facilité
+// Ajout des variables d'environnement dans la config
 builder.Configuration.AddEnvironmentVariables();
 
-// Remplacement des placeholders ${VAR} dans appsettings.json car ASP.NET ne le fait pas forcément de base
+// Remplacement des placeholders ${VAR} dans appsettings.json
 var replacedConfig = ReplacePlaceholders(builder.Configuration);
 
 // Construction de la chaîne finale de connexion
@@ -28,10 +28,20 @@ var finalConnStr = replacedConfig.GetConnectionString("DefaultConnection");
 
 // Enregistrement du DbContext avec Pomelo MySQL
 builder.Services.AddDbContext<VortexDbContext>(options =>
-    options.UseMySql(
-        finalConnStr,
-        ServerVersion.AutoDetect(finalConnStr)
-    ));
+    options.UseMySql(finalConnStr, ServerVersion.AutoDetect(finalConnStr))
+);
+
+// Configuration CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowVortexWeb",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -40,9 +50,12 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-app.MapControllers(); 
+// Active CORS AVANT les endpoints
+app.UseCors("AllowVortexWeb");
 
-// Vérification de la connexion DB au démarrage (premier health check)
+app.MapControllers();
+
+// Vérification de la connexion DB au démarrage
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<VortexDbContext>();
@@ -52,7 +65,7 @@ using (var scope = app.Services.CreateScope())
         app.Logger.LogError("❌ Impossible de se connecter à la DB");
 }
 
-// Configure the HTTP request pipeline 
+// Configure le pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -68,7 +81,7 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 
-// Ajout d'une route de vérification pour les health checks
+// Health check
 app.MapGet("/health/db", async (VortexDbContext db) =>
 {
     try
