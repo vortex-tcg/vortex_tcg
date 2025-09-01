@@ -11,8 +11,8 @@ namespace VortexTCG.DataAccess.Models
 
         public int Quantity { get; set; }
 
-        public int CollectionId { get; set; }
-        public Collection Collection { get; set; }
+        public int? CollectionId { get; set; }
+        public Collection? Collection { get; set; }
 
         public int? DeckId { get; set; }
         public Deck? Decks { get; set; }
