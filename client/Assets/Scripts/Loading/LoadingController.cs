@@ -49,14 +49,16 @@ public class LoadingController : MonoBehaviour
 
         if (req.loadMenu)
         {
+
         #if UNITY_EDITOR
-            if (!Application.CanStreamedLevelBeLoaded(req.menuSceneName))
-                Debug.LogWarning($"[TODO] La scène menu '{req.menuSceneName}' n'est pas encore disponible.");
+            if (!Application.CanStreamedLevelBeLoaded(req.menuSceneName)) {
+                Debug.LogWarning($"[TODO] La scène menu Scene/UpperMenuUi n'est pas encore disponible.");
+            }
             else
+
         #endif
             {
                 var add = SceneManager.LoadSceneAsync(req.menuSceneName, LoadSceneMode.Additive);
-                if (add != null) while (!add.isDone) yield return null;
             }
         }
 
