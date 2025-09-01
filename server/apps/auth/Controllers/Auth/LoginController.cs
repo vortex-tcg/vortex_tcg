@@ -30,7 +30,7 @@ public class LoginController(VortexDbContext db, IConfiguration configuration) :
         public string? Token { get; set; } 
         public string? Role { get; set; }
     }
-
+    
     [HttpPost]
     public async Task<IActionResult> Login([FromBody] LoginData data)
     {
