@@ -1,0 +1,29 @@
+infos of cards:
+id, 
+name, 
+HP, 
+Attack, 
+Cost,
+description, 
+picture,
+effet_active, 
+rarityid, 
+extensionid, 
+cardtypeid,
+createdat, 
+updatedat,
+createdatutc, 
+createdby
+updatedatutc, 
+updatedby
+
+Indexes:
+PRIMARY (id)
+INDEX (CardTypeID)
+INDEX (ExtensionID)
+INDEX (RarityID)
+
+Foreign Keys:
+cardtypeid -> CardTypes(id)
+extensionid -> Extensions(id)
+rarityid -> Rarities(id)

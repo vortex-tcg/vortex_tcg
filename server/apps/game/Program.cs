@@ -33,7 +33,13 @@ builder.Services.AddDbContext<VortexDbContext>(options =>
         ServerVersion.AutoDetect(finalConnStr)
     ));
 
+// Add services to the container
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+
 var app = builder.Build();
+
+app.MapControllers();
 
 // Vérification de la connexion DB au démarrage (premier health check)
 using (var scope = app.Services.CreateScope())
