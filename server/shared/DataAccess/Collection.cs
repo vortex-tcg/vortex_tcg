@@ -9,16 +9,16 @@ namespace VortexTCG.DataAccess.Models
         [Key]
         public int Id { get; set; }
 
-        public int CollectionCardId { get; set; }
+        public int CollectionCardId { get; set; } = default!;
 
-        public CollectionCard CollectionCard { get; set; }
+        public CollectionCard CollectionCard { get; set; } = default!;
 
-        public ICollection<User> Users { get; set; }
+        public ICollection<User> Users { get; set; } = default!;
 
-        public ICollection<DeckCard> DeckCard { get; set; }
+        public ICollection<DeckCard> DeckCard { get; set; } = default!;
 
-        public int? ChampionId { get; set; }
-        public Champion? Champions { get; set; }
+        public int? ChampionId { get; set; } = default!;
+        public Champion? Champions { get; set; } = default!;
 
     }
 }
