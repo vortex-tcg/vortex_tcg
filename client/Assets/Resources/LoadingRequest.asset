@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3267429f436429f4e8eba633c1a28df9, type: 3}
   m_Name: LoadingRequest
   m_EditorClassIdentifier: 
-  targetScene: 
-  loadMenu: 0
+  targetScene: MainPage
+  loadMenu: 1
   unloadMenu: 0
-  menuSceneName: MenuOverlay
+  menuSceneName: Scene/UpperMenuUI
   minShowTime: 0.5
   useFade: 1
   fadeDuration: 0.25
