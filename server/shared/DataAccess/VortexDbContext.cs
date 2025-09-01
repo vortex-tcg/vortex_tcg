@@ -101,7 +101,7 @@ namespace VortexTCG.DataAccess
                 if (typeof(AuditableEntity).IsAssignableFrom(entityType.ClrType))
                 {
                     modelBuilder.Entity(entityType.ClrType)
-                        .Property<DateTime>("CreatedAt")
+                        .Property<DateTime?>("CreatedAt")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     modelBuilder.Entity(entityType.ClrType)
@@ -112,7 +112,7 @@ namespace VortexTCG.DataAccess
 
                     modelBuilder.Entity(entityType.ClrType)
                         .Property<string>("UpdatedBy");
-                }
+                }   
             }
         }
 
