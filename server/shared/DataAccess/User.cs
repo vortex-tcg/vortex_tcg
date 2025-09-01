@@ -10,31 +10,31 @@ namespace VortexTCG.DataAccess.Models
         public int Id { get; set; }
 
         [Required]
-        public string FirstName { get; set; }
+        public string FirstName { get; set; } = default!;
 
         [Required]
-        public string LastName { get; set; }
+        public string LastName { get; set; } = default!;
 
         [Required]
-        public string Username { get; set; }
+        public string Username { get; set; } = default!;
 
         [Required] //Met en Not Null, uniquement pour autre chose qu'un INT car ils sont automatiquement non nullable
-        public string Password { get; set; }
+        public string Password { get; set; } = default!;
 
         [Required]
         [EmailAddress] //Ajoute une validation au runtime, mais n'a pas d'effet en base.
-        public string Email { get; set; }
+        public string Email { get; set; } = default!;
 
         public int CurrencyQuantity { get; set; }
 
-        public string Language { get; set; }
+        public string Language { get; set; } = default!;
 
         // Foreign Keys
 
-        public int RoleId { get; set; }
-        public Role Role { get; set; }
-        public int RankId { get; set; }
-        public Rank Rank { get; set; }
+        public int RoleId { get; set; } = default!;
+        public Role Role { get; set; } = default!;
+        public int RankId { get; set; } = default!;
+        public Rank Rank { get; set; } = default!;
         public int? CollectionId { get; set; }
         public Collection? Collection { get; set; }
         public int? GameId { get; set; }

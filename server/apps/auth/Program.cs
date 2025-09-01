@@ -1,26 +1,48 @@
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Pomelo.EntityFrameworkCore.MySql;
+using System.Text;
 using System.Text.RegularExpressions;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.Services;
-
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 //Chargement du .env plus précise.
 Env.Load(Path.Combine(AppContext.BaseDirectory, "../../../../.env"));
 
 var builder = WebApplication.CreateBuilder(args);
+
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(builder.Environment.ContentRootPath)
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .Build();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var secretKey = configuration["JwtSettings:SecretKey"] ?? throw new InvalidOperationException("JwtSettings:SecretKey is not configured.");
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+        };
+    });
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // Ajout du Razor pour tester via pages
 builder.Services.AddRazorPages();
+builder.Services.AddControllers();
 
-// Ajout des variables d'environnement dans la config pour de la sécu et de la facilité
+// Ajout des variables d'environnement dans la config
 builder.Configuration.AddEnvironmentVariables();
 
-// Remplacement des placeholders ${VAR} dans appsettings.json car ASP.NET ne le fait pas forcément de base
+// Remplacement des placeholders ${VAR} dans appsettings.json
 var replacedConfig = ReplacePlaceholders(builder.Configuration);
 
 // Construction de la chaîne finale de connexion
@@ -28,10 +50,20 @@ var finalConnStr = replacedConfig.GetConnectionString("DefaultConnection");
 
 // Enregistrement du DbContext avec Pomelo MySQL
 builder.Services.AddDbContext<VortexDbContext>(options =>
-    options.UseMySql(
-        finalConnStr,
-        ServerVersion.AutoDetect(finalConnStr)
-    ));
+    options.UseMySql(finalConnStr, ServerVersion.AutoDetect(finalConnStr))
+);
+
+// Configuration CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowVortexWeb",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -40,9 +72,12 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-app.MapControllers(); 
+// Active CORS AVANT les endpoints
+app.UseCors("AllowVortexWeb");
 
-// Vérification de la connexion DB au démarrage (premier health check)
+app.MapControllers();
+
+// Vérification de la connexion DB au démarrage
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<VortexDbContext>();
@@ -52,7 +87,7 @@ using (var scope = app.Services.CreateScope())
         app.Logger.LogError("❌ Impossible de se connecter à la DB");
 }
 
-// Configure the HTTP request pipeline 
+// Configure le pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -63,12 +98,13 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapControllers();
 app.MapRazorPages();
 
-// Ajout d'une route de vérification pour les health checks
+// Health check
 app.MapGet("/health/db", async (VortexDbContext db) =>
 {
     try

@@ -9,21 +9,21 @@ namespace VortexTCG.DataAccess.Models
         [Key]
         public int Id { get; set; }
 
-        public string Name { get; set; }
+        public string Name { get; set; } = default!;
 
-        public string Description { get; set; }
+        public string Description { get; set; } = default!;
 
-        public int HP { get; set; }
+        public int HP { get; set; } = default!;
 
-        public string Picture { get; set; }
+        public string Picture { get; set; } = default!;
 
-        public int FactionId { get; set; }
-        public Faction Faction { get; set; }
+        public int FactionId { get; set; } = default!;
+        public Faction Faction { get; set; } = default!;
 
-        public int EffectChampionId { get; set; }
-        public EffectChampion EffectChampion { get; set; }
+        public int EffectChampionId { get; set; } = default!;
+        public EffectChampion EffectChampion { get; set; } = default!;
 
-        public ICollection<Collection> Collections { get; set; }
+        public ICollection<Collection> Collections { get; set; } = default!;
 
     }
 }

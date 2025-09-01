@@ -9,14 +9,14 @@ namespace VortexTCG.DataAccess.Models
         [Key]
         public int Id { get; set; }
 
-        public int Quantity { get; set; }
+        public int Quantity { get; set; } = default!;
 
-        public int Price { get; set; }
+        public int Price { get; set; } = default!;
 
-        public int CardId { get; set; }
-        public Card Card { get; set; }
+        public int CardId { get; set; } = default!;
+        public Card Card { get; set; } = default!;
 
-        public ICollection<Collection> Collections { get; set; }
+        public ICollection<Collection> Collections { get; set; } = default!;
 
     }
 }
