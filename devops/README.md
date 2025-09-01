@@ -58,7 +58,7 @@ we need.
   In terraform a .tfvar file is the equivalent of a .env file. We only need to define the 
   variable list before, to set a list of possible existing variables.
 
-  For each variable their is 4 things to keep in mind :
+  For each variable there is 4 things to keep in mind :
   - the name -> must be in capitalize letters, separate with underscores.
   - description -> the value to describe what this variable is made for.
   - type -> to add more security about the variable and define which type is allow.
@@ -87,5 +87,23 @@ we need.
   In this part i will describe everything about launching the devops part.
 
   ### 2.1 : .tfvars : 
+  there is two *.tfvars* files in the devops project : 
+  - example
+  - normal
+
+  the example is the *.tfvars* that will be share between dev to get the content you have to add in the *.tfvars*
+  As say previously the .tfvars is similar to a .env file and contain all the sensitive value of our project.
+
+  you have to create the *terraform.tfvars* if you don't have one, this is from this file that 
+  terraform will look for the variables.
+
+  ### 2.2 : Commands : 
+  This part will describe all the terraform commands that are necessary to launch and destroy our resources : 
+  - terraform init -> will prepare the directory to communicate with the provider
+  - terraform plan -> will describe the list of incoming changes 
+  - terraform apply -> will apply the changes in the provider
+  - terraform destroy -> will kill every process running in the provider
+
+If you encounter any issues or questions contact *Maxime*
   
   
