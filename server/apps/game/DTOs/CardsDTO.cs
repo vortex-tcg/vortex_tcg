@@ -10,9 +10,9 @@ namespace Collection.DTOs
         public string Description { get; set; }= string.Empty;
         public string Picture { get; set; }= string.Empty;
         public int Effect_active { get; set; }
-        public string CardType { get; set; }= string.Empty;
-        public string Rarity { get; set; }= string.Empty;
-        public string Extension { get; set; }= string.Empty;
+        public int CardTypeId { get; set; }
+        public int RarityId { get; set; }
+        public int ExtensionId { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

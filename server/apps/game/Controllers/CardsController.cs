@@ -36,9 +36,9 @@ namespace CollectionCards.Controllers
                     Description = c.Description,
                     Picture = c.Picture,
                     Effect_active = c.Effect_active, 
-                    CardType = c.CardType.Label,
-                    Rarity = c.Rarity.Label,
-                    Extension = c.Extension.Label,
+                    CardTypeId = c.CardTypeId,
+                    RarityId = c.RarityId,
+                    ExtensionId = c.ExtensionId,
                     // CreatedAt = c.CreatedAt
                 })
                 .ToListAsync();
@@ -65,9 +65,9 @@ namespace CollectionCards.Controllers
                     Description = c.Description,
                     Picture = c.Picture,
                     Effect_active = c.Effect_active,
-                    CardType = c.CardType.Label,
-                    Rarity = c.Rarity.Label,
-                    Extension = c.Extension.Label,
+                    CardTypeId = c.CardTypeId,
+                    RarityId = c.RarityId,
+                    ExtensionId = c.ExtensionId,
                     // CreatedAt = c.CreatedAt
                 })
                 .FirstOrDefaultAsync();
@@ -117,31 +117,27 @@ namespace CollectionCards.Controllers
             _context.Cards.Add(card);
             await _context.SaveChangesAsync();
 
-            // Recharger avec les relations
-            await _context.Entry(card)
-                .Reference(c => c.CardType)
-                .LoadAsync();
-            await _context.Entry(card)
-                .Reference(c => c.Rarity)
-                .LoadAsync();
-            await _context.Entry(card)
-                .Reference(c => c.Extension)
-                .LoadAsync();
+            // Recharger avec les relations en une seule requête
+            var cardWithRelations = await _context.Cards
+                .Include(c => c.CardType)
+                .Include(c => c.Rarity)
+                .Include(c => c.Extension)
+                .FirstOrDefaultAsync(c => c.Id == card.Id);
 
             var cardDto = new CardDTO
             {
-                Id = card.Id,
-                Name = card.Name,
-                Hp = card.Hp,
-                Attack = card.Attack,
-                Cost = card.Cost,
-                Description = card.Description,
-                Picture = card.Picture,
-                Effect_active = card.Effect_active,
-                CardType = card.CardType.Label,
-                Rarity = card.Rarity.Label,
-                Extension = card.Extension.Label,
-                // CreatedAt = card.CreatedAt
+                Id = cardWithRelations.Id,
+                Name = cardWithRelations.Name,
+                Hp = cardWithRelations.Hp,
+                Attack = cardWithRelations.Attack,
+                Cost = cardWithRelations.Cost,
+                Description = cardWithRelations.Description,
+                Picture = cardWithRelations.Picture,
+                Effect_active = cardWithRelations.Effect_active,
+                CardTypeId = cardWithRelations.CardTypeId,
+                RarityId = cardWithRelations.RarityId,
+                ExtensionId = cardWithRelations.ExtensionId,
+                // CreatedAt = cardWithRelations.CreatedAt
             };
 
             return CreatedAtAction(nameof(GetCard), new { id = card.Id }, cardDto);
@@ -241,9 +237,9 @@ namespace CollectionCards.Controllers
                     Description = c.Description,
                     Picture = c.Picture,
                     Effect_active = c.Effect_active,
-                    CardType = c.CardType.Label,
-                    Rarity = c.Rarity.Label,
-                    Extension = c.Extension.Label,
+                    CardTypeId = c.CardTypeId,
+                    RarityId = c.RarityId,
+                    ExtensionId = c.ExtensionId,
                     // CreatedAt = c.CreatedAt
                 })
                 .ToListAsync();
