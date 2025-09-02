@@ -16,8 +16,8 @@
   - 2.2 : commands
 
 
-This readme while explain in detail how the devops of **Vortex** is working
-Terraform while allow to provide resources in AWS.
+This readme will explain in detail how the devops of **Vortex** is working
+Terraform will allow to provide resources in AWS.
 
 The goal of this working method is to get easily resources from any cloud provider
 and easily add / remove / manage resources without going on aws web site.
@@ -41,7 +41,7 @@ we need.
   You can find the variable list in the **terraform.tfvars**.
   We took a 10GB of allocated storage, it is enough for the project, and stay in the free AWS tier.
   About the engine, we are in **mariadb**, and its engine version is **11.4.5**
-  About the password, *Maxime* si the only that can provide the RDS cluster and connect with credentials.
+  About the password, *Maxime* is the only one that can provide the RDS cluster and connect with credentials.
   
   ### 1.3 : Cluster : 
   This file will contain all the code to provide a EC2 Cluster (for the back-end server).
@@ -53,7 +53,7 @@ we need.
 
   ### 1.4 : Variables : 
   This file is one of the more important on our app.
-  In this file we will define all the variables we will use in ours **.tsvar** file.
+  In this file we will define all the variables we will use in ours **.tfvars** file.
 
   In terraform a .tfvar file is the equivalent of a .env file. We only need to define the 
   variable list before, to set a list of possible existing variables.
