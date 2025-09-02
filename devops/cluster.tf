@@ -13,7 +13,7 @@ data "aws_ami" "ubuntu" {
 }
 
 // Create a resource EC2 of type linux ubuntu
-resource "aws_instance" "truc" {
+resource "aws_instance" "server" {
   ami = data.aws_ami.ubuntu.id
   instance_type = "t3.micro"
   
