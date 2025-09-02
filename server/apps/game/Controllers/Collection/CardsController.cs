@@ -9,11 +9,11 @@ namespace CollectionCards.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class CardsController : ControllerBase
+    public class ControllerCards : ControllerBase
     {
         private readonly VortexDbContext _context;
 
-        public CardsController(VortexDbContext context)
+        public ControllerCards(VortexDbContext context)
         {
             _context = context;
         }
@@ -213,7 +213,7 @@ namespace CollectionCards.Controllers
 
             if (!string.IsNullOrEmpty(name))
             {
-                query = query.Where(c => c.Name.Contains(name));
+                query = query.Where(c => c.Name.Contains(name) && c.Name != null);
             }
 
             if (cardTypeId.HasValue)
