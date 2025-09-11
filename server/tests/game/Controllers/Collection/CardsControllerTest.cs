@@ -131,7 +131,10 @@ namespace CardsController.Tests
                 var controller = new ControllerCards(db);
                 var actionResult = await controller.GetCard(10); // ID inexistant
 
-                Assert.IsType<NotFoundObjectResult>(actionResult.Result);
+                var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult.Result);
+                var payload = notFoundResult.Value?.ToString();
+                Assert.NotNull(payload);
+                Assert.Contains("Carte introuvable", payload);
             }
         }
 
@@ -217,6 +220,12 @@ namespace CardsController.Tests
 
                 Assert.True(modelState.ContainsKey("Name"));
                 Assert.True(modelState.ContainsKey("Hp"));
+                Assert.True(modelState.ContainsKey("Name"));
+                var nameErrors = modelState["Name"] as string[];
+                Assert.Contains("Le nom est requis.", nameErrors);
+                Assert.True(modelState.ContainsKey("Hp"));
+                var hpErrors = modelState["Hp"] as string[];
+                Assert.Contains("Hp doit être entre 0 et 100.", hpErrors);
             }
         }
 
@@ -240,6 +249,10 @@ namespace CardsController.Tests
                 var actionResult = await controller.CreateCard(newCard);
 
                 var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult.Result);
+                var payload = badRequestResult.Value?.ToString();
+                Assert.NotNull(payload);
+                Assert.Contains("CardType, Rarity ou Extension invalide", payload);
+
                 Assert.NotNull(badRequestResult.Value);
             }
         }
@@ -319,7 +332,10 @@ namespace CardsController.Tests
                 var controller = new ControllerCards(db);
                 var actionResult = await controller.UpdateCard(5, updateCard);
 
-                Assert.IsType<NotFoundObjectResult>(actionResult);
+                var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult);
+                var payload = notFoundResult.Value?.ToString();
+                Assert.NotNull(payload);
+                Assert.Contains("Carte introuvable", payload);
 
                 var unchangedCard = await db.Cards.FindAsync(1);
                 Assert.Equal("Test Card", unchangedCard.Name);
@@ -368,8 +384,14 @@ namespace CardsController.Tests
                 var modelState = Assert.IsType<SerializableError>(badRequestResult.Value);
 
                 Assert.True(modelState.ContainsKey("Name"));
+                var nameErrors = modelState["Name"] as string[];
+                Assert.Contains("Le nom est requis.", nameErrors);
                 Assert.True(modelState.ContainsKey("Hp"));
+                var hpErrors = modelState["Hp"] as string[];
+                Assert.Contains("Hp doit être entre 0 et 100.", hpErrors);
                 Assert.True(modelState.ContainsKey("Picture"));
+                var pictureErrors = modelState["Picture"] as string[];
+                Assert.Contains("Picture doit être une URL valide.", pictureErrors);
 
                 var unchangedCard = await db.Cards.FindAsync(1);
                 Assert.Equal("Test Card", unchangedCard.Name);
@@ -400,6 +422,9 @@ namespace CardsController.Tests
 
                 var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
                 Assert.NotNull(badRequestResult.Value);
+                var payload = badRequestResult.Value?.ToString();
+                Assert.NotNull(payload);
+                Assert.Contains("CardType, Rarity ou Extension invalide", payload);
             }
         }
 
@@ -449,7 +474,10 @@ namespace CardsController.Tests
                 var controller = new ControllerCards(db);
                 var actionResult = await controller.DeleteCard(5);
 
-                Assert.IsType<NotFoundObjectResult>(actionResult);
+                var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult);
+                var payload = notFoundResult.Value?.ToString();
+                Assert.NotNull(payload);
+                Assert.Contains("Carte introuvable", payload);
 
                 var existingCard = await db.Cards.FindAsync(1);
                 Assert.NotNull(existingCard);
