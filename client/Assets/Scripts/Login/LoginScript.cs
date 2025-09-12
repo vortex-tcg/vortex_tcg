@@ -5,6 +5,7 @@ using UnityEngine.Networking;
 using System.Collections;
 using System.Text;
 using System.Text.RegularExpressions;
+using System;
 
 public class LoginScript : MonoBehaviour
 {
@@ -13,6 +14,7 @@ public class LoginScript : MonoBehaviour
     public TMP_InputField passwordField;
     public TMP_Text emailErrorText;
     public Button loginButton;
+    [SerializeField] private NetworkRef networkRef;
 
     private bool passwordVisible = false;
     private bool isSubmitting = false;
@@ -26,29 +28,31 @@ public class LoginScript : MonoBehaviour
         passwordField.ForceLabelUpdate();
     }
 
+    private void Start()
+    {
+        UpdateLoginButtonState();
+        if (emailField)    emailField.onValueChanged.AddListener(_ => UpdateLoginButtonState());
+        if (passwordField) passwordField.onValueChanged.AddListener(_ => UpdateLoginButtonState());
+        if (loginButton)   loginButton.onClick.AddListener(() => StartCoroutine(Login()));
+    }
+
     private bool IsValidEmail(string email)
     {
         string pattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
         return Regex.IsMatch(email ?? "", pattern);
     }
 
-    private void Start()
-    {
-        UpdateLoginButtonState();
-        emailField.onValueChanged.AddListener(_ => UpdateLoginButtonState());
-        passwordField.onValueChanged.AddListener(_ => UpdateLoginButtonState());
-        loginButton.onClick.AddListener(() => StartCoroutine(Login()));
-    }
-
     private void UpdateLoginButtonState()
     {
+        if (loginButton == null) return;
+
         if (isSubmitting)
         {
             loginButton.interactable = false;
             return;
         }
 
-        bool ready = IsValidEmail(emailField.text) && !string.IsNullOrEmpty(passwordField.text);
+        bool ready = IsValidEmail(emailField?.text) && !string.IsNullOrEmpty(passwordField?.text);
         loginButton.interactable = ready;
     }
 
@@ -57,9 +61,17 @@ public class LoginScript : MonoBehaviour
         isSubmitting = true;
         UpdateLoginButtonState();
 
-        string baseUrl = ConfigLoader.Load().apiBaseUrl;
-        string email = emailField.text;
+        var cfg = ConfigLoader.Load();
+        string baseUrl = (cfg?.apiBaseUrl ?? "").TrimEnd('/');
+        if (string.IsNullOrEmpty(baseUrl))
+        {
+            emailErrorText.text = "Configuration API manquante.";
+            isSubmitting = false;
+            UpdateLoginButtonState();
+            yield break;
+        }
 
+        string email = emailField?.text ?? "";
         if (!IsValidEmail(email))
         {
             emailErrorText.text = "Adresse email invalide";
@@ -68,8 +80,11 @@ public class LoginScript : MonoBehaviour
             yield break;
         }
 
-        string password = passwordField.text;
-        string url = baseUrl + "/api/Login";
+        string password = passwordField?.text ?? "";
+
+        string url = baseUrl.EndsWith("/api", System.StringComparison.OrdinalIgnoreCase)
+            ? baseUrl + "/auth/Login"
+            : baseUrl + "/api/auth/Login";
 
         string jsonBody = JsonUtility.ToJson(new LoginData(email, password));
 
@@ -79,6 +94,8 @@ public class LoginScript : MonoBehaviour
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
 
+        Debug.Log("[Login] POST " + url);
+
         try
         {
             yield return request.SendWebRequest();
@@ -86,17 +103,29 @@ public class LoginScript : MonoBehaviour
             if (request.result == UnityWebRequest.Result.Success)
             {
                 string response = request.downloadHandler.text;
-                string token = ExtractTokenFromResponse(response); 
+                string token = ExtractTokenFromResponse(response);
 
                 if (string.IsNullOrEmpty(token))
                 {
                     token = BuildMockJwt(email, 3600);
+                    Debug.LogWarning("[Login] Pas de token dans la réponse — utilisation d'un JWT mock (dev).");
                 }
 
                 if (!string.IsNullOrEmpty(token))
                 {
                     Jwt.I.SetToken(token, persist: true);
+                    var client = SignalRClient.Instance ?? new GameObject("NetworkRoot").AddComponent<SignalRClient>();
+                    networkRef?.Bind(client);
+                    client.SetAuthToken(Jwt.I.Token);
+                    var displayName = (email ?? "UnityPlayer").Split('@')[0];
+                    Debug.Log("[Login] Connecting to hub as " + displayName);
+                    var _ = client.ConnectAndIdentify(displayName);  
+
+                    float start = Time.realtimeSinceStartup;
+                    while (!client.IsConnected && Time.realtimeSinceStartup - start < 5f)
+                        yield return null; 
                 }
+
 
                 if (!Jwt.I.IsJwtPresent())
                 {
@@ -119,7 +148,7 @@ public class LoginScript : MonoBehaviour
             }
             else
             {
-                Debug.LogError("Erreur de connexion : " + request.error);
+                Debug.LogError($"[Login] Erreur HTTP {request.responseCode} : {request.error}");
                 emailErrorText.text = "Connexion avec le serveur impossible.";
             }
         }
@@ -130,6 +159,7 @@ public class LoginScript : MonoBehaviour
         }
     }
 
+
     [System.Serializable]
     private class LoginData
     {
@@ -138,35 +168,42 @@ public class LoginScript : MonoBehaviour
         public LoginData(string email, string password) { this.email = email; this.password = password; }
     }
 
+    [System.Serializable] private class TokenOnly { public string token; }
+    [System.Serializable] private class AccessTokenOnly { public string accessToken; }
+
     private string ExtractTokenFromResponse(string json)
     {
         if (string.IsNullOrEmpty(json)) return null;
 
         try
         {
-            var t1 = JsonUtility.FromJson<TokenOnly>("{\"token\":" + ExtractRawString(json, "token") + "}");
-            if (!string.IsNullOrEmpty(t1.token)) return t1.token;
+            var raw = ExtractRawString(json, "Token");
+            if (!string.IsNullOrEmpty(raw))
+            {
+                var t1 = JsonUtility.FromJson<TokenOnly>("{\"Token\":" + raw + "}");
+                if (!string.IsNullOrEmpty(t1.token)) return t1.token;
+            }
         }
         catch { /* ignore */ }
 
         try
         {
-            var t2 = JsonUtility.FromJson<AccessTokenOnly>("{\"accessToken\":" + ExtractRawString(json, "accessToken") + "}");
-            if (!string.IsNullOrEmpty(t2.accessToken)) return t2.accessToken;
+            var raw = ExtractRawString(json, "accessToken");
+            if (!string.IsNullOrEmpty(raw))
+            {
+                var t2 = JsonUtility.FromJson<AccessTokenOnly>("{\"accessToken\":" + raw + "}");
+                if (!string.IsNullOrEmpty(t2.accessToken)) return t2.accessToken;
+            }
         }
         catch { /* ignore */ }
 
         return null;
-
     }
-
-    [System.Serializable] private class TokenOnly { public string token; }
-    [System.Serializable] private class AccessTokenOnly { public string accessToken; }
 
     private string ExtractRawString(string json, string key)
     {
         string pattern = $"\"{key}\"";
-        int i = json.IndexOf(pattern);
+        int i = json.IndexOf(pattern, StringComparison.Ordinal);
         if (i < 0) return null;
         int start = json.IndexOf(':', i);
         if (start < 0) return null;
@@ -189,13 +226,14 @@ public class LoginScript : MonoBehaviour
 
     private string Base64UrlEncode(byte[] bytes)
     {
-        return System.Convert.ToBase64String(bytes)
+        return Convert.ToBase64String(bytes)
             .TrimEnd('=').Replace('+', '-').Replace('/', '_');
     }
 
     public void OnEmailChanged(string input)
     {
-        emailErrorText.text = IsValidEmail(input) ? "" : "Adresse email invalide.";
+        if (emailErrorText)
+            emailErrorText.text = IsValidEmail(input) ? "" : "Adresse email invalide.";
         UpdateLoginButtonState();
     }
 }
