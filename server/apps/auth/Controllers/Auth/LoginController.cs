@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
+using VortexTCG.Auth.DTOs; // DTOs unifiés
 using Scrypt;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -12,47 +13,38 @@ namespace VortexTCG.Auth.Controllers;
 
 [ApiController]
 [Route("api/auth/[controller]")]
-public class LoginController(VortexDbContext db, IConfiguration configuration) : ControllerBase
+public class LoginController : ControllerBase
 {
-    private readonly VortexDbContext _db = db;
-    private readonly IConfiguration _configuration = configuration;
+    private readonly VortexDbContext _db;
+    private readonly IConfiguration _configuration;
 
-    public class LoginData
+    public LoginController(VortexDbContext db, IConfiguration configuration)
     {
-        public string? Email { get; set; }
-        public string? Password { get; set; }
+        _db = db;
+        _configuration = configuration;
     }
 
-    public class LoginResponse
-    {
-        public int Id { get; set; }
-        public string Username { get; set; } = null!;
-        public string? Token { get; set; } 
-        public string? Role { get; set; }
-    }
-    
     [HttpPost]
-    public async Task<IActionResult> Login([FromBody] LoginData data)
+    public async Task<IActionResult> Login([FromBody] UserLoginDTO request)
     {
-        if (data == null ||
-            string.IsNullOrWhiteSpace(data.Email) ||
-            string.IsNullOrWhiteSpace(data.Password))
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
         {
             return BadRequest(new { error = "Email ou mot de passe sont requis." });
         }
 
         var user = await _db.Users
-            .SingleOrDefaultAsync(u => u.Email == data.Email);
+            .Include(u => u.Role)
+            .SingleOrDefaultAsync(u => u.Email == request.Email);
 
         if (user == null)
-            return Unauthorized(new { error = "Invalid credentials." });
+            return Unauthorized(new { error = "Identifiants invalides." });
 
         var encoder = new ScryptEncoder();
-        var passwordMatches = false;
+        bool passwordMatches;
 
         try
         {
-            passwordMatches = encoder.Compare(data.Password, user.Password);
+            passwordMatches = encoder.Compare(request.Password, user.Password);
         }
         catch
         {
@@ -60,19 +52,20 @@ public class LoginController(VortexDbContext db, IConfiguration configuration) :
         }
 
         if (!passwordMatches)
-            return Unauthorized(new { error = "Invalid credentials." });
+            return Unauthorized(new { error = "Identifiants invalides." });
 
+        // Génération du token JWT
         var token = GenerateAccessToken(user.Username);
 
-        var result = new LoginResponse
+        var response = new UserResponseDTO
         {
             Id = user.Id,
             Username = user.Username,
             Token = new JwtSecurityTokenHandler().WriteToken(token),
-            Role = user.RoleId.ToString() 
+            Role = user.Role?.Label ?? "User" // Label lisible plutôt qu'un simple Id
         };
 
-        return Ok(result);
+        return Ok(response);
     }
 
     private JwtSecurityToken GenerateAccessToken(string userName)
@@ -87,11 +80,10 @@ public class LoginController(VortexDbContext db, IConfiguration configuration) :
             throw new InvalidOperationException("JWT SecretKey is not configured.");
 
         var key = Encoding.UTF8.GetBytes(secretKey);
-        var token = new JwtSecurityToken(
+        return new JwtSecurityToken(
             claims: claims,
-            signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
+            signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256),
+            expires: DateTime.UtcNow.AddHours(2) // durée de vie configurable
         );
-
-        return token;
     }
 }

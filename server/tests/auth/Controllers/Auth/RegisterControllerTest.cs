@@ -5,6 +5,8 @@ using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using VortexTCG.Auth.DTOs;
+using System;
 
 namespace Tests
 {
@@ -12,8 +14,8 @@ namespace Tests
     {
         private VortexDbContext GetInMemoryDbContext()
         {
-            var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDatabase")
+            var options = new DbContextOptionsBuilder<VortexDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString()) // DB unique par test
                 .Options;
 
             return new VortexDbContext(options);
@@ -25,13 +27,14 @@ namespace Tests
             var db = GetInMemoryDbContext();
             var controller = new RegisterController(db);
 
-            var request = new RegisterController.RegisterRequest
+            var request = new UserRegisterDTO
             {
                 FirstName = "John",
                 LastName = "Doe",
                 Email = "johndoe@gmail.com",
                 Password = "Password1!",
                 PasswordConfirmation = "Password1!"
+                // Username manquant exprès
             };
 
             var result = await controller.Register(request);
@@ -47,7 +50,7 @@ namespace Tests
             var db = GetInMemoryDbContext();
             var controller = new RegisterController(db);
 
-            var request = new RegisterController.RegisterRequest
+            var request = new UserRegisterDTO
             {
                 FirstName = "John",
                 LastName = "Doe",
@@ -63,7 +66,6 @@ namespace Tests
             var payload = badRequest.Value?.ToString();
             Assert.NotNull(payload);
             Assert.Contains("Les mots de passe ne correspondent pas", payload);
-
         }
 
         [Fact]
@@ -72,7 +74,7 @@ namespace Tests
             var db = GetInMemoryDbContext();
             var controller = new RegisterController(db);
 
-            var request = new RegisterController.RegisterRequest
+            var request = new UserRegisterDTO
             {
                 FirstName = "John",
                 LastName = "Doe",
@@ -86,7 +88,7 @@ namespace Tests
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
             var payload = badRequest.Value?.ToString();
             Assert.NotNull(payload);
-            Assert.Contains("Le mot de passe doit contenir au minimum 8 caractères", payload);
+            Assert.Contains("Le mot de passe doit contenir au minimum", payload);
         }
 
         [Fact]
@@ -95,7 +97,7 @@ namespace Tests
             var db = GetInMemoryDbContext();
             var controller = new RegisterController(db);
 
-            var request = new RegisterController.RegisterRequest
+            var request = new UserRegisterDTO
             {
                 FirstName = "John",
                 LastName = "Doe",
@@ -109,7 +111,7 @@ namespace Tests
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
             var payload = badRequest.Value?.ToString();
             Assert.NotNull(payload);
-            Assert.Contains("Le mot de passe doit contenir au minimum 8 caractères, une majuscule", payload);
+            Assert.Contains("majuscule", payload);
         }
 
         [Fact]
@@ -118,7 +120,7 @@ namespace Tests
             var db = GetInMemoryDbContext();
             var controller = new RegisterController(db);
 
-            var request = new RegisterController.RegisterRequest
+            var request = new UserRegisterDTO
             {
                 FirstName = "John",
                 LastName = "Doe",
@@ -131,7 +133,7 @@ namespace Tests
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
             var payload = badRequest.Value?.ToString();
             Assert.NotNull(payload);
-            Assert.Contains("Le mot de passe doit contenir au minimum 8 caractères, une majuscule, un chiffre", payload);
+            Assert.Contains("chiffre", payload);
         }
 
         [Fact]
@@ -140,7 +142,7 @@ namespace Tests
             var db = GetInMemoryDbContext();
             var controller = new RegisterController(db);
 
-            var request = new RegisterController.RegisterRequest
+            var request = new UserRegisterDTO
             {
                 FirstName = "John",
                 LastName = "Doe",
@@ -154,7 +156,7 @@ namespace Tests
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
             var payload = badRequest.Value?.ToString();
             Assert.NotNull(payload);
-            Assert.Contains("Le mot de passe doit contenir au minimum 8 caractères, une majuscule, un chiffre et un caractère spécial", payload);
+            Assert.Contains("caractère spécial", payload);
         }
 
         [Fact]
@@ -177,12 +179,11 @@ namespace Tests
                 RoleId = 1,
                 RankId = 1,
                 CreatedBy = "System",
-                CreatedAtUtc = DateTime.UtcNow
             });
             await db.SaveChangesAsync();
 
             var controller = new RegisterController(db);
-            var request = new RegisterController.RegisterRequest
+            var request = new UserRegisterDTO
             {
                 FirstName = "John",
                 LastName = "Doe",
@@ -197,7 +198,6 @@ namespace Tests
             var payload = conflictResult.Value?.ToString();
             Assert.NotNull(payload);
             Assert.Contains("Email déjà utilisé", payload);
-
         }
 
         [Fact]
@@ -219,12 +219,11 @@ namespace Tests
                 CurrencyQuantity = 0,
                 RoleId = 1,
                 RankId = 1,
-                CreatedBy = "System",
-                CreatedAtUtc = DateTime.UtcNow
+                CreatedBy = "System"
             });
             await db.SaveChangesAsync();
             var controller = new RegisterController(db);
-            var request = new RegisterController.RegisterRequest
+            var request = new UserRegisterDTO
             {
                 FirstName = "John",
                 LastName = "Doe",

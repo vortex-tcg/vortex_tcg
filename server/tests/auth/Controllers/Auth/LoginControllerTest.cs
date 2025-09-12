@@ -3,6 +3,7 @@ using VortexTCG.Auth.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
+using VortexTCG.Auth.DTOs;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -15,7 +16,7 @@ namespace Tests
         private VortexDbContext GetInMemoryDbContext()
         {
             var options = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) 
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
 
             return new VortexDbContext(options);
@@ -25,11 +26,11 @@ namespace Tests
         {
             var inMemorySettings = new Dictionary<string, string>
             {
-                { "JwtSettings:SecretKey", "123soleiljspjesaispaaaaaaaaaahahahahahhahahah" } 
+                { "JwtSettings:SecretKey", "123soleiljspjesaispaaaaaaaaaahahahahahhahahah" }
             };
 
             return new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!) 
+                .AddInMemoryCollection(inMemorySettings!)
                 .Build();
         }
 
@@ -40,7 +41,7 @@ namespace Tests
             var config = GetTestConfiguration();
             var controller = new LoginController(db, config);
 
-            var request = new LoginController.LoginData
+            var request = new UserLoginDTO
             {
                 Email = "",
                 Password = ""
@@ -60,7 +61,7 @@ namespace Tests
             var config = GetTestConfiguration();
             var controller = new LoginController(db, config);
 
-            var request = new LoginController.LoginData
+            var request = new UserLoginDTO
             {
                 Email = "nonexistent@example.com",
                 Password = "Password1!"
@@ -70,7 +71,7 @@ namespace Tests
             var unauthorized = Assert.IsType<UnauthorizedObjectResult>(result);
             var payload = unauthorized.Value?.ToString();
             Assert.NotNull(payload);
-            Assert.Contains("Invalid credentials", payload);
+            Assert.Contains("Identifiants invalides", payload);
         }
 
         [Fact]
@@ -79,9 +80,9 @@ namespace Tests
             var db = GetInMemoryDbContext();
             var config = GetTestConfiguration();
 
-           
             var encoder = new ScryptEncoder();
             var hashedPassword = encoder.Encode("CorrectPassword1!");
+
             db.Ranks.Add(new Rank { Label = "Bronze", nbVictory = 0 });
             db.Roles.Add(new Role { Label = "User" });
             db.Users.Add(new User
@@ -101,7 +102,7 @@ namespace Tests
             await db.SaveChangesAsync();
 
             var controller = new LoginController(db, config);
-            var request = new LoginController.LoginData
+            var request = new UserLoginDTO
             {
                 Email = "johndoe@example.com",
                 Password = "WrongPassword1!"
@@ -111,7 +112,7 @@ namespace Tests
             var unauthorized = Assert.IsType<UnauthorizedObjectResult>(result);
             var payload = unauthorized.Value?.ToString();
             Assert.NotNull(payload);
-            Assert.Contains("Invalid credentials", payload);
+            Assert.Contains("Identifiants invalides", payload);
         }
 
         [Fact]
@@ -122,6 +123,7 @@ namespace Tests
 
             var encoder = new ScryptEncoder();
             var hashedPassword = encoder.Encode("Password1!");
+
             db.Ranks.Add(new Rank { Label = "Bronze", nbVictory = 0 });
             db.Roles.Add(new Role { Label = "User" });
             db.Users.Add(new User
@@ -133,7 +135,7 @@ namespace Tests
                 Password = hashedPassword,
                 Language = "fr",
                 CurrencyQuantity = 0,
-                RoleId = 2,
+                RoleId = 1,
                 RankId = 1,
                 CreatedBy = "System",
                 CreatedAtUtc = DateTime.UtcNow
@@ -141,7 +143,7 @@ namespace Tests
             await db.SaveChangesAsync();
 
             var controller = new LoginController(db, config);
-            var request = new LoginController.LoginData
+            var request = new UserLoginDTO
             {
                 Email = "johndoe@example.com",
                 Password = "Password1!"
@@ -149,10 +151,11 @@ namespace Tests
 
             var result = await controller.Login(request);
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<LoginController.LoginResponse>(okResult.Value);
+            var response = Assert.IsType<UserResponseDTO>(okResult.Value);
+
             Assert.NotNull(response.Token);
             Assert.Equal("johndoe", response.Username);
-            Assert.Equal("2", response.Role); 
+            Assert.Equal("User", response.Role); // maintenant retourne le Label du rôle
         }
     }
 }
