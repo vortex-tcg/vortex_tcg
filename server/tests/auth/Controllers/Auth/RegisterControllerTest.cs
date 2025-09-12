@@ -3,15 +3,22 @@ using VortexTCG.Auth.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
+using VortexTCG.Auth.DTOs;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using VortexTCG.Auth.DTOs;
 using System;
 
 namespace Tests
 {
+    /// <summary>
+    /// Classe de tests unitaires pour le <see cref="RegisterController"/>.
+    /// Vérifie tous les scénarios liés à l'inscription des utilisateurs.
+    /// </summary>
     public class RegisterControllerTest
     {
+        /// <summary>
+        /// Crée un contexte en mémoire pour les tests afin d'isoler la base de données.
+        /// </summary>
         private VortexDbContext GetInMemoryDbContext()
         {
             var options = new DbContextOptionsBuilder<VortexDbContext>()
@@ -21,6 +28,9 @@ namespace Tests
             return new VortexDbContext(options);
         }
 
+        /// <summary>
+        /// Teste la réponse lorsque tous les champs ne sont pas fournis.
+        /// </summary>
         [Fact]
         public async Task All_Fields_Register()
         {
@@ -44,6 +54,9 @@ namespace Tests
             Assert.Contains("Tous les champs sont requis", payload);
         }
 
+        /// <summary>
+        /// Teste la réponse lorsque les mots de passe ne correspondent pas.
+        /// </summary>
         [Fact]
         public async Task Password_Match_Register()
         {
@@ -61,13 +74,15 @@ namespace Tests
             };
 
             var result = await controller.Register(request);
-
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
             var payload = badRequest.Value?.ToString();
             Assert.NotNull(payload);
             Assert.Contains("Les mots de passe ne correspondent pas", payload);
         }
 
+        /// <summary>
+        /// Teste la réponse lorsque le mot de passe est trop court ou faible.
+        /// </summary>
         [Fact]
         public async Task Password_Not_Long_Enough_Register()
         {
@@ -91,6 +106,9 @@ namespace Tests
             Assert.Contains("Le mot de passe doit contenir au minimum", payload);
         }
 
+        /// <summary>
+        /// Teste la réponse lorsque le mot de passe ne contient pas de majuscule.
+        /// </summary>
         [Fact]
         public async Task Password_Lower_Case_Register()
         {
@@ -114,6 +132,9 @@ namespace Tests
             Assert.Contains("majuscule", payload);
         }
 
+        /// <summary>
+        /// Teste la réponse lorsque le mot de passe ne contient pas de chiffre.
+        /// </summary>
         [Fact]
         public async Task Password_No_Number_Register()
         {
@@ -136,6 +157,9 @@ namespace Tests
             Assert.Contains("chiffre", payload);
         }
 
+        /// <summary>
+        /// Teste la réponse lorsque le mot de passe ne contient pas de caractère spécial.
+        /// </summary>
         [Fact]
         public async Task Password_No_SpecialChar_Register()
         {
@@ -159,6 +183,9 @@ namespace Tests
             Assert.Contains("caractère spécial", payload);
         }
 
+        /// <summary>
+        /// Teste la réponse lorsque l'email est déjà utilisé par un autre utilisateur.
+        /// </summary>
         [Fact]
         public async Task Email_Already_Used_Register()
         {
@@ -200,6 +227,9 @@ namespace Tests
             Assert.Contains("Email déjà utilisé", payload);
         }
 
+        /// <summary>
+        /// Teste la réponse lorsque le nom d'utilisateur est déjà pris.
+        /// </summary>
         [Fact]
         public async Task Username_Already_Used_Register()
         {
