@@ -4,6 +4,7 @@ using UnityEngine;
 public class AppConfig
 {
     public string apiBaseUrl;
+    public string gameHubUrl;
 }
 
 public static class ConfigLoader
@@ -21,6 +22,20 @@ public static class ConfigLoader
             return null;
         }
         config = JsonUtility.FromJson<AppConfig>(configText.text);
+    
         return config;
+    }
+    public static string BuildGameHubUrl(AppConfig cfg)
+    {
+        if (cfg == null) return null;
+        if (!string.IsNullOrWhiteSpace(cfg.gameHubUrl)) return cfg.gameHubUrl;
+
+        if (string.IsNullOrWhiteSpace(cfg.apiBaseUrl)) return null;
+
+        var baseUrl = cfg.apiBaseUrl.TrimEnd('/');
+        if (baseUrl.EndsWith("/api", System.StringComparison.OrdinalIgnoreCase))
+            baseUrl = baseUrl[..^4];
+
+        return baseUrl.TrimEnd('/') + "/hubs/game";
     }
 }
