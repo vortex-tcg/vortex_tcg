@@ -1,21 +1,43 @@
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Pomelo.EntityFrameworkCore.MySql;
+using System.Text;
 using System.Text.RegularExpressions;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.Services;
-
-// Chargement du .env
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+//Chargement du .env plus précise.
 Env.Load(Path.Combine(AppContext.BaseDirectory, "../../../../.env"));
 
 var builder = WebApplication.CreateBuilder(args);
+
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(builder.Environment.ContentRootPath)
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .Build();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var secretKey = configuration["JwtSettings:SecretKey"] ?? throw new InvalidOperationException("JwtSettings:SecretKey is not configured.");
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+        };
+    });
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // Ajout du Razor pour tester via pages
 builder.Services.AddRazorPages();
+builder.Services.AddControllers();
 
 // Ajout des variables d'environnement dans la config
 builder.Configuration.AddEnvironmentVariables();
@@ -76,9 +98,10 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapControllers();
 app.MapRazorPages();
 
 // Health check
