@@ -7,18 +7,28 @@ using Collection.DTOs;
 
 namespace CollectionCards.Controllers
 {
+    /// <summary>
+    /// Contrôleur pour gérer les opérations liées aux cartes.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class ControllerCards : ControllerBase
     {
         private readonly VortexDbContext _context;
 
+        /// <summary>
+        /// Initialise une nouvelle instance de la classe <see cref="ControllerCards"/>.
+        /// </summary>
+        /// <param name="context">Le contexte de base de données pour accéder aux données des cartes.</param>
         public ControllerCards(VortexDbContext context)
         {
             _context = context;
         }
 
-        // GET: api/Cards
+        /// <summary>
+        /// Récupère toutes les cartes de la base de données.
+        /// </summary>
+        /// <returns>Une liste de toutes les cartes disponibles.</returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CardDTO>>> GetCards()
         {
@@ -46,7 +56,11 @@ namespace CollectionCards.Controllers
             return Ok(cards);
         }
 
-        // GET: api/Cards/id
+        /// <summary>
+        /// Récupère une carte spécifique par son identifiant.
+        /// </summary>
+        /// <param name="id">L'identifiant de la carte à récupérer.</param>
+        /// <returns>La carte correspondante ou une erreur 404 si elle n'existe pas.</returns>
         [HttpGet("{id}")]
         public async Task<ActionResult<CardDTO>> GetCard(int id)
         {
@@ -80,7 +94,11 @@ namespace CollectionCards.Controllers
             return Ok(card);
         }
 
-        // POST: api/Cards
+        /// <summary>
+        /// Crée une nouvelle carte dans la base de données.
+        /// </summary>
+        /// <param name="createCardDTO">Les données de la carte à créer.</param>
+        /// <returns>La carte créée avec ses détails ou une erreur 400 en cas de données invalides.</returns>
         [HttpPost]
         public async Task<ActionResult<CardDTO>> CreateCard([FromBody] CreateCardDTO createCardDTO)
         {
@@ -124,6 +142,11 @@ namespace CollectionCards.Controllers
                 .Include(c => c.Extension)
                 .FirstOrDefaultAsync(c => c.Id == card.Id);
 
+            if (cardWithRelations == null)
+            {
+                return StatusCode(500, new { message = "Unable to retrieve the created card" });
+            }
+
             var cardDto = new CardDTO
             {
                 Id = cardWithRelations.Id,
@@ -143,7 +166,12 @@ namespace CollectionCards.Controllers
             return CreatedAtAction(nameof(GetCard), new { id = card.Id }, cardDto);
         }
 
-        // PUT: api/Cards/5
+        /// <summary>
+        /// Met à jour une carte existante dans la base de données.
+        /// </summary>
+        /// <param name="id">L'identifiant de la carte à mettre à jour.</param>
+        /// <param name="updateCardDTO">Les nouvelles données de la carte.</param>
+        /// <returns>Une réponse 204 No Content si la mise à jour est réussie ou une erreur 404 si la carte n'existe pas.</returns>
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCard(int id, [FromBody] UpdateCardDTO updateCardDTO)
         {
@@ -185,7 +213,11 @@ namespace CollectionCards.Controllers
             return NoContent();
         }
 
-        // DELETE: api/Cards/5
+        /// <summary>
+        /// Supprime une carte de la base de données.
+        /// </summary>
+        /// <param name="id">L'identifiant de la carte à supprimer.</param>
+        /// <returns>Une réponse 204 No Content si la suppression est réussie ou une erreur 404 si la carte n'existe pas.</returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCard(int id)
         {
@@ -201,7 +233,13 @@ namespace CollectionCards.Controllers
             return NoContent();
         }
 
-        // GET: api/Cards/search?name=dragon
+        /// <summary>
+        /// Recherche des cartes en fonction de filtres optionnels.
+        /// </summary>
+        /// <param name="name">Le nom ou une partie du nom de la carte à rechercher.</param>
+        /// <param name="cardTypeId">L'identifiant du type de carte pour filtrer.</param>
+        /// <param name="rarityId">L'identifiant de la rareté pour filtrer.</param>
+        /// <returns>Une liste de cartes correspondant aux critères de recherche.</returns>
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<CardDTO>>> SearchCards([FromQuery] string? name, [FromQuery] int? cardTypeId, [FromQuery] int? rarityId)
         {
