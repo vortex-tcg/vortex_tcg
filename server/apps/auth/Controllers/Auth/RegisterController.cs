@@ -73,51 +73,51 @@ namespace VortexTCG.Auth.Controllers
         public async Task<IActionResult> register([FromBody] UserRegisterDTO user_register_dto)
         {
             // Vérification des champs requis
-            if (string.IsNullOrWhiteSpace(user_register_dto.FirstName) ||
-                string.IsNullOrWhiteSpace(user_register_dto.LastName) ||
-                string.IsNullOrWhiteSpace(user_register_dto.Username) ||
-                string.IsNullOrWhiteSpace(user_register_dto.Email) ||
-                string.IsNullOrWhiteSpace(user_register_dto.Password) ||
-                string.IsNullOrWhiteSpace(user_register_dto.PasswordConfirmation))
+            if (string.IsNullOrWhiteSpace(user_register_dto.first_name) ||
+                string.IsNullOrWhiteSpace(user_register_dto.last_name) ||
+                string.IsNullOrWhiteSpace(user_register_dto.username) ||
+                string.IsNullOrWhiteSpace(user_register_dto.email) ||
+                string.IsNullOrWhiteSpace(user_register_dto.password) ||
+                string.IsNullOrWhiteSpace(user_register_dto.password_confirmation))
             {
                 return BadRequest(new { error = "Tous les champs sont requis." });
             }
 
             // Vérifie la correspondance des mots de passe
-            if (user_register_dto.Password != user_register_dto.PasswordConfirmation)
+            if (user_register_dto.password != user_register_dto.password_confirmation)
             {
                 return BadRequest(new { error = "Les mots de passe ne correspondent pas." });
             }
 
             // Vérifie la complexité du mot de passe
             var password_pattern = @"^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?""':{}|<>]).{8,}$";
-            if (!Regex.IsMatch(user_register_dto.Password, password_pattern))
+            if (!Regex.IsMatch(user_register_dto.password, password_pattern))
             {
                 return BadRequest(new { error = "Le mot de passe doit contenir au minimum 8 caractères, une majuscule, un chiffre et un caractère spécial." });
             }
 
             // Vérifie l’unicité de l’email et du nom d’utilisateur
-            if (_db_context.Users.Any(u => u.Email == user_register_dto.Email))
+            if (_db_context.Users.Any(u => u.Email == user_register_dto.email))
             {
                 return Conflict(new { error = "Email déjà utilisé." });
             }
 
-            if (_db_context.Users.Any(u => u.Username == user_register_dto.Username))
+            if (_db_context.Users.Any(u => u.Username == user_register_dto.username))
             {
                 return Conflict(new { error = "Nom d'utilisateur déjà pris." });
             }
 
             // Hash du mot de passe
             var scrypt_encoder = new ScryptEncoder();
-            var hashed_password = scrypt_encoder.Encode(user_register_dto.Password);
+            var hashed_password = scrypt_encoder.Encode(user_register_dto.password);
 
             // Création de l’entité utilisateur
             var user = new User
             {
-                FirstName = user_register_dto.FirstName,
-                LastName = user_register_dto.LastName,
-                Username = user_register_dto.Username,
-                Email = user_register_dto.Email,
+                FirstName = user_register_dto.first_name,
+                LastName = user_register_dto.last_name,
+                Username = user_register_dto.username,
+                Email = user_register_dto.email,
                 Password = hashed_password,
                 Language = "fr",          // Langue par défaut
                 CurrencyQuantity = 0,     // Valeur initiale
@@ -131,13 +131,13 @@ namespace VortexTCG.Auth.Controllers
             // Conversion en DTO de réponse
             var user_response_dto = new UserResponseDTO
             {
-                Id = user.Id,
-                Username = user.Username,
-                Email = user.Email,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Language = user.Language,
-                CurrencyQuantity = user.CurrencyQuantity
+                id = user.Id,
+                username = user.Username,
+                email = user.Email,
+                first_name = user.FirstName,
+                last_name = user.LastName,
+                language = user.Language,
+                currency_quantity = user.CurrencyQuantity
             };
 
             return Ok(user_response_dto);
