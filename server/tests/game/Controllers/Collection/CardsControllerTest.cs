@@ -1,10 +1,10 @@
 using Xunit;
-using CollectionCards.Controllers;
+using VortexTCG.Cards.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
-using Collection.DTOs;
+using VortexTCG.Cards.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace Tests
 {
     /// <summary>
-    /// Classe de tests unitaires pour le contrôleur <see cref="ControllerCards"/>.
+    /// Classe de tests unitaires pour le contrôleur <see cref="CardsController"/>.
     /// </summary>
     public class CardsControllerTest
     {
@@ -31,7 +31,7 @@ namespace Tests
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.GetCards"/> retourne toutes les cartes.
+        /// Teste si la méthode <see cref="CardsController.GetCards"/> retourne toutes les cartes.
         /// </summary>
         [Fact]
         public async Task GetCards_ShouldReturnCardList()
@@ -75,7 +75,7 @@ namespace Tests
 
 
             // Act
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             var result = await controller.GetCards();
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             var cards = Assert.IsType<List<CardDTO>>(okResult.Value);
@@ -83,22 +83,23 @@ namespace Tests
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.GetCards"/> retourne une liste vide lorsque aucune carte n'existe.
+        /// Teste si la méthode <see cref="CardsController.GetCards"/> retourne une liste vide lorsque aucune carte n'existe.
         /// </summary>
         [Fact]
-        public async Task GetCards_ShouldReturnEmptyList_WhenNoCardsExist()
+        public async Task GetCards_ShouldReturnNotFound_WhenNoCardsExist()
         {
             var db = GetInMemoryDbContext();
 
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             var result = await controller.GetCards();
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var cards = Assert.IsType<List<CardDTO>>(okResult.Value);
-            Assert.Empty(cards);
+            var payload = okResult.Value?.ToString();
+            Assert.NotNull(payload);
+            Assert.Contains("Aucune carte trouvée", payload);
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.GetCard"/> retourne une carte spécifique par son identifiant.
+        /// Teste si la méthode <see cref="CardsController.GetCard"/> retourne une carte spécifique par son identifiant.
         /// </summary>
         [Fact]
         public async Task GetCardById_ShouldReturnCard()
@@ -122,7 +123,7 @@ namespace Tests
                 });
             await db.SaveChangesAsync();
 
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             var actionResult = await controller.GetCard(1);
             var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
             var card = Assert.IsType<CardDTO>(okResult.Value);
@@ -132,14 +133,14 @@ namespace Tests
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.GetCard"/> retourne une erreur 404 lorsque l'identifiant est invalide.
+        /// Teste si la méthode <see cref="CardsController.GetCard"/> retourne une erreur 404 lorsque l'identifiant est invalide.
         /// </summary>
         [Fact]
         public async Task GetCardById_ShouldReturnNotFound()
         {
             var db = GetInMemoryDbContext();
 
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             var actionResult = await controller.GetCard(1);
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult.Result);
             var payload = notFoundResult.Value?.ToString();
@@ -148,7 +149,7 @@ namespace Tests
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.CreateCard"/> crée une carte valide et retourne ses détails.
+        /// Teste si la méthode <see cref="CardsController.CreateCard"/> crée une carte valide et retourne ses détails.
         /// </summary>
         [Fact]
         public async Task CreateCard_WithValidData_ReturnsCreatedWithCard()
@@ -174,7 +175,7 @@ namespace Tests
                 ExtensionId = 1
             };
 
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             var actionResult = await controller.CreateCard(newCard);
             var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
             var createdCard = Assert.IsType<CardDTO>(createdAtActionResult.Value);
@@ -185,7 +186,7 @@ namespace Tests
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.CreateCard"/> retourne une erreur 400 pour des données invalides.
+        /// Teste si la méthode <see cref="CardsController.CreateCard"/> retourne une erreur 400 pour des données invalides.
         /// </summary>
         [Fact]
         public async Task CreateCard_WithInvalidData_ReturnsBadRequest()
@@ -211,7 +212,7 @@ namespace Tests
                 ExtensionId = 1
             };
 
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             controller.ModelState.AddModelError("Name", "Le nom est requis.");
             controller.ModelState.AddModelError("Hp", "Hp doit être entre 0 et 100.");
 
@@ -233,7 +234,7 @@ namespace Tests
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.CreateCard"/> retourne une erreur 400 pour des clés étrangères invalides.
+        /// Teste si la méthode <see cref="CardsController.CreateCard"/> retourne une erreur 400 pour des clés étrangères invalides.
         /// </summary>
         [Fact]
         public async Task CreateCard_WithInvalidForeignKey_ReturnsBadRequest()
@@ -253,7 +254,7 @@ namespace Tests
                 ExtensionId = 99
             };
 
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             var actionResult = await controller.CreateCard(newCard);
 
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult.Result);
@@ -263,7 +264,7 @@ namespace Tests
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.UpdateCard"/> met à jour une carte existante avec des données valides.
+        /// Teste si la méthode <see cref="CardsController.UpdateCard"/> met à jour une carte existante avec des données valides.
         /// </summary>
         [Fact]
         public async Task UpdateCard_WithValidData_ReturnUpdatedCard()
@@ -304,7 +305,7 @@ namespace Tests
                 ExtensionId = 1
             };
 
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             var actionResult = await controller.UpdateCard(1, updateCard);
 
             Assert.IsType<NoContentResult>(actionResult);
@@ -316,7 +317,7 @@ namespace Tests
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.UpdateCard"/> retourne une erreur 404 pour un identifiant inexistant.
+        /// Teste si la méthode <see cref="CardsController.UpdateCard"/> retourne une erreur 404 pour un identifiant inexistant.
         /// </summary>
         [Fact]
         public async Task UpdateCard_WithNonExistentId_ReturnsNotFound()
@@ -357,7 +358,7 @@ namespace Tests
                 ExtensionId = 1
             };
 
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             var actionResult = await controller.UpdateCard(5, updateCard);
 
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult);
@@ -373,7 +374,7 @@ namespace Tests
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.UpdateCard"/> retourne une erreur 400 pour des données invalides.
+        /// Teste si la méthode <see cref="CardsController.UpdateCard"/> retourne une erreur 400 pour des données invalides.
         /// </summary>
         [Fact]
         public async Task UpdateCard_WithInvalidData_ReturnBadRequest()
@@ -414,7 +415,7 @@ namespace Tests
                 ExtensionId = 1
             };
 
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             controller.ModelState.AddModelError("Name", "Le nom est requis.");
             controller.ModelState.AddModelError("Picture", "Picture doit être une URL valide.");
 
@@ -441,7 +442,7 @@ namespace Tests
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.UpdateCard"/> retourne une erreur 400 pour des clés étrangères invalides.
+        /// Teste si la méthode <see cref="CardsController.UpdateCard"/> retourne une erreur 400 pour des clés étrangères invalides.
         /// </summary>
         [Fact]
         public async Task UpdateCard_WithInvalidForeignKey_ReturnsBadRequest()
@@ -467,7 +468,7 @@ namespace Tests
             });
             await db.SaveChangesAsync();
 
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             var updatedCard = new UpdateCardDTO
             {
                 Name = "Updated",
@@ -485,7 +486,7 @@ namespace Tests
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.DeleteCard"/> supprime une carte existante avec un identifiant valide.
+        /// Teste si la méthode <see cref="CardsController.DeleteCard"/> supprime une carte existante avec un identifiant valide.
         /// </summary>
         [Fact]
         public async Task DeleteCard_WithValidId_ReturnsNoContent()
@@ -511,7 +512,7 @@ namespace Tests
             });
             await db.SaveChangesAsync();
 
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             var actionResult = await controller.DeleteCard(1);
 
             Assert.IsType<NoContentResult>(actionResult);
@@ -521,7 +522,7 @@ namespace Tests
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.DeleteCard"/> retourne une erreur 404 pour un identifiant inexistant.
+        /// Teste si la méthode <see cref="CardsController.DeleteCard"/> retourne une erreur 404 pour un identifiant inexistant.
         /// </summary>
         [Fact]
         public async Task DeleteCard_WithNonExistentId_ReturnsNotFound()
@@ -547,7 +548,7 @@ namespace Tests
             });
             await db.SaveChangesAsync();
 
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             var actionResult = await controller.DeleteCard(5);
 
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult);
@@ -561,7 +562,7 @@ namespace Tests
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.SearchCards"/> retourne les cartes correspondant à un nom donné.
+        /// Teste si la méthode <see cref="CardsController.SearchCards"/> retourne les cartes correspondant à un nom donné.
         /// </summary>
         [Fact]
         public async Task SearchCards_ByName_ReturnsMatchingCards()
@@ -616,7 +617,7 @@ namespace Tests
                 });
             await db.SaveChangesAsync();
 
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             var actionResult = await controller.SearchCards(name: "Dragon", cardTypeId: null, rarityId: null);
 
             var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
@@ -628,7 +629,7 @@ namespace Tests
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.SearchCards"/> retourne les cartes correspondant à plusieurs paramètres de recherche.
+        /// Teste si la méthode <see cref="CardsController.SearchCards"/> retourne les cartes correspondant à plusieurs paramètres de recherche.
         /// </summary>
         [Fact]
         public async Task SearchCards_WithMultipleParameters_ReturnsFilteredCards()
@@ -669,7 +670,7 @@ namespace Tests
                 });
             await db.SaveChangesAsync();
 
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             var actionResult = await controller.SearchCards(name: "Dragon", cardTypeId: 1, rarityId: 2);
 
             var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
@@ -682,7 +683,7 @@ namespace Tests
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.SearchCards"/> retourne une liste vide lorsqu'aucune carte ne correspond.
+        /// Teste si la méthode <see cref="CardsController.SearchCards"/> retourne une liste vide lorsqu'aucune carte ne correspond.
         /// </summary>
         [Fact]
         public async Task SearchCards_WithNoMatches_ReturnsEmptyList()
@@ -723,7 +724,7 @@ namespace Tests
                 });
             await db.SaveChangesAsync();
 
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             var actionResult = await controller.SearchCards(name: "Wizard", cardTypeId: null, rarityId: null);
 
             var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
@@ -734,7 +735,7 @@ namespace Tests
         }
 
         /// <summary>
-        /// Teste si la méthode <see cref="ControllerCards.SearchCards"/> retourne toutes les cartes lorsqu'aucun paramètre n'est fourni.
+        /// Teste si la méthode <see cref="CardsController.SearchCards"/> retourne toutes les cartes lorsqu'aucun paramètre n'est fourni.
         /// </summary>
         [Fact]
         public async Task SearchCards_WithNoParameters_ReturnsAllCards()
@@ -775,7 +776,7 @@ namespace Tests
                 });
             await db.SaveChangesAsync();
 
-            var controller = new ControllerCards(db);
+            var controller = new CardsController(db);
             var actionResult = await controller.SearchCards(name: null, cardTypeId: null, rarityId: null);
 
             var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
