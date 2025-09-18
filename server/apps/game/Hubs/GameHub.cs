@@ -37,25 +37,25 @@ public class GameHub : Hub
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         // 1) Si le joueur était dans un salon par code, on le retire.
-        _rooms.Leave(Context.ConnectionId, out var code, out var oppCodeId, out var empty);
+        _rooms.leave(Context.ConnectionId, out var code, out var opp_code_id, out var empty);
         if (code is not null) await Groups.RemoveFromGroupAsync(Context.ConnectionId, code);
-        if (oppCodeId is not null && !empty)
-            await Clients.Client(oppCodeId).SendAsync("OpponentLeft", code ?? "");
+        if (opp_code_id is not null && !empty)
+            await Clients.Client(opp_code_id).SendAsync("OpponentLeft", code ?? "");
 
         // 2) S'il était en matchmaking, on retire la paire et on avertit l'adversaire.
-        var (oppId, _) = _matchmaker.GetOpponent(Context.ConnectionId);
-        _matchmaker.LeaveOrDisconnect(Context.ConnectionId);
-        if (oppId is not null)
-            await Clients.Client(oppId).SendAsync("OpponentLeft", "");
+        var (opp_id, _) = _matchmaker.get_opponent(Context.ConnectionId);
+        _matchmaker.leave_or_disconnect(Context.ConnectionId);
+        if (opp_id is not null)
+            await Clients.Client(opp_id).SendAsync("OpponentLeft", "");
 
         await base.OnDisconnectedAsync(exception);
     }
 
     // Permet au client de définir son pseudo côté serveur (stocké dans Matchmaker/RoomService).
-    public Task SetName(string name)
+    public Task set_name(string name)
     {
-        _matchmaker.SetName(Context.ConnectionId, name);
-        _rooms.SetName(Context.ConnectionId, name);
+        _matchmaker.set_name(Context.ConnectionId, name);
+        _rooms.set_name(Context.ConnectionId, name);
         return Task.CompletedTask;
     }
 
@@ -63,19 +63,19 @@ public class GameHub : Hub
 
     // Le client demande à entrer dans la file.
     // Si un autre joueur est aussi en attente, on créer une "room" logique (GUID) et on envoie "Matched" aux deux.
-    public async Task JoinQueue()
+    public async Task join_queue()
     {
         // S'il était dans un salon privé, on le quitte d'abord pour éviter les situations mixtes.
-        await LeaveRoomByCode();
+        await leave_room_by_code();
 
-        var result = _matchmaker.Enqueue(Context.ConnectionId);
-        if (result.matched && result.roomId is not null && result.otherId is not null)
+        var result = _matchmaker.enqueue(Context.ConnectionId);
+        if (result.matched && result.room_id is not null && result.other_id is not null)
         {
-            var meName = _matchmaker.GetName(Context.ConnectionId);
-            var otherName = _matchmaker.GetName(result.otherId);
+            var me_name = _matchmaker.get_name(Context.ConnectionId);
+            var other_name = _matchmaker.get_name(result.other_id);
 
-            await Clients.Clients(new[] { Context.ConnectionId, result.otherId })
-                .SendAsync("Matched", result.roomId, new { you = meName, opponent = otherName });
+            await Clients.Clients(new[] { Context.ConnectionId, result.other_id })
+                .SendAsync("Matched", result.room_id, new { you = me_name, opponent = other_name });
         }
         else
         {
@@ -85,33 +85,33 @@ public class GameHub : Hub
     }
 
     // Le client sort de la file d'attente. On prévient l'adversaire si un match était déjà formé.
-    public async Task LeaveQueue()
+    public async Task leave_queue()
     {
-        var (oppId, roomId) = _matchmaker.GetOpponent(Context.ConnectionId);
-        _matchmaker.LeaveOrDisconnect(Context.ConnectionId);
-        if (oppId is not null && roomId is not null)
-            await Clients.Client(oppId).SendAsync("OpponentLeft", roomId);
+        var (opp_id, room_id) = _matchmaker.get_opponent(Context.ConnectionId);
+        _matchmaker.leave_or_disconnect(Context.ConnectionId);
+        if (opp_id is not null && room_id is not null)
+            await Clients.Client(opp_id).SendAsync("OpponentLeft", room_id);
     }
 
     // Envoi d'un message texte au sein d'un "match" (roomId = GUID coté matchmaking).
-    public async Task SendRoomMessage(string roomId, string message)
+    public async Task send_room_message(string room_id, string message)
     {
-        var (oppId, myRoomId) = _matchmaker.GetOpponent(Context.ConnectionId);
-        if (oppId is null || myRoomId != roomId) return; // Sécurité: ignorer si pas dans la même room.
+        var (opp_id, my_room_id) = _matchmaker.get_opponent(Context.ConnectionId);
+        if (opp_id is null || my_room_id != room_id) return; // Sécurité: ignorer si pas dans la même room.
 
-        var from = _matchmaker.GetName(Context.ConnectionId);
-        await Clients.Client(oppId).SendAsync("ReceiveRoomMessage", roomId, from, message);
+        var from = _matchmaker.get_name(Context.ConnectionId);
+        await Clients.Client(opp_id).SendAsync("ReceiveRoomMessage", room_id, from, message);
     }
 
     // --- SALONS PRIVÉS PAR CODE ---
 
     // Crée un salon privé avec un code (soit proposé par le client, soit aléatoire). Le créateur rejoint automatiquement le group SignalR.
-    public async Task CreateRoom(string? preferredCode = null)
+    public async Task create_room(string? preferredCode = null)
     {
-        // Si on était en matchmaking, on s'en retire, car on va jouer par code.
-        _matchmaker.LeaveOrDisconnect(Context.ConnectionId);
+    // Si on était en matchmaking, on s'en retire, car on va jouer par code.
+    _matchmaker.leave_or_disconnect(Context.ConnectionId);
 
-        if (!_rooms.TryCreateRoom(Context.ConnectionId, out var code, preferredCode))
+        if (!_rooms.try_create_room(Context.ConnectionId, out var code, preferredCode))
         {
             await Clients.Caller.SendAsync("RoomCreateError", "CODE_TAKEN");
             return;
@@ -124,11 +124,11 @@ public class GameHub : Hub
     }
 
     // Rejoindre un salon existant par code. Si l'adversaire est déjà présent, on notifie "Matched" aux deux.
-    public async Task JoinRoom(string code)
+    public async Task join_room(string code)
     {
-        _matchmaker.LeaveOrDisconnect(Context.ConnectionId);
+        _matchmaker.leave_or_disconnect(Context.ConnectionId);
 
-        var ok = _rooms.TryJoinRoom(Context.ConnectionId, code, out var oppId, out var isFull);
+        var ok = _rooms.try_join_room(Context.ConnectionId, code, out var opp_id, out var isFull);
         if (!ok)
         {
             await Clients.Caller.SendAsync("RoomJoinError", isFull ? "ROOM_FULL" : "NOT_FOUND");
@@ -137,13 +137,13 @@ public class GameHub : Hub
 
         await Groups.AddToGroupAsync(Context.ConnectionId, code);
 
-        if (oppId is not null)
+        if (opp_id is not null)
         {
-            var meName = _rooms.GetName(Context.ConnectionId);
-            var otherName = _rooms.GetName(oppId);
+            var me_name = _rooms.get_name(Context.ConnectionId);
+            var other_name = _rooms.get_name(opp_id);
 
-            await Clients.Clients(new[] { Context.ConnectionId, oppId })
-                .SendAsync("Matched", code, new { you = meName, opponent = otherName });
+            await Clients.Clients(new[] { Context.ConnectionId, opp_id })
+                .SendAsync("Matched", code, new { you = me_name, opponent = other_name });
         }
         else
         {
@@ -152,44 +152,44 @@ public class GameHub : Hub
     }
 
     // Envoi d'un message dans un salon privé (adressage par code). Diffusé à "OthersInGroup".
-    public async Task SendRoomMessageByCode(string code, string message)
+    public async Task send_room_message_by_code(string code, string message)
     {
-        var myCode = _rooms.GetRoomOf(Context.ConnectionId);
-        if (myCode != code) return; // Sécurité: on n'envoie que si l'émetteur appartient bien à ce salon.
+        var my_code = _rooms.get_room_of(Context.ConnectionId);
+        if (my_code != code) return; // Sécurité: on n'envoie que si l'émetteur appartient bien à ce salon.
 
-        var from = _rooms.GetName(Context.ConnectionId);
+        var from = _rooms.get_name(Context.ConnectionId);
         await Clients.OthersInGroup(code).SendAsync("ReceiveRoomMessage", code, from, message);
     }
 
     // Quitter un salon privé (par code). Si la room devient vide, elle est supprimée côté serveur.
-    public async Task LeaveRoomByCode()
+    public async Task leave_room_by_code()
     {
-        _rooms.Leave(Context.ConnectionId, out var code, out var opponentId, out var roomEmpty);
+        _rooms.leave(Context.ConnectionId, out var code, out var opponent_id, out var roomEmpty);
         if (code is not null) await Groups.RemoveFromGroupAsync(Context.ConnectionId, code);
-        if (opponentId is not null && !roomEmpty)
-            await Clients.Client(opponentId).SendAsync("OpponentLeft", code ?? "");
+        if (opponent_id is not null && !roomEmpty)
+            await Clients.Client(opponent_id).SendAsync("OpponentLeft", code ?? "");
     }
 
     // Événement "jeu": jouer une carte. On supporte les deux modes:
     // - par code (rooms privées) -> broadcast au group
     // - par roomId (matchmaking GUID) -> envoi direct à l'adversaire
-    public async Task PlayCard(string keyOrCode, int cardId)
+    public async Task play_card(string keyOrCode, int cardId)
     {
         // Mode salon privé (code)
-        var code = _rooms.GetRoomOf(Context.ConnectionId);
+        var code = _rooms.get_room_of(Context.ConnectionId);
         if (code is not null && code == keyOrCode)
         {
-            var from = _rooms.GetName(Context.ConnectionId);
+            var from = _rooms.get_name(Context.ConnectionId);
             await Clients.OthersInGroup(code).SendAsync("OpponentPlayedCard", code, from, cardId);
             return;
         }
 
         // Mode matchmaking (GUID roomId)
-        var (oppId, roomId) = _matchmaker.GetOpponent(Context.ConnectionId);
-        if (oppId is not null && roomId == keyOrCode)
+        var (opp_id, room_id) = _matchmaker.get_opponent(Context.ConnectionId);
+        if (opp_id is not null && room_id == keyOrCode)
         {
-            var from = _matchmaker.GetName(Context.ConnectionId);
-            await Clients.Client(oppId).SendAsync("OpponentPlayedCard", roomId, from, cardId);
+            var from = _matchmaker.get_name(Context.ConnectionId);
+            await Clients.Client(opp_id).SendAsync("OpponentPlayedCard", room_id, from, cardId);
         }
     }
 }

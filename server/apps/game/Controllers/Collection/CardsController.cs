@@ -20,7 +20,7 @@ namespace CollectionCards.Controllers
 
         // GET: api/Cards
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CardDTO>>> GetCards()
+        public async Task<ActionResult<IEnumerable<CardDTO>>> get_cards()
         {
             var cards = await _context.Cards
                 .Include(c => c.CardType)
@@ -28,18 +28,18 @@ namespace CollectionCards.Controllers
                 .Include(c => c.Extension)
                 .Select(c => new CardDTO
                 {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Hp = c.Hp,
-                    Attack = c.Attack,
-                    Cost = c.Cost,
-                    Description = c.Description,
-                    Picture = c.Picture,
-                    Effect_active = c.Effect_active, 
-                    CardTypeId = c.CardTypeId,
-                    RarityId = c.RarityId,
-                    ExtensionId = c.ExtensionId,
-                    // CreatedAt = c.CreatedAt
+                    id = c.Id,
+                    name = c.Name,
+                    hp = c.Hp,
+                    attack = c.Attack,
+                    cost = c.Cost,
+                    description = c.Description,
+                    picture = c.Picture,
+                    effect_active = c.Effect_active,
+                    card_type_id = c.CardTypeId,
+                    rarity_id = c.RarityId,
+                    extension_id = c.ExtensionId,
+                    // created_at = c.CreatedAt
                 })
                 .ToListAsync();
 
@@ -48,7 +48,7 @@ namespace CollectionCards.Controllers
 
         // GET: api/Cards/id
         [HttpGet("{id}")]
-        public async Task<ActionResult<CardDTO>> GetCard(int id)
+        public async Task<ActionResult<CardDTO>> get_card(int id)
         {
             var card = await _context.Cards
                 .Include(c => c.CardType)
@@ -57,18 +57,18 @@ namespace CollectionCards.Controllers
                 .Where(c => c.Id == id)
                 .Select(c => new CardDTO
                 {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Hp = c.Hp,
-                    Attack = c.Attack,
-                    Cost = c.Cost,
-                    Description = c.Description,
-                    Picture = c.Picture,
-                    Effect_active = c.Effect_active,
-                    CardTypeId = c.CardTypeId,
-                    RarityId = c.RarityId,
-                    ExtensionId = c.ExtensionId,
-                    // CreatedAt = c.CreatedAt
+                    id = c.Id,
+                    name = c.Name,
+                    hp = c.Hp,
+                    attack = c.Attack,
+                    cost = c.Cost,
+                    description = c.Description,
+                    picture = c.Picture,
+                    effect_active = c.Effect_active,
+                    card_type_id = c.CardTypeId,
+                    rarity_id = c.RarityId,
+                    extension_id = c.ExtensionId,
+                    // created_at = c.CreatedAt
                 })
                 .FirstOrDefaultAsync();
 
@@ -82,7 +82,7 @@ namespace CollectionCards.Controllers
 
         // POST: api/Cards
         [HttpPost]
-        public async Task<ActionResult<CardDTO>> CreateCard([FromBody] CreateCardDTO createCardDTO)
+        public async Task<ActionResult<CardDTO>> create_card([FromBody] CreateCardDTO create_card_dto)
         {
             if (!ModelState.IsValid)
             {
@@ -90,27 +90,27 @@ namespace CollectionCards.Controllers
             }
 
             // Vérifier que les entités liées existent
-            var cardType = await _context.CardTypes.FindAsync(createCardDTO.CardTypeId);
-            var rarity = await _context.Rarities.FindAsync(createCardDTO.RarityId);
-            var extension = await _context.Extensions.FindAsync(createCardDTO.ExtensionId);
+            var card_type = await _context.CardTypes.FindAsync(create_card_dto.card_type_id);
+            var rarity = await _context.Rarities.FindAsync(create_card_dto.rarity_id);
+            var extension = await _context.Extensions.FindAsync(create_card_dto.extension_id);
 
-            if (cardType == null || rarity == null || extension == null)
+            if (card_type == null || rarity == null || extension == null)
             {
                 return BadRequest(new { message = "CardType, Rarity ou Extension invalide" });
             }
 
             var card = new Card
             {
-                Name = createCardDTO.Name,
-                Hp = createCardDTO.Hp,
-                Attack = createCardDTO.Attack,
-                Cost = createCardDTO.Cost,
-                Description = createCardDTO.Description,
-                Picture = createCardDTO.Picture,
-                Effect_active = createCardDTO.Effect_active,
-                CardTypeId = createCardDTO.CardTypeId,
-                RarityId = createCardDTO.RarityId,
-                ExtensionId = createCardDTO.ExtensionId,
+                Name = create_card_dto.name,
+                Hp = create_card_dto.hp,
+                Attack = create_card_dto.attack,
+                Cost = create_card_dto.cost,
+                Description = create_card_dto.description,
+                Picture = create_card_dto.picture,
+                Effect_active = create_card_dto.effect_active,
+                CardTypeId = create_card_dto.card_type_id,
+                RarityId = create_card_dto.rarity_id,
+                ExtensionId = create_card_dto.extension_id,
                 CreatedBy = "System" // À remplacer par l'utilisateur connecté
             };
 
@@ -118,7 +118,7 @@ namespace CollectionCards.Controllers
             await _context.SaveChangesAsync();
 
             // Recharger avec les relations en une seule requête
-            var cardWithRelations = await _context.Cards
+            var card_with_relations = await _context.Cards
                 .Include(c => c.CardType)
                 .Include(c => c.Rarity)
                 .Include(c => c.Extension)
@@ -126,26 +126,26 @@ namespace CollectionCards.Controllers
 
             var cardDto = new CardDTO
             {
-                Id = cardWithRelations.Id,
-                Name = cardWithRelations.Name,
-                Hp = cardWithRelations.Hp,
-                Attack = cardWithRelations.Attack,
-                Cost = cardWithRelations.Cost,
-                Description = cardWithRelations.Description,
-                Picture = cardWithRelations.Picture,
-                Effect_active = cardWithRelations.Effect_active,
-                CardTypeId = cardWithRelations.CardTypeId,
-                RarityId = cardWithRelations.RarityId,
-                ExtensionId = cardWithRelations.ExtensionId,
-                // CreatedAt = cardWithRelations.CreatedAt
+                id = card_with_relations.Id,
+                name = card_with_relations.Name,
+                hp = card_with_relations.Hp,
+                attack = card_with_relations.Attack,
+                cost = card_with_relations.Cost,
+                description = card_with_relations.Description,
+                picture = card_with_relations.Picture,
+                effect_active = card_with_relations.Effect_active,
+                card_type_id = card_with_relations.CardTypeId,
+                rarity_id = card_with_relations.RarityId,
+                extension_id = card_with_relations.ExtensionId,
+                // created_at = card_with_relations.CreatedAt
             };
 
-            return CreatedAtAction(nameof(GetCard), new { id = card.Id }, cardDto);
+            return CreatedAtAction(nameof(get_card), new { id = card.Id }, cardDto);
         }
 
         // PUT: api/Cards/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCard(int id, [FromBody] UpdateCardDTO updateCardDTO)
+        public async Task<IActionResult> update_card(int id, [FromBody] UpdateCardDTO update_card_dto)
         {
             if (!ModelState.IsValid)
             {
@@ -159,25 +159,25 @@ namespace CollectionCards.Controllers
             }
 
             // Vérifier que les entités liées existent
-            var cardType = await _context.CardTypes.FindAsync(updateCardDTO.CardTypeId);
-            var rarity = await _context.Rarities.FindAsync(updateCardDTO.RarityId);
-            var extension = await _context.Extensions.FindAsync(updateCardDTO.ExtensionId);
+            var card_type = await _context.CardTypes.FindAsync(update_card_dto.card_type_id);
+            var rarity = await _context.Rarities.FindAsync(update_card_dto.rarity_id);
+            var extension = await _context.Extensions.FindAsync(update_card_dto.extension_id);
 
-            if (cardType == null || rarity == null || extension == null)
+            if (card_type == null || rarity == null || extension == null)
             {
                 return BadRequest(new { message = "CardType, Rarity ou Extension invalide" });
             }
 
-            card.Name = updateCardDTO.Name;
-            card.Hp = updateCardDTO.Hp;
-            card.Attack = updateCardDTO.Attack;
-            card.Cost = updateCardDTO.Cost;
-            card.Description = updateCardDTO.Description;
-            card.Picture = updateCardDTO.Picture;
-            card.Effect_active = updateCardDTO.Effect_active;
-            card.CardTypeId = updateCardDTO.CardTypeId;
-            card.RarityId = updateCardDTO.RarityId;
-            card.ExtensionId = updateCardDTO.ExtensionId;
+            card.Name = update_card_dto.name;
+            card.Hp = update_card_dto.hp;
+            card.Attack = update_card_dto.attack;
+            card.Cost = update_card_dto.cost;
+            card.Description = update_card_dto.description;
+            card.Picture = update_card_dto.picture;
+            card.Effect_active = update_card_dto.effect_active;
+            card.CardTypeId = update_card_dto.card_type_id;
+            card.RarityId = update_card_dto.rarity_id;
+            card.ExtensionId = update_card_dto.extension_id;
             card.UpdatedBy = "System"; // À remplacer par l'utilisateur connecté
 
             await _context.SaveChangesAsync();
@@ -187,7 +187,7 @@ namespace CollectionCards.Controllers
 
         // DELETE: api/Cards/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCard(int id)
+        public async Task<IActionResult> delete_card(int id)
         {
             var card = await _context.Cards.FindAsync(id);
             if (card == null)
@@ -203,7 +203,7 @@ namespace CollectionCards.Controllers
 
         // GET: api/Cards/search?name=dragon
         [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<CardDTO>>> SearchCards([FromQuery] string? name, [FromQuery] int? cardTypeId, [FromQuery] int? rarityId)
+        public async Task<ActionResult<IEnumerable<CardDTO>>> search_cards([FromQuery] string? name, [FromQuery] int? card_type_id, [FromQuery] int? rarity_id)
         {
             var query = _context.Cards
                 .Include(c => c.CardType)
@@ -216,31 +216,32 @@ namespace CollectionCards.Controllers
                 query = query.Where(c => c.Name.Contains(name) && c.Name != null);
             }
 
-            if (cardTypeId.HasValue)
+            if (card_type_id.HasValue)
             {
-                query = query.Where(c => c.CardTypeId == cardTypeId.Value);
+                query = query.Where(c => c.CardTypeId == card_type_id.Value);
             }
 
-            if (rarityId.HasValue)
+            if (rarity_id.HasValue)
             {
-                query = query.Where(c => c.RarityId == rarityId.Value);
+                query = query.Where(c => c.RarityId == rarity_id.Value);
             }
+
 
             var cards = await query
                 .Select(c => new CardDTO
                 {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Hp = c.Hp,
-                    Attack = c.Attack,
-                    Cost = c.Cost,
-                    Description = c.Description,
-                    Picture = c.Picture,
-                    Effect_active = c.Effect_active,
-                    CardTypeId = c.CardTypeId,
-                    RarityId = c.RarityId,
-                    ExtensionId = c.ExtensionId,
-                    // CreatedAt = c.CreatedAt
+                    id = c.Id,
+                    name = c.Name,
+                    hp = c.Hp,
+                    attack = c.Attack,
+                    cost = c.Cost,
+                    description = c.Description,
+                    picture = c.Picture,
+                    effect_active = c.Effect_active,
+                    card_type_id = c.CardTypeId,
+                    rarity_id = c.RarityId,
+                    extension_id = c.ExtensionId,
+                    // created_at = c.CreatedAt
                 })
                 .ToListAsync();
 

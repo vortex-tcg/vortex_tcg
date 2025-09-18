@@ -2,17 +2,17 @@ namespace Collection.DTOs
 {
     public class CardDTO
     {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public int Hp { get; set; }
-        public int Attack { get; set; }
-        public int Cost { get; set; }
-        public string Description { get; set; }= string.Empty;
-        public string Picture { get; set; }= string.Empty;
-        public int Effect_active { get; set; }
-        public int CardTypeId { get; set; }
-        public int RarityId { get; set; }
-        public int ExtensionId { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public int id { get; set; }
+        public string name { get; set; } = string.Empty;
+        public int hp { get; set; }
+        public int attack { get; set; }
+        public int cost { get; set; }
+        public string description { get; set; }= string.Empty;
+        public string picture { get; set; }= string.Empty;
+        public int effect_active { get; set; }
+        public int card_type_id { get; set; }
+        public int rarity_id { get; set; }
+        public int extension_id { get; set; }
+        public DateTime created_at { get; set; }
     }
 }

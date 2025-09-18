@@ -15,23 +15,23 @@ public class RoomService
     private record Room(HashSet<string> Members);
 
     private readonly ConcurrentDictionary<string, Room> _rooms = new();       // code -> Room
-    private readonly ConcurrentDictionary<string, string> _connToRoom = new(); // conn -> code
+    private readonly ConcurrentDictionary<string, string> _conn_to_room = new(); // conn -> code
     private readonly ConcurrentDictionary<string, string> _names = new();      // pseudo par ConnectionId
 
     // Alphabet sans voyelles ambiguës (pas d'I/O/0/1) pour des codes lisibles.
     private static readonly char[] Alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".ToCharArray();
     private readonly RandomNumberGenerator _rng = RandomNumberGenerator.Create();
 
-    public void SetName(string connectionId, string? name)
-        => _names[connectionId] = string.IsNullOrWhiteSpace(name)
-            ? $"Player-{connectionId[..5]}"
+    public void set_name(string connection_id, string? name)
+        => _names[connection_id] = string.IsNullOrWhiteSpace(name)
+            ? $"Player-{connection_id[..5]}"
             : name!;
 
-    public string GetName(string connectionId)
-        => _names.TryGetValue(connectionId, out var n) ? n : $"Player-{connectionId[..5]}";
+    public string get_name(string connection_id)
+        => _names.TryGetValue(connection_id, out var n) ? n : $"Player-{connection_id[..5]}";
 
     // Création d'un salon: soit avec un code préféré (si libre), soit avec un code aléatoire.
-    public bool TryCreateRoom(string connectionId, out string code, string? preferred = null)
+    public bool try_create_room(string connection_id, out string code, string? preferred = null)
     {
         if (!string.IsNullOrWhiteSpace(preferred))
         {
@@ -50,16 +50,16 @@ public class RoomService
         var room = _rooms[code];
         lock (room)
         {
-            room.Members.Add(connectionId);
-            _connToRoom[connectionId] = code;
+            room.Members.Add(connection_id);
+            _conn_to_room[connection_id] = code;
         }
         return true;
     }
 
     // Rejoindre un salon existant. On refuse au-delà de 2 membres et on remonte un flag isFull.
-    public bool TryJoinRoom(string connectionId, string code, out string? opponentId, out bool isFull)
+    public bool try_join_room(string connection_id, string code, out string? opponent_id, out bool isFull)
     {
-        opponentId = null; isFull = false;
+        opponent_id = null; isFull = false;
         code = code.Trim().ToUpperInvariant();
 
         if (!_rooms.TryGetValue(code, out var room)) return false;
@@ -67,46 +67,46 @@ public class RoomService
         lock (room)
         {
             if (room.Members.Count >= 2) { isFull = true; return false; }
-            room.Members.Add(connectionId);
-            _connToRoom[connectionId] = code;
-            opponentId = room.Members.FirstOrDefault(id => id != connectionId);
+            room.Members.Add(connection_id);
+            _conn_to_room[connection_id] = code;
+            opponent_id = room.Members.FirstOrDefault(id => id != connection_id);
             return true;
         }
     }
 
-    public string? GetRoomOf(string connectionId)
-        => _connToRoom.TryGetValue(connectionId, out var c) ? c : null;
+    public string? get_room_of(string connection_id)
+        => _conn_to_room.TryGetValue(connection_id, out var c) ? c : null;
 
-    public string? GetOpponentOf(string connectionId)
+    public string? get_opponent_of(string connection_id)
     {
-        var code = GetRoomOf(connectionId);
+        var code = get_room_of(connection_id);
         if (code is null) return null;
         if (!_rooms.TryGetValue(code, out var room)) return null;
 
         lock (room)
-            return room.Members.FirstOrDefault(id => id != connectionId);
+            return room.Members.FirstOrDefault(id => id != connection_id);
     }
 
     // Quitte le salon. Si personne ne reste, on supprime la room pour libérer la mémoire/codes.
-    public void Leave(string connectionId, out string? code, out string? opponentId, out bool roomEmpty)
+    public void leave(string connection_id, out string? code, out string? opponent_id, out bool roomEmpty)
     {
-        code = null; opponentId = null; roomEmpty = false;
+        code = null; opponent_id = null; roomEmpty = false;
 
-        if (!_connToRoom.TryRemove(connectionId, out var c)) return;
+        if (!_conn_to_room.TryRemove(connection_id, out var c)) return;
         code = c;
 
         if (_rooms.TryGetValue(c, out var room))
         {
             lock (room)
             {
-                room.Members.Remove(connectionId);
-                opponentId = room.Members.FirstOrDefault();
+                room.Members.Remove(connection_id);
+                opponent_id = room.Members.FirstOrDefault();
                 roomEmpty = room.Members.Count == 0;
                 if (roomEmpty) _rooms.TryRemove(c, out _);
             }
         }
 
-        _names.TryRemove(connectionId, out _);
+        _names.TryRemove(connection_id, out _);
     }
 
     // Génère un code "humainement lisible" en utilisant un RNG cryptographique.

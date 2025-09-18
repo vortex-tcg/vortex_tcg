@@ -14,12 +14,12 @@ namespace VortexTCG.Auth.DTOs
         /// Adresse email de l’utilisateur.
         /// </summary>
         /// <example>john.doe@example.com</example>
-        public string Email { get; set; } = string.Empty;
+        public string email { get; set; } = string.Empty;
 
         /// <summary>
         /// Mot de passe de l’utilisateur.
         /// </summary>
         /// <example>Password1!</example>
-        public string Password { get; set; } = string.Empty;
+        public string password { get; set; } = string.Empty;
     }
 }

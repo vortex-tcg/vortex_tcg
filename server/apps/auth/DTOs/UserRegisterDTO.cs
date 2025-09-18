@@ -14,36 +14,36 @@ namespace VortexTCG.Auth.DTOs
         /// Prénom de l’utilisateur.
         /// </summary>
         /// <example>John</example>
-        public string FirstName { get; set; } = string.Empty;
+        public string first_name { get; set; } = string.Empty;
 
         /// <summary>
         /// Nom de famille de l’utilisateur.
         /// </summary>
         /// <example>Doe</example>
-        public string LastName { get; set; } = string.Empty;
+        public string last_name { get; set; } = string.Empty;
 
         /// <summary>
         /// Nom d’utilisateur choisi par l’utilisateur.
         /// </summary>
         /// <example>johndoe</example>
-        public string Username { get; set; } = string.Empty;
+        public string username { get; set; } = string.Empty;
 
         /// <summary>
         /// Adresse email de l’utilisateur.
         /// </summary>
         /// <example>john.doe@example.com</example>
-        public string Email { get; set; } = string.Empty;
+        public string email { get; set; } = string.Empty;
 
         /// <summary>
         /// Mot de passe choisi par l’utilisateur.
         /// </summary>
         /// <example>Password1!</example>
-        public string Password { get; set; } = string.Empty;
+        public string password { get; set; } = string.Empty;
 
         /// <summary>
         /// Confirmation du mot de passe pour vérification.
         /// </summary>
         /// <example>Password1!</example>
-        public string PasswordConfirmation { get; set; } = string.Empty;
+        public string password_confirmation { get; set; } = string.Empty;
     }
 }

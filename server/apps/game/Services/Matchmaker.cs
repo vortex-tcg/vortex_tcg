@@ -15,28 +15,28 @@ public class Matchmaker
 
     // Rooms logiques (GUID), pas des groupes SignalR: juste pour identifier un match 1v1.
     private readonly ConcurrentDictionary<string, (string p1, string p2)> _rooms = new();
-    private readonly ConcurrentDictionary<string, string> _connToRoom = new(); // map conn -> roomId (GUID)
+    private readonly ConcurrentDictionary<string, string> _conn_to_room = new(); // map conn -> roomId (GUID)
 
     private readonly object _lock = new(); // protège l'opération d'appairage
 
-    public void SetName(string connectionId, string? name)
-        => _names[connectionId] = name ?? $"Player-{connectionId[..5]}";
+    public void set_name(string connection_id, string? name)
+        => _names[connection_id] = name ?? $"Player-{connection_id[..5]}";
 
-    public string GetName(string connectionId)
-        => _names.TryGetValue(connectionId, out var n) ? n : $"Player-{connectionId[..5]}";
+    public string get_name(string connection_id)
+        => _names.TryGetValue(connection_id, out var n) ? n : $"Player-{connection_id[..5]}";
 
     // Ajoute le joueur dans la file, et tente immédiatement d'appairer 2 candidats valides.
-    public (bool matched, string? roomId, string? otherId) Enqueue(string connectionId)
+    public (bool matched, string? room_id, string? other_id) enqueue(string connection_id)
     {
         lock (_lock)
         {
-            _waiting[connectionId] = true;
-            _queue.Enqueue(connectionId);
+            _waiting[connection_id] = true;
+            _queue.Enqueue(connection_id);
 
-            string? p1 = DequeueValid();
+            string? p1 = dequeue_valid();
             if (p1 is null) return (false, null, null);
 
-            string? p2 = DequeueValid();
+            string? p2 = dequeue_valid();
             if (p2 is null)
             {
                 // Pas encore de deuxième joueur: on remet p1 en file.
@@ -46,56 +46,56 @@ public class Matchmaker
             }
 
             // Deux joueurs -> crée un match (roomId = GUID) et mappe les connexions.
-            var roomId = Guid.NewGuid().ToString("N");
-            _rooms[roomId] = (p1, p2);
-            _connToRoom[p1] = roomId;
-            _connToRoom[p2] = roomId;
+            var room_id = Guid.NewGuid().ToString("N");
+            _rooms[room_id] = (p1, p2);
+            _conn_to_room[p1] = room_id;
+            _conn_to_room[p2] = room_id;
 
-            return (true, roomId, p1 == connectionId ? p2 : p1);
+            return (true, room_id, p1 == connection_id ? p2 : p1);
         }
     }
 
     // Retire de la queue jusqu'à trouver un ConnectionId toujours marqué "en attente".
-    private string? DequeueValid()
+    private string? dequeue_valid()
     {
-        while (_queue.TryDequeue(out var cId))
+        while (_queue.TryDequeue(out var c_id))
         {
-            if (_waiting.TryRemove(cId, out _))
-                return cId;
+            if (_waiting.TryRemove(c_id, out _))
+                return c_id;
         }
         return null;
     }
 
-    public string? GetRoomId(string connectionId)
-        => _connToRoom.TryGetValue(connectionId, out var r) ? r : null;
+    public string? get_room_id(string connection_id)
+        => _conn_to_room.TryGetValue(connection_id, out var r) ? r : null;
 
     // Récupère l'adversaire + roomId du match actif d'un joueur, si existe.
-    public (string? opponentId, string? roomId) GetOpponent(string myConnectionId)
+    public (string? opponent_id, string? room_id) get_opponent(string my_connection_id)
     {
-        if (_connToRoom.TryGetValue(myConnectionId, out var roomId)
-            && _rooms.TryGetValue(roomId, out var pair))
+        if (_conn_to_room.TryGetValue(my_connection_id, out var room_id)
+            && _rooms.TryGetValue(room_id, out var pair))
         {
-            var opp = pair.p1 == myConnectionId ? pair.p2 : pair.p1;
-            return (opp, roomId);
+            var opp = pair.p1 == my_connection_id ? pair.p2 : pair.p1;
+            return (opp, room_id);
         }
         return (null, null);
     }
 
     // Nettoie tous les états quand un joueur quitte ou se déconnecte.
-    public void LeaveOrDisconnect(string connectionId)
+    public void leave_or_disconnect(string connection_id)
     {
-        _waiting.TryRemove(connectionId, out _);
+        _waiting.TryRemove(connection_id, out _);
 
-        if (_connToRoom.TryRemove(connectionId, out var roomId))
+        if (_conn_to_room.TryRemove(connection_id, out var room_id))
         {
-            if (_rooms.TryGetValue(roomId, out var pair))
+            if (_rooms.TryGetValue(room_id, out var pair))
             {
-                var opp = pair.p1 == connectionId ? pair.p2 : pair.p1;
-                _connToRoom.TryRemove(opp, out _); // l'adversaire est "libéré"
+                var opp = pair.p1 == connection_id ? pair.p2 : pair.p1;
+                _conn_to_room.TryRemove(opp, out _); // l'adversaire est "libéré"
             }
-            _rooms.TryRemove(roomId, out _);
+            _rooms.TryRemove(room_id, out _);
         }
 
-        _names.TryRemove(connectionId, out _);
+        _names.TryRemove(connection_id, out _);
     }
 }

@@ -20,7 +20,7 @@ namespace VortexTCG.Auth.Controllers;
 [Route("api/auth/[controller]")]
 public class LoginController : ControllerBase
 {
-    private readonly VortexDbContext _db;
+    private readonly VortexDbContext _db_context;
     private readonly IConfiguration _configuration;
 
     /// <summary>
@@ -28,9 +28,9 @@ public class LoginController : ControllerBase
     /// </summary>
     /// <param name="db">Le contexte de base de données injecté.</param>
     /// <param name="configuration">La configuration de l’application (utilisée pour la clé JWT).</param>
-    public LoginController(VortexDbContext db, IConfiguration configuration)
+    public LoginController(VortexDbContext db_context, IConfiguration configuration)
     {
-        _db = db;
+        _db_context = db_context;
         _configuration = configuration;
     }
 
@@ -46,79 +46,79 @@ public class LoginController : ControllerBase
     /// </list>
     /// </returns>
     [HttpPost]
-    public async Task<IActionResult> Login([FromBody] UserLoginDTO request)
+    public async Task<IActionResult> login([FromBody] UserLoginDTO request)
     {
         // Vérification basique des champs obligatoires
-        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+        if (string.IsNullOrWhiteSpace(request.email) || string.IsNullOrWhiteSpace(request.password))
         {
             return BadRequest(new { error = "Email ou mot de passe sont requis." });
         }
 
         // Recherche de l’utilisateur correspondant à l’email
-        var user = await _db.Users
+        var user = await _db_context.Users
             .Include(u => u.Role) // On charge également le rôle pour la réponse
-            .SingleOrDefaultAsync(u => u.Email == request.Email);
+            .SingleOrDefaultAsync(u => u.Email == request.email);
 
         if (user == null)
             return Unauthorized(new { error = "Identifiants invalides." });
 
-        var encoder = new ScryptEncoder();
-        bool passwordMatches;
+        var scrypt_encoder = new ScryptEncoder();
+        bool password_matches;
 
         try
         {
             // Vérification du mot de passe fourni avec le hash stocké
-            passwordMatches = encoder.Compare(request.Password, user.Password);
+            password_matches = scrypt_encoder.Compare(request.password, user.Password);
         }
         catch
         {
             // En cas de problème avec la comparaison, on considère le mot de passe invalide
-            passwordMatches = false;
+            password_matches = false;
         }
 
-        if (!passwordMatches)
+        if (!password_matches)
             return Unauthorized(new { error = "Identifiants invalides." });
 
         // Génération du token JWT
-        var token = GenerateAccessToken(user.Username);
+        var jwt_token = generateAccessToken(user.Username);
 
         // Préparation de la réponse normalisée
-        var response = new UserResponseDTO
+        var response_dto = new UserResponseDTO
         {
-            Id = user.Id,
-            Username = user.Username,
-            Token = new JwtSecurityTokenHandler().WriteToken(token),
-            Role = user.Role?.Label ?? "User" // Retourne le label du rôle (ex: "User", "Admin")
+            id = user.Id,
+            username = user.Username,
+            token = new JwtSecurityTokenHandler().WriteToken(jwt_token),
+            role = user.Role?.Label ?? "User" // Retourne le label du rôle (ex: "User", "Admin")
         };
 
-        return Ok(response);
+        return Ok(response_dto);
     }
 
     /// <summary>
     /// Génère un jeton JWT pour un utilisateur donné.
     /// </summary>
-    /// <param name="userName">Nom d’utilisateur (inclus comme claim dans le token).</param>
+    /// <param name="user_name">Nom d’utilisateur (inclus comme claim dans le token).</param>
     /// <returns>Un objet <see cref="JwtSecurityToken"/> signé et valide.</returns>
     /// <exception cref="InvalidOperationException">Si la clé secrète JWT n’est pas configurée.</exception>
-    private JwtSecurityToken GenerateAccessToken(string userName)
+    private JwtSecurityToken generateAccessToken(string user_name)
     {
         // Définition des informations (claims) contenues dans le token
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, userName)
+            new Claim(ClaimTypes.Name, user_name)
         };
 
         // Récupération de la clé secrète depuis la configuration
-        var secretKey = _configuration["JwtSettings:SecretKey"];
-        if (string.IsNullOrEmpty(secretKey))
+        var secret_key = _configuration["JwtSettings:SecretKey"];
+        if (string.IsNullOrEmpty(secret_key))
             throw new InvalidOperationException("JWT SecretKey is not configured.");
 
-        var key = Encoding.UTF8.GetBytes(secretKey);
+        var key_bytes = Encoding.UTF8.GetBytes(secret_key);
 
         // Construction du token avec une durée de validité de 2 heures
         return new JwtSecurityToken(
             claims: claims,
-            signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256),
+            signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key_bytes), SecurityAlgorithms.HmacSha256),
             expires: DateTime.UtcNow.AddHours(2)
         );
     }
