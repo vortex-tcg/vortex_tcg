@@ -16,7 +16,6 @@ namespace CollectionCards.Controllers
     {
         private readonly VortexDbContext _context;
 
-
         /// <summary>
         /// Initialise une nouvelle instance de la classe <see cref="ControllerCards"/>.
         /// </summary>
@@ -25,7 +24,6 @@ namespace CollectionCards.Controllers
         {
             _context = context;
         }
-
 
         /// <summary>
         /// Récupère toutes les cartes de la base de données.
@@ -47,7 +45,7 @@ namespace CollectionCards.Controllers
                     Cost = c.Cost,
                     Description = c.Description,
                     Picture = c.Picture,
-                    Effect_active = c.Effect_active, 
+                    Effect_active = c.Effect_active,
                     CardTypeId = c.CardTypeId,
                     RarityId = c.RarityId,
                     ExtensionId = c.ExtensionId,
@@ -57,7 +55,6 @@ namespace CollectionCards.Controllers
 
             return Ok(cards);
         }
-
 
         /// <summary>
         /// Récupère une carte spécifique par son identifiant.
@@ -96,7 +93,6 @@ namespace CollectionCards.Controllers
 
             return Ok(card);
         }
-
 
         /// <summary>
         /// Crée une nouvelle carte dans la base de données.
@@ -146,12 +142,10 @@ namespace CollectionCards.Controllers
                 .Include(c => c.Extension)
                 .FirstOrDefaultAsync(c => c.Id == card.Id);
 
-
             if (cardWithRelations == null)
             {
                 return StatusCode(500, new { message = "Unable to retrieve the created card" });
             }
-
 
             var cardDto = new CardDTO
             {
@@ -171,7 +165,6 @@ namespace CollectionCards.Controllers
 
             return CreatedAtAction(nameof(GetCard), new { id = card.Id }, cardDto);
         }
-
 
         /// <summary>
         /// Met à jour une carte existante dans la base de données.
@@ -220,7 +213,6 @@ namespace CollectionCards.Controllers
             return NoContent();
         }
 
-
         /// <summary>
         /// Supprime une carte de la base de données.
         /// </summary>
@@ -240,7 +232,6 @@ namespace CollectionCards.Controllers
 
             return NoContent();
         }
-
 
         /// <summary>
         /// Recherche des cartes en fonction de filtres optionnels.
