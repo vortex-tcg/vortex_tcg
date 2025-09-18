@@ -4,7 +4,7 @@ WORKDIR /workspace
 
 COPY . .
 
-WORKDIR /workspace/apps/auth
+WORKDIR /workspace/server/apps/auth
 
 RUN dotnet restore
 # Install the deps

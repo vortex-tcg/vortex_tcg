@@ -1,30 +1,22 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using System;
 
-namespace VortexTCG.DataAccess
+using VortexTCG.DataAccess;
+
+public class VortexDbContextFactory : IDesignTimeDbContextFactory<VortexDbContext>
 {
-    public class VortexDbContextFactory : IDesignTimeDbContextFactory<VortexDbContext>
+    public VortexDbContext CreateDbContext(string[] args)
     {
-        public VortexDbContext CreateDbContext(string[] args)
-        {
-            DotNetEnv.Env.Load("../../.env");
-            
-            // Récupérer les variables d'environnement
-            var server = Environment.GetEnvironmentVariable("DB_HOST");
-            var port = Environment.GetEnvironmentVariable("DB_PORT");
-            var database = Environment.GetEnvironmentVariable("DB_NAME");
-            var username = Environment.GetEnvironmentVariable("DB_USERNAME");
-            var password = Environment.GetEnvironmentVariable("DB_PASSWORD");
+        var optionsBuilder = new DbContextOptionsBuilder<VortexDbContext>();
+        
+        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") 
+                               ?? "Server=db;Database=vortex_design;User=root;Password=;";
 
-            // Construire la connection string
-            var connectionString = $"Server={server};Port={port};Database={database};User={username};Password={password};";
+        optionsBuilder.UseMySql(
+            connectionString,
+            ServerVersion.Parse("11.4.5-mariadb")
+        );
 
-            var optionsBuilder = new DbContextOptionsBuilder<VortexDbContext>();
-            optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
-
-            // Pour la factory, IHttpContextAccessor peut être null
-            return new VortexDbContext(optionsBuilder.Options, httpContextAccessor: null);
-        }
+        return new VortexDbContext(optionsBuilder.Options);
     }
 }

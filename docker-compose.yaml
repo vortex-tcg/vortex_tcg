@@ -2,7 +2,7 @@ services:
   auth:
     build:
       context: .
-      dockerfile: ./apps/auth/Dockerfile
+      dockerfile: ./server/apps/auth/Dockerfile
     env_file:
       - .env
     environment:
@@ -11,19 +11,20 @@ services:
       - ConnectionStrings__DefaultConnection=Server=db;Database=vortexdb;User=${DB_USERNAME};Password=${DB_PASSWORD};
     ports:
       - "${AUTH_PORT}:5238"
+    working_dir: 
+      /workspace/server/apps/auth
     volumes:
-      - .:/workspace                      
-      - /workspace/apps/auth/obj
-      - /workspace/apps/auth/bin
-    working_dir: /workspace/apps/auth
+      - .:/workspace
+      - /workspace/server/apps/auth/obj
+      - /workspace/server/apps/auth/bin
     depends_on:
-      - game
-      - db
+      db:
+        condition: service_healthy
       
   game:
     build: 
       context: .
-      dockerfile: ./apps/game/Dockerfile
+      dockerfile: ./server/apps/game/Dockerfile
     env_file:
       - .env
     environment:
@@ -32,13 +33,14 @@ services:
       - ConnectionStrings__DefaultConnection=Server=db;Database=vortexdb;User=${DB_USERNAME};Password=${DB_PASSWORD};
     ports: 
       - "${GAME_PORT}:8000"
+    working_dir: /workspace/server/apps/game
     volumes:
-      - .:/workspace  
-      - /workspace/apps/game/obj
-      - /workspace/apps/game/bin
-    working_dir: /workspace/apps/game
+      - .:/workspace
+      - /workspace/server/apps/game/obj
+      - /workspace/server/apps/game/bin
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     
     # Working_dir define the dir where commands will be execute
     # Remove bin / obj from the working dir to avoid potential errors
@@ -57,6 +59,13 @@ services:
       - "${DB_PORT}:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
+      - ./grant-user.sh:/docker-entrypoint-initdb.d/create-user.sh
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
     
   adminer: 
     image: adminer

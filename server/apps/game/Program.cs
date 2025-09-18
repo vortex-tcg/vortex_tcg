@@ -57,8 +57,8 @@ var finalConnStr = replacedConfig.GetConnectionString("DefaultConnection");
 // Enregistre le DbContext EF Core MySQL
 builder.Services.AddDbContext<VortexDbContext>(options =>
     options.UseMySql(
-        finalConnStr,
-        ServerVersion.AutoDetect(finalConnStr)
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
     ));
 
 var app = builder.Build();
@@ -134,3 +134,10 @@ static IConfiguration ReplacePlaceholders(IConfiguration config)
         .AddInMemoryCollection(dict)
         .Build();
 }
+
+builder.Services.AddDbContext<VortexDbContext>(options =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 0)),
+        mySqlOptions => mySqlOptions.MigrationsAssembly("DataAccess"));
+});
