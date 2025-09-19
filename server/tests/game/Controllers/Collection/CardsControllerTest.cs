@@ -21,7 +21,7 @@ namespace Tests
         /// Crée un contexte de base de données en mémoire pour les tests.
         /// </summary>
         /// <returns>Une instance de <see cref="VortexDbContext"/> configurée pour utiliser une base de données en mémoire.</returns>
-        private VortexDbContext GetInMemoryDbContext()
+        private VortexDbContext get_in_memory_db_context()
         {
             var options = new DbContextOptionsBuilder<VortexDbContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
@@ -34,12 +34,11 @@ namespace Tests
         /// Teste si la méthode <see cref="CardsController.GetCards"/> retourne toutes les cartes.
         /// </summary>
         [Fact]
-        public async Task GetCards_ShouldReturnCardList()
+        public async Task getCardsShouldReturnCardList()
         {
             // Arrange
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
-            // Envoyer des données de test dans la base de données en mémoire
             db.Cards.AddRange(new List<Card>
             {
                 new Card
@@ -73,12 +72,11 @@ namespace Tests
             });
             await db.SaveChangesAsync();
 
-
             // Act
             var controller = new CardsController(db);
-            var result = await controller.GetCards();
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var cards = Assert.IsType<List<CardDTO>>(okResult.Value);
+            var result = await controller.getCards();
+            var ok_result = Assert.IsType<OkObjectResult>(result.Result);
+            var cards = Assert.IsType<List<CardDTO>>(ok_result.Value);
             Assert.Equal(2, cards.Count);
         }
 
@@ -86,14 +84,14 @@ namespace Tests
         /// Teste si la méthode <see cref="CardsController.GetCards"/> retourne une liste vide lorsque aucune carte n'existe.
         /// </summary>
         [Fact]
-        public async Task GetCards_ShouldReturnNotFound_WhenNoCardsExist()
+        public async Task getCards_shouldReturnNotFound_whenNoCardsExist()
         {
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
             var controller = new CardsController(db);
-            var result = await controller.GetCards();
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var payload = okResult.Value?.ToString();
+            var result = await controller.getCards();
+            var ok_result = Assert.IsType<OkObjectResult>(result.Result);
+            var payload = ok_result.Value?.ToString();
             Assert.NotNull(payload);
             Assert.Contains("Aucune carte trouvée", payload);
         }
@@ -102,9 +100,9 @@ namespace Tests
         /// Teste si la méthode <see cref="CardsController.GetCard"/> retourne une carte spécifique par son identifiant.
         /// </summary>
         [Fact]
-        public async Task GetCardById_ShouldReturnCard()
+        public async Task getCardById_shouldReturnCard()
         {
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
             db.Cards.Add(
                 new Card
@@ -124,24 +122,24 @@ namespace Tests
             await db.SaveChangesAsync();
 
             var controller = new CardsController(db);
-            var actionResult = await controller.GetCard(1);
-            var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
-            var card = Assert.IsType<CardDTO>(okResult.Value);
+            var actionResult = await controller.getCard(1);
+            var ok_result = Assert.IsType<OkObjectResult>(actionResult.Result);
+            var card = Assert.IsType<CardDTO>(ok_result.Value);
             Assert.NotNull(card);
-            Assert.Equal("Test Card", card.Name);
-            Assert.Equal(10, card.Hp);
+            Assert.Equal("Test Card", card.name);
+            Assert.Equal(10, card.hp);
         }
 
         /// <summary>
         /// Teste si la méthode <see cref="CardsController.GetCard"/> retourne une erreur 404 lorsque l'identifiant est invalide.
         /// </summary>
         [Fact]
-        public async Task GetCardById_ShouldReturnNotFound()
+        public async Task getCardById_shouldReturnNotFound()
         {
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
             var controller = new CardsController(db);
-            var actionResult = await controller.GetCard(1);
+            var actionResult = await controller.getCard(1);
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult.Result);
             var payload = notFoundResult.Value?.ToString();
             Assert.NotNull(payload);
@@ -152,9 +150,9 @@ namespace Tests
         /// Teste si la méthode <see cref="CardsController.CreateCard"/> crée une carte valide et retourne ses détails.
         /// </summary>
         [Fact]
-        public async Task CreateCard_WithValidData_ReturnsCreatedWithCard()
+        public async Task createCard_withValidData_returnsCreatedWithCard()
         {
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
             db.CardTypes.Add(new CardType { Id = 1, Label = "Creature" });
             db.Rarities.Add(new Rarity { Id = 1, Label = "Common" });
@@ -163,35 +161,35 @@ namespace Tests
 
             var newCard = new CreateCardDTO
             {
-                Name = "New Card",
-                Hp = 20,
-                Attack = 10,
-                Cost = 5,
-                Description = "A new test card",
-                Picture = "newcard.png",
-                Effect_active = 1,
-                CardTypeId = 1,
-                RarityId = 1,
-                ExtensionId = 1
+                name = "New Card",
+                hp = 20,
+                attack = 10,
+                cost = 5,
+                description = "A new test card",
+                picture = "newcard.png",
+                effect_active = 1,
+                card_type_id = 1,
+                rarity_id = 1,
+                extension_id = 1
             };
 
             var controller = new CardsController(db);
-            var actionResult = await controller.CreateCard(newCard);
+            var actionResult = await controller.createCard(newCard);
             var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
-            var createdCard = Assert.IsType<CardDTO>(createdAtActionResult.Value);
+            var created_card = Assert.IsType<CardDTO>(createdAtActionResult.Value);
 
-            Assert.NotNull(createdCard);
-            Assert.Equal("New Card", createdCard.Name);
-            Assert.Equal(20, createdCard.Hp);
+            Assert.NotNull(created_card);
+            Assert.Equal("New Card", created_card.name);
+            Assert.Equal(20, created_card.hp);
         }
 
         /// <summary>
         /// Teste si la méthode <see cref="CardsController.CreateCard"/> retourne une erreur 400 pour des données invalides.
         /// </summary>
         [Fact]
-        public async Task CreateCard_WithInvalidData_ReturnsBadRequest()
+        public async Task createCard_withInvalidData_returnsBadRequest()
         {
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
             db.CardTypes.Add(new CardType { Id = 1, Label = "Creature" });
             db.Rarities.Add(new Rarity { Id = 1, Label = "Common" });
@@ -200,34 +198,34 @@ namespace Tests
 
             var invalidCard = new CreateCardDTO
             {
-                Name = "",
-                Hp = -10,
-                Attack = 5,
-                Cost = 5,
-                Description = "A new test card",
-                Picture = "newcard.png",
-                Effect_active = 1,
-                CardTypeId = 1,
-                RarityId = 1,
-                ExtensionId = 1
+                name = "",
+                hp = -10,
+                attack = 5,
+                cost = 5,
+                description = "A new test card",
+                picture = "newcard.png",
+                effect_active = 1,
+                card_type_id = 1,
+                rarity_id = 1,
+                extension_id = 1
             };
 
             var controller = new CardsController(db);
-            controller.ModelState.AddModelError("Name", "Le nom est requis.");
-            controller.ModelState.AddModelError("Hp", "Hp doit être entre 0 et 100.");
+            controller.ModelState.AddModelError("name", "Le nom est requis.");
+            controller.ModelState.AddModelError("hp", "Hp doit être entre 0 et 100.");
 
-            var actionResult = await controller.CreateCard(invalidCard);
+            var actionResult = await controller.createCard(invalidCard);
 
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult.Result);
             var modelState = Assert.IsType<SerializableError>(badRequestResult.Value);
 
-            Assert.True(modelState.ContainsKey("Name"));
-            var nameErrors = modelState["Name"] as string[];
+            Assert.True(modelState.ContainsKey("name"));
+            var nameErrors = modelState["name"] as string[];
             Assert.NotNull(nameErrors);
             Assert.Contains("Le nom est requis.", nameErrors);
 
-            Assert.True(modelState.ContainsKey("Hp"));
-            var hpErrors = modelState["Hp"] as string[];
+            Assert.True(modelState.ContainsKey("hp"));
+            var hpErrors = modelState["hp"] as string[];
             Assert.NotNull(hpErrors);
             Assert.Contains("Hp doit être entre 0 et 100.", hpErrors);
 
@@ -237,9 +235,9 @@ namespace Tests
         /// Teste si la méthode <see cref="CardsController.CreateCard"/> retourne une erreur 400 pour des clés étrangères invalides.
         /// </summary>
         [Fact]
-        public async Task CreateCard_WithInvalidForeignKey_ReturnsBadRequest()
+        public async Task createCard_withInvalidForeignKey_returnsBadRequest()
         {
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
             db.CardTypes.Add(new CardType { Id = 1, Label = "Creature" });
             db.Rarities.Add(new Rarity { Id = 1, Label = "Common" });
@@ -248,14 +246,14 @@ namespace Tests
 
             var newCard = new CreateCardDTO
             {
-                Name = "Test",
-                CardTypeId = 99,
-                RarityId = 99,
-                ExtensionId = 99
+                name = "Test",
+                card_type_id = 99,
+                rarity_id = 99,
+                extension_id = 99
             };
 
             var controller = new CardsController(db);
-            var actionResult = await controller.CreateCard(newCard);
+            var actionResult = await controller.createCard(newCard);
 
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult.Result);
             var payload = badRequestResult.Value?.ToString();
@@ -267,9 +265,9 @@ namespace Tests
         /// Teste si la méthode <see cref="CardsController.UpdateCard"/> met à jour une carte existante avec des données valides.
         /// </summary>
         [Fact]
-        public async Task UpdateCard_WithValidData_ReturnUpdatedCard()
+        public async Task updateCard_withValidData_returnUpdatedCard()
         {
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
             db.CardTypes.Add(new CardType { Id = 1, Label = "Creature" });
             db.Rarities.Add(new Rarity { Id = 1, Label = "Common" });
@@ -293,20 +291,20 @@ namespace Tests
 
             var updateCard = new UpdateCardDTO
             {
-                Name = "Updated Card",
-                Hp = 30,
-                Attack = 15,
-                Cost = 7,
-                Description = "An updated test card",
-                Picture = "updatedcard.png",
-                Effect_active = 2,
-                CardTypeId = 1,
-                RarityId = 1,
-                ExtensionId = 1
+                name = "Updated Card",
+                hp = 30,
+                attack = 15,
+                cost = 7,
+                description = "An updated test card",
+                picture = "updatedcard.png",
+                effect_active = 2,
+                card_type_id = 1,
+                rarity_id = 1,
+                extension_id = 1
             };
 
             var controller = new CardsController(db);
-            var actionResult = await controller.UpdateCard(1, updateCard);
+            var actionResult = await controller.updateCard(1, updateCard);
 
             Assert.IsType<NoContentResult>(actionResult);
 
@@ -320,9 +318,9 @@ namespace Tests
         /// Teste si la méthode <see cref="CardsController.UpdateCard"/> retourne une erreur 404 pour un identifiant inexistant.
         /// </summary>
         [Fact]
-        public async Task UpdateCard_WithNonExistentId_ReturnsNotFound()
+        public async Task updateCard_withNonExistentId_returnsNotFound()
         {
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
             db.CardTypes.Add(new CardType { Id = 1, Label = "Creature" });
             db.Rarities.Add(new Rarity { Id = 1, Label = "Common" });
@@ -346,20 +344,20 @@ namespace Tests
 
             var updateCard = new UpdateCardDTO
             {
-                Name = "Updated Card",
-                Hp = 30,
-                Attack = 15,
-                Cost = 7,
-                Description = "An updated test card",
-                Picture = "updatedcard.png",
-                Effect_active = 2,
-                CardTypeId = 1,
-                RarityId = 1,
-                ExtensionId = 1
+                name = "Updated Card",
+                hp = 30,
+                attack = 15,
+                cost = 7,
+                description = "An updated test card",
+                picture = "updatedcard.png",
+                effect_active = 2,
+                card_type_id = 1,
+                rarity_id = 1,
+                extension_id = 1
             };
 
             var controller = new CardsController(db);
-            var actionResult = await controller.UpdateCard(5, updateCard);
+            var actionResult = await controller.updateCard(5, updateCard);
 
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult);
             var payload = notFoundResult.Value?.ToString();
@@ -377,9 +375,9 @@ namespace Tests
         /// Teste si la méthode <see cref="CardsController.UpdateCard"/> retourne une erreur 400 pour des données invalides.
         /// </summary>
         [Fact]
-        public async Task UpdateCard_WithInvalidData_ReturnBadRequest()
+        public async Task updateCard_withInvalidData_returnBadRequest()
         {
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
             db.CardTypes.Add(new CardType { Id = 1, Label = "Creature" });
             db.Rarities.Add(new Rarity { Id = 1, Label = "Common" });
@@ -403,34 +401,34 @@ namespace Tests
 
             var invalidUpdateCard = new UpdateCardDTO
             {
-                Name = "",
-                Hp = -30,
-                Attack = 15,
-                Cost = 7,
-                Description = "An updated test card",
-                Picture = "",
-                Effect_active = 2,
-                CardTypeId = 1,
-                RarityId = 1,
-                ExtensionId = 1
+                name = "",
+                hp = -30,
+                attack = 15,
+                cost = 7,
+                description = "An updated test card",
+                picture = "",
+                effect_active = 2,
+                card_type_id = 1,
+                rarity_id = 1,
+                extension_id = 1
             };
 
             var controller = new CardsController(db);
-            controller.ModelState.AddModelError("Name", "Le nom est requis.");
-            controller.ModelState.AddModelError("Picture", "Picture doit être une URL valide.");
+            controller.ModelState.AddModelError("name", "Le nom est requis.");
+            controller.ModelState.AddModelError("picture", "Picture doit être une URL valide.");
 
-            var actionResult = await controller.UpdateCard(1, invalidUpdateCard);
+            var actionResult = await controller.updateCard(1, invalidUpdateCard);
 
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult);
             var modelState = Assert.IsType<SerializableError>(badRequestResult.Value);
 
-            Assert.True(modelState.ContainsKey("Name"));
-            var nameErrors = modelState["Name"] as string[];
+            Assert.True(modelState.ContainsKey("name"));
+            var nameErrors = modelState["name"] as string[];
             Assert.NotNull(nameErrors);
             Assert.Contains("Le nom est requis.", nameErrors);
 
-            Assert.True(modelState.ContainsKey("Picture"));
-            var pictureErrors = modelState["Picture"] as string[];
+            Assert.True(modelState.ContainsKey("picture"));
+            var pictureErrors = modelState["picture"] as string[];
             Assert.NotNull(pictureErrors);
             Assert.Contains("Picture doit être une URL valide.", pictureErrors);
 
@@ -445,9 +443,9 @@ namespace Tests
         /// Teste si la méthode <see cref="CardsController.UpdateCard"/> retourne une erreur 400 pour des clés étrangères invalides.
         /// </summary>
         [Fact]
-        public async Task UpdateCard_WithInvalidForeignKey_ReturnsBadRequest()
+        public async Task updateCard_withInvalidForeignKey_returnsBadRequest()
         {
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
             db.CardTypes.Add(new CardType { Id = 1, Label = "Creature" });
             db.Rarities.Add(new Rarity { Id = 1, Label = "Common" });
@@ -471,13 +469,13 @@ namespace Tests
             var controller = new CardsController(db);
             var updatedCard = new UpdateCardDTO
             {
-                Name = "Updated",
-                CardTypeId = 99,
-                RarityId = 99,
-                ExtensionId = 99
+                name = "Updated",
+                card_type_id = 99,
+                rarity_id = 99,
+                extension_id = 99
             };
 
-            var result = await controller.UpdateCard(1, updatedCard);
+            var result = await controller.updateCard(1, updatedCard);
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
             Assert.NotNull(badRequestResult.Value);
             var payload = badRequestResult.Value?.ToString();
@@ -489,9 +487,9 @@ namespace Tests
         /// Teste si la méthode <see cref="CardsController.DeleteCard"/> supprime une carte existante avec un identifiant valide.
         /// </summary>
         [Fact]
-        public async Task DeleteCard_WithValidId_ReturnsNoContent()
+        public async Task deleteCard_withValidId_returnsNoContent()
         {
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
             db.CardTypes.Add(new CardType { Id = 1, Label = "Creature" });
             db.Rarities.Add(new Rarity { Id = 1, Label = "Common" });
@@ -513,7 +511,7 @@ namespace Tests
             await db.SaveChangesAsync();
 
             var controller = new CardsController(db);
-            var actionResult = await controller.DeleteCard(1);
+            var actionResult = await controller.deleteCard(1);
 
             Assert.IsType<NoContentResult>(actionResult);
 
@@ -525,9 +523,9 @@ namespace Tests
         /// Teste si la méthode <see cref="CardsController.DeleteCard"/> retourne une erreur 404 pour un identifiant inexistant.
         /// </summary>
         [Fact]
-        public async Task DeleteCard_WithNonExistentId_ReturnsNotFound()
+        public async Task deleteCard_withNonExistentId_returnsNotFound()
         {
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
             db.CardTypes.Add(new CardType { Id = 1, Label = "Creature" });
             db.Rarities.Add(new Rarity { Id = 1, Label = "Common" });
@@ -549,7 +547,7 @@ namespace Tests
             await db.SaveChangesAsync();
 
             var controller = new CardsController(db);
-            var actionResult = await controller.DeleteCard(5);
+            var actionResult = await controller.deleteCard(5);
 
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult);
             var payload = notFoundResult.Value?.ToString();
@@ -565,9 +563,9 @@ namespace Tests
         /// Teste si la méthode <see cref="CardsController.SearchCards"/> retourne les cartes correspondant à un nom donné.
         /// </summary>
         [Fact]
-        public async Task SearchCards_ByName_ReturnsMatchingCards()
+        public async Task searchCards_byName_returnsMatchingCards()
         {
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
             db.CardTypes.Add(new CardType { Id = 1, Label = "Creature" });
             db.Rarities.Add(new Rarity { Id = 1, Label = "Common" });
@@ -618,23 +616,23 @@ namespace Tests
             await db.SaveChangesAsync();
 
             var controller = new CardsController(db);
-            var actionResult = await controller.SearchCards(name: "Dragon", cardTypeId: null, rarityId: null);
+            var actionResult = await controller.searchCards(name: "Dragon", card_type_id: null, rarity_id: null);
 
-            var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
-            var cards = Assert.IsAssignableFrom<IEnumerable<CardDTO>>(okResult.Value);
+            var ok_result = Assert.IsType<OkObjectResult>(actionResult.Result);
+            var cards = Assert.IsAssignableFrom<IEnumerable<CardDTO>>(ok_result.Value);
 
             Assert.NotNull(cards);
             Assert.Equal(2, cards.Count());
-            Assert.All(cards, c => Assert.Contains("Dragon", c.Name));
+            Assert.All(cards, c => Assert.Contains("Dragon", c.name));
         }
 
         /// <summary>
         /// Teste si la méthode <see cref="CardsController.SearchCards"/> retourne les cartes correspondant à plusieurs paramètres de recherche.
         /// </summary>
         [Fact]
-        public async Task SearchCards_WithMultipleParameters_ReturnsFilteredCards()
+        public async Task searchCards_withMultipleParameters_returnsFilteredCards()
         {
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
             db.CardTypes.AddRange(new CardType { Id = 1, Label = "Creature" });
             db.Rarities.AddRange(new Rarity { Id = 1, Label = "Common" }, new Rarity { Id = 2, Label = "Rare" });
@@ -671,24 +669,24 @@ namespace Tests
             await db.SaveChangesAsync();
 
             var controller = new CardsController(db);
-            var actionResult = await controller.SearchCards(name: "Dragon", cardTypeId: 1, rarityId: 2);
+            var actionResult = await controller.searchCards(name: "Dragon", card_type_id: 1, rarity_id: 2);
 
-            var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
-            var cards = Assert.IsAssignableFrom<IEnumerable<CardDTO>>(okResult.Value);
+            var ok_result = Assert.IsType<OkObjectResult>(actionResult.Result);
+            var cards = Assert.IsAssignableFrom<IEnumerable<CardDTO>>(ok_result.Value);
 
             Assert.NotNull(cards);
             var cardList = cards.ToList();
-            Assert.Single(cardList); // Assurer que une seule carte correspond
-            Assert.Equal("Dragon Rider", cardList.First().Name);
+            Assert.Single(cardList);
+            Assert.Equal("Dragon Rider", cardList.First().name);
         }
 
         /// <summary>
         /// Teste si la méthode <see cref="CardsController.SearchCards"/> retourne une liste vide lorsqu'aucune carte ne correspond.
         /// </summary>
         [Fact]
-        public async Task SearchCards_WithNoMatches_ReturnsEmptyList()
+        public async Task searchCards_withNoMatches_returnsEmptyList()
         {
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
             db.CardTypes.Add(new CardType { Id = 1, Label = "Creature" });
             db.Rarities.Add(new Rarity { Id = 1, Label = "Common" });
@@ -725,10 +723,10 @@ namespace Tests
             await db.SaveChangesAsync();
 
             var controller = new CardsController(db);
-            var actionResult = await controller.SearchCards(name: "Wizard", cardTypeId: null, rarityId: null);
+            var actionResult = await controller.searchCards(name: "Wizard", card_type_id: null, rarity_id: null);
 
-            var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
-            var cards = Assert.IsAssignableFrom<IEnumerable<CardDTO>>(okResult.Value);
+            var ok_result = Assert.IsType<OkObjectResult>(actionResult.Result);
+            var cards = Assert.IsAssignableFrom<IEnumerable<CardDTO>>(ok_result.Value);
 
             Assert.NotNull(cards);
             Assert.Empty(cards);
@@ -738,9 +736,9 @@ namespace Tests
         /// Teste si la méthode <see cref="CardsController.SearchCards"/> retourne toutes les cartes lorsqu'aucun paramètre n'est fourni.
         /// </summary>
         [Fact]
-        public async Task SearchCards_WithNoParameters_ReturnsAllCards()
+        public async Task searchCards_withNoParameters_returnsAllCards()
         {
-            var db = GetInMemoryDbContext();
+            var db = get_in_memory_db_context();
 
             db.CardTypes.Add(new CardType { Id = 1, Label = "Creature" });
             db.Rarities.Add(new Rarity { Id = 1, Label = "Common" });
@@ -777,10 +775,10 @@ namespace Tests
             await db.SaveChangesAsync();
 
             var controller = new CardsController(db);
-            var actionResult = await controller.SearchCards(name: null, cardTypeId: null, rarityId: null);
+            var actionResult = await controller.searchCards(name: null, card_type_id: null, rarity_id: null);
 
-            var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
-            var cards = Assert.IsAssignableFrom<IEnumerable<CardDTO>>(okResult.Value);
+            var ok_result = Assert.IsType<OkObjectResult>(actionResult.Result);
+            var cards = Assert.IsAssignableFrom<IEnumerable<CardDTO>>(ok_result.Value);
 
             Assert.NotNull(cards);
             Assert.Equal(2, cards.Count());

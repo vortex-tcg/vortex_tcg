@@ -8,61 +8,61 @@ namespace VortexTCG.Cards.DTOs
         /// <summary>
         /// Identifiant unique de la carte.
         /// </summary>
-        public int Id { get; set; }
+        public int id { get; set; }
 
         /// <summary>
         /// Nom de la carte.
         /// </summary>
-        public string Name { get; set; } = string.Empty;
+        public string name { get; set; } = string.Empty;
 
         /// <summary>
         /// Points de vie de la carte.
         /// </summary>
-        public int Hp { get; set; }
+        public int hp { get; set; }
 
         /// <summary>
         /// Points d'attaque de la carte.
         /// </summary>
-        public int Attack { get; set; }
+        public int attack { get; set; }
 
         /// <summary>
         /// Coût de la carte.
         /// </summary>
-        public int Cost { get; set; }
+        public int cost { get; set; }
 
         /// <summary>
         /// Description de la carte.
         /// </summary>
-        public string Description { get; set; } = string.Empty;
+        public string description { get; set; } = string.Empty;
 
         /// <summary>
         /// URL de l'image associée à la carte.
         /// </summary>
-        public string Picture { get; set; } = string.Empty;
+        public string picture { get; set; } = string.Empty;
 
         /// <summary>
         /// Indique si un effet est actif sur la carte.
         /// </summary>
-        public int Effect_active { get; set; }
+        public int effect_active { get; set; }
 
         /// <summary>
         /// Identifiant du type de carte.
         /// </summary>
-        public int CardTypeId { get; set; }
+        public int card_type_id { get; set; }
 
         /// <summary>
         /// Identifiant de la rareté de la carte.
         /// </summary>
-        public int RarityId { get; set; }
+        public int rarity_id { get; set; }
 
         /// <summary>
         /// Identifiant de l'extension de la carte.
         /// </summary>
-        public int ExtensionId { get; set; }
+        public int extension_id { get; set; }
 
         /// <summary>
         /// Date de création de la carte.
         /// </summary>
-        public DateTime CreatedAt { get; set; }
+        public DateTime created_at { get; set; }
     }
 }
