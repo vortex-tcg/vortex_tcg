@@ -2,25 +2,25 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
-using Collection.DTOs;
+using VortexTCG.Cards.DTOs;
 
 
-namespace CollectionCards.Controllers
+namespace VortexTCG.Cards.Controllers
 {
     /// <summary>
     /// Contrôleur pour gérer les opérations liées aux cartes.
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
-    public class ControllerCards : ControllerBase
+    [Route("api/game/[controller]")]
+    public class CardsController : ControllerBase
     {
         private readonly VortexDbContext _context;
 
         /// <summary>
-        /// Initialise une nouvelle instance de la classe <see cref="ControllerCards"/>.
+        /// Initialise une nouvelle instance de la classe <see cref="CardsController"/>.
         /// </summary>
         /// <param name="context">Le contexte de base de données pour accéder aux données des cartes.</param>
-        public ControllerCards(VortexDbContext context)
+        public CardsController(VortexDbContext context)
         {
             _context = context;
         }
@@ -52,6 +52,11 @@ namespace CollectionCards.Controllers
                     // CreatedAt = c.CreatedAt
                 })
                 .ToListAsync();
+
+            if (cards.Count == 0)
+            {
+                return Ok(new { message = "Aucune carte trouvée", cards = new List<CardDTO>() });
+            }
 
             return Ok(cards);
         }

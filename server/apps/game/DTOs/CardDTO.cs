@@ -1,4 +1,4 @@
-namespace Collection.DTOs
+namespace VortexTCG.Cards.DTOs
 {
     /// <summary>
     /// Objet de transfert de données pour représenter une carte.

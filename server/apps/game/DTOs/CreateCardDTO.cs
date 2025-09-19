@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Collection.DTOs
+namespace VortexTCG.Cards.DTOs
 {
     /// <summary>
     /// Objet de transfert de données pour créer une nouvelle carte.
