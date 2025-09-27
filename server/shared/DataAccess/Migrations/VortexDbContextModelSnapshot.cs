@@ -182,6 +182,40 @@ namespace DataAccess.Migrations
                     b.HasIndex("RarityId");
 
                     b.ToTable("Cards");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Attack = 5,
+                            CardTypeId = 1,
+                            Cost = 3,
+                            CreatedAtUtc = new DateTime(2025, 9, 19, 12, 50, 4, 440, DateTimeKind.Utc).AddTicks(1762),
+                            CreatedBy = "System",
+                            Description = "First card",
+                            Effect_active = 0,
+                            ExtensionId = 1,
+                            Hp = 10,
+                            Name = "Card1",
+                            Picture = "card1.png",
+                            RarityId = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Attack = 6,
+                            CardTypeId = 1,
+                            Cost = 4,
+                            CreatedAtUtc = new DateTime(2025, 9, 19, 12, 50, 4, 440, DateTimeKind.Utc).AddTicks(1765),
+                            CreatedBy = "System",
+                            Description = "Second card",
+                            Effect_active = 0,
+                            ExtensionId = 1,
+                            Hp = 8,
+                            Name = "Card2",
+                            Picture = "card2.png",
+                            RarityId = 1
+                        });
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.CardType", b =>
@@ -220,6 +254,15 @@ namespace DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("CardTypes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAtUtc = new DateTime(2025, 9, 19, 12, 50, 4, 440, DateTimeKind.Utc).AddTicks(1720),
+                            CreatedBy = "System",
+                            Label = "Creature"
+                        });
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Champion", b =>
@@ -814,6 +857,15 @@ namespace DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Extensions");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAtUtc = new DateTime(2025, 9, 19, 12, 50, 4, 440, DateTimeKind.Utc).AddTicks(1748),
+                            CreatedBy = "System",
+                            Label = "Base Set"
+                        });
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Faction", b =>
@@ -1024,7 +1076,7 @@ namespace DataAccess.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAtUtc = new DateTime(2025, 9, 1, 9, 32, 15, 845, DateTimeKind.Utc).AddTicks(8141),
+                            CreatedAtUtc = new DateTime(2025, 9, 19, 12, 50, 4, 440, DateTimeKind.Utc).AddTicks(1690),
                             CreatedBy = "System",
                             Label = "Wood",
                             nbVictory = 0
@@ -1067,6 +1119,15 @@ namespace DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Rarities");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAtUtc = new DateTime(2025, 9, 19, 12, 50, 4, 440, DateTimeKind.Utc).AddTicks(1732),
+                            CreatedBy = "System",
+                            Label = "Common"
+                        });
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Role", b =>
@@ -1110,14 +1171,14 @@ namespace DataAccess.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAtUtc = new DateTime(2025, 9, 1, 9, 32, 15, 845, DateTimeKind.Utc).AddTicks(8002),
+                            CreatedAtUtc = new DateTime(2025, 9, 19, 12, 50, 4, 440, DateTimeKind.Utc).AddTicks(1598),
                             CreatedBy = "System",
                             Label = "Admin"
                         },
                         new
                         {
                             Id = 2,
-                            CreatedAtUtc = new DateTime(2025, 9, 1, 9, 32, 15, 845, DateTimeKind.Utc).AddTicks(8005),
+                            CreatedAtUtc = new DateTime(2025, 9, 19, 12, 50, 4, 440, DateTimeKind.Utc).AddTicks(1600),
                             CreatedBy = "System",
                             Label = "User"
                         });
@@ -1207,7 +1268,7 @@ namespace DataAccess.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAtUtc = new DateTime(2025, 9, 1, 9, 32, 15, 845, DateTimeKind.Utc).AddTicks(8160),
+                            CreatedAtUtc = new DateTime(2025, 9, 19, 12, 50, 4, 440, DateTimeKind.Utc).AddTicks(1708),
                             CreatedBy = "System",
                             CurrencyQuantity = 1000,
                             Email = "johndoe@gmail.com",
