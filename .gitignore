@@ -1,18 +1,4 @@
 # ================================
-# GLOBAL SETTINGS
-# ================================
-# Ignore OS files
-.DS_Store
-Thumbs.db
-
-# Ignore IDE settings
-.vscode/
-.idea/
-*.suo
-*.user
-*.userprefs
-
-# ================================
 # Unity
 # ================================
 /client/[Ll]ibrary/
@@ -54,8 +40,12 @@ Thumbs.db
 /client/*.opendb
 /client/*.VC.db
 
+# Ignore les packages NuGet installés dans Assets
+/client/[Aa]ssets/Packages/
+
 # Asset store tools
 /client/[Aa]ssets/AssetStoreTools*
+
 
 # Visual Studio / Rider
 .vscode/
