@@ -5,6 +5,7 @@
 //       et les messages/événements de jeu entre deux clients.
 //       Les commentaires expliquent le cycle de vie et les patterns utilisés.
 // =============================================
+using System;
 using Microsoft.AspNetCore.SignalR;
 using game.Services;
 
@@ -190,6 +191,115 @@ public class GameHub : Hub
         {
             var from = _matchmaker.GetName(Context.ConnectionId);
             await Clients.Client(oppId).SendAsync("OpponentPlayedCard", roomId, from, cardId);
+        }
+    }
+
+    /**
+     * drawCards
+     * @param playerId identifiant du joueur qui pioche
+     * @param amount nombre de cartes à piocher
+     */
+    /// <summary>
+    /// Déclenche, côté adversaire, l'événement de pioche d'un nombre donné de cartes.
+    /// </summary>
+    /// <remarks>
+    /// Utilise <see cref="DispatchGameEventAsync(string, object?[])"/> pour router l'événement soit au
+    /// groupe SignalR de la room (mode code), soit au pair logique (mode matchmaking).
+    /// L'événement émis côté client est « drawCards » avec la payload [playerId, amount].
+    /// </remarks>
+    /// <param name="playerId">Identifiant du joueur qui pioche.</param>
+    /// <param name="amount">Nombre de cartes à piocher.</param>
+    /// <returns>
+    /// Tâche asynchrone terminée lorsque l'événement a été routé au(x) destinataire(s).
+    /// </returns>
+    /// <exception cref="System.Exception">
+    /// Peut être levée par l'infrastructure SignalR en cas d'échec d'envoi.
+    /// </exception>
+    [HubMethodName("drawCards")]
+    public Task HandleDrawCards(int playerId, int amount)
+        => DispatchGameEventAsync("drawCards", playerId, amount);
+
+    /**
+     * playCard
+     * @param cardId identifiant de la carte jouée
+     * @param position position de la carte sur le plateau (-1 si aucune)
+     */
+    /// <summary>
+    /// Notifie l'adversaire qu'une carte a été jouée avec une position donnée sur le plateau.
+    /// </summary>
+    /// <remarks>
+    /// Émet l'événement « playCard » vers l'adversaire, avec la payload [cardId, position].
+    /// </remarks>
+    /// <param name="cardId">Identifiant de la carte jouée.</param>
+    /// <param name="position">Position de la carte sur le plateau (−1 si aucune).</param>
+    /// <returns>Tâche asynchrone d'envoi de l'événement.</returns>
+    /// <exception cref="System.Exception">En cas d'échec d'envoi SignalR.</exception>
+    [HubMethodName("playCardAction")]
+    public Task HandlePlayCardAction(int cardId, int position)
+        => DispatchGameEventAsync("playCard", cardId, position);
+
+    /**
+     * changePhase
+     * Déclenche une modification de phase pour l'adversaire.
+     */
+    /// <summary>
+    /// Demande à l'adversaire de passer à la phase suivante (événement « changePhase »).
+    /// </summary>
+    /// <remarks>Ne transporte pas de payload. Routage via <see cref="DispatchGameEventAsync(string, object?[])"/>.</remarks>
+    /// <returns>Tâche asynchrone d'envoi de l'événement.</returns>
+    /// <exception cref="System.Exception">En cas d'erreur d'émission SignalR.</exception>
+    [HubMethodName("changePhase")]
+    public Task HandleChangePhase()
+        => DispatchGameEventAsync("changePhase");
+
+    /**
+     * changeSentryPos
+     * @param boardPosition nouvelle position de la sentinelle
+     */
+    /// <summary>
+    /// Informe l'adversaire d'un changement de position de la sentinelle.
+    /// </summary>
+    /// <remarks>
+    /// Émet « changeSentryPos » avec la payload [boardPosition].
+    /// </remarks>
+    /// <param name="boardPosition">Nouvelle position de la sentinelle sur le plateau.</param>
+    /// <returns>Tâche asynchrone d'envoi.</returns>
+    /// <exception cref="System.Exception">En cas d'échec d'envoi SignalR.</exception>
+    [HubMethodName("changeSentryPos")]
+    public Task HandleChangeSentryPos(int boardPosition)
+        => DispatchGameEventAsync("changeSentryPos", boardPosition);
+
+    /// <summary>
+    /// Route un événement de jeu vers l'adversaire, selon le contexte courant (room par code ou matchmaking).
+    /// </summary>
+    /// <remarks>
+    /// - Si l'appelant est dans une room par <c>code</c>, l'événement est diffusé à <see cref="IHubCallerClients.OthersInGroup(string)"/>.
+    /// - Sinon, si l'appelant a un <c>oppId</c> connu via le <c>Matchmaker</c>, l'événement est envoyé à <see cref="IHubClients.Client(string)"/>.
+    /// - La payload transmise côté clients est un tableau (Array) contenant les arguments fournis.
+    /// </remarks>
+    /// <param name="eventName">Nom de l'événement à émettre (ex.: <c>drawCards</c>, <c>playCard</c>, ...).</param>
+    /// <param name="args">Arguments optionnels de l'événement; seront envoyés comme tableau.</param>
+    /// <returns>
+    /// Tâche asynchrone complétée lorsque l'émission a été effectuée (ou ignorée si aucun destinataire valide).
+    /// </returns>
+    /// <exception cref="System.Exception">
+    /// Peut remonter une exception d'infrastructure SignalR (ex.: connexion interrompue) lors de l'envoi.
+    /// </exception>
+    private async Task DispatchGameEventAsync(string eventName, params object?[] args)
+    {
+        var payload = args is { Length: > 0 } ? args : Array.Empty<object?>();
+
+        var code = _rooms.GetRoomOf(Context.ConnectionId);
+        if (code is not null)
+        {
+            await Clients.OthersInGroup(code).SendAsync(eventName, payload);
+            return;
+        }
+
+        var (oppId, roomId) = _matchmaker.GetOpponent(Context.ConnectionId);
+        if (oppId is not null)
+        {
+            await Clients.Client(oppId).SendAsync(eventName, payload);
         }
     }
 }

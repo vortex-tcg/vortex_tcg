@@ -1,167 +1,261 @@
 ﻿<!doctype html>
 <html>
+
 <head>
     <meta charset="utf-8" />
     <title>Test matchmaking & rooms</title>
     <style>
-        body{font-family:sans-serif;max-width:760px;margin:24px auto;padding:0 12px}
-        #log{border:1px solid #999;height:180px;overflow:auto;padding:6px;border-radius:8px}
-        input,button{padding:6px 10px;margin:4px}
+        body {
+            font-family: sans-serif;
+            max-width: 760px;
+            margin: 24px auto;
+            padding: 0 12px
+        }
+
+        #log {
+            border: 1px solid #999;
+            height: 180px;
+            overflow: auto;
+            padding: 6px;
+            border-radius: 8px
+        }
+
+        input,
+        button {
+            padding: 6px 10px;
+            margin: 4px
+        }
     </style>
 </head>
+
 <body>
-<h1>SignalR – Matchmaking & Rooms par code</h1>
+    <h1>SignalR – Matchmaking & Rooms par code</h1>
 
-<div>
-    <label>Pseudo: <input id="name" value="Joueur" /></label>
-    <button id="connect">Connexion</button>
-    <span id="status"></span>
-</div>
+    <div>
+        <label>Pseudo: <input id="name" value="Joueur" /></label>
+        <button id="connect">Connexion</button>
+        <span id="status"></span>
+    </div>
 
-<hr/>
+    <hr />
 
-<h3>Mode 1 : Matchmaking aléatoire</h3>
-<div>
-    <button id="queue" disabled>Se mettre en file</button>
-    <button id="leaveQueue" disabled>Quitter la file / room</button>
-</div>
+    <h3>Mode 1 : Matchmaking aléatoire</h3>
+    <div>
+        <button id="queue" disabled>Se mettre en file</button>
+        <button id="leaveQueue" disabled>Quitter la file / room</button>
+    </div>
 
-<h3>Mode 2 : Room par code</h3>
-<div>
-    <input id="roomCode" placeholder="CODE (ex: Q7D9K2)" />
-    <button id="create">Créer room</button>
-    <button id="join">Rejoindre room</button>
-    <button id="leaveCode">Quitter room (code)</button>
-</div>
+    <h3>Mode 2 : Room par code</h3>
+    <div>
+        <input id="roomCode" placeholder="CODE (ex: Q7D9K2)" />
+        <button id="create">Créer room</button>
+        <button id="join">Rejoindre room</button>
+        <button id="leaveCode">Quitter room (code)</button>
+    </div>
 
-<div id="room" style="display:none;">
-    <h2 id="roomTitle"></h2>
-    <div id="log"></div>
-    <input id="msg" placeholder="Message" />
-    <button id="send">Envoyer</button>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8/dist/browser/signalr.min.js"></script>
-<script>
-    const status = document.getElementById('status');
-    const roomDiv = document.getElementById('room');
-    const roomTitle = document.getElementById('roomTitle');
-    const log = document.getElementById('log');
+    <div id="room" style="display:none;">
+        <h2 id="roomTitle"></h2>
+        <div id="log"></div>
+        <input id="msg" placeholder="Message" />
+        <button id="send">Envoyer</button>
 
-    const btnConnect = document.getElementById('connect');
-    const btnQueue = document.getElementById('queue');
-    const btnLeaveQueue = document.getElementById('leaveQueue');
+        <hr />
+        <h3>Game actions</h3>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+            <div>
+                <strong>drawCards</strong><br />
+                <input id="gcPlayerId" type="number" placeholder="playerId" style="width:120px" />
+                <input id="gcAmount" type="number" placeholder="amount" style="width:120px" />
+                <button id="btnDrawCards">Send</button>
+            </div>
+            <div>
+                <strong>playCardAction</strong><br />
+                <input id="pcCardId" type="number" placeholder="cardId" style="width:120px" />
+                <input id="pcPosition" type="number" placeholder="position" style="width:120px" />
+                <button id="btnPlayCard">Send</button>
+            </div>
+            <div>
+                <strong>changePhase</strong><br />
+                <button id="btnChangePhase">Trigger</button>
+            </div>
+            <div>
+                <strong>changeSentryPos</strong><br />
+                <input id="spBoardPos" type="number" placeholder="boardPosition" style="width:160px" />
+                <button id="btnSentryPos">Send</button>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8/dist/browser/signalr.min.js"></script>
+    <script>
+        const status = document.getElementById('status');
+        const roomDiv = document.getElementById('room');
+        const roomTitle = document.getElementById('roomTitle');
+        const log = document.getElementById('log');
 
-    const btnCreate = document.getElementById('create');
-    const btnJoin   = document.getElementById('join');
-    const btnLeaveCode = document.getElementById('leaveCode');
+        const btnConnect = document.getElementById('connect');
+        const btnQueue = document.getElementById('queue');
+        const btnLeaveQueue = document.getElementById('leaveQueue');
 
-    const nameInput = document.getElementById('name');
-    const codeInput = document.getElementById('roomCode');
-    const msgInput  = document.getElementById('msg');
-    const btnSend   = document.getElementById('send');
+        const btnCreate = document.getElementById('create');
+        const btnJoin = document.getElementById('join');
+        const btnLeaveCode = document.getElementById('leaveCode');
 
-    let connection, currentKey = null, mode = null; // mode: 'queue' | 'code'
+        const nameInput = document.getElementById('name');
+        const codeInput = document.getElementById('roomCode');
+        const msgInput = document.getElementById('msg');
+        const btnSend = document.getElementById('send');
 
-    function append(t){ const p=document.createElement('div'); p.textContent=t; log.appendChild(p); log.scrollTop=log.scrollHeight; }
+        let connection, currentKey = null, mode = null; // mode: 'queue' | 'code'
 
-    btnConnect.onclick = async () => {
-        try {
-            connection = new signalR.HubConnectionBuilder()
-                .withUrl("/hubs/game")
-                .withAutomaticReconnect()
-                .build();
+        function append(t) { const p = document.createElement('div'); p.textContent = t; log.appendChild(p); log.scrollTop = log.scrollHeight; }
 
-            connection.on("Connected", id => {
-                status.textContent = "Connecté: " + id;
-                btnQueue.disabled = false;
-                btnCreate.disabled = false;
-                btnJoin.disabled = false;
-                btnLeaveQueue.disabled = false;
-                btnLeaveCode.disabled = false;
-            });
+        btnConnect.onclick = async () => {
+            try {
+                connection = new signalR.HubConnectionBuilder()
+                    .withUrl("/hubs/game")
+                    .withAutomaticReconnect()
+                    .build();
 
-            connection.on("Waiting", () => {
-                status.textContent = "En attente d'un adversaire...";
-            });
+                connection.on("Connected", id => {
+                    status.textContent = "Connecté: " + id;
+                    btnQueue.disabled = false;
+                    btnCreate.disabled = false;
+                    btnJoin.disabled = false;
+                    btnLeaveQueue.disabled = false;
+                    btnLeaveCode.disabled = false;
+                });
 
-            connection.on("Matched", (key, payload) => {
-                currentKey = key;
-                roomTitle.textContent = `Salle ${key}`;
-                roomDiv.style.display = 'block';
-                append(`Match vs ${payload.opponent}.`);
-            });
+                connection.on("Waiting", () => {
+                    status.textContent = "En attente d'un adversaire...";
+                });
 
-            connection.on("RoomCreated", code => {
-                mode = 'code';
-                currentKey = code;
-                codeInput.value = code;
-                roomTitle.textContent = `Salle ${code}`;
-                roomDiv.style.display = 'block';
-                append(`Salle créée. Partage le code: ${code}`);
-            });
+                connection.on("Matched", (key, payload) => {
+                    currentKey = key;
+                    roomTitle.textContent = `Salle ${key}`;
+                    roomDiv.style.display = 'block';
+                    append(`Match vs ${payload.opponent}.`);
+                });
 
-            connection.on("RoomCreateError", reason => {
-                status.textContent = reason === "CODE_TAKEN" ? "Code déjà pris." : "Erreur création salle.";
-            });
+                connection.on("RoomCreated", code => {
+                    mode = 'code';
+                    currentKey = code;
+                    codeInput.value = code;
+                    roomTitle.textContent = `Salle ${code}`;
+                    roomDiv.style.display = 'block';
+                    append(`Salle créée. Partage le code: ${code}`);
+                });
 
-            connection.on("RoomJoinError", reason => {
-                status.textContent = reason === "ROOM_FULL" ? "Salle pleine." : "Salle introuvable.";
-            });
+                connection.on("RoomCreateError", reason => {
+                    status.textContent = reason === "CODE_TAKEN" ? "Code déjà pris." : "Erreur création salle.";
+                });
 
-            connection.on("ReceiveRoomMessage", (key, from, text) => {
-                append(`${from}: ${text}`);
-            });
+                connection.on("RoomJoinError", reason => {
+                    status.textContent = reason === "ROOM_FULL" ? "Salle pleine." : "Salle introuvable.";
+                });
 
-            connection.on("OpponentLeft", (key) => {
-                append("️ L'adversaire a quitté.");
-            });
+                connection.on("ReceiveRoomMessage", (key, from, text) => {
+                    append(`${from}: ${text}`);
+                });
 
-            await connection.start();
-            await connection.invoke("SetName", nameInput.value || "Joueur");
-            status.textContent = "Connecté au hub.";
-        } catch (e) {
-            status.textContent = "Erreur de connexion (voir console).";
-            console.error(e);
-        }
-    };
-    btnQueue.onclick = async () => {
-        mode = 'queue';
-        await connection.invoke("JoinQueue");
-        status.textContent = "Demande de matchmaking envoyée...";
-    };
-    btnLeaveQueue.onclick = async () => {
-        await connection.invoke("LeaveQueue");
-        append("Vous avez quitté la file/room (matchmaking).");
-        currentKey = null;
-    };
+                connection.on("OpponentLeft", (key) => {
+                    append("️ L'adversaire a quitté.");
+                });
 
-    btnCreate.onclick = async () => {
-        mode = 'code';
-        const preferred = (codeInput.value || "").trim() || null;
-        await connection.invoke("CreateRoom", preferred);
-    };
-    btnJoin.onclick = async () => {
-        mode = 'code';
-        const code = (codeInput.value || "").trim();
-        if (!code) return alert("Entre un code.");
-        await connection.invoke("JoinRoom", code);
-    };
-    btnLeaveCode.onclick = async () => {
-        await connection.invoke("LeaveRoomByCode");
-        append("Vous avez quitté la room (code).");
-        currentKey = null;
-    };
+                // --- Game events (received from opponent) ---
+                // Each event sends a single 'payload' array per server implementation
+                connection.on("drawCards", (payload) => {
+                    const [playerId, amount] = payload || [];
+                    append(`EVENT drawCards -> playerId=${playerId}, amount=${amount}`);
+                });
+                connection.on("playCard", (payload) => {
+                    const [cardId, position] = payload || [];
+                    append(`EVENT playCard -> cardId=${cardId}, position=${position}`);
+                });
+                connection.on("changePhase", () => {
+                    append("EVENT changePhase");
+                });
+                connection.on("changeSentryPos", (payload) => {
+                    const [boardPosition] = payload || [];
+                    append(`EVENT changeSentryPos -> boardPosition=${boardPosition}`);
+                });
 
-    btnSend.onclick = async () => {
-        const t = msgInput.value.trim();
-        if (!t || !currentKey) return;
-        if (mode === 'code')
-            await connection.invoke("SendRoomMessageByCode", currentKey, t);
-        else
-            await connection.invoke("SendRoomMessage", currentKey, t);
-        append(`Moi: ${t}`);
-        msgInput.value = "";
-    };
-</script>
+                await connection.start();
+                await connection.invoke("SetName", nameInput.value || "Joueur");
+                status.textContent = "Connecté au hub.";
+            } catch (e) {
+                status.textContent = "Erreur de connexion (voir console).";
+                console.error(e);
+            }
+        };
+        btnQueue.onclick = async () => {
+            mode = 'queue';
+            await connection.invoke("JoinQueue");
+            status.textContent = "Demande de matchmaking envoyée...";
+        };
+        btnLeaveQueue.onclick = async () => {
+            await connection.invoke("LeaveQueue");
+            append("Vous avez quitté la file/room (matchmaking).");
+            currentKey = null;
+        };
+
+        btnCreate.onclick = async () => {
+            mode = 'code';
+            const preferred = (codeInput.value || "").trim() || null;
+            await connection.invoke("CreateRoom", preferred);
+        };
+        btnJoin.onclick = async () => {
+            mode = 'code';
+            const code = (codeInput.value || "").trim();
+            if (!code) return alert("Entre un code.");
+            await connection.invoke("JoinRoom", code);
+        };
+        btnLeaveCode.onclick = async () => {
+            await connection.invoke("LeaveRoomByCode");
+            append("Vous avez quitté la room (code).");
+            currentKey = null;
+        };
+
+        btnSend.onclick = async () => {
+            const t = msgInput.value.trim();
+            if (!t || !currentKey) return;
+            if (mode === 'code')
+                await connection.invoke("SendRoomMessageByCode", currentKey, t);
+            else
+                await connection.invoke("SendRoomMessage", currentKey, t);
+            append(`Moi: ${t}`);
+            msgInput.value = "";
+        };
+
+        // --- Game actions (send to opponent via hub methods) ---
+        document.getElementById('btnDrawCards').onclick = async () => {
+            if (!currentKey) return alert('Rejoignez une room ou un match d\'abord.');
+            const playerId = parseInt(document.getElementById('gcPlayerId').value, 10);
+            const amount = parseInt(document.getElementById('gcAmount').value, 10);
+            await connection.invoke('drawCards', playerId, amount);
+            append(`(sent) drawCards(${playerId}, ${amount})`);
+        };
+
+        document.getElementById('btnPlayCard').onclick = async () => {
+            if (!currentKey) return alert('Rejoignez une room ou un match d\'abord.');
+            const cardId = parseInt(document.getElementById('pcCardId').value, 10);
+            const position = parseInt(document.getElementById('pcPosition').value, 10);
+            await connection.invoke('playCardAction', cardId, position);
+            append(`(sent) playCardAction(${cardId}, ${position})`);
+        };
+
+        document.getElementById('btnChangePhase').onclick = async () => {
+            if (!currentKey) return alert('Rejoignez une room ou un match d\'abord.');
+            await connection.invoke('changePhase');
+            append(`(sent) changePhase()`);
+        };
+
+        document.getElementById('btnSentryPos').onclick = async () => {
+            if (!currentKey) return alert('Rejoignez une room ou un match d\'abord.');
+            const boardPos = parseInt(document.getElementById('spBoardPos').value, 10);
+            await connection.invoke('changeSentryPos', boardPos);
+            append(`(sent) changeSentryPos(${boardPos})`);
+        };
+    </script>
 </body>
+
 </html>
