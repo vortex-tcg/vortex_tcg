@@ -2,9 +2,10 @@
     <Style src="project://database/Assets/UI%20Toolkit/HUDStylesheet.uss?fileID=7433441132597879392&amp;guid=2177595ec7397e54f8540429d6376417&amp;type=3#HUDStylesheet" />
     <ui:VisualElement name="Container" style="flex-grow: 1; flex-direction: row; justify-content: flex-start; align-content: flex-start; align-self: flex-start; margin-top: 10px; margin-right: 10px; margin-bottom: 10px; margin-left: 10px;">
         <ui:VisualElement name="MatchSide" style="flex-grow: 1; width: 800px; height: auto;">
-            <ui:VisualElement name="P2" style="flex-grow: 1; background-color: rgba(161, 161, 161, 0); overflow: visible; visibility: visible; height: 1px; flex-direction: row;">
+            <ui:VisualElement name="P1" style="flex-grow: 1; background-color: rgba(161, 161, 161, 0); overflow: visible; visibility: visible; height: 1px; flex-direction: row;">
+                <ui:VisualElement name="VisualElement" style="flex-grow: 1; height: auto; width: 182px;" />
                 <ui:VisualElement name="LeftFrame" style="flex-grow: 1; height: auto; border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-right-radius: 15px; border-bottom-left-radius: 15px; margin-bottom: 0; flex-direction: column; margin-top: 0; margin-right: 0; margin-left: 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; width: initial; align-items: flex-end;">
-                    <ui:VisualElement name="CardsResourcesHP" style="flex-grow: 1; flex-direction: row; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0); border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-right-radius: 15px; border-bottom-left-radius: 15px; width: 587px;">
+                    <ui:VisualElement name="CardsResourcesHP" style="flex-grow: 1; flex-direction: row; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0); border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-right-radius: 15px; border-bottom-left-radius: 15px; width: 587px; height: auto;">
                         <ui:VisualElement name="CardsFrame" style="flex-grow: 1; width: 70%; flex-direction: row; justify-content: center; align-items: center; align-self: center; padding-top: 15px; padding-right: 15px; padding-bottom: 15px; padding-left: 15px; height: 89px;">
                             <ui:VisualElement name="Card" class="card bordered" style="flex-grow: 1; height: 100%; width: 5px; max-width: 55px;" />
                             <ui:VisualElement name="Card" class="card bordered" style="flex-grow: 1; height: 100%; width: 5px; max-width: 55px;" />
@@ -29,11 +30,12 @@
                         <ui:Label text="12500" name="GoldAmount" class="golds" style="font-size: 10px; margin-top: 5px; margin-right: 5px; margin-bottom: 5px; margin-left: 5px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; background-color: rgba(0, 0, 0, 0.47); width: 80px; height: 22px; justify-content: center; align-items: center; -unity-text-align: middle-center; border-top-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; border-bottom-left-radius: 10px;" />
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="VisualElement" style="flex-grow: 1; height: 188px;" />
+                <ui:VisualElement name="VisualElement" style="flex-grow: 1; height: auto; width: 182px;" />
             </ui:VisualElement>
             <ui:VisualElement name="Board" style="flex-grow: 1; height: 25%; background-image: url(&quot;project://database/Assets/Logo/vortexlogo.png?fileID=2800000&amp;guid=38722d95bcbc71a429b79acc4098f555&amp;type=3#vortexlogo&quot;); -unity-background-scale-mode: scale-to-fit; -unity-background-image-tint-color: rgba(255, 255, 255, 0.48);" />
             <ui:VisualElement name="P2" style="flex-grow: 1; background-color: rgba(161, 161, 161, 0); overflow: visible; visibility: visible; height: 1px; flex-direction: row;">
-                <ui:VisualElement name="LeftFrame" style="flex-grow: 1; height: auto; border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-right-radius: 15px; border-bottom-left-radius: 15px; margin-bottom: 0; flex-direction: column-reverse; margin-top: 0; margin-right: 0; margin-left: 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; width: initial; align-items: flex-end;">
+                <ui:VisualElement name="VisualElement" style="flex-grow: 1; height: auto; width: 182px;" />
+                <ui:VisualElement name="LeftFrame" style="flex-grow: 1; height: auto; border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-right-radius: 15px; border-bottom-left-radius: 15px; margin-bottom: 0; flex-direction: column-reverse; margin-top: 0; margin-right: 0; margin-left: 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; width: initial; align-items: flex-start;">
                     <ui:VisualElement name="CardsResourcesHP" style="flex-grow: 1; flex-direction: row-reverse; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0); border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-right-radius: 15px; border-bottom-left-radius: 15px; width: 587px;">
                         <ui:VisualElement name="CardsFrame" style="flex-grow: 1; width: 70%; flex-direction: row; justify-content: center; align-items: center; align-self: center; padding-top: 15px; padding-right: 15px; padding-bottom: 15px; padding-left: 15px; height: 89px;">
                             <ui:VisualElement name="Card" class="card bordered" style="flex-grow: 1; height: 100%; width: 5px; max-width: 55px;" />
@@ -59,7 +61,7 @@
                         <ui:Label text="12500" name="GoldAmount" class="golds" style="font-size: 10px; margin-top: 5px; margin-right: 5px; margin-bottom: 5px; margin-left: 5px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; background-color: rgba(0, 0, 0, 0.47); width: 80px; height: 22px; justify-content: center; align-items: center; -unity-text-align: middle-center; border-top-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; border-bottom-left-radius: 10px;" />
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="VisualElement" style="flex-grow: 1; height: 188px;" />
+                <ui:VisualElement name="VisualElement" style="flex-grow: 1; height: auto; width: 182px;" />
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="InformationSide" style="flex-grow: 1; width: auto; justify-content: flex-end;">
@@ -68,7 +70,9 @@
                 <ui:ListView style="border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0; border-top-left-radius: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; border-bottom-left-radius: 0; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0); margin-bottom: 5px; height: 178px;" />
             </ui:VisualElement>
             <ui:VisualElement name="CardView" style="flex-grow: 1; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; border-bottom-left-radius: 10px; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0); margin-bottom: 5px; height: 80%;" />
-            <ui:Button text="END PHASE" name="EndPhaseButton" class="button" />
+            <ui:VisualElement style="flex-grow: 1; justify-content: center; align-items: stretch;">
+                <ui:Button text="END PHASE" name="EndPhaseButton" class="button" style="margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; align-items: center; justify-content: center; align-self: stretch; -unity-text-align: middle-center; padding-right: 0; padding-left: 0;" />
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
