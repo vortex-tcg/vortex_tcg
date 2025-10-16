@@ -41,7 +41,7 @@
 /client/*.VC.db
 
 # Ignore les packages NuGet installés dans Assets
-/client/Assets/Packages/
+/client/[Aa]ssets/Packages/
 
 # Asset store tools
 /client/[Aa]ssets/AssetStoreTools*
