@@ -1,0 +1,9 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI%20Toolkit/HUDStylesheet.uss?fileID=7433441132597879392&amp;guid=2177595ec7397e54f8540429d6376417&amp;type=3#HUDStylesheet" />
+    <ui:VisualElement name="Container" style="flex-grow: 1; flex-direction: row; justify-content: flex-start; align-content: flex-start; align-self: flex-start; margin-top: 10px; margin-right: 10px; margin-bottom: 10px; margin-left: 10px;">
+        <ui:VisualElement name="MatchSide" style="flex-grow: 1; width: 800px; height: auto;" />
+        <ui:VisualElement name="InformationSide" style="flex-grow: 1; width: auto; justify-content: flex-end;">
+            <ui:Button text="END PHASE" name="EndPhaseButton" class="button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
