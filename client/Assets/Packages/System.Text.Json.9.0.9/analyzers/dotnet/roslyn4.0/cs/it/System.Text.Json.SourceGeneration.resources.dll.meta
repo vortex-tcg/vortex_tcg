@@ -1,5 +1,9 @@
 fileFormatVersion: 2
-guid: 7b1e6368995352b4ea00dd8b64adcbc1
+<<<<<<<< HEAD:client/Assets/Packages/System.Text.Json.9.0.9/analyzers/dotnet/roslyn4.0/cs/fr/System.Text.Json.SourceGeneration.resources.dll.meta
+guid: 4eeef34ee0668954d93955bd61816161
+========
+guid: 159d3d09cd98db042890bc2c34c6250f
+>>>>>>>> origin/dev:client/Assets/Packages/System.Text.Json.9.0.9/analyzers/dotnet/roslyn4.0/cs/it/System.Text.Json.SourceGeneration.resources.dll.meta
 labels:
 - NuGetForUnity
 - RoslynAnalyzer
