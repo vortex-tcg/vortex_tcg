@@ -29,3 +29,7 @@
     max-height: none;
     height: 90px;
 }
+
+.card-preview {
+    display: none;
+}
