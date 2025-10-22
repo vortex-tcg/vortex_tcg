@@ -2,9 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using VortexTCG.DataAccess;
+using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Reflection.Metadata.Ecma335;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +35,8 @@ builder.Services.AddControllers();
 
 // Configuration DB
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+Console.WriteLine(connectionString);
 
 builder.Services.AddDbContext<VortexDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
@@ -89,11 +91,6 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
-
-app.MapControllerRoute(
-    name: "auth",
-    defaults: new { controller = "AuthController" },
-    pattern: "auth/{action=Index}/{id?}");
 
 // Health check
 app.MapGet("/health/db", async (VortexDbContext db) =>
