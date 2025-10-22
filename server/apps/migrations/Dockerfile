@@ -5,10 +5,6 @@ WORKDIR /workspace
 # Copie tout le code source
 COPY . .
 
-# Installe dotnet-ef CLI globalement
-RUN dotnet tool install --global dotnet-ef --version 8.0.*
-ENV PATH="${PATH}:/root/.dotnet/tools"
-
 WORKDIR /workspace/apps/migrations
 
 # Restore les dépendances

@@ -63,30 +63,26 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<VortexDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    
+
     try
     {
-        // Vérification connexion
         if (db.Database.CanConnect())
+        {
             logger.LogInformation("Connexion DB OK");
+        }
         else
         {
-            logger.LogError("Impossible de se connecter à la DB");
-            return; // Arrête l'app si pas de connexion
+            logger.LogError("Impossible de se connecter à la DB (CanConnect() = false)");
+            return; 
         }
-
-        logger.LogInformation("Application des migrations...");
-        db.Database.Migrate();
-        logger.LogInformation("Migrations appliquées avec succès");
     }
     catch (Exception ex)
     {
-        logger.LogError($"Erreur lors des migrations: {ex.Message}");
-        throw; // Fail fast si problème de migration
+        logger.LogError(ex, "Erreur lors de la tentative de connexion à la DB");
+        return; 
     }
 }
 
-// 3) Pipeline HTTP
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -102,7 +98,6 @@ app.UseAuthorization();
 app.MapHub<GameHub>("/hubs/game");
 app.MapRazorPages();
 
-// Endpoint de health-check
 app.MapGet("/health/db", async (VortexDbContext db) =>
 {
     try
