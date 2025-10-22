@@ -4,6 +4,7 @@ using System.Text;
 using VortexTCG.DataAccess;
 using VortexTCG.Common.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Reflection.Metadata.Ecma335;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -88,6 +89,11 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
+
+app.MapControllerRoute(
+    name: "auth",
+    defaults: new { controller = "AuthController" },
+    pattern: "auth/{action=Index}/{id?}");
 
 // Health check
 app.MapGet("/health/db", async (VortexDbContext db) =>
