@@ -34,12 +34,10 @@ builder.Services.AddRazorPages();
 builder.Services.AddControllers();
 
 // Configuration DB
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-Console.WriteLine(connectionString);
+var connectionString = builder.Configuration["CONNECTION_STRING"];
 
 builder.Services.AddDbContext<VortexDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+    options.UseMySql(connectionString, new MariaDbServerVersion(new Version(11, 8, 3)) )
 );
 
 // CORS
