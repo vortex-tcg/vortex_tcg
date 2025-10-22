@@ -4,10 +4,13 @@ using System.ComponentModel.DataAnnotations.Schema; //Utilisé pour des attribut
 
 namespace VortexTCG.DataAccess.Models
 {
+    public enum Role { USER = 0, ADMIN = 1, SUPER_ADMIN = 2 };
+    public enum UserStatus { DISCONNECTED = 0, CONNECTED = 1, IN_QUEUE = 2, IN_GAME = 3 };
+
     public class User : AuditableEntity //Cette classe deviendra une table Users (par convention, EF Core met le nom de la classe au pluriel pour la table).
     {
         [Key] //Primary Key
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         [Required]
         public string FirstName { get; set; } = default!;
@@ -31,21 +34,32 @@ namespace VortexTCG.DataAccess.Models
 
         // Foreign Keys
 
-        public int RoleId { get; set; } = default!;
         public Role Role { get; set; } = default!;
-        public int RankId { get; set; } = default!;
-        public Rank Rank { get; set; } = default!;
-        public int? CollectionId { get; set; }
+        public UserStatus Status { get; set; } = default!;
+
+        public Guid? RankId { get; set; } = default!;
+        public Rank? Rank { get; set; } = default!;
+
+        public Guid? CollectionId { get; set; }
         public Collection? Collection { get; set; }
-        public int? GameId { get; set; }
-        public Game? Game { get; set; }
 
-        public ICollection<Booster>? Boosters { get; set; }
+        public ICollection<Deck>? Decks { get; set; }
 
-        public ICollection<Deck>? Deck { get; set; }
+        public ICollection<Game>? Logs { get; set; }
 
-        public ICollection<Gamelog>? Gamelog { get; set; }
+        public ICollection<Friend> Friends { get; set; } // Quand j'ajoute un ami
+        public ICollection<Friend> OtherFriends { get; set; } // Quand des utilisateurs m'ajoute en ami
+    }
 
-        public ICollection<FriendsList>? FriendsLists { get; set; }
+    public class Friend : AuditableEntity
+    {
+        [Key] //Primary Key
+        public Guid Id { get; set; }
+
+        public Guid FriendUserId { get; set; }
+        public User FriendUser { get; set; }
+
+        public Guid UserId { get; set; }
+        public User User { get; set; }
     }
 }
