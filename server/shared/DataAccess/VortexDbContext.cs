@@ -17,7 +17,7 @@ namespace VortexTCG.DataAccess
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public DbSet<Action> Actions { get; set; }
+        public DbSet<ActionType> Actions { get; set; }
         public DbSet<Gamelog> Gamelogs { get; set; }
         public DbSet<Game> Games { get; set; }
         public DbSet<User> Users { get; set; }
@@ -50,12 +50,12 @@ namespace VortexTCG.DataAccess
             modelBuilder.Entity<Effect>()
                         .HasOne(c => c.StartCondition)
                         .WithMany(ct => ct.StartEffects)
-                        .HasForeignKey(c => c.StartCondition);
+                        .HasForeignKey(c => c.StartConditionId);
             
             modelBuilder.Entity<Effect>()
                         .HasOne(c => c.EndCondition)
                         .WithMany(ct => ct.EndEffects)
-                        .HasForeignKey(c => c.EndCondition);
+                        .HasForeignKey(c => c.EndConditionId);
             
             // Card
             modelBuilder.Entity<Card>()

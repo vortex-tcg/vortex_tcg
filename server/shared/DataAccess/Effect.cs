@@ -24,8 +24,7 @@ namespace VortexTCG.DataAccess.Models
 
         public Guid EndConditionId { get; set; } = default!;
         public Condition EndCondition { get; set; } = default!;
-
-        public Guid? ChampionId { get; set; } = default!;
+        
         public Champion Champion { get; set; } = default!;
 
         public ICollection<EffectCard> Cards { get; set; } = default!;

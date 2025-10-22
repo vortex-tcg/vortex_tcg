@@ -30,8 +30,6 @@ namespace VortexTCG.DataAccess.Models
         [Required]
         public string Label { get; set; } = default!;
 
-        public ICollection<Condition> StartConditions { get; set; } = default!;
-
-        public ICollection<Condition> EndConditions { get; set; } = default!;
+        public ICollection<Condition> Conditions { get; set; } = default!;
     }
 }

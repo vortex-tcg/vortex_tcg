@@ -11,7 +11,6 @@ namespace VortexTCG.DataAccess.Models
         [Key]
         public Guid Id { get; set; }
 
-        public Guid UserId { get; set; } = default!;
         public User User { get; set; } = default!;
 
         public ICollection<CollectionCard> Cards { get; set; } = default!;
@@ -30,7 +29,7 @@ namespace VortexTCG.DataAccess.Models
 
         public ICollection<DeckCard> DeckCards { get; set; } = default!;
 
-        public int CardId { get; set; } = default!;
+        public Guid CardId { get; set; } = default!;
         public Card Card { get; set; } = default!;
 
         public Guid CollectionId { get; set; } = default!;

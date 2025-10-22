@@ -7,7 +7,9 @@ try
 {
     // Récupère la connection string depuis les variables d'environnement
     var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
-    
+
+    Console.WriteLine(connectionString);
+
     if (string.IsNullOrEmpty(connectionString))
     {
         Console.WriteLine("ConnectionString manquante !");
@@ -18,9 +20,12 @@ try
 
     // Configure le DbContext
     var optionsBuilder = new DbContextOptionsBuilder<VortexDbContext>();
+    Console.WriteLine("Ohana");
     optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
-
+    Console.WriteLine("Veut dire famille");
     using var db = new VortexDbContext(optionsBuilder.Options);
+
+    Console.WriteLine("Je suis un problème de Connexion à la db");
 
     // Vérifie la connexion
     if (!db.Database.CanConnect())

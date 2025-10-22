@@ -16,7 +16,6 @@ namespace VortexTCG.DataAccess.Models
 
         public int TurnNumber { get; set; } = default!;
 
-        public Guid? UserId { get; set; } = default!;
         public Game? User { get; set; } = default!;
 
         public ICollection<ActionType>? Actions { get; set; } = default!;
