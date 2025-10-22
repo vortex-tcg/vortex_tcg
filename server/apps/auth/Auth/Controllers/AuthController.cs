@@ -5,6 +5,7 @@ using System.Text;
 
 namespace VortexTCG.Auth.Controllers;
 
+[ApiController]
 public class AuthController(VortexDbContext db, IConfiguration configuration) : ControllerBase
 {
 
