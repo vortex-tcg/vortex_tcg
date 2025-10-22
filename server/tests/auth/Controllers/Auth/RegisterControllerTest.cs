@@ -1,243 +1,177 @@
-using Xunit;
-using VortexTCG.Auth.Controllers;
-using Microsoft.AspNetCore.Mvc;
-using VortexTCG.DataAccess;
-using VortexTCG.DataAccess.Models;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using VortexTCG.Auth.DTOs;
+using VortexTCG.Auth.Services;
+using VortexTCG.DataAccess;
+using VortexTCG.DataAccess.Models;
 
-namespace Tests
+namespace Tests;
+
+public class RegisterServiceTests
 {
-    public class RegisterControllerTest
+    private static VortexDbContext CreateDb()
     {
-        private VortexDbContext GetInMemoryDbContext()
+        var options = new DbContextOptionsBuilder<VortexDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        return new VortexDbContext(options);
+    }
+
+    [Fact]
+    public async Task Missing_fields_returns_400()
+    {
+        using var db = CreateDb();
+        var service = new RegisterService(db);
+        var dto = new RegisterDTO
         {
-            var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDatabase")
-                .Options;
+            FirstName = "John",
+            LastName = "Doe",
+            // Username missing
+            Email = "john@example.com",
+            Password = "P@ssw0rd1!",
+            PasswordConfirmation = "P@ssw0rd1!"
+        };
 
-            return new VortexDbContext(options);
-        }
+        var result = await service.RegisterAsync(dto);
+        Assert.False(result.Success);
+        Assert.Equal(400, result.StatusCode);
+        Assert.Contains("Tous les champs sont requis", result.Message);
+    }
 
-        [Fact]
-        public async Task All_Fields_Register()
+    [Fact]
+    public async Task Password_mismatch_returns_400()
+    {
+        using var db = CreateDb();
+        var service = new RegisterService(db);
+        var dto = new RegisterDTO
         {
-            var db = GetInMemoryDbContext();
-            var controller = new RegisterController(db);
+            FirstName = "John",
+            LastName = "Doe",
+            Username = "john",
+            Email = "john@example.com",
+            Password = "P@ssw0rd1!",
+            PasswordConfirmation = "P@ssw0rd2!"
+        };
 
-            var request = new RegisterController.RegisterRequest
-            {
-                FirstName = "John",
-                LastName = "Doe",
-                Email = "johndoe@gmail.com",
-                Password = "Password1!",
-                PasswordConfirmation = "Password1!"
-            };
+        var result = await service.RegisterAsync(dto);
+        Assert.False(result.Success);
+        Assert.Equal(400, result.StatusCode);
+        Assert.Contains("Les mots de passe ne correspondent pas", result.Message);
+    }
 
-            var result = await controller.Register(request);
-            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-            var payload = badRequest.Value?.ToString();
-            Assert.NotNull(payload);
-            Assert.Contains("Tous les champs sont requis", payload);
-        }
-
-        [Fact]
-        public async Task Password_Match_Register()
+    [Theory]
+    [InlineData("weak")]
+    [InlineData("alllowercase")]
+    [InlineData("NoNumberPassword!")]
+    [InlineData("NoSpecialChar1")]
+    public async Task Weak_password_returns_400(string password)
+    {
+        using var db = CreateDb();
+        var service = new RegisterService(db);
+        var dto = new RegisterDTO
         {
-            var db = GetInMemoryDbContext();
-            var controller = new RegisterController(db);
+            FirstName = "John",
+            LastName = "Doe",
+            Username = "john",
+            Email = "john@example.com",
+            Password = password,
+            PasswordConfirmation = password
+        };
 
-            var request = new RegisterController.RegisterRequest
-            {
-                FirstName = "John",
-                LastName = "Doe",
-                Username = "johndoe",
-                Email = "johndoe@gmail.com",
-                Password = "Password1!",
-                PasswordConfirmation = "DifferentPassword1!"
-            };
+        var result = await service.RegisterAsync(dto);
+        Assert.False(result.Success);
+        Assert.Equal(400, result.StatusCode);
+        Assert.Contains("Le mot de passe doit contenir au minimum 8 caractères, une majuscule, un chiffre et un caractère spécial", result.Message);
+    }
 
-            var result = await controller.Register(request);
-
-            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-            var payload = badRequest.Value?.ToString();
-            Assert.NotNull(payload);
-            Assert.Contains("Les mots de passe ne correspondent pas", payload);
-
-        }
-
-        [Fact]
-        public async Task Password_Not_Long_Enough_Register()
+    [Fact]
+    public async Task Email_already_used_returns_409()
+    {
+        using var db = CreateDb();
+        db.Users.Add(new User
         {
-            var db = GetInMemoryDbContext();
-            var controller = new RegisterController(db);
+            FirstName = "Existing",
+            LastName = "User",
+            Username = "existing",
+            Email = "john@example.com",
+            Password = "hash",
+            Language = "fr",
+            CurrencyQuantity = 0
+        });
+        await db.SaveChangesAsync();
 
-            var request = new RegisterController.RegisterRequest
-            {
-                FirstName = "John",
-                LastName = "Doe",
-                Username = "johndoe",
-                Email = "johndoe@gmail.com",
-                Password = "weak",
-                PasswordConfirmation = "weak"
-            };
-
-            var result = await controller.Register(request);
-            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-            var payload = badRequest.Value?.ToString();
-            Assert.NotNull(payload);
-            Assert.Contains("Le mot de passe doit contenir au minimum 8 caractères", payload);
-        }
-
-        [Fact]
-        public async Task Password_Lower_Case_Register()
+        var service = new RegisterService(db);
+        var dto = new RegisterDTO
         {
-            var db = GetInMemoryDbContext();
-            var controller = new RegisterController(db);
+            FirstName = "John",
+            LastName = "Doe",
+            Username = "john",
+            Email = "john@example.com",
+            Password = "P@ssw0rd1!",
+            PasswordConfirmation = "P@ssw0rd1!"
+        };
 
-            var request = new RegisterController.RegisterRequest
-            {
-                FirstName = "John",
-                LastName = "Doe",
-                Username = "johndoe",
-                Email = "johndoe@gmail.com",
-                Password = "alllowercase",
-                PasswordConfirmation = "alllowercase"
-            };
+        var result = await service.RegisterAsync(dto);
+        Assert.False(result.Success);
+        Assert.Equal(409, result.StatusCode);
+        Assert.Contains("Email déjà utilisé", result.Message);
+    }
 
-            var result = await controller.Register(request);
-            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-            var payload = badRequest.Value?.ToString();
-            Assert.NotNull(payload);
-            Assert.Contains("Le mot de passe doit contenir au minimum 8 caractères, une majuscule", payload);
-        }
-
-        [Fact]
-        public async Task Password_No_Number_Register()
+    [Fact]
+    public async Task Username_already_used_returns_409()
+    {
+        using var db = CreateDb();
+        db.Users.Add(new User
         {
-            var db = GetInMemoryDbContext();
-            var controller = new RegisterController(db);
+            FirstName = "Existing",
+            LastName = "User",
+            Username = "john",
+            Email = "other@example.com",
+            Password = "hash",
+            Language = "fr",
+            CurrencyQuantity = 0
+        });
+        await db.SaveChangesAsync();
 
-            var request = new RegisterController.RegisterRequest
-            {
-                FirstName = "John",
-                LastName = "Doe",
-                Username = "johndoe",
-                Email = "johndoe@gmail.com",
-                Password = "NoNumberPassword!",
-                PasswordConfirmation = "NoNumberPassword!"
-            };
-            var result = await controller.Register(request);
-            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-            var payload = badRequest.Value?.ToString();
-            Assert.NotNull(payload);
-            Assert.Contains("Le mot de passe doit contenir au minimum 8 caractères, une majuscule, un chiffre", payload);
-        }
-
-        [Fact]
-        public async Task Password_No_SpecialChar_Register()
+        var service = new RegisterService(db);
+        var dto = new RegisterDTO
         {
-            var db = GetInMemoryDbContext();
-            var controller = new RegisterController(db);
+            FirstName = "John",
+            LastName = "Doe",
+            Username = "john",
+            Email = "john2@example.com",
+            Password = "P@ssw0rd1!",
+            PasswordConfirmation = "P@ssw0rd1!"
+        };
 
-            var request = new RegisterController.RegisterRequest
-            {
-                FirstName = "John",
-                LastName = "Doe",
-                Username = "johndoe",
-                Email = "johndoe@gmail.com",
-                Password = "NoSpecialChar1",
-                PasswordConfirmation = "NoSpecialChar1"
-            };
+        var result = await service.RegisterAsync(dto);
+        Assert.False(result.Success);
+        Assert.Equal(409, result.StatusCode);
+        Assert.Contains("Nom d'utilisateur déjà pris", result.Message);
+    }
 
-            var result = await controller.Register(request);
-            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-            var payload = badRequest.Value?.ToString();
-            Assert.NotNull(payload);
-            Assert.Contains("Le mot de passe doit contenir au minimum 8 caractères, une majuscule, un chiffre et un caractère spécial", payload);
-        }
-
-        [Fact]
-        public async Task Email_Already_Used_Register()
+    [Fact]
+    public async Task Success_returns_201_and_persists_user()
+    {
+        using var db = CreateDb();
+        var service = new RegisterService(db);
+        var dto = new RegisterDTO
         {
-            var db = GetInMemoryDbContext();
-            db.Ranks.Add(new Rank { Label = "Bronze", nbVictory = 0 });
-            await db.SaveChangesAsync();
-            db.Roles.Add(new Role { Label = "User" });
-            await db.SaveChangesAsync();
-            db.Users.Add(new User
-            {
-                FirstName = "Existing",
-                LastName = "User",
-                Username = "existinguser",
-                Email = "johndoe@gmail.com",
-                Password = "HashedPassword1!",
-                Language = "fr",
-                CurrencyQuantity = 0,
-                RoleId = 1,
-                RankId = 1,
-                CreatedBy = "System",
-                CreatedAtUtc = DateTime.UtcNow
-            });
-            await db.SaveChangesAsync();
+            FirstName = "Ada",
+            LastName = "Lovelace",
+            Username = "ada",
+            Email = "ada@example.com",
+            Password = "P@ssw0rd1!",
+            PasswordConfirmation = "P@ssw0rd1!"
+        };
 
-            var controller = new RegisterController(db);
-            var request = new RegisterController.RegisterRequest
-            {
-                FirstName = "John",
-                LastName = "Doe",
-                Username = "johndoe",
-                Email = "johndoe@gmail.com",
-                Password = "Password1!",
-                PasswordConfirmation = "Password1!"
-            };
+        var result = await service.RegisterAsync(dto);
+        Assert.True(result.Success);
+        Assert.Equal(201, result.StatusCode);
+        Assert.Contains("Utilisateur créé", result.Message);
 
-            var result = await controller.Register(request);
-            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-            var payload = conflictResult.Value?.ToString();
-            Assert.NotNull(payload);
-            Assert.Contains("Email déjà utilisé", payload);
-
-        }
-
-        [Fact]
-        public async Task Username_Already_Used_Register()
-        {
-            var db = GetInMemoryDbContext();
-            db.Ranks.Add(new Rank { Label = "Bronze", nbVictory = 0 });
-            await db.SaveChangesAsync();
-            db.Roles.Add(new Role { Label = "User" });
-            await db.SaveChangesAsync();
-            db.Users.Add(new User
-            {
-                FirstName = "Existing",
-                LastName = "User",
-                Username = "johndoe",
-                Email = "johndoe@gmail.com",
-                Password = "HashedPassword1!",
-                Language = "fr",
-                CurrencyQuantity = 0,
-                RoleId = 1,
-                RankId = 1,
-                CreatedBy = "System",
-                CreatedAtUtc = DateTime.UtcNow
-            });
-            await db.SaveChangesAsync();
-            var controller = new RegisterController(db);
-            var request = new RegisterController.RegisterRequest
-            {
-                FirstName = "John",
-                LastName = "Doe",
-                Username = "johndoe",
-                Email = "johndoe2@gmail.com",
-                Password = "Password1!",
-                PasswordConfirmation = "Password1!"
-            };
-            var result = await controller.Register(request);
-            var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-            var payload = conflictResult.Value?.ToString();
-            Assert.NotNull(payload);
-            Assert.Contains("Nom d'utilisateur déjà pris", payload);
-        }
+        var saved = await db.Users.SingleOrDefaultAsync(u => u.Email == "ada@example.com");
+        Assert.NotNull(saved);
+        Assert.Equal("ada", saved!.Username);
     }
 }
