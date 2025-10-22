@@ -7,7 +7,7 @@ namespace VortexTCG.DataAccess.Models
     public class Rank : AuditableEntity
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         [Required]
         public string Label { get; set; } = default!;

@@ -6,8 +6,8 @@ Console.WriteLine("🔄 Début de l'application des migrations...");
 try
 {
     // Récupère la connection string depuis les variables d'environnement
-    var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
-    
+    var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+
     if (string.IsNullOrEmpty(connectionString))
     {
         Console.WriteLine("ConnectionString manquante !");
@@ -19,9 +19,8 @@ try
     // Configure le DbContext
     var optionsBuilder = new DbContextOptionsBuilder<VortexDbContext>();
     optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
-
     using var db = new VortexDbContext(optionsBuilder.Options);
-
+    
     // Vérifie la connexion
     if (!db.Database.CanConnect())
     {
