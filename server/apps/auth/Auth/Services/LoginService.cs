@@ -10,6 +10,7 @@ using Scrypt;
 
 namespace VortexTCG.Auth.Services {
 
+    public record LoginResult(bool success, int statusCode, string message, LoginResponseDTO? data = null);
     public class LoginService
     {
 
@@ -25,15 +26,15 @@ namespace VortexTCG.Auth.Services {
             _provider = new LoginProvider(_db);
         }
 
-        private Boolean checkLoginData(LoginDTO data)
+        private Boolean checkIsEmptyLoginData(LoginDTO data)
         {
             if (data == null ||
                 string.IsNullOrWhiteSpace(data.email) ||
                 string.IsNullOrWhiteSpace(data.password))
             {
-                return false;
+                return true;
             }
-            return true;
+            return false;
         }
 
         private JwtSecurityToken generateAccessToken(string userName)
@@ -57,7 +58,7 @@ namespace VortexTCG.Auth.Services {
 
         private string convertRoleToString(Role role)
         {
-            switch(role)
+            switch (role)
             {
                 case Role.USER:
                     return "USER";
@@ -70,18 +71,18 @@ namespace VortexTCG.Auth.Services {
             }
         }
 
-        public async Task<LoginResponseDTO> login(LoginDTO data)
+        public async Task<LoginResult> login(LoginDTO data)
         {
-            if (!checkLoginData(data))
+            if (checkIsEmptyLoginData(data))
             {
-                throw new Exception("BAD_REQUEST");
+                return new(success: false, statusCode: 400, message: "Email ou mot de passe sont requis.");
             }
 
             LoginUserDTO user = await _provider.getFirstUserByEmail(data.email);
 
             if (user == null)
             {
-                throw new Exception("UNAUTHORIZED");
+                return new(success: false, statusCode: 401, message: "Invalid credentials.");
             }
 
             ScryptEncoder encoder = new ScryptEncoder();
@@ -92,18 +93,18 @@ namespace VortexTCG.Auth.Services {
             }
             catch
             {
-                throw new Exception("UNAUTHORIZED");
+                return new(success: false, statusCode: 401, message: "Invalid credentials.");
             }
 
             JwtSecurityToken token = generateAccessToken(user.Username);
 
-            return new LoginResponseDTO
+            return new(success: true, statusCode: 200, message: "success", new LoginResponseDTO
             {
                 id = user.Id,
                 username = user.Username,
                 token = new JwtSecurityTokenHandler().WriteToken(token),
                 role = convertRoleToString(user.Role)
-            };
+            });
         }
     }
 }
