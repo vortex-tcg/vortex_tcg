@@ -3,6 +3,7 @@ using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using VortexTCG.Auth.Services;
 using VortexTCG.Auth.DTOs;
+using VortexTCG.Common.DTO;
 
 namespace VortexTCG.Auth.Controllers
 {
@@ -26,12 +27,12 @@ namespace VortexTCG.Auth.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> login([FromBody] LoginDTO data)
         {
-            LoginResult result = await _login_service.login(data);
+            ResultDTO<LoginResponseDTO> result = await _login_service.login(data);
             if (result.success && result.data != null)
             {
                 return Ok(result.data);
             }
-            return StatusCode(result.statusCode, new { message = result.message });
+            return StatusCode(result.statusCode, new { result.message });
         }
     }
 }

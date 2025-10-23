@@ -1,40 +1,18 @@
 using Xunit;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using VortexTCG.Auth.Controllers;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
-using Microsoft.Extensions.Configuration;
+using VortexTCG.Common.Services;
 using VortexTCG.Auth.DTOs;
 using Scrypt;
-using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 
 namespace Tests
 {
     public class AuthControllerTest
     {
-        private VortexDbContext getInMemoryDbContext()
-        {
-            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-                .Options;
-
-            return new VortexDbContext(options);
-        }
-
-        private IConfiguration getTestConfiguration()
-        {
-            Dictionary<string, string> inMemorySettings = new Dictionary<string, string>
-            {
-                { "JwtSettings:SecretKey", "123soleiljspjesaispaaaaaaaaaahahahahahhahahah" }
-            };
-
-            return new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings!)
-                .Build();
-        }
-
         private async Task createUser(VortexDbContext db)
         {
             ScryptEncoder encoder = new ScryptEncoder();
@@ -61,8 +39,8 @@ namespace Tests
         [Fact(DisplayName = "login with invalid input returns bad request")]
         public async Task loginWithInvalidInputReturnsBadRequest()
         {
-            VortexDbContext db = getInMemoryDbContext();
-            IConfiguration config = getTestConfiguration();
+            VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
             AuthController controller = new AuthController(db, config);
 
             LoginDTO request = new LoginDTO
@@ -82,8 +60,8 @@ namespace Tests
         [Fact(DisplayName = "login with no email returns bad request")]
         public async Task loginWithNoEmailReturnsBadRequest()
         {
-            VortexDbContext db = getInMemoryDbContext();
-            IConfiguration config = getTestConfiguration();
+            VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
             AuthController controller = new AuthController(db, config);
 
             LoginDTO request = new LoginDTO
@@ -103,8 +81,8 @@ namespace Tests
         [Fact(DisplayName = "login with no password returns bad request")]
         public async Task loginWithNoPasswordReturnsBadRequest()
         {
-            VortexDbContext db = getInMemoryDbContext();
-            IConfiguration config = getTestConfiguration();
+            VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
             AuthController controller = new AuthController(db, config);
 
             LoginDTO request = new LoginDTO
@@ -124,8 +102,8 @@ namespace Tests
         [Fact(DisplayName = "login with non existent user returns unauthorized")]
         public async Task loginWithNonExistentUserReturnsUnauthorized()
         {
-            VortexDbContext db = getInMemoryDbContext();
-            IConfiguration config = getTestConfiguration();
+            VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
             AuthController controller = new AuthController(db, config);
 
             LoginDTO request = new LoginDTO
@@ -145,8 +123,8 @@ namespace Tests
         [Fact(DisplayName = "login with wrong password returns unauthorized")]
         public async Task loginWithWrongPasswordReturnsUnauthorized()
         {
-            VortexDbContext db = getInMemoryDbContext();
-            IConfiguration config = getTestConfiguration();
+            VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
 
             await createUser(db);
 
@@ -169,8 +147,8 @@ namespace Tests
         [Fact(DisplayName = "login with valid credentials user returns ok with token")]
         public async Task loginWithValidCredentialsReturnsOkWithToken()
         {
-            VortexDbContext db = getInMemoryDbContext();
-            IConfiguration config = getTestConfiguration();
+            VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
 
             await createUser(db);
 
