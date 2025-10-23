@@ -26,22 +26,10 @@ namespace VortexTCG.Auth.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> login([FromBody] LoginDTO data)
         {
-            try
-            {
-                return Ok(await _login_service.login(data));
-            }
-            catch (Exception error)
-            {
-                switch (error.Message)
-                {
-                    case "UNAUTHORIZED":
-                        return Unauthorized(new { error = "Invalid credentials." });
-                    case "BAD_REQUEST":
-                        return BadRequest(new { error = "Email ou mot de passe sont requis." });
-                    default:
-                        return BadRequest(new { error = error.Message });
-                }
-            }
+            LoginResult result = await _login_service.login(data);
+            return StatusCode(result.statusCode, result.success ?
+                                                 new { message = result.message, data = result.data } :
+                                                 new { message = result.message });
         }
     }
 }
