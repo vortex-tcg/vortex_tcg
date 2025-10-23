@@ -5,12 +5,12 @@ using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using VortexTCG.Auth.DTOs;
 using VortexTCG.Auth.Providers;
+using VortexTCG.Common.DTO;
 using System.Text;
 using Scrypt;
 
 namespace VortexTCG.Auth.Services {
 
-    public record LoginResult(bool success, int statusCode, LoginResponseDTO? data = null, string? message = null );
     public class LoginService
     {
 
@@ -71,18 +71,28 @@ namespace VortexTCG.Auth.Services {
             }
         }
 
-        public async Task<LoginResult> login(LoginDTO data)
+        public async Task<ResultDTO<LoginResponseDTO>> login(LoginDTO data)
         {
             if (checkIsEmptyLoginData(data))
             {
-                return new(success: false, statusCode: 400, message: "Email ou mot de passe sont requis.");
+                return new ResultDTO<LoginResponseDTO>
+                {
+                    success = false,
+                    statusCode = 400,
+                    message = "Email ou mot de passe sont requis."
+                };
             }
 
             LoginUserDTO user = await _provider.getFirstUserByEmail(data.email);
 
             if (user == null)
             {
-                return new(success: false, statusCode: 401, message: "Invalid credentials.");
+                return new ResultDTO<LoginResponseDTO>
+                {
+                    success = false,
+                    statusCode = 401,
+                    message = "Invalid credentials."
+                };
             }
 
             ScryptEncoder encoder = new ScryptEncoder();
@@ -91,23 +101,38 @@ namespace VortexTCG.Auth.Services {
             {
                 if (!encoder.Compare(data.password, user.Password))
                 {
-                    return new(success: false, statusCode: 401, message: "Invalid credentials.");
+                    return new ResultDTO<LoginResponseDTO>
+                    {
+                        success = false,
+                        statusCode = 401,
+                        message = "Invalid credentials."
+                    };
                 }
             }
             catch
             {
-                return new(success: false, statusCode: 401, message: "Invalid credentials.");
+                return new ResultDTO<LoginResponseDTO>
+                {
+                    success = false,
+                    statusCode = 401,
+                    message = "Invalid credentials."
+                };
             }
 
             JwtSecurityToken token = generateAccessToken(user.Username);
 
-            return new(success: true, statusCode: 200, message: "success", data: new LoginResponseDTO
+            return new ResultDTO<LoginResponseDTO>
             {
-                id = user.Id,
-                username = user.Username,
-                token = new JwtSecurityTokenHandler().WriteToken(token),
-                role = convertRoleToString(user.Role)
-            });
+                success = true,
+                statusCode = 200,
+                data = new LoginResponseDTO
+                {
+                    id = user.Id,
+                    username = user.Username,
+                    token = new JwtSecurityTokenHandler().WriteToken(token),
+                    role = convertRoleToString(user.Role)
+                }
+            };
         }
     }
 }
