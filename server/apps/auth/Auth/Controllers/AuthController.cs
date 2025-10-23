@@ -27,9 +27,11 @@ namespace VortexTCG.Auth.Controllers
         public async Task<IActionResult> login([FromBody] LoginDTO data)
         {
             LoginResult result = await _login_service.login(data);
-            return StatusCode(result.statusCode, result.success ?
-                                                 new { message = result.message, data = result.data } :
-                                                 new { message = result.message });
+            if (result.success && result.data != null)
+            {
+                return Ok(result.data);
+            }
+            return StatusCode(result.statusCode, new { message = result.message });
         }
     }
 }

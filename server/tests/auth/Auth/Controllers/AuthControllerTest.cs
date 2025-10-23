@@ -1,0 +1,194 @@
+using Xunit;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using VortexTCG.Auth.Controllers;
+using VortexTCG.DataAccess;
+using VortexTCG.DataAccess.Models;
+using Microsoft.Extensions.Configuration;
+using VortexTCG.Auth.DTOs;
+using Scrypt;
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
+
+namespace Tests
+{
+    public class AuthControllerTest
+    {
+        private VortexDbContext getInMemoryDbContext()
+        {
+            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+
+            return new VortexDbContext(options);
+        }
+
+        private IConfiguration getTestConfiguration()
+        {
+            Dictionary<string, string> inMemorySettings = new Dictionary<string, string>
+            {
+                { "JwtSettings:SecretKey", "123soleiljspjesaispaaaaaaaaaahahahahahhahahah" }
+            };
+
+            return new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemorySettings!)
+                .Build();
+        }
+
+        private async Task createUser(VortexDbContext db)
+        {
+            ScryptEncoder encoder = new ScryptEncoder();
+            string hashedPassword = encoder.Encode("CorrectPassword1!");
+
+            Rank rank = db.Ranks.Add(new Rank { Label = "Bronze", nbVictory = 0 }).Entity;
+            db.Users.Add(new User
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                Username = "johndoe",
+                Email = "johndoe@example.com",
+                Password = hashedPassword,
+                Language = "fr",
+                CurrencyQuantity = 0,
+                Role = Role.USER,
+                RankId = rank.Id,
+                CreatedBy = "System",
+                CreatedAtUtc = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+        }
+
+        [Fact(DisplayName = "login with invalid input returns bad request")]
+        public async Task loginWithInvalidInputReturnsBadRequest()
+        {
+            VortexDbContext db = getInMemoryDbContext();
+            IConfiguration config = getTestConfiguration();
+            AuthController controller = new AuthController(db, config);
+
+            LoginDTO request = new LoginDTO
+            {
+                email = "",
+                password = ""
+            };
+
+            var result = await controller.login(request);
+            ObjectResult badRequest = Assert.IsType<ObjectResult>(result);
+            String payload = badRequest.Value?.ToString();
+            Assert.Equal(400, badRequest.StatusCode);
+            Assert.NotNull(payload);
+            Assert.Contains("Email ou mot de passe sont requis", payload);
+        }
+
+        [Fact(DisplayName = "login with no email returns bad request")]
+        public async Task loginWithNoEmailReturnsBadRequest()
+        {
+            VortexDbContext db = getInMemoryDbContext();
+            IConfiguration config = getTestConfiguration();
+            AuthController controller = new AuthController(db, config);
+
+            LoginDTO request = new LoginDTO
+            {
+                email = "",
+                password = "Password1!"
+            };
+
+            IActionResult result = await controller.login(request);
+            ObjectResult badRequest = Assert.IsType<ObjectResult>(result);
+            String payload = badRequest.Value?.ToString();
+            Assert.Equal(400, badRequest.StatusCode);
+            Assert.NotNull(payload);
+            Assert.Contains("Email ou mot de passe sont requis", payload);
+        }
+
+        [Fact(DisplayName = "login with no password returns bad request")]
+        public async Task loginWithNoPasswordReturnsBadRequest()
+        {
+            VortexDbContext db = getInMemoryDbContext();
+            IConfiguration config = getTestConfiguration();
+            AuthController controller = new AuthController(db, config);
+
+            LoginDTO request = new LoginDTO
+            {
+                email = "nonexistent@example.com",
+                password = ""
+            };
+
+            IActionResult result = await controller.login(request);
+            ObjectResult badRequest = Assert.IsType<ObjectResult>(result);
+            String payload = badRequest.Value?.ToString();
+            Assert.Equal(400, badRequest.StatusCode);
+            Assert.NotNull(payload);
+            Assert.Contains("Email ou mot de passe sont requis", payload);
+        }
+
+        [Fact(DisplayName = "login with non existent user returns unauthorized")]
+        public async Task loginWithNonExistentUserReturnsUnauthorized()
+        {
+            VortexDbContext db = getInMemoryDbContext();
+            IConfiguration config = getTestConfiguration();
+            AuthController controller = new AuthController(db, config);
+
+            LoginDTO request = new LoginDTO
+            {
+                email = "nonexistent@example.com",
+                password = "Password1!"
+            };
+
+            IActionResult result = await controller.login(request);
+            ObjectResult unauthorized = Assert.IsType<ObjectResult>(result);
+            String payload = unauthorized.Value?.ToString();
+            Assert.Equal(401, unauthorized.StatusCode);
+            Assert.NotNull(payload);
+            Assert.Contains("Invalid credentials", payload);
+        }
+
+        [Fact(DisplayName = "login with wrong password returns unauthorized")]
+        public async Task loginWithWrongPasswordReturnsUnauthorized()
+        {
+            VortexDbContext db = getInMemoryDbContext();
+            IConfiguration config = getTestConfiguration();
+
+            await createUser(db);
+
+            AuthController controller = new AuthController(db, config);
+
+            LoginDTO request = new LoginDTO
+            {
+                email = "johndoe@example.com",
+                password = "Password2rzarae!"
+            };
+
+            IActionResult result = await controller.login(request);
+            ObjectResult unauthorized = Assert.IsType<ObjectResult>(result);
+            String payload = unauthorized.Value?.ToString();
+            Assert.Equal(401, unauthorized.StatusCode);
+            Assert.NotNull(payload);
+            Assert.Contains("Invalid credentials", payload);
+        }
+
+        [Fact(DisplayName = "login with valid credentials user returns ok with token")]
+        public async Task loginWithValidCredentialsReturnsOkWithToken()
+        {
+            VortexDbContext db = getInMemoryDbContext();
+            IConfiguration config = getTestConfiguration();
+
+            await createUser(db);
+
+            AuthController controller = new AuthController(db, config);
+
+            LoginDTO request = new LoginDTO
+            {
+                email = "johndoe@example.com",
+                password = "CorrectPassword1!"
+            };
+
+            IActionResult result = await controller.login(request);
+            OkObjectResult okResult = Assert.IsType<OkObjectResult>(result);
+            LoginResponseDTO response = Assert.IsType<LoginResponseDTO>(okResult.Value);
+            Assert.Equal(200, okResult.StatusCode);
+            Assert.NotNull(response.token);
+            Assert.Equal("johndoe", response.username);
+            Assert.Equal("USER", response.role); 
+        }
+    }
+}
