@@ -10,7 +10,7 @@ using Scrypt;
 
 namespace VortexTCG.Auth.Services {
 
-    public record LoginResult(bool success, int statusCode, string message, LoginResponseDTO? data = null);
+    public record LoginResult(bool success, int statusCode, LoginResponseDTO? data = null, string? message = null );
     public class LoginService
     {
 
@@ -89,7 +89,10 @@ namespace VortexTCG.Auth.Services {
 
             try
             {
-                encoder.Compare(data.password, user.Password);
+                if (!encoder.Compare(data.password, user.Password))
+                {
+                    return new(success: false, statusCode: 401, message: "Invalid credentials.");
+                }
             }
             catch
             {
@@ -98,7 +101,7 @@ namespace VortexTCG.Auth.Services {
 
             JwtSecurityToken token = generateAccessToken(user.Username);
 
-            return new(success: true, statusCode: 200, message: "success", new LoginResponseDTO
+            return new(success: true, statusCode: 200, message: "success", data: new LoginResponseDTO
             {
                 id = user.Id,
                 username = user.Username,
