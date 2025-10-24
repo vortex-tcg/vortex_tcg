@@ -5,23 +5,23 @@ namespace VortexTCG.Auth.DTOs
     public class RegisterDTO
     {
         [Required]
-        public string FirstName { get; set; } = string.Empty;
+        public string first_name { get; set; } = string.Empty;
 
         [Required]
-        public string LastName { get; set; } = string.Empty;
+        public string last_name { get; set; } = string.Empty;
 
         [Required]
-        public string Username { get; set; } = string.Empty;
+        public string username { get; set; } = string.Empty;
 
         [Required]
         [EmailAddress]
-        public string Email { get; set; } = string.Empty;
+        public string email { get; set; } = string.Empty;
 
         [Required]
-        public string Password { get; set; } = string.Empty;
+        public string password { get; set; } = string.Empty;
 
         [Required]
-        [Compare(nameof(Password), ErrorMessage = "Les mots de passe ne correspondent pas.")]
-        public string PasswordConfirmation { get; set; } = string.Empty;
+        [Compare("password", ErrorMessage = "Les mots de passe ne correspondent pas.")]
+        public string password_confirmation { get; set; } = string.Empty;
     }
 }

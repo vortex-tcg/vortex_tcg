@@ -4,76 +4,93 @@ using System.Text.RegularExpressions;
 using VortexTCG.Auth.DTOs;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
+using VortexTCG.Auth.Providers;
 
 namespace VortexTCG.Auth.Services
 {
 	public class RegisterService
 	{
-		private readonly VortexDbContext _db;
-		private readonly ScryptEncoder _encoder = new ScryptEncoder();
+		private readonly UserProvider _userProvider;
+		private static readonly Regex PasswordRegex = new(
+			pattern: @"^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?""':{}|<>]).{8,}$",
+			options: RegexOptions.Compiled
+		);
 
 		public RegisterService(VortexDbContext db)
 		{
-			_db = db;
+			_userProvider = new UserProvider(db);
 		}
 
 		public record RegisterResult(bool Success, int StatusCode, string Message);
 
 		public async Task<RegisterResult> RegisterAsync(RegisterDTO request, CancellationToken ct = default)
 		{
-			// Vérifications basiques (double-sécurité au-delà des DataAnnotations)
-			if (string.IsNullOrWhiteSpace(request.FirstName) ||
-				string.IsNullOrWhiteSpace(request.LastName) ||
-				string.IsNullOrWhiteSpace(request.Username) ||
-				string.IsNullOrWhiteSpace(request.Email) ||
-				string.IsNullOrWhiteSpace(request.Password) ||
-				string.IsNullOrWhiteSpace(request.PasswordConfirmation))
+			var nullCheck = CheckNullFields(request);
+			if (nullCheck is not null)
+				return nullCheck;
+
+			var passwordCheck = CheckPassword(request.password, request.password_confirmation);
+			if (passwordCheck is not null)
+				return passwordCheck;
+
+			var uniquenessCheck = await CheckUniquenessAsync(request, ct);
+			if (uniquenessCheck is not null)
+				return uniquenessCheck;
+
+			var encoder = new ScryptEncoder();
+			string hashedPassword = encoder.Encode(request.password);
+
+			var user = new User
+			{
+				FirstName = request.first_name,
+				LastName = request.last_name,
+				Username = request.username,
+				Email = request.email,
+				Password = hashedPassword,
+				Language = "fr",
+				CurrencyQuantity = 0,
+			};
+
+			_userProvider.AddUser(user);
+			await _userProvider.SaveChangesAsync(ct);
+
+			return new(true, 201, "Utilisateur créé avec succès ✅");
+		}
+
+		private RegisterResult? CheckNullFields(RegisterDTO request)
+		{
+			if (string.IsNullOrWhiteSpace(request.first_name) ||
+				string.IsNullOrWhiteSpace(request.last_name) ||
+				string.IsNullOrWhiteSpace(request.username) ||
+				string.IsNullOrWhiteSpace(request.email) ||
+				string.IsNullOrWhiteSpace(request.password) ||
+				string.IsNullOrWhiteSpace(request.password_confirmation))
 			{
 				return new(false, 400, "Tous les champs sont requis.");
 			}
+			return null;
+		}
 
-			if (request.Password != request.PasswordConfirmation)
-			{
+	private RegisterResult? CheckPassword(string password, string confirmation)
+		{
+			if (password != confirmation)
 				return new(false, 400, "Les mots de passe ne correspondent pas.");
-			}
 
-			// Sécurité du mot de passe
-			var passwordPattern = @"^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?""':{}|<>]).{8,}$";
-			if (!Regex.IsMatch(request.Password, passwordPattern))
-			{
+			if (!PasswordRegex.IsMatch(password))
 				return new(false, 400, "Le mot de passe doit contenir au minimum 8 caractères, une majuscule, un chiffre et un caractère spécial.");
-			}
 
-			// Unicité email / username
-			if (await _db.Users.AnyAsync(u => u.Email == request.Email, ct))
-			{
+			return null;
+		}
+
+		private async Task<RegisterResult?> CheckUniquenessAsync(RegisterDTO request, CancellationToken ct)
+		{
+			if (await _userProvider.EmailExistsAsync(request.email, ct))
 				return new(false, 409, "Email déjà utilisé.");
-			}
 
-			if (await _db.Users.AnyAsync(u => u.Username == request.Username, ct))
-			{
+			if (await _userProvider.UsernameExistsAsync(request.username, ct))
 				return new(false, 409, "Nom d'utilisateur déjà pris.");
-			}
 
-			// Hash & création utilisateur
-			String hashedPassword = _encoder.Encode(request.Password);
-
-			User user = new User
-            {
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                Username = request.Username,
-                Email = request.Email,
-                Password = hashedPassword,
-                Language = "fr",
-				CurrencyQuantity = 0,
-                // RankId laissé null par défaut
-            };
-
-			_db.Users.Add(user);
-			await _db.SaveChangesAsync(ct);
-
-			return new(true, 201, "Utilisateur créé avec succès ✅");
+			return null;
 		}
 	}
 }
