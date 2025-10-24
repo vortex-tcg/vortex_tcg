@@ -46,10 +46,8 @@ builder.Configuration.AddEnvironmentVariables();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<VortexDbContext>(options =>
-    options.UseMySql(
-        connectionString,
-        ServerVersion.AutoDetect(connectionString)
-    ));
+    options.UseMySql(connectionString, new MariaDbServerVersion(new Version(11, 8, 3)))
+);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
