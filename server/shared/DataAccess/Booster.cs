@@ -7,15 +7,26 @@ namespace VortexTCG.DataAccess.Models
     public class Booster : AuditableEntity
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         public string Label { get; set; } = default!;
 
-        public int Price { get; set; } = default!;
+        public float Price { get; set; } = default!;
 
-        public int UserId { get; set; } = default!;
-        public User User { get; set; } = default!;
-        public int? CardId { get; set; } = default!;
-        public Card? Cards { get; set; } = default!;
+        public ICollection<BoosterCard> Cards { get; set; } = default!;
+    }
+
+    public class BoosterCard : AuditableEntity
+    {
+        [Key]
+        public Guid Id { get; set; }
+
+        public float Probability { get; set; } = default!;
+
+        public Guid CardId { get; set; } = default!;
+        public Card Card { get; set; } = default!;
+
+        public Guid BoosterId { get; set; } = default!;
+        public Booster Booster { get; set; } = default!;
     }
 }
