@@ -39,7 +39,8 @@ var connectionString = builder.Configuration["CONNECTION_STRING"];
 builder.Services.AddDbContext<VortexDbContext>(options =>
     options.UseMySql(connectionString, new MariaDbServerVersion(new Version(11, 8, 3)) )
 );
-
+builder.Services.AddScoped<api.Effect.Providers.EffectTypeProvider>();
+builder.Services.AddScoped<api.Effect.Services.EffectTypeService>();
 // CORS
 builder.Services.AddCors(options =>
 {
@@ -78,7 +79,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 if (app.Environment.IsDevelopment())
-{
+{   
     app.UseSwagger();
     app.UseSwaggerUI();
 }
@@ -106,4 +107,11 @@ app.MapGet("/health/db", async (VortexDbContext db) =>
     }
 });
 
+
 app.Run();
+
+record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+{
+    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+}
+
