@@ -193,12 +193,6 @@ public class GameHub : Hub
             await Clients.Client(oppId).SendAsync("OpponentPlayedCard", roomId, from, cardId);
         }
     }
-
-    /**
-     * drawCards
-     * @param playerId identifiant du joueur qui pioche
-     * @param amount nombre de cartes à piocher
-     */
     /// <summary>
     /// Déclenche, côté adversaire, l'événement de pioche d'un nombre donné de cartes.
     /// </summary>
@@ -218,12 +212,6 @@ public class GameHub : Hub
     [HubMethodName("drawCards")]
     public Task HandleDrawCards(int playerId, int amount)
         => DispatchGameEventAsync("drawCards", playerId, amount);
-
-    /**
-     * playCard
-     * @param cardId identifiant de la carte jouée
-     * @param position position de la carte sur le plateau (-1 si aucune)
-     */
     /// <summary>
     /// Notifie l'adversaire qu'une carte a été jouée avec une position donnée sur le plateau.
     /// </summary>
@@ -237,11 +225,6 @@ public class GameHub : Hub
     [HubMethodName("playCardAction")]
     public Task HandlePlayCardAction(int cardId, int position)
         => DispatchGameEventAsync("playCard", cardId, position);
-
-    /**
-     * changePhase
-     * Déclenche une modification de phase pour l'adversaire.
-     */
     /// <summary>
     /// Demande à l'adversaire de passer à la phase suivante (événement « changePhase »).
     /// </summary>
@@ -251,11 +234,6 @@ public class GameHub : Hub
     [HubMethodName("changePhase")]
     public Task HandleChangePhase()
         => DispatchGameEventAsync("changePhase");
-
-    /**
-     * changeSentryPos
-     * @param boardPosition nouvelle position de la sentinelle
-     */
     /// <summary>
     /// Informe l'adversaire d'un changement de position de la sentinelle.
     /// </summary>
