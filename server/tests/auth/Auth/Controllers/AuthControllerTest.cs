@@ -8,6 +8,7 @@ using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.Services;
 using VortexTCG.Auth.DTOs;
 using Scrypt;
+using VortexTCG.Common.DTO;
 
 namespace Tests
 {
@@ -51,10 +52,10 @@ namespace Tests
 
             var result = await controller.login(request);
             ObjectResult badRequest = Assert.IsType<ObjectResult>(result);
-            String payload = badRequest.Value?.ToString();
+            ResultDTO<LoginResponseDTO> payload = Assert.IsType<ResultDTO<LoginResponseDTO>>(badRequest.Value);
             Assert.Equal(400, badRequest.StatusCode);
             Assert.NotNull(payload);
-            Assert.Contains("Email ou mot de passe sont requis", payload);
+            Assert.Contains("Email ou mot de passe sont requis", payload.message);
         }
 
         [Fact(DisplayName = "login with no email returns bad request")]
@@ -72,10 +73,10 @@ namespace Tests
 
             IActionResult result = await controller.login(request);
             ObjectResult badRequest = Assert.IsType<ObjectResult>(result);
-            String payload = badRequest.Value?.ToString();
+            ResultDTO<LoginResponseDTO> payload = Assert.IsType<ResultDTO<LoginResponseDTO>>(badRequest.Value);
             Assert.Equal(400, badRequest.StatusCode);
             Assert.NotNull(payload);
-            Assert.Contains("Email ou mot de passe sont requis", payload);
+            Assert.Contains("Email ou mot de passe sont requis", payload.message);
         }
 
         [Fact(DisplayName = "login with no password returns bad request")]
@@ -93,10 +94,10 @@ namespace Tests
 
             IActionResult result = await controller.login(request);
             ObjectResult badRequest = Assert.IsType<ObjectResult>(result);
-            String payload = badRequest.Value?.ToString();
+            ResultDTO<LoginResponseDTO> payload = Assert.IsType<ResultDTO<LoginResponseDTO>>(badRequest.Value);
             Assert.Equal(400, badRequest.StatusCode);
             Assert.NotNull(payload);
-            Assert.Contains("Email ou mot de passe sont requis", payload);
+            Assert.Contains("Email ou mot de passe sont requis", payload.message);
         }
 
         [Fact(DisplayName = "login with non existent user returns unauthorized")]
@@ -114,10 +115,10 @@ namespace Tests
 
             IActionResult result = await controller.login(request);
             ObjectResult unauthorized = Assert.IsType<ObjectResult>(result);
-            String payload = unauthorized.Value?.ToString();
+            ResultDTO<LoginResponseDTO> payload = Assert.IsType<ResultDTO<LoginResponseDTO>>(unauthorized.Value);
             Assert.Equal(401, unauthorized.StatusCode);
             Assert.NotNull(payload);
-            Assert.Contains("Invalid credentials", payload);
+            Assert.Contains("Invalid credentials", payload.message);
         }
 
         [Fact(DisplayName = "login with wrong password returns unauthorized")]
@@ -138,10 +139,10 @@ namespace Tests
 
             IActionResult result = await controller.login(request);
             ObjectResult unauthorized = Assert.IsType<ObjectResult>(result);
-            String payload = unauthorized.Value?.ToString();
+            ResultDTO<LoginResponseDTO> payload = Assert.IsType<ResultDTO<LoginResponseDTO>>(unauthorized.Value);
             Assert.Equal(401, unauthorized.StatusCode);
             Assert.NotNull(payload);
-            Assert.Contains("Invalid credentials", payload);
+            Assert.Contains("Invalid credentials", payload.message);
         }
 
         [Fact(DisplayName = "login with valid credentials user returns ok with token")]
@@ -161,12 +162,12 @@ namespace Tests
             };
 
             IActionResult result = await controller.login(request);
-            OkObjectResult okResult = Assert.IsType<OkObjectResult>(result);
-            LoginResponseDTO response = Assert.IsType<LoginResponseDTO>(okResult.Value);
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
+            ResultDTO<LoginResponseDTO> payload = Assert.IsType<ResultDTO<LoginResponseDTO>>(okResult.Value);
             Assert.Equal(200, okResult.StatusCode);
-            Assert.NotNull(response.token);
-            Assert.Equal("johndoe", response.username);
-            Assert.Equal("USER", response.role); 
+            Assert.NotNull(payload.data?.token);
+            Assert.Equal("johndoe", payload.data?.username);
+            Assert.Equal("USER", payload.data?.role); 
         }
     }
 }
