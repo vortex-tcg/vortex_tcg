@@ -3,15 +3,14 @@ using api.Effect.Services;
 using Microsoft.AspNetCore.Mvc;
 using VortexTCG.Common.DTO;
 
-
 namespace api.Effect.Controller
 {
     [ApiController]
-    [Route("api/effect_type")]
-    public class EffectTypeController : ControllerBase
+    [Route("api/effect_description")]
+    public class EffectDescriptionController : ControllerBase
     {
-        private readonly EffectTypeService _service;
-        public EffectTypeController(EffectTypeService service) => _service = service;
+        private readonly EffectDescriptionService _service;
+        public EffectDescriptionController(EffectDescriptionService service) => _service = service;
 
         [HttpGet]
         public async Task<IActionResult> list(CancellationToken ct) =>
@@ -22,11 +21,11 @@ namespace api.Effect.Controller
             toActionResult(await _service.getAsync(id, ct));
 
         [HttpPost]
-        public async Task<IActionResult> create([FromBody] EffectTypeCreateDTO dto, CancellationToken ct) =>
+        public async Task<IActionResult> create([FromBody] EffectDescriptionInputDTO dto, CancellationToken ct) =>
             toActionResult(await _service.createAsync(dto, ct));
 
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> update(Guid id, [FromBody] EffectTypeUpdateDTO dto, CancellationToken ct) =>
+        public async Task<IActionResult> update(Guid id, [FromBody] EffectDescriptionInputDTO dto, CancellationToken ct) =>
             toActionResult(await _service.updateAsync(id, dto, ct));
 
         [HttpDelete("{id:guid}")]
@@ -35,5 +34,5 @@ namespace api.Effect.Controller
 
         private IActionResult toActionResult<T>(ResultDTO<T> result) =>
             StatusCode(result.statusCode, result);
-    }
+    }       
 }
