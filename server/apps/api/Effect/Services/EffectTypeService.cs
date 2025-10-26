@@ -23,9 +23,9 @@ namespace api.Effect.Services
             Label = e.Label
         };
 
-        public async Task<ResultDTO<List<EffectTypeDTO>>> ListAsync(CancellationToken ct = default)
+        public async Task<ResultDTO<List<EffectTypeDTO>>> listAsync(CancellationToken ct = default)
         {
-            var entities = await _provider.ListAsync(ct);
+            var entities = await _provider.listAsync(ct);
             return new ResultDTO<List<EffectTypeDTO>>
             {
                 success = true,
@@ -34,22 +34,22 @@ namespace api.Effect.Services
             };
         }
 
-        public async Task<ResultDTO<EffectTypeDTO>> GetAsync(Guid id, CancellationToken ct = default)
+        public async Task<ResultDTO<EffectTypeDTO>> getAsync(Guid id, CancellationToken ct = default)
         {
-            var entity = await _provider.FindByIdAsync(id, ct);
+            var entity = await _provider.findByIdAsync(id, ct);
             if (entity is null)
                 return new ResultDTO<EffectTypeDTO> { success = false, statusCode = 404, message = "EffectType introuvable." };
 
             return new ResultDTO<EffectTypeDTO> { success = true, statusCode = 200, data = Map(entity) };
         }
 
-        public async Task<ResultDTO<EffectTypeDTO>> CreateAsync(EffectTypeCreateDTO input, CancellationToken ct = default)
+        public async Task<ResultDTO<EffectTypeDTO>> createAsync(EffectTypeCreateDTO input, CancellationToken ct = default)
         {
             var label = Normalize(input.Label);
             if (string.IsNullOrWhiteSpace(label))
                 return new ResultDTO<EffectTypeDTO> { success = false, statusCode = 400, message = "Label requis." };
 
-            if (await _provider.ExistsByLabelAsync(label, ct))
+            if (await _provider.existsByLabelAsync(label, ct))
                 return new ResultDTO<EffectTypeDTO> { success = false, statusCode = 409, message = "Un EffectType avec ce label existe déjà." };
 
             var entity = new EffectType
@@ -58,13 +58,13 @@ namespace api.Effect.Services
                 Label = label
             };
 
-            entity = await _provider.AddAsync(entity, ct);
+            entity = await _provider.addAsync(entity, ct);
             return new ResultDTO<EffectTypeDTO> { success = true, statusCode = 201, data = Map(entity) };
         }
 
-        public async Task<ResultDTO<EffectTypeDTO>> UpdateAsync(Guid id, EffectTypeUpdateDTO input, CancellationToken ct = default)
+        public async Task<ResultDTO<EffectTypeDTO>> updateAsync(Guid id, EffectTypeUpdateDTO input, CancellationToken ct = default)
         {
-            var existing = await _provider.FindByIdAsync(id, ct);
+            var existing = await _provider.findByIdAsync(id, ct);
             if (existing is null)
                 return new ResultDTO<EffectTypeDTO> { success = false, statusCode = 404, message = "EffectType introuvable." };
 
@@ -74,20 +74,20 @@ namespace api.Effect.Services
 
             // Unicité simple : autorise le même label si c'est le même enregistrement
             if (!string.Equals(existing.Label, label, StringComparison.Ordinal) &&
-                await _provider.ExistsByLabelAsync(label, ct))
+                await _provider.existsByLabelAsync(label, ct))
             {
                 return new ResultDTO<EffectTypeDTO> { success = false, statusCode = 409, message = "Un EffectType avec ce label existe déjà." };
             }
 
             existing.Label = label;
 
-            await _provider.UpdateAsync(existing, ct);
+            await _provider.updateAsync(existing, ct);
             return new ResultDTO<EffectTypeDTO> { success = true, statusCode = 200, data = Map(existing) };
         }
 
-        public async Task<ResultDTO<bool>> DeleteAsync(Guid id, CancellationToken ct = default)
+        public async Task<ResultDTO<bool>> deleteAsync(Guid id, CancellationToken ct = default)
         {
-            var ok = await _provider.DeleteAsync(id, ct);
+            var ok = await _provider.deleteAsync(id, ct);
             if (!ok)
                 return new ResultDTO<bool> { success = false, statusCode = 404, message = "EffectType introuvable." };
 
