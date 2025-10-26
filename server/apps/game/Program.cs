@@ -43,13 +43,11 @@ builder.Services.AddRazorPages();
 // 2) Configuration DB - Utilise directement les variables d'environnement
 builder.Configuration.AddEnvironmentVariables();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration["CONNECTION_STRING"];
 
 builder.Services.AddDbContext<VortexDbContext>(options =>
-    options.UseMySql(
-        connectionString,
-        ServerVersion.AutoDetect(connectionString)
-    ));
+    options.UseMySql(connectionString, new MariaDbServerVersion(new Version(11, 8, 3)))
+);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
