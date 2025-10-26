@@ -47,8 +47,8 @@ namespace VortexTCG.DataAccess.Models
 
         public ICollection<Game>? Logs { get; set; }
 
-        public ICollection<Friend> Friends { get; set; } // Quand j'ajoute un ami
-        public ICollection<Friend> OtherFriends { get; set; } // Quand des utilisateurs m'ajoute en ami
+        public ICollection<Friend> Friends { get; set; } = new List<Friend>(); // Quand j'ajoute un ami
+        public ICollection<Friend> OtherFriends { get; set; } = new List<Friend>(); // Quand des utilisateurs m'ajoute en ami
     }
 
     public class Friend : AuditableEntity
@@ -57,9 +57,9 @@ namespace VortexTCG.DataAccess.Models
         public Guid Id { get; set; }
 
         public Guid FriendUserId { get; set; }
-        public User FriendUser { get; set; }
+        public User FriendUser { get; set; } = default!;
 
         public Guid UserId { get; set; }
-        public User User { get; set; }
+        public User User { get; set; } = default!;
     }
 }
