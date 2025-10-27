@@ -30,6 +30,14 @@ namespace Tests.Rank
             return new RankController(service);
         }
 
+        private class TestCurrentUserService : VortexTCG.Common.Services.ICurrentUserService
+        {
+            public Guid UserId => Guid.Empty;
+            public string Username => "test";
+            public string Role => "USER";
+            public string GetCurrentUsername() => "test";
+        }
+
         [Fact]
         public async Task CreateRank_ReturnsCreated()
         {

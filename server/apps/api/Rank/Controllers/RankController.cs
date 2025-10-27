@@ -7,8 +7,8 @@ using VortexTCG.Common.DTO;
 namespace VortexTCG.Api.Rank.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
-    public class RankController : ControllerBase
+    [Route("api/rank")]
+    public class RankController : VortexBaseController
     {
         private readonly RankService _service;
         public RankController(RankService service)
