@@ -43,6 +43,8 @@ builder.Services.AddScoped<api.Effect.Providers.EffectTypeProvider>();
 builder.Services.AddScoped<api.Effect.Services.EffectTypeService>();
 builder.Services.AddScoped<api.Effect.Providers.EffectDescriptionProvider>();
 builder.Services.AddScoped<api.Effect.Services.EffectDescriptionService>();
+builder.Services.AddScoped<api.Card.Providers.CardProvider>();
+builder.Services.AddScoped<api.Card.Services.CardService>();
 
 // CORS
 builder.Services.AddCors(options =>
