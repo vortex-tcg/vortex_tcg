@@ -1,0 +1,116 @@
+### Tests de validation des IDs - API Faction
+
+@baseUrl = http://localhost:6006
+@contentType = application/json
+
+### 1. GET all factions (pour voir les données existantes)
+GET {{baseUrl}}/api/faction
+Accept: {{contentType}}
+
+###
+
+### 2. ❌ CREATE faction avec ID de carte INVALIDE
+POST {{baseUrl}}/api/faction
+Content-Type: {{contentType}}
+
+{
+  "label": "Test Faction Invalid Card",
+  "currency": "Test Coins",
+  "condition": "Test condition",
+  "cardIds": [
+    "99999999-9999-9999-9999-999999999999",
+    "88888888-8888-8888-8888-888888888888"
+  ]
+}
+
+###
+
+### 3. ❌ CREATE faction avec ID de champion INVALIDE
+POST {{baseUrl}}/api/faction
+Content-Type: {{contentType}}
+
+{
+  "label": "Test Faction Invalid Champion",
+  "currency": "Test Coins",
+  "condition": "Test condition",
+  "championId": "77777777-7777-7777-7777-777777777777"
+}
+
+###
+
+### 4. ❌ CREATE faction avec IDs de carte ET champion INVALIDES
+POST {{baseUrl}}/api/faction
+Content-Type: {{contentType}}
+
+{
+  "label": "Test Faction All Invalid",
+  "currency": "Test Coins",
+  "condition": "Test condition",
+  "cardIds": [
+    "99999999-9999-9999-9999-999999999999",
+    "88888888-8888-8888-8888-888888888888"
+  ],
+  "championId": "77777777-7777-7777-7777-777777777777"
+}
+
+###
+
+### 5. ✅ CREATE faction valide (SANS cartes/champion pour comparaison)
+POST {{baseUrl}}/api/faction
+Content-Type: {{contentType}}
+
+{
+  "label": "Valid Test Faction",
+  "currency": "Valid Coins",
+  "condition": "Valid condition"
+}
+
+###
+
+### 6. GET faction créée avec cartes (test de l'endpoint /cards)
+GET {{baseUrl}}/api/faction/00000000-0000-0000-0000-000000000000/cards
+Accept: {{contentType}}
+
+###
+
+### 7. ❌ UPDATE faction avec ID de carte INVALIDE (remplacer l'ID par celui créé)
+PUT {{baseUrl}}/api/faction/00000000-0000-0000-0000-000000000000
+Content-Type: {{contentType}}
+
+{
+  "label": "Updated with invalid cards",
+  "cardIds": [
+    "99999999-9999-9999-9999-999999999999"
+  ]
+}
+
+###
+
+### 8. ❌ UPDATE faction avec ID de champion INVALIDE (remplacer l'ID par celui créé)
+PUT {{baseUrl}}/api/faction/00000000-0000-0000-0000-000000000000
+Content-Type: {{contentType}}
+
+{
+  "label": "Updated with invalid champion",
+  "championId": "77777777-7777-7777-7777-777777777777"
+}
+
+###
+
+### 9. ✅ UPDATE faction avec suppression des relations (doit fonctionner)
+PUT {{baseUrl}}/api/faction/00000000-0000-0000-0000-000000000000
+Content-Type: {{contentType}}
+
+{
+  "label": "Updated with empty relations",
+  "cardIds": [],
+  "championId": "00000000-0000-0000-0000-000000000000"
+}
+
+###
+
+### 10. Test général - GET all factions pour voir le résultat final
+GET {{baseUrl}}/api/faction
+Accept: {{contentType}}
+
+###
