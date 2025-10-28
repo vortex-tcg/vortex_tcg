@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\apps\api\api.csproj" />
     <ProjectReference Include="..\apps\auth\auth.csproj" />
     <ProjectReference Include="..\apps\game\game.csproj" />
   </ItemGroup>

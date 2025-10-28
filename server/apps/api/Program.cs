@@ -1,13 +1,57 @@
+using Microsoft.EntityFrameworkCore;
+using VortexTCG.DataAccess;
+using VortexTCG.Common.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Configuration.AddEnvironmentVariables();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddControllers();
+
+var connectionString = builder.Configuration["CONNECTION_STRING"];
+
+builder.Services.AddDbContext<VortexDbContext>(options =>
+    options.UseMySql(connectionString, new MariaDbServerVersion(new Version(11, 8, 3)) )
+);
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowVortexWeb",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+app.UseCors("AllowVortexWeb");
+app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<VortexDbContext>();
+    try
+    {
+        if (db.Database.CanConnect())
+            app.Logger.LogInformation("Connexion DB OK");
+        else
+            app.Logger.LogError("Impossible de se connecter à la DB");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError($"Erreur DB: {ex.Message}");
+    }
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -15,30 +59,23 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseAuthorization();
 
-var summaries = new[]
+// Health check
+app.MapGet("/health/db", async (VortexDbContext db) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+    try
+    {
+        var canConnect = await db.Database.CanConnectAsync();
+        return canConnect
+            ? Results.Ok(new { status = "UP", message = "✅ DB reachable" })
+            : Results.Problem("❌ DB unreachable");
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"❌ DB error: {ex.Message}");
+    }
+});
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
