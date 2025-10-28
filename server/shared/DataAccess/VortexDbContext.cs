@@ -27,6 +27,7 @@ namespace VortexTCG.DataAccess
         public DbSet<CollectionChampion> CollectionChampions { get; set; }
         public DbSet<Champion> Champions { get; set; }
         public DbSet<Faction> Factions { get; set; }
+        public DbSet<FactionCard> FactionCards { get; set; }
         public DbSet<CollectionCard> CollectionCards { get; set; }
         public DbSet<DeckCard> DeckCards { get; set; }
         public DbSet<Deck> Decks { get; set; }
@@ -46,7 +47,6 @@ namespace VortexTCG.DataAccess
         {
             base.OnModelCreating(modelBuilder);
 
-            // Effect
             modelBuilder.Entity<Effect>()
                         .HasOne(c => c.StartCondition)
                         .WithMany(ct => ct.StartEffects)
@@ -57,7 +57,6 @@ namespace VortexTCG.DataAccess
                         .WithMany(ct => ct.EndEffects)
                         .HasForeignKey(c => c.EndConditionId);
             
-            // Card
             modelBuilder.Entity<Card>()
                         .Property(p => p.Extension)
                         .HasConversion<string>()
@@ -68,13 +67,11 @@ namespace VortexTCG.DataAccess
                         .HasConversion<string>()
                         .HasColumnType("varchar(256)");
 
-            // CollectionCard
             modelBuilder.Entity<CollectionCard>()
                         .Property(p => p.Rarity)
                         .HasConversion<string>()
                         .HasColumnType("varchar(256)");
 
-            // Friend
             modelBuilder.Entity<Friend>()
                         .HasOne(c => c.FriendUser)
                         .WithMany(ct => ct.OtherFriends)
@@ -85,7 +82,6 @@ namespace VortexTCG.DataAccess
                         .WithMany(ct => ct.Friends)
                         .HasForeignKey(c => c.UserId);
 
-            // User
             modelBuilder.Entity<User>()
                         .Property(p => p.Status)
                         .HasConversion<string>()
@@ -96,20 +92,19 @@ namespace VortexTCG.DataAccess
                         .HasConversion<string>()
                         .HasColumnType("varchar(256)");
 
-            // Game
             modelBuilder.Entity<Game>()
                         .Property(p => p.Status)
                         .HasConversion<string>()
                         .HasColumnType("varchar(256)");
 
-            // Action
             modelBuilder.Entity<ActionType>()
                         .HasOne(a => a.Parent)
                         .WithMany(a => a.Childs)
                         .HasForeignKey(a => a.ParentId);
 
-
-            // Configuration des propriétés d'audit pour les entités implémentant AuditableEntity
+            modelBuilder.Entity<FactionCard>()
+                        .ToTable("FactionCard");
+y
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 if (typeof(AuditableEntity).IsAssignableFrom(entityType.ClrType))
