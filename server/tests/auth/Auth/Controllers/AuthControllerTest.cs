@@ -19,7 +19,7 @@ namespace Tests
             ScryptEncoder encoder = new ScryptEncoder();
             string hashedPassword = encoder.Encode("CorrectPassword1!");
 
-            Rank rank = db.Ranks.Add(new Rank { Label = "Bronze", nbVictory = 0 }).Entity;
+            var rank = db.Ranks.Add(new VortexTCG.DataAccess.Models.Rank { Label = "Bronze", nbVictory = 0 }).Entity;
             db.Users.Add(new User
             {
                 FirstName = "John",
