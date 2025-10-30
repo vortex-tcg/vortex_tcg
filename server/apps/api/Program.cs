@@ -1,20 +1,50 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using VortexTCG.DataAccess;
+using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Ajout des variables d'environnement
 builder.Configuration.AddEnvironmentVariables();
+
+// JWT Authentication
+var secretKey = builder.Configuration["JwtSettings:SecretKey"] 
+    ?? throw new InvalidOperationException("JwtSettings:SecretKey is not configured.");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+        };
+    });
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddRazorPages();
 builder.Services.AddControllers();
 
+// Configuration DB
 var connectionString = builder.Configuration["CONNECTION_STRING"];
 
 builder.Services.AddDbContext<VortexDbContext>(options =>
     options.UseMySql(connectionString, new MariaDbServerVersion(new Version(11, 8, 3)) )
 );
+builder.Services.AddScoped<api.Effect.Providers.EffectTypeProvider>();
+builder.Services.AddScoped<api.Effect.Services.EffectTypeService>();
+builder.Services.AddScoped<api.Effect.Providers.EffectDescriptionProvider>();
+builder.Services.AddScoped<api.Effect.Services.EffectDescriptionService>();
+builder.Services.AddScoped<api.Card.Providers.CardProvider>();
+builder.Services.AddScoped<api.Card.Services.CardService>();
 
 // CORS
 builder.Services.AddCors(options =>
@@ -36,6 +66,7 @@ var app = builder.Build();
 app.UseCors("AllowVortexWeb");
 app.MapControllers();
 
+// Vérification DB
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<VortexDbContext>();
@@ -53,14 +84,17 @@ using (var scope = app.Services.CreateScope())
 }
 
 if (app.Environment.IsDevelopment())
-{
+{   
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
+app.MapRazorPages();
 
 // Health check
 app.MapGet("/health/db", async (VortexDbContext db) =>
@@ -78,4 +112,11 @@ app.MapGet("/health/db", async (VortexDbContext db) =>
     }
 });
 
+
 app.Run();
+
+record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+{
+    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+}
+
