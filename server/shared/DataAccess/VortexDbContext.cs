@@ -104,7 +104,6 @@ namespace VortexTCG.DataAccess
 
             modelBuilder.Entity<FactionCard>()
                         .ToTable("FactionCard");
-y
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 if (typeof(AuditableEntity).IsAssignableFrom(entityType.ClrType))
