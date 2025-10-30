@@ -14,11 +14,16 @@ namespace VortexTCG.Api.User.Services
 			_provider = provider;
 		}
 
-		public List<UserDTO> GetAllAsync()
+		public async Task<ResultDTO<UserDTO[]>> GetAllAsync()
 		{
-			List<UserModel> users = _provider.Query().ToList();
-			List<UserDTO> dtos = users.Select(u => ToDTO(u)).ToList();
-			return dtos;
+			List<UserModel> users = await Task.Run(() => _provider.Query().ToList());
+			UserDTO[] dtos = users.Select(u => ToDTO(u)).ToArray();
+			return new ResultDTO<UserDTO[]>
+			{
+				success = true,
+				statusCode = 200,
+				data = dtos
+			};
 		}
 
 		public async Task<UserDTO?> GetByIdAsync(Guid id)
