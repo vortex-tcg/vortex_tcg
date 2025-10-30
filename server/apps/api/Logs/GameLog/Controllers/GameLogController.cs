@@ -1,38 +1,40 @@
+// ...existing code...
+// Utilisation de GameLogModel si besoin dans le contrôleur
 using Microsoft.AspNetCore.Mvc;
-using VortexTCG.Api.User.DTOs;
-using VortexTCG.Api.User.Services;
+using VortexTCG.Api.Logs.GameLog.DTOs;
+using VortexTCG.Api.Logs.GameLog.Services;
 using VortexTCG.Common.DTO;
 using VortexTCG.Common.Services;
 
-namespace VortexTCG.Api.User.Controllers
+namespace VortexTCG.Api.Logs.GameLog.Controllers
 {
 	[ApiController]
-	[Route("api/user")]
-	public class UserController : VortexBaseController
+	[Route("api/gamelog")]
+	public class GameLogController : VortexBaseController
 	{
-		private readonly UserService _service;
-		public UserController(UserService service)
+		private readonly GameLogService _service;
+		public GameLogController(GameLogService service)
 		{
 			_service = service;
 		}
 
 		[HttpGet]
-		public ActionResult<List<UserDTO>> GetAll()
+		public ActionResult<List<GameLogDTO>> GetAll()
 		{
-			var users = _service.GetAllAsync();
-			return Ok(users);
+			var logs = _service.GetAllAsync();
+			return Ok(logs);
 		}
 
 		[HttpGet("{id}")]
-		public async Task<ActionResult<UserDTO>> GetById(Guid id)
+		public async Task<ActionResult<GameLogDTO>> GetById(Guid id)
 		{
-			var user = await _service.GetByIdAsync(id);
-			if (user == null) return NotFound();
-			return Ok(user);
+			var log = await _service.GetByIdAsync(id);
+			if (log == null) return NotFound();
+			return Ok(log);
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<ResultDTO<UserDTO>>> Add([FromBody] UserCreateDTO dto)
+		public async Task<ActionResult<ResultDTO<GameLogDTO>>> Add([FromBody] GameLogCreateDTO dto)
 		{
 			var result = await _service.CreateAsync(dto);
 			if (!result.success)
@@ -41,7 +43,7 @@ namespace VortexTCG.Api.User.Controllers
 		}
 
 		[HttpPut("{id}")]
-		public async Task<ActionResult<ResultDTO<UserDTO>>> Update(Guid id, [FromBody] UserCreateDTO dto)
+		public async Task<ActionResult<ResultDTO<GameLogDTO>>> Update(Guid id, [FromBody] GameLogCreateDTO dto)
 		{
 			var result = await _service.UpdateAsync(id, dto);
 			if (!result.success)

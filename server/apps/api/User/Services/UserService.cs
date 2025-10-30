@@ -14,7 +14,7 @@ namespace VortexTCG.Api.User.Services
 			_provider = provider;
 		}
 
-		public async Task<List<UserDTO>> GetAllAsync()
+		public List<UserDTO> GetAllAsync()
 		{
 			List<UserModel> users = _provider.Query().ToList();
 			List<UserDTO> dtos = users.Select(u => ToDTO(u)).ToList();
