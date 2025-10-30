@@ -18,10 +18,16 @@ namespace VortexTCG.Api.Logs.ActionType.Services
 			_provider = provider;
 		}
 
-		public List<ActionTypeDTO> GetAllAsync()
+		public async Task<ResultDTO<ActionTypeDTO[]>> GetAllAsync()
 		{
-			List<ActionTypeModel> actions = _provider.Query().ToList();
-			return actions.Select(a => ToDTO(a)).ToList();
+			List<ActionTypeModel> actions = await Task.Run(() => _provider.Query().ToList());
+			ActionTypeDTO[] dtos = actions.Select(a => ToDTO(a)).ToArray();
+			return new ResultDTO<ActionTypeDTO[]>
+			{
+				success = true,
+				statusCode = 200,
+				data = dtos
+			};
 		}
 
 		public async Task<ActionTypeDTO?> GetByIdAsync(Guid id)

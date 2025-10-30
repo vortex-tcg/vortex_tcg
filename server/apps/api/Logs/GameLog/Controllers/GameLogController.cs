@@ -19,45 +19,39 @@ namespace VortexTCG.Api.Logs.GameLog.Controllers
 		}
 
 		[HttpGet]
-		public ActionResult<List<GameLogDTO>> GetAll()
+		public async Task<IActionResult> GetAll()
 		{
-			var logs = _service.GetAllAsync();
-			return Ok(logs);
+			var result = await _service.GetAllAsync();
+			return toActionResult<GameLogDTO[]>(result);
 		}
 
 		[HttpGet("{id}")]
-		public async Task<ActionResult<GameLogDTO>> GetById(Guid id)
+		public async Task<IActionResult> GetById(Guid id)
 		{
-			var log = await _service.GetByIdAsync(id);
-			if (log == null) return NotFound();
-			return Ok(log);
+			var data = await _service.GetByIdAsync(id);
+			var result = new ResultDTO<GameLogDTO> { success = data != null, statusCode = data != null ? 200 : 404, data = data };
+			return toActionResult<GameLogDTO>(result);
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<ResultDTO<GameLogDTO>>> Add([FromBody] GameLogCreateDTO dto)
+		public async Task<IActionResult> Add([FromBody] GameLogCreateDTO dto)
 		{
 			var result = await _service.CreateAsync(dto);
-			if (!result.success)
-				return StatusCode(result.statusCode, result);
-			return CreatedAtAction(nameof(GetById), new { id = result.data!.Id }, result);
+			return toActionResult<GameLogDTO>(result);
 		}
 
 		[HttpPut("{id}")]
-		public async Task<ActionResult<ResultDTO<GameLogDTO>>> Update(Guid id, [FromBody] GameLogCreateDTO dto)
+		public async Task<IActionResult> Update(Guid id, [FromBody] GameLogCreateDTO dto)
 		{
 			var result = await _service.UpdateAsync(id, dto);
-			if (!result.success)
-				return StatusCode(result.statusCode, result);
-			return Ok(result);
+			return toActionResult<GameLogDTO>(result);
 		}
 
 		[HttpDelete("{id}")]
-		public async Task<ActionResult<ResultDTO<object>>> Delete(Guid id)
+		public async Task<IActionResult> Delete(Guid id)
 		{
 			var result = await _service.DeleteAsync(id);
-			if (!result.success)
-				return StatusCode(result.statusCode, result);
-			return StatusCode(result.statusCode, result);
+			return toActionResult<object>(result);
 		}
 	}
 }

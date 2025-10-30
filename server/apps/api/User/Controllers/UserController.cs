@@ -17,45 +17,39 @@ namespace VortexTCG.Api.User.Controllers
 		}
 
 		[HttpGet]
-		public ActionResult<List<UserDTO>> GetAll()
+		public async Task<IActionResult> GetAll()
 		{
-			var users = _service.GetAllAsync();
-			return Ok(users);
+			var result = await _service.GetAllAsync();
+			return toActionResult<UserDTO[]>(result);
 		}
 
 		[HttpGet("{id}")]
-		public async Task<ActionResult<UserDTO>> GetById(Guid id)
+		public async Task<IActionResult> GetById(Guid id)
 		{
-			var user = await _service.GetByIdAsync(id);
-			if (user == null) return NotFound();
-			return Ok(user);
+			var data = await _service.GetByIdAsync(id);
+			var result = new ResultDTO<UserDTO> { success = data != null, statusCode = data != null ? 200 : 404, data = data };
+			return toActionResult<UserDTO>(result);
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<ResultDTO<UserDTO>>> Add([FromBody] UserCreateDTO dto)
+		public async Task<IActionResult> Add([FromBody] UserCreateDTO dto)
 		{
 			var result = await _service.CreateAsync(dto);
-			if (!result.success)
-				return StatusCode(result.statusCode, result);
-			return CreatedAtAction(nameof(GetById), new { id = result.data!.Id }, result);
+			return toActionResult<UserDTO>(result);
 		}
 
 		[HttpPut("{id}")]
-		public async Task<ActionResult<ResultDTO<UserDTO>>> Update(Guid id, [FromBody] UserCreateDTO dto)
+		public async Task<IActionResult> Update(Guid id, [FromBody] UserCreateDTO dto)
 		{
 			var result = await _service.UpdateAsync(id, dto);
-			if (!result.success)
-				return StatusCode(result.statusCode, result);
-			return Ok(result);
+			return toActionResult<UserDTO>(result);
 		}
 
 		[HttpDelete("{id}")]
-		public async Task<ActionResult<ResultDTO<object>>> Delete(Guid id)
+		public async Task<IActionResult> Delete(Guid id)
 		{
 			var result = await _service.DeleteAsync(id);
-			if (!result.success)
-				return StatusCode(result.statusCode, result);
-			return StatusCode(result.statusCode, result);
+			return toActionResult<object>(result);
 		}
 	}
 }

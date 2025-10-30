@@ -17,10 +17,16 @@ namespace VortexTCG.Api.Logs.GameLog.Services
 			_provider = provider;
 		}
 
-		public List<GameLogDTO> GetAllAsync()
+		public async Task<ResultDTO<GameLogDTO[]>> GetAllAsync()
 		{
-			List<GameLogModel> logs = _provider.Query().ToList();
-			return logs.Select(g => ToDTO(g)).ToList();
+			List<GameLogModel> logs = await Task.Run(() => _provider.Query().ToList());
+			GameLogDTO[] dtos = logs.Select(g => ToDTO(g)).ToArray();
+			return new ResultDTO<GameLogDTO[]>
+			{
+				success = true,
+				statusCode = 200,
+				data = dtos
+			};
 		}
 
 		public async Task<GameLogDTO?> GetByIdAsync(Guid id)

@@ -19,45 +19,39 @@ namespace VortexTCG.Api.Logs.ActionType.Controllers
 		}
 
 		[HttpGet]
-		public ActionResult<List<ActionTypeDTO>> GetAll()
+		public async Task<IActionResult> GetAll()
 		{
-			var actions = _service.GetAllAsync();
-			return Ok(actions);
+			var result = await _service.GetAllAsync();
+			return toActionResult<ActionTypeDTO[]>(result);
 		}
 
 		[HttpGet("{id}")]
-		public async Task<ActionResult<ActionTypeDTO>> GetById(Guid id)
+		public async Task<IActionResult> GetById(Guid id)
 		{
-			var action = await _service.GetByIdAsync(id);
-			if (action == null) return NotFound();
-			return Ok(action);
+			var data = await _service.GetByIdAsync(id);
+			var result = new ResultDTO<ActionTypeDTO> { success = data != null, statusCode = data != null ? 200 : 404, data = data };
+			return toActionResult<ActionTypeDTO>(result);
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<ResultDTO<ActionTypeDTO>>> Add([FromBody] ActionTypeCreateDTO dto)
+		public async Task<IActionResult> Add([FromBody] ActionTypeCreateDTO dto)
 		{
 			var result = await _service.CreateAsync(dto);
-			if (!result.success)
-				return StatusCode(result.statusCode, result);
-			return CreatedAtAction(nameof(GetById), new { id = result.data!.Id }, result);
+			return toActionResult<ActionTypeDTO>(result);
 		}
 
 		[HttpPut("{id}")]
-		public async Task<ActionResult<ResultDTO<ActionTypeDTO>>> Update(Guid id, [FromBody] ActionTypeCreateDTO dto)
+		public async Task<IActionResult> Update(Guid id, [FromBody] ActionTypeCreateDTO dto)
 		{
 			var result = await _service.UpdateAsync(id, dto);
-			if (!result.success)
-				return StatusCode(result.statusCode, result);
-			return Ok(result);
+			return toActionResult<ActionTypeDTO>(result);
 		}
 
 		[HttpDelete("{id}")]
-		public async Task<ActionResult<ResultDTO<object>>> Delete(Guid id)
+		public async Task<IActionResult> Delete(Guid id)
 		{
 			var result = await _service.DeleteAsync(id);
-			if (!result.success)
-				return StatusCode(result.statusCode, result);
-			return Ok(result);
+			return toActionResult<object>(result);
 		}
 	}
 }
