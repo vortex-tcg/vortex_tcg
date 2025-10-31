@@ -10,6 +10,8 @@ using VortexTCG.Auth.DTOs;
 using Scrypt;
 using VortexTCG.Common.DTO;
 using RoleEnum = VortexTCG.DataAccess.Models.Role;
+using Microsoft.EntityFrameworkCore;
+using VortexTCG.Auth.Services;
 
 namespace Tests
 {
@@ -169,6 +171,172 @@ namespace Tests
             Assert.NotNull(payload.data?.token);
             Assert.Equal("johndoe", payload.data?.username);
             Assert.Equal("USER", payload.data?.role); 
+        }
+
+        private static VortexDbContext CreateDb()
+        {
+            var options = new DbContextOptionsBuilder<VortexDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options;
+            return new VortexDbContext(options);
+        }
+
+        [Fact]
+        public async Task Missing_fields_returns_400()
+        {
+            using var db = CreateDb();
+            var service = new RegisterService(db);
+            var dto = new RegisterDTO
+            {
+                first_name = "John",
+                last_name = "Doe",
+                // username missing
+                email = "john@example.com",
+                password = "P@ssw0rd1!",
+                password_confirmation = "P@ssw0rd1!"
+            };
+
+            var result = await service.RegisterAsync(dto);
+            Assert.False(result.Success);
+            Assert.Equal(400, result.StatusCode);
+            Assert.Contains("Tous les champs sont requis", result.Message);
+        }
+
+        [Fact]
+        public async Task Password_mismatch_returns_400()
+        {
+            using var db = CreateDb();
+            var service = new RegisterService(db);
+            var dto = new RegisterDTO
+            {
+                first_name = "John",
+                last_name = "Doe",
+                username = "john",
+                email = "john@example.com",
+                password = "P@ssw0rd1!",
+                password_confirmation = "P@ssw0rd2!"
+            };
+
+            var result = await service.RegisterAsync(dto);
+            Assert.False(result.Success);
+            Assert.Equal(400, result.StatusCode);
+            Assert.Contains("Les mots de passe ne correspondent pas", result.Message);
+        }
+
+        [Theory]
+        [InlineData("weak")]
+        [InlineData("alllowercase")]
+        [InlineData("NoNumberPassword!")]
+        [InlineData("NoSpecialChar1")]
+        public async Task Weak_password_returns_400(string password)
+        {
+            using var db = CreateDb();
+            var service = new RegisterService(db);
+            var dto = new RegisterDTO
+            {
+                first_name = "John",
+                last_name = "Doe",
+                username = "john",
+                email = "john@example.com",
+                password = password,
+                password_confirmation = password
+            };
+
+            var result = await service.RegisterAsync(dto);
+            Assert.False(result.Success);
+            Assert.Equal(400, result.StatusCode);
+            Assert.Contains("Le mot de passe doit contenir au minimum 8 caractères, une majuscule, un chiffre et un caractère spécial", result.Message);
+        }
+
+        [Fact]
+        public async Task Email_already_used_returns_409()
+        {
+            using var db = CreateDb();
+            db.Users.Add(new User
+            {
+                FirstName = "Existing",
+                LastName = "User",
+                Username = "existing",
+                Email = "john@example.com",
+                Password = "hash",
+                Language = "fr",
+                CurrencyQuantity = 0
+            });
+            await db.SaveChangesAsync();
+
+            var service = new RegisterService(db);
+            var dto = new RegisterDTO
+            {
+                first_name = "John",
+                last_name = "Doe",
+                username = "john",
+                email = "john@example.com",
+                password = "P@ssw0rd1!",
+                password_confirmation = "P@ssw0rd1!"
+            };
+
+            var result = await service.RegisterAsync(dto);
+            Assert.False(result.Success);
+            Assert.Equal(409, result.StatusCode);
+            Assert.Contains("Email déjà utilisé", result.Message);
+        }
+
+        [Fact]
+        public async Task Username_already_used_returns_409()
+        {
+            using var db = CreateDb();
+            db.Users.Add(new User
+            {
+                FirstName = "Existing",
+                LastName = "User",
+                Username = "john",
+                Email = "other@example.com",
+                Password = "hash",
+                Language = "fr",
+                CurrencyQuantity = 0
+            });
+            await db.SaveChangesAsync();
+
+            var service = new RegisterService(db);
+            var dto = new RegisterDTO
+            {
+                first_name = "John",
+                last_name = "Doe",
+                username = "john",
+                email = "john2@example.com",
+                password = "P@ssw0rd1!",
+                password_confirmation = "P@ssw0rd1!"
+            };
+
+            var result = await service.RegisterAsync(dto);
+            Assert.False(result.Success);
+            Assert.Equal(409, result.StatusCode);
+            Assert.Contains("Nom d'utilisateur déjà pris", result.Message);
+        }
+
+        [Fact]
+        public async Task Success_returns_201_and_persists_user()
+        {
+            using var db = CreateDb();
+            var service = new RegisterService(db);
+            var dto = new RegisterDTO
+            {
+                first_name = "Ada",
+                last_name = "Lovelace",
+                username = "ada",
+                email = "ada@example.com",
+                password = "P@ssw0rd1!",
+                password_confirmation = "P@ssw0rd1!"
+            };
+
+            var result = await service.RegisterAsync(dto);
+            Assert.True(result.Success);
+            Assert.Equal(201, result.StatusCode);
+            Assert.Contains("Utilisateur créé", result.Message);
+
+            var saved = await db.Users.SingleOrDefaultAsync(u => u.Email == "ada@example.com");
+            Assert.NotNull(saved);
+            Assert.Equal("ada", saved!.Username);
         }
     }
 }
