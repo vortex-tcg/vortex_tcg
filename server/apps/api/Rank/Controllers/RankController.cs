@@ -17,45 +17,38 @@ namespace VortexTCG.Api.Rank.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<RankDTO>>> GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            var ranks = await _service.GetAllAsync();
-            return Ok(ranks);
+            var result = await _service.GetAllAsync();
+            return toActionResult<RankDTO[]>(result);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<RankDTO>> GetById(Guid id)
+        public async Task<IActionResult> GetById(Guid id)
         {
-            var rank = await _service.GetByIdAsync(id);
-            if (rank == null) return NotFound();
-            return Ok(rank);
+            var result = await _service.GetByIdAsync(id);
+            return toActionResult(result);
         }
 
         [HttpPost]
-        public async Task<ActionResult<ResultDTO<RankDTO>>> Add([FromBody] RankCreateDTO dto)
+        public async Task<IActionResult> Add([FromBody] RankCreateDTO dto)
         {
             var result = await _service.CreateAsync(dto);
-            if (!result.success)
-                return StatusCode(result.statusCode, result);
-            return CreatedAtAction(nameof(GetById), new { id = result.data!.Id }, result);
+            return toActionResult(result);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<ResultDTO<RankDTO>>> Update(Guid id, [FromBody] RankCreateDTO dto)
+        public async Task<IActionResult> Update(Guid id, [FromBody] RankCreateDTO dto)
         {
             var result = await _service.UpdateAsync(id, dto);
-            if (!result.success)
-                return StatusCode(result.statusCode, result);
-            return Ok(result);
+            return toActionResult(result);
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<ResultDTO<object>>> Delete(Guid id)
+        public async Task<IActionResult> Delete(Guid id)
         {
             var result = await _service.DeleteAsync(id);
-            if (!result.success)
-                return StatusCode(result.statusCode, result);
-            return StatusCode(result.statusCode, result);
+            return toActionResult(result);
         }
     }
 }
