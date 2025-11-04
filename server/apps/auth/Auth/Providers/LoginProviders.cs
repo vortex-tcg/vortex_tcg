@@ -14,7 +14,7 @@ namespace VortexTCG.Auth.Providers {
             _db = db;
         }
 
-        public async Task<LoginUserDTO> getFirstUserByEmail(string email)
+        public async Task<LoginUserDTO?> getFirstUserByEmail(string email)
         {
             return await _db.Users
                             .Where(u => u.Email == email)

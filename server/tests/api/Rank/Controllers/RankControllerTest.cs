@@ -45,7 +45,7 @@ namespace Tests.Rank
             var controller = CreateController(db);
             var dto = new RankCreateDTO { Label = "Bronze", nbVictory = 0 };
             var result = await controller.Add(dto);
-            var created = Assert.IsType<CreatedAtActionResult>(result.Result);
+            var created = Assert.IsType<ObjectResult>(result);
             var payload = Assert.IsType<ResultDTO<RankDTO>>(created.Value);
             Assert.True(payload.success);
             Assert.Equal(201, payload.statusCode);
@@ -60,7 +60,7 @@ namespace Tests.Rank
             var dto = new RankCreateDTO { Label = "Bronze", nbVictory = 0 };
             await controller.Add(dto);
             var result = await controller.Add(dto);
-            var conflict = Assert.IsType<ObjectResult>(result.Result);
+            var conflict = Assert.IsType<ObjectResult>(result);
             var payload = Assert.IsType<ResultDTO<RankDTO>>(conflict.Value);
             Assert.False(payload.success);
             Assert.Equal(409, payload.statusCode);
@@ -73,9 +73,10 @@ namespace Tests.Rank
             var controller = CreateController(db);
             var dto = new RankCreateDTO { Label = "Silver", nbVictory = 10 };
             var createResult = await controller.Add(dto);
-            var created = ((ResultDTO<RankDTO>)((CreatedAtActionResult)createResult.Result).Value).data;
-            var getResult = await controller.GetById(created.Id);
-            var ok = Assert.IsType<OkObjectResult>(getResult.Result);
+        var created = Assert.IsType<ObjectResult>(createResult);
+            var payloadCreate = Assert.IsType<ResultDTO<RankDTO>>(created.Value);
+            var getResult = await controller.GetById(payloadCreate.data.Id);
+            var ok = Assert.IsType<ObjectResult>(getResult);
             var payload = Assert.IsType<ResultDTO<RankDTO>>(ok.Value);
             Assert.True(payload.success);
             Assert.Equal("Silver", payload.data.Label);
@@ -89,10 +90,11 @@ namespace Tests.Rank
             var controller = CreateController(db);
             var dto = new RankCreateDTO { Label = "Gold", nbVictory = 20 };
             var createResult = await controller.Add(dto);
-            var created = ((ResultDTO<RankDTO>)((CreatedAtActionResult)createResult.Result).Value).data;
+        var created = Assert.IsType<ObjectResult>(createResult);
+            var payloadCreate = Assert.IsType<ResultDTO<RankDTO>>(created.Value);
             var updateDto = new RankCreateDTO { Label = "Platinum", nbVictory = 30 };
-            var updateResult = await controller.Update(created.Id, updateDto);
-            var ok = Assert.IsType<OkObjectResult>(updateResult.Result);
+            var updateResult = await controller.Update(payloadCreate.data.Id, updateDto);
+            var ok = Assert.IsType<ObjectResult>(updateResult);
             var payload = Assert.IsType<ResultDTO<RankDTO>>(ok.Value);
             Assert.True(payload.success);
             Assert.Equal("Platinum", payload.data.Label);
@@ -106,22 +108,26 @@ namespace Tests.Rank
             var controller = CreateController(db);
             var dto = new RankCreateDTO { Label = "Diamond", nbVictory = 50 };
             var createResult = await controller.Add(dto);
-            var created = ((ResultDTO<RankDTO>)((CreatedAtActionResult)createResult.Result).Value).data;
-            var deleteResult = await controller.Delete(created.Id);
-            var deleted = Assert.IsType<ObjectResult>(deleteResult.Result);
+            var created = Assert.IsType<ObjectResult>(createResult);
+            var payloadCreate = Assert.IsType<ResultDTO<RankDTO>>(created.Value);
+            var deleteResult = await controller.Delete(payloadCreate.data.Id);
+            var deleted = Assert.IsType<ObjectResult>(deleteResult);
             var payload = Assert.IsType<ResultDTO<object>>(deleted.Value);
             Assert.False(payload.success == false && payload.statusCode == 404);
-            var getResult = await controller.GetById(created.Id);
-            if (getResult.Result is NotFoundResult)
+            var getResult = await controller.GetById(payloadCreate.data.Id);
+            if (getResult is NotFoundResult)
             {
-                Assert.IsType<NotFoundResult>(getResult.Result);
+                Assert.IsType<NotFoundResult>(getResult);
             }
             else
             {
-                var ok = Assert.IsType<OkObjectResult>(getResult.Result);
+                var ok = Assert.IsType<ObjectResult>(getResult);
                 var payloadGet = Assert.IsType<ResultDTO<RankDTO>>(ok.Value);
-                Assert.False(payloadGet.success);
-                Assert.Equal(404, payloadGet.statusCode);
+                if (payloadGet != null)
+                {
+                    Assert.False(payloadGet.success);
+                    Assert.Equal(404, payloadGet.statusCode);
+                }
             }
         }
     }
