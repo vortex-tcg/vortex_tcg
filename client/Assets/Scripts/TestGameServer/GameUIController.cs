@@ -32,8 +32,6 @@ public class GameUIController : MonoBehaviour
         client.OnLog += HandleLog;
         client.OnMatched += HandleMatched;
         client.OnOpponentLeft += HandleOpponentLeft;
-
-        // Boutons
         connectBtn.onClick.AddListener(OnClickConnect);
         matchmakingBtn.onClick.AddListener(OnClickMatchmaking);
         createRoomBtn.onClick.AddListener(OnClickCreateRoom);
@@ -63,12 +61,12 @@ public class GameUIController : MonoBehaviour
     private void HandleStatus(string s) => statusText.text = s;
     private void HandleLog(string s) => AppendLog(s);
     private void HandleMatched(string key) => AppendLog($"[MATCHED] Salle: {key}");
-    private void HandleOpponentLeft() => AppendLog("⚠️ L'adversaire a quitté.");
+    private void HandleOpponentLeft() => AppendLog("L'adversaire a quitté.");
 
     private void AppendLog(string s)
     {
         if (logText == null) return;
-        if (logText.text.Length > 4000) logText.text = ""; // évite l'infini
+        if (logText.text.Length > 4000) logText.text = "";
         logText.text += (logText.text.Length > 0 ? "\n" : "") + s;
     }
 
