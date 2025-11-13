@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using VortexTCG.DataAccess;
+using VortexTCG.DataAccess.Seeds;
 
 Console.WriteLine("🔄 Début de l'application des migrations...");
 
@@ -14,13 +15,14 @@ try
         Environment.Exit(1);
     }
 
-    Console.WriteLine($"Connexion à la base de données...");
+    Console.WriteLine("Connexion à la base de données...");
 
     // Configure le DbContext
     var optionsBuilder = new DbContextOptionsBuilder<VortexDbContext>();
     optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+
     using var db = new VortexDbContext(optionsBuilder.Options);
-    
+
     // Vérifie la connexion
     if (!db.Database.CanConnect())
     {
@@ -50,12 +52,18 @@ try
         Console.WriteLine("Base de données déjà à jour, aucune migration nécessaire.");
     }
 
-    Console.WriteLine("Terminé !");
-    Environment.Exit(0);
+    // 🔹 Seed runtime avec UsersInitializer
+    var seeder = new UsersInitializer(db);
+    seeder.Seed();
+    Console.WriteLine("✅ Users seedés avec succès !");
+
+    Console.WriteLine("✅ Tout est prêt ! L'application continue de tourner...");
 }
 catch (Exception ex)
 {
     Console.WriteLine($"Erreur lors de l'application des migrations : {ex.Message}");
+    if (ex.InnerException != null)
+        Console.WriteLine($"Cause interne : {ex.InnerException.Message}");
     Console.WriteLine($"Stack trace : {ex.StackTrace}");
     Environment.Exit(1);
 }
