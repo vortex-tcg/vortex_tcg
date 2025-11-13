@@ -24,13 +24,57 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.ActionType", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("char(36)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("GameLogId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ParentId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("actionDescription")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameLogId");
+
+                    b.HasIndex("ParentId");
+
+                    b.ToTable("Actions");
+                });
+
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.Booster", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -45,6 +89,9 @@ namespace DataAccess.Migrations
                     b.Property<string>("Label")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<float>("Price")
+                        .HasColumnType("float");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
@@ -57,21 +104,22 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ActionTypes");
+                    b.ToTable("Boosters");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Booster", b =>
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.BoosterCard", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("char(36)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    b.Property<Guid>("BoosterId")
+                        .HasColumnType("char(36)");
 
-                    b.Property<int?>("CardId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("CardId")
+                        .HasColumnType("char(36)");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -83,7 +131,71 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<string>("Label")
+                    b.Property<float>("Probability")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BoosterId");
+
+                    b.HasIndex("CardId");
+
+                    b.ToTable("BoosterCards");
+                });
+
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.Card", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<int?>("Attack")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CardType")
+                        .IsRequired()
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<int>("Cost")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Extension")
+                        .IsRequired()
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<int?>("Hp")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Picture")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -99,138 +211,18 @@ namespace DataAccess.Migrations
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("longtext");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("CardId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Boosters");
-                });
-
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Card", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Attack")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CardTypeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Cost")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime(6)")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("Effect_active")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ExtensionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Hp")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Picture")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("RarityId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CardTypeId");
-
-                    b.HasIndex("ExtensionId");
-
-                    b.HasIndex("RarityId");
 
                     b.ToTable("Cards");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.CardType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime(6)")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CardTypes");
-                });
-
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Champion", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("char(36)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -246,11 +238,11 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("EffectChampionId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("EffectId")
+                        .HasColumnType("char(36)");
 
-                    b.Property<int>("FactionId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("FactionId")
+                        .HasColumnType("char(36)");
 
                     b.Property<int>("HP")
                         .HasColumnType("int");
@@ -274,7 +266,8 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EffectChampionId");
+                    b.HasIndex("EffectId")
+                        .IsUnique();
 
                     b.HasIndex("FactionId");
 
@@ -283,16 +276,11 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Class", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("char(36)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("CardId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -319,26 +307,145 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
+                    b.ToTable("Class");
+                });
+
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.ClassCard", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("CardId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ClassId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
                     b.HasIndex("CardId");
 
-                    b.ToTable("Classes");
+                    b.HasIndex("ClassId");
+
+                    b.ToTable("ClassCard");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Collection", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Collections");
+                });
+
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.CollectionCard", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("CardId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("CollectionId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("Quantity")
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("Rarity")
+                        .IsRequired()
+                        .HasColumnType("varchar(256)");
 
-                    b.Property<int?>("ChampionId")
-                        .HasColumnType("int");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
 
-                    b.Property<int>("CollectionCardId")
-                        .HasColumnType("int");
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CardId");
+
+                    b.HasIndex("CollectionId");
+
+                    b.ToTable("CollectionCards");
+                });
+
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.CollectionChampion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ChampionId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("CollectionId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -363,72 +470,25 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("ChampionId");
 
-                    b.HasIndex("CollectionCardId");
+                    b.HasIndex("CollectionId");
 
-                    b.ToTable("Collections");
-                });
-
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.CollectionCard", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CardId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime(6)")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("Price")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CardId");
-
-                    b.ToTable("CollectionCard");
+                    b.ToTable("CollectionChampions");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Condition", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("char(36)");
 
                     b.Property<string>("ConditionDescription")
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("ConditionTypeId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("ConditionTypeId")
+                        .HasColumnType("char(36)");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -439,9 +499,6 @@ namespace DataAccess.Migrations
                     b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<int?>("EffectCardId")
-                        .HasColumnType("int");
 
                     b.Property<string>("Label")
                         .IsRequired()
@@ -460,20 +517,16 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("ConditionTypeId");
 
-                    b.HasIndex("EffectCardId");
-
                     b.ToTable("Conditions");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.ConditionType", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("char(36)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -505,13 +558,14 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Deck", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("char(36)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    b.Property<Guid>("ChampionId")
+                        .HasColumnType("char(36)");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -522,6 +576,9 @@ namespace DataAccess.Migrations
                     b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<Guid>("FactionId")
+                        .HasColumnType("char(36)");
 
                     b.Property<string>("Label")
                         .IsRequired()
@@ -536,10 +593,14 @@ namespace DataAccess.Migrations
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("char(36)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ChampionId");
+
+                    b.HasIndex("FactionId");
 
                     b.HasIndex("UserId");
 
@@ -548,16 +609,14 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.DeckCard", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("char(36)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    b.Property<Guid>("CardId")
+                        .HasColumnType("char(36)");
 
-                    b.Property<int?>("CollectionId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -569,8 +628,8 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("DeckId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("DeckId")
+                        .HasColumnType("char(36)");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
@@ -586,25 +645,20 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CollectionId");
+                    b.HasIndex("CardId");
 
                     b.HasIndex("DeckId");
 
                     b.ToTable("DeckCards");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.EffectCard", b =>
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.Effect", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("char(36)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("CardId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -616,15 +670,21 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("EffectTypeId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("EffectDescriptionId")
+                        .HasColumnType("char(36)");
 
-                    b.Property<bool>("IsEquipementEffect")
-                        .HasColumnType("tinyint(1)");
+                    b.Property<Guid>("EffectTypeId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("EndConditionId")
+                        .HasColumnType("char(36)");
 
                     b.Property<string>("Parameter")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<Guid>("StartConditionId")
+                        .HasColumnType("char(36)");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -641,67 +701,66 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CardId");
+                    b.HasIndex("EffectDescriptionId");
 
                     b.HasIndex("EffectTypeId");
+
+                    b.HasIndex("EndConditionId");
+
+                    b.HasIndex("StartConditionId");
+
+                    b.ToTable("Effects");
+                });
+
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.EffectCard", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("CardId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("EffectId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CardId");
+
+                    b.HasIndex("EffectId");
 
                     b.ToTable("EffectCards");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.EffectChampion", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Cost")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime(6)")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("EffectChampions");
-                });
-
             modelBuilder.Entity("VortexTCG.DataAccess.Models.EffectDescription", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("char(36)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -717,11 +776,11 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("EffectCardId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Label")
                         .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Parameter")
                         .HasColumnType("longtext");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -734,21 +793,17 @@ namespace DataAccess.Migrations
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("EffectCardId");
 
                     b.ToTable("EffectDescriptions");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.EffectType", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("char(36)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -778,15 +833,17 @@ namespace DataAccess.Migrations
                     b.ToTable("EffectTypes");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Extension", b =>
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.Faction", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("char(36)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("Condition")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -795,6 +852,10 @@ namespace DataAccess.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Currency")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -813,25 +874,19 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Extensions");
+                    b.ToTable("Factions");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Faction", b =>
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.FactionCard", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("char(36)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    b.Property<Guid>("CardId")
+                        .HasColumnType("char(36)");
 
-                    b.Property<int?>("CardId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Condition")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -843,12 +898,8 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("Currency")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<Guid>("FactionId")
+                        .HasColumnType("char(36)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
@@ -863,43 +914,18 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("CardId");
 
-                    b.ToTable("Factions");
+                    b.HasIndex("FactionId");
+
+                    b.ToTable("FactionCard");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.FriendsList", b =>
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.Friend", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("char(36)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("FriendId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("FriendsLists");
-                });
-
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Game", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -911,7 +937,96 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<Guid>("FriendUserId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FriendUserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Friends");
+                });
+
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.Game", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("GamelogId")
+                        .HasColumnType("char(36)");
+
                     b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GamelogId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Games");
+                });
+
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.Gamelog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Label")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -929,66 +1044,16 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Games");
-                });
-
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Gamelog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ActionTypeId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime(6)")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("longtext");
-
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ActionTypeId");
-
-                    b.HasIndex("UserId");
-
                     b.ToTable("Gamelogs");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Rank", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("char(36)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -1019,122 +1084,18 @@ namespace DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Ranks");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAtUtc = new DateTime(2025, 8, 26, 9, 17, 43, 143, DateTimeKind.Utc).AddTicks(5046),
-                            CreatedBy = "System",
-                            Label = "Wood",
-                            nbVictory = 0
-                        });
-                });
-
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Rarity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime(6)")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Rarities");
-                });
-
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Role", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime(6)")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Roles");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAtUtc = new DateTime(2025, 8, 26, 9, 17, 43, 143, DateTimeKind.Utc).AddTicks(4949),
-                            CreatedBy = "System",
-                            Label = "Admin"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedAtUtc = new DateTime(2025, 8, 26, 9, 17, 43, 143, DateTimeKind.Utc).AddTicks(4952),
-                            CreatedBy = "System",
-                            Label = "User"
-                        });
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.User", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("char(36)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    b.Property<Guid?>("CollectionId")
+                        .HasColumnType("char(36)");
 
-                    b.Property<int?>("CollectionId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime(6)")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -1157,9 +1118,6 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("GameId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Language")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -1172,11 +1130,16 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("RankId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("RankId")
+                        .HasColumnType("char(36)");
 
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int");
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("varchar(256)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
@@ -1193,83 +1156,57 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CollectionId");
-
-                    b.HasIndex("GameId");
+                    b.HasIndex("CollectionId")
+                        .IsUnique();
 
                     b.HasIndex("RankId");
 
-                    b.HasIndex("RoleId");
-
                     b.ToTable("Users");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAtUtc = new DateTime(2025, 8, 26, 9, 17, 43, 143, DateTimeKind.Utc).AddTicks(5064),
-                            CreatedBy = "System",
-                            CurrencyQuantity = 1000,
-                            Email = "johndoe@gmail.com",
-                            FirstName = "John",
-                            Language = "fr",
-                            LastName = "Doe",
-                            Password = "Mdp",
-                            RankId = 1,
-                            RoleId = 2,
-                            Username = "johndoe"
-                        });
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Booster", b =>
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.ActionType", b =>
                 {
-                    b.HasOne("VortexTCG.DataAccess.Models.Card", "Cards")
-                        .WithMany("Booster")
-                        .HasForeignKey("CardId");
+                    b.HasOne("VortexTCG.DataAccess.Models.Gamelog", "Gamelog")
+                        .WithMany("Actions")
+                        .HasForeignKey("GameLogId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("VortexTCG.DataAccess.Models.User", "User")
+                    b.HasOne("VortexTCG.DataAccess.Models.ActionType", "Parent")
+                        .WithMany("Childs")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Gamelog");
+
+                    b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.BoosterCard", b =>
+                {
+                    b.HasOne("VortexTCG.DataAccess.Models.Booster", "Booster")
+                        .WithMany("Cards")
+                        .HasForeignKey("BoosterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VortexTCG.DataAccess.Models.Card", "Card")
                         .WithMany("Boosters")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("CardId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Cards");
+                    b.Navigation("Booster");
 
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Card", b =>
-                {
-                    b.HasOne("VortexTCG.DataAccess.Models.CardType", "CardType")
-                        .WithMany("Cards")
-                        .HasForeignKey("CardTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("VortexTCG.DataAccess.Models.Extension", "Extension")
-                        .WithMany("Cards")
-                        .HasForeignKey("ExtensionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("VortexTCG.DataAccess.Models.Rarity", "Rarity")
-                        .WithMany("Cards")
-                        .HasForeignKey("RarityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CardType");
-
-                    b.Navigation("Extension");
-
-                    b.Navigation("Rarity");
+                    b.Navigation("Card");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Champion", b =>
                 {
-                    b.HasOne("VortexTCG.DataAccess.Models.EffectChampion", "EffectChampion")
-                        .WithMany("Champions")
-                        .HasForeignKey("EffectChampionId")
+                    b.HasOne("VortexTCG.DataAccess.Models.Effect", "Effect")
+                        .WithOne("Champion")
+                        .HasForeignKey("VortexTCG.DataAccess.Models.Champion", "EffectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1279,200 +1216,272 @@ namespace DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("EffectChampion");
+                    b.Navigation("Effect");
 
                     b.Navigation("Faction");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Class", b =>
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.ClassCard", b =>
                 {
-                    b.HasOne("VortexTCG.DataAccess.Models.Card", "Cards")
+                    b.HasOne("VortexTCG.DataAccess.Models.Card", "Card")
                         .WithMany("Class")
-                        .HasForeignKey("CardId");
-
-                    b.Navigation("Cards");
-                });
-
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Collection", b =>
-                {
-                    b.HasOne("VortexTCG.DataAccess.Models.Champion", "Champions")
-                        .WithMany("Collections")
-                        .HasForeignKey("ChampionId");
-
-                    b.HasOne("VortexTCG.DataAccess.Models.CollectionCard", "CollectionCard")
-                        .WithMany("Collections")
-                        .HasForeignKey("CollectionCardId")
+                        .HasForeignKey("CardId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Champions");
+                    b.HasOne("VortexTCG.DataAccess.Models.Class", "Class")
+                        .WithMany("Cards")
+                        .HasForeignKey("ClassId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("CollectionCard");
+                    b.Navigation("Card");
+
+                    b.Navigation("Class");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.CollectionCard", b =>
                 {
                     b.HasOne("VortexTCG.DataAccess.Models.Card", "Card")
-                        .WithMany("CollectionCards")
+                        .WithMany("Collections")
                         .HasForeignKey("CardId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("VortexTCG.DataAccess.Models.Collection", "Collection")
+                        .WithMany("Cards")
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Card");
+
+                    b.Navigation("Collection");
+                });
+
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.CollectionChampion", b =>
+                {
+                    b.HasOne("VortexTCG.DataAccess.Models.Champion", "Champion")
+                        .WithMany("Collections")
+                        .HasForeignKey("ChampionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VortexTCG.DataAccess.Models.Collection", "Collection")
+                        .WithMany("Champions")
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Champion");
+
+                    b.Navigation("Collection");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Condition", b =>
                 {
                     b.HasOne("VortexTCG.DataAccess.Models.ConditionType", "ConditionType")
                         .WithMany("Conditions")
-                        .HasForeignKey("ConditionTypeId");
-
-                    b.HasOne("VortexTCG.DataAccess.Models.EffectCard", null)
-                        .WithMany("Condition")
-                        .HasForeignKey("EffectCardId");
+                        .HasForeignKey("ConditionTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("ConditionType");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Deck", b =>
                 {
+                    b.HasOne("VortexTCG.DataAccess.Models.Champion", "Champion")
+                        .WithMany()
+                        .HasForeignKey("ChampionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VortexTCG.DataAccess.Models.Faction", "Faction")
+                        .WithMany("Decks")
+                        .HasForeignKey("FactionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("VortexTCG.DataAccess.Models.User", "Users")
-                        .WithMany("Deck")
-                        .HasForeignKey("UserId");
+                        .WithMany("Decks")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Champion");
+
+                    b.Navigation("Faction");
 
                     b.Navigation("Users");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.DeckCard", b =>
                 {
-                    b.HasOne("VortexTCG.DataAccess.Models.Collection", "Collection")
+                    b.HasOne("VortexTCG.DataAccess.Models.CollectionCard", "Card")
+                        .WithMany("DeckCards")
+                        .HasForeignKey("CardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VortexTCG.DataAccess.Models.Deck", "Deck")
                         .WithMany("DeckCard")
-                        .HasForeignKey("CollectionId");
+                        .HasForeignKey("DeckId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("VortexTCG.DataAccess.Models.Deck", "Decks")
-                        .WithMany("DeckCard")
-                        .HasForeignKey("DeckId");
+                    b.Navigation("Card");
 
-                    b.Navigation("Collection");
-
-                    b.Navigation("Decks");
+                    b.Navigation("Deck");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.EffectCard", b =>
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.Effect", b =>
                 {
-                    b.HasOne("VortexTCG.DataAccess.Models.Card", "Cards")
-                        .WithMany("EffectCard")
-                        .HasForeignKey("CardId");
+                    b.HasOne("VortexTCG.DataAccess.Models.EffectDescription", "EffectDescription")
+                        .WithMany("Effects")
+                        .HasForeignKey("EffectDescriptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("VortexTCG.DataAccess.Models.EffectType", "EffectType")
-                        .WithMany("EffectCards")
+                        .WithMany("Effect")
                         .HasForeignKey("EffectTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Cards");
+                    b.HasOne("VortexTCG.DataAccess.Models.Condition", "EndCondition")
+                        .WithMany("EndEffects")
+                        .HasForeignKey("EndConditionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VortexTCG.DataAccess.Models.Condition", "StartCondition")
+                        .WithMany("StartEffects")
+                        .HasForeignKey("StartConditionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EffectDescription");
 
                     b.Navigation("EffectType");
+
+                    b.Navigation("EndCondition");
+
+                    b.Navigation("StartCondition");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.EffectDescription", b =>
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.EffectCard", b =>
                 {
-                    b.HasOne("VortexTCG.DataAccess.Models.EffectCard", "EffectCards")
-                        .WithMany("EffectDescription")
-                        .HasForeignKey("EffectCardId");
+                    b.HasOne("VortexTCG.DataAccess.Models.Card", "Card")
+                        .WithMany("Effect")
+                        .HasForeignKey("CardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("EffectCards");
+                    b.HasOne("VortexTCG.DataAccess.Models.Effect", "Effect")
+                        .WithMany("Cards")
+                        .HasForeignKey("EffectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Card");
+
+                    b.Navigation("Effect");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Faction", b =>
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.FactionCard", b =>
                 {
-                    b.HasOne("VortexTCG.DataAccess.Models.Card", "Cards")
-                        .WithMany("Faction")
-                        .HasForeignKey("CardId");
+                    b.HasOne("VortexTCG.DataAccess.Models.Card", "Card")
+                        .WithMany("Factions")
+                        .HasForeignKey("CardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("Cards");
+                    b.HasOne("VortexTCG.DataAccess.Models.Faction", "Faction")
+                        .WithMany("Cards")
+                        .HasForeignKey("FactionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Card");
+
+                    b.Navigation("Faction");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.FriendsList", b =>
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.Friend", b =>
                 {
+                    b.HasOne("VortexTCG.DataAccess.Models.User", "FriendUser")
+                        .WithMany("OtherFriends")
+                        .HasForeignKey("FriendUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("VortexTCG.DataAccess.Models.User", "User")
-                        .WithMany("FriendsLists")
+                        .WithMany("Friends")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("FriendUser");
+
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Gamelog", b =>
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.Game", b =>
                 {
-                    b.HasOne("VortexTCG.DataAccess.Models.ActionType", "ActionType")
-                        .WithMany("Gamelogs")
-                        .HasForeignKey("ActionTypeId")
+                    b.HasOne("VortexTCG.DataAccess.Models.Gamelog", "Gamelog")
+                        .WithOne("User")
+                        .HasForeignKey("VortexTCG.DataAccess.Models.Game", "GamelogId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("VortexTCG.DataAccess.Models.User", "Users")
-                        .WithMany("Gamelog")
-                        .HasForeignKey("UserId");
+                    b.HasOne("VortexTCG.DataAccess.Models.User", "User")
+                        .WithMany("Logs")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("ActionType");
+                    b.Navigation("Gamelog");
 
-                    b.Navigation("Users");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.User", b =>
                 {
                     b.HasOne("VortexTCG.DataAccess.Models.Collection", "Collection")
-                        .WithMany("Users")
-                        .HasForeignKey("CollectionId");
-
-                    b.HasOne("VortexTCG.DataAccess.Models.Game", "Game")
-                        .WithMany("User")
-                        .HasForeignKey("GameId");
+                        .WithOne("User")
+                        .HasForeignKey("VortexTCG.DataAccess.Models.User", "CollectionId");
 
                     b.HasOne("VortexTCG.DataAccess.Models.Rank", "Rank")
                         .WithMany("Users")
-                        .HasForeignKey("RankId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("VortexTCG.DataAccess.Models.Role", "Role")
-                        .WithMany("Users")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("RankId");
 
                     b.Navigation("Collection");
 
-                    b.Navigation("Game");
-
                     b.Navigation("Rank");
-
-                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.ActionType", b =>
                 {
-                    b.Navigation("Gamelogs");
+                    b.Navigation("Childs");
+                });
+
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.Booster", b =>
+                {
+                    b.Navigation("Cards");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Card", b =>
                 {
-                    b.Navigation("Booster");
+                    b.Navigation("Boosters");
 
                     b.Navigation("Class");
 
-                    b.Navigation("CollectionCards");
+                    b.Navigation("Collections");
 
-                    b.Navigation("EffectCard");
+                    b.Navigation("Effect");
 
-                    b.Navigation("Faction");
-                });
-
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.CardType", b =>
-                {
-                    b.Navigation("Cards");
+                    b.Navigation("Factions");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Champion", b =>
@@ -1480,16 +1489,31 @@ namespace DataAccess.Migrations
                     b.Navigation("Collections");
                 });
 
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.Class", b =>
+                {
+                    b.Navigation("Cards");
+                });
+
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Collection", b =>
                 {
-                    b.Navigation("DeckCard");
+                    b.Navigation("Cards");
 
-                    b.Navigation("Users");
+                    b.Navigation("Champions");
+
+                    b.Navigation("User")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.CollectionCard", b =>
                 {
-                    b.Navigation("Collections");
+                    b.Navigation("DeckCards");
+                });
+
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.Condition", b =>
+                {
+                    b.Navigation("EndEffects");
+
+                    b.Navigation("StartEffects");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.ConditionType", b =>
@@ -1502,35 +1526,37 @@ namespace DataAccess.Migrations
                     b.Navigation("DeckCard");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.EffectCard", b =>
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.Effect", b =>
                 {
-                    b.Navigation("Condition");
+                    b.Navigation("Cards");
 
-                    b.Navigation("EffectDescription");
+                    b.Navigation("Champion")
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.EffectChampion", b =>
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.EffectDescription", b =>
                 {
-                    b.Navigation("Champions");
+                    b.Navigation("Effects");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.EffectType", b =>
                 {
-                    b.Navigation("EffectCards");
-                });
-
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Extension", b =>
-                {
-                    b.Navigation("Cards");
+                    b.Navigation("Effect");
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Faction", b =>
                 {
+                    b.Navigation("Cards");
+
                     b.Navigation("Champions");
+
+                    b.Navigation("Decks");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Game", b =>
+            modelBuilder.Entity("VortexTCG.DataAccess.Models.Gamelog", b =>
                 {
+                    b.Navigation("Actions");
+
                     b.Navigation("User");
                 });
 
@@ -1539,25 +1565,15 @@ namespace DataAccess.Migrations
                     b.Navigation("Users");
                 });
 
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Rarity", b =>
-                {
-                    b.Navigation("Cards");
-                });
-
-            modelBuilder.Entity("VortexTCG.DataAccess.Models.Role", b =>
-                {
-                    b.Navigation("Users");
-                });
-
             modelBuilder.Entity("VortexTCG.DataAccess.Models.User", b =>
                 {
-                    b.Navigation("Boosters");
+                    b.Navigation("Decks");
 
-                    b.Navigation("Deck");
+                    b.Navigation("Friends");
 
-                    b.Navigation("FriendsLists");
+                    b.Navigation("Logs");
 
-                    b.Navigation("Gamelog");
+                    b.Navigation("OtherFriends");
                 });
 #pragma warning restore 612, 618
         }
