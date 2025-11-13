@@ -9,6 +9,11 @@ namespace api.Card.Providers
         private readonly VortexDbContext _db;
         public CardProvider(VortexDbContext db) => _db = db;
 
+        public Task<List<CardModel>> listAsync(CancellationToken ct = default)
+        {
+            return _db.Cards.AsNoTracking().OrderBy(e => e.Name).ToListAsync(ct);
+        }
+
         public async Task<CardModel> addAsync(CardModel entity, CancellationToken ct = default)
         {
             _db.Cards.Add(entity);
