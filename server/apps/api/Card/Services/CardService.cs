@@ -21,6 +21,17 @@ namespace api.Card.Services
             _provider = provider;
         }
 
+        public async Task<ResultDTO<List<CardDTO>>> listAsync(CancellationToken ct = default)
+        {
+            var entities = await _provider.listAsync(ct);
+            return new ResultDTO<List<CardDTO>>
+            {
+                success = true,
+                statusCode = 200,
+                data = entities.Select(Map).ToList()
+            };
+        }
+
         public async Task<ResultDTO<CardDTO>> createAsync(CardCreateDTO input, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(input.Name))
