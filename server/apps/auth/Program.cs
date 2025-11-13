@@ -1,37 +1,46 @@
-using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
-using Pomelo.EntityFrameworkCore.MySql;
-using System.Text.RegularExpressions;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.Services;
-
-// Chargement du .env
-Env.Load(Path.Combine(AppContext.BaseDirectory, "../../../../.env"));
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-
-// Ajout du Razor pour tester via pages
-builder.Services.AddRazorPages();
-
-// Ajout des variables d'environnement dans la config
+// Ajout des variables d'environnement
 builder.Configuration.AddEnvironmentVariables();
 
-// Remplacement des placeholders ${VAR} dans appsettings.json
-var replacedConfig = ReplacePlaceholders(builder.Configuration);
+// JWT Authentication
+var secretKey = builder.Configuration["JwtSettings:SecretKey"] 
+    ?? throw new InvalidOperationException("JwtSettings:SecretKey is not configured.");
 
-// Construction de la chaîne finale de connexion
-var finalConnStr = replacedConfig.GetConnectionString("DefaultConnection");
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+        };
+    });
 
-// Enregistrement du DbContext avec Pomelo MySQL
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddRazorPages();
+builder.Services.AddControllers();
+
+// Configuration DB
+var connectionString = builder.Configuration["CONNECTION_STRING"];
+
 builder.Services.AddDbContext<VortexDbContext>(options =>
-    options.UseMySql(finalConnStr, ServerVersion.AutoDetect(finalConnStr))
+    options.UseMySql(connectionString, new MariaDbServerVersion(new Version(11, 8, 3)) )
 );
 
-// Configuration CORS
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVortexWeb",
@@ -43,29 +52,31 @@ builder.Services.AddCors(options =>
         });
 });
 
-// Add services to the container
-builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Active CORS AVANT les endpoints
 app.UseCors("AllowVortexWeb");
-
 app.MapControllers();
 
-// Vérification de la connexion DB au démarrage
+// Vérification DB
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<VortexDbContext>();
-    if (db.Database.CanConnect())
-        app.Logger.LogInformation("✅ Connexion DB OK");
-    else
-        app.Logger.LogError("❌ Impossible de se connecter à la DB");
+    try
+    {
+        if (db.Database.CanConnect())
+            app.Logger.LogInformation("Connexion DB OK");
+        else
+            app.Logger.LogError("Impossible de se connecter à la DB");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError($"Erreur DB: {ex.Message}");
+    }
 }
 
-// Configure le pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -74,11 +85,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapRazorPages();
 
 // Health check
@@ -98,27 +107,3 @@ app.MapGet("/health/db", async (VortexDbContext db) =>
 });
 
 app.Run();
-
-
-// --- Utils ---
-static IConfiguration ReplacePlaceholders(IConfiguration config)
-{
-    var dict = new Dictionary<string, string?>();
-
-    foreach (var kvp in config.AsEnumerable())
-    {
-        if (kvp.Value is null) continue;
-
-        var newValue = Regex.Replace(kvp.Value, @"\$\{(.+?)\}", match =>
-        {
-            var envVar = match.Groups[1].Value;
-            return Environment.GetEnvironmentVariable(envVar) ?? match.Value;
-        });
-
-        dict[kvp.Key] = newValue;
-    }
-
-    return new ConfigurationBuilder()
-        .AddInMemoryCollection(dict)
-        .Build();
-}

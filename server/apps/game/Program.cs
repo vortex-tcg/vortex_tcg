@@ -1,104 +1,114 @@
-using DotNetEnv;
+// =============================================
+// FICHIER: Program.cs (Minimal Hosting)
+// Rôle: Point d'entrée de l'application ASP.NET Core.
+//       Configure les services DI (SignalR, CORS, EF Core MySQL), le pipeline HTTP,
+//       mappe le Hub "/hubs/game" et expose un endpoint /health/db.
+// =============================================
 using Microsoft.EntityFrameworkCore;
-using Pomelo.EntityFrameworkCore.MySql;
-using System.Text.RegularExpressions;
 using VortexTCG.DataAccess;
-using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.Services;
-
-//Chargement du .env plus précise.
-Env.Load(Path.Combine(AppContext.BaseDirectory, "../../../../.env"));
+using game.Hubs;
+using game.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 1) Services de base
+builder.Services.AddSignalR(o => {
+    o.EnableDetailedErrors = true;
+});
+
+// CORS pour autoriser les frontends
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Dev", b => b
+        .WithOrigins("https://localhost:5001", "http://localhost:5000",
+            "http://localhost:5173", "http://localhost:3000")
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials());
+});
+
+// Injections des services applicatifs
+builder.Services.AddSingleton<Matchmaker>();
+builder.Services.AddSingleton<RoomService>();
+
+// Logs console
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-
-// Ajout du Razor pour tester via pages
 builder.Services.AddRazorPages();
 
-// Ajout des variables d'environnement dans la config pour de la sécu et de la facilité
+// 2) Configuration DB - Utilise directement les variables d'environnement
 builder.Configuration.AddEnvironmentVariables();
 
-// Remplacement des placeholders ${VAR} dans appsettings.json car ASP.NET ne le fait pas forcément de base
-var replacedConfig = ReplacePlaceholders(builder.Configuration);
+var connectionString = builder.Configuration["CONNECTION_STRING"];
 
-// Construction de la chaîne finale de connexion
-var finalConnStr = replacedConfig.GetConnectionString("DefaultConnection");
-
-// Enregistrement du DbContext avec Pomelo MySQL
 builder.Services.AddDbContext<VortexDbContext>(options =>
-    options.UseMySql(
-        finalConnStr,
-        ServerVersion.AutoDetect(finalConnStr)
-    ));
+    options.UseMySql(connectionString, new MariaDbServerVersion(new Version(11, 8, 3)))
+);
+
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
-// Vérification de la connexion DB au démarrage (premier health check)
+app.MapControllers();
+
+// Vérification de la connexion DB au démarrage
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<VortexDbContext>();
-    if (db.Database.CanConnect())
-        app.Logger.LogInformation("✅ Connexion DB OK");
-    else
-        app.Logger.LogError("❌ Impossible de se connecter à la DB");
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        if (db.Database.CanConnect())
+        {
+            logger.LogInformation("Connexion DB OK");
+        }
+        else
+        {
+            logger.LogError("Impossible de se connecter à la DB (CanConnect() = false)");
+            return; 
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Erreur lors de la tentative de connexion à la DB");
+        return; 
+    }
 }
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
+app.UseCors("Dev");
 app.UseAuthorization();
 
+app.MapHub<GameHub>("/hubs/game");
 app.MapRazorPages();
 
-// Ajout d'une route de vérification pour les health checks
 app.MapGet("/health/db", async (VortexDbContext db) =>
 {
     try
     {
         var canConnect = await db.Database.CanConnectAsync();
         return canConnect
-            ? Results.Ok(new { status = "UP", message = "✅ DB reachable" })
-            : Results.Problem("❌ DB unreachable");
+            ? Results.Ok(new { status = "UP", message = "DB reachable" })
+            : Results.Problem("DB unreachable");
     }
     catch (Exception ex)
     {
-        return Results.Problem($"❌ DB error: {ex.Message}");
+        return Results.Problem($"DB error: {ex.Message}");
     }
 });
 
 app.Run();
-
-
-// --- Utils ---
-static IConfiguration ReplacePlaceholders(IConfiguration config)
-{
-    var dict = new Dictionary<string, string?>();
-
-    foreach (var kvp in config.AsEnumerable())
-    {
-        if (kvp.Value is null) continue;
-
-        var newValue = Regex.Replace(kvp.Value, @"\$\{(.+?)\}", match =>
-        {
-            var envVar = match.Groups[1].Value;
-            return Environment.GetEnvironmentVariable(envVar) ?? match.Value;
-        });
-
-        dict[kvp.Key] = newValue;
-    }
-
-    return new ConfigurationBuilder()
-        .AddInMemoryCollection(dict)
-        .Build();
-}
