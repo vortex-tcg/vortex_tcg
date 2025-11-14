@@ -64,7 +64,6 @@ public class HandManager : MonoBehaviour
 
         previewZone.Clear();
 
-        // Clone le prefab de la grande carte
         var previewCard = CardPreview.Instantiate();
         SetLabel(previewCard, "Name", card.Name);
         SetLabel(previewCard, "Cost", card.Cost.ToString());
@@ -95,54 +94,106 @@ public class HandManager : MonoBehaviour
     private List<CardDTO> MockFetchPlayerHand()
     {
         return new List<CardDTO>
+    {
+        new CardDTO
         {
-            new CardDTO
-            {
-                Id = Guid.NewGuid(),
-                GameId = 1,
-                Name = "Pyromancien novice",
-                Hp = 3,
-                Attack = 2,
-                Cost = 1,
-                Description = "Inflige 1 dégât à tous les ennemis.",
-                CardType = CardType.Creature,
-                Class = new List<string> { "Mage" },
-                Effects = new List<Effect>()
-            },
-            new CardDTO
-            {
-                Id = Guid.NewGuid(),
-                GameId = 1,
-                Name = "Garde de pierre",
-                Hp = 6,
-                Attack = 1,
-                Cost = 2,
-                Description = "Provocation. Réduit les dégâts subis de 1.",
-                CardType = CardType.Creature,
-                Class = new List<string> { "Guerrier" },
-                Effects = new List<Effect>()
-            },
-            new CardDTO
-            {
-                Id = Guid.NewGuid(),
-                GameId = 1,
-                Name = "Boule de feu",
-                Hp = 0,
-                Attack = 0,
-                Cost = 3,
-                Description = "Inflige 4 dégâts à une cible.",
-                CardType = CardType.Spell,
-                Class = new List<string> { "Mage" },
-                Effects = new List<Effect>()
-            }
-        };
+            Id = Guid.NewGuid(),
+            GameId = 1,
+            Name = "Pyromancien novice",
+            Hp = 3,
+            Attack = 2,
+            Cost = 1,
+            Description = "Inflige 1 dégât à tous les ennemis.",
+            CardType = CardType.Creature,
+            Class = new List<string> { "Mage" },
+            Effects = new List<Effect>()
+        },
+        new CardDTO
+        {
+            Id = Guid.NewGuid(),
+            GameId = 1,
+            Name = "Garde de pierre",
+            Hp = 6,
+            Attack = 1,
+            Cost = 2,
+            Description = "Provocation. Réduit les dégâts subis de 1.",
+            CardType = CardType.Creature,
+            Class = new List<string> { "Guerrier" },
+            Effects = new List<Effect>()
+        },
+        new CardDTO
+        {
+            Id = Guid.NewGuid(),
+            GameId = 1,
+            Name = "Boule de feu",
+            Hp = 0,
+            Attack = 0,
+            Cost = 3,
+            Description = "Inflige 4 dégâts à une cible.",
+            CardType = CardType.Spell,
+            Class = new List<string> { "Mage" },
+            Effects = new List<Effect>()
+        },
+        new CardDTO
+        {
+            Id = Guid.NewGuid(),
+            GameId = 1,
+            Name = "Archère elfe",
+            Hp = 2,
+            Attack = 3,
+            Cost = 2,
+            Description = "Inflige 1 dégât supplémentaire si votre héros a moins de 10 PV.",
+            CardType = CardType.Creature,
+            Class = new List<string> { "Archer" },
+            Effects = new List<Effect>()
+        },
+        new CardDTO
+        {
+            Id = Guid.NewGuid(),
+            GameId = 1,
+            Name = "Soin mineur",
+            Hp = 0,
+            Attack = 0,
+            Cost = 1,
+            Description = "Restaure 3 points de vie à une cible.",
+            CardType = CardType.Spell,
+            Class = new List<string> { "Clerc" },
+            Effects = new List<Effect>()
+        },
+        new CardDTO
+        {
+            Id = Guid.NewGuid(),
+            GameId = 1,
+            Name = "Chevalier de lumière",
+            Hp = 5,
+            Attack = 4,
+            Cost = 4,
+            Description = "Provocation. Inflige 1 dégât à tous les ennemis adjacents.",
+            CardType = CardType.Creature,
+            Class = new List<string> { "Paladin" },
+            Effects = new List<Effect>()
+        },
+        new CardDTO
+        {
+            Id = Guid.NewGuid(),
+            GameId = 1,
+            Name = "Explosion arcanique",
+            Hp = 0,
+            Attack = 0,
+            Cost = 5,
+            Description = "Inflige 6 dégâts répartis aléatoirement entre tous les ennemis.",
+            CardType = CardType.Spell,
+            Class = new List<string> { "Mage" },
+            Effects = new List<Effect>()
+        }
+    };
     }
 }
 
-// -----------------------------
-// STRUCTURES DE DONNÉES
-// -----------------------------
-[Serializable]
+    // -----------------------------
+    // STRUCTURES DE DONNÉES
+    // -----------------------------
+    [Serializable]
 public class CardDTO
 {
     public Guid Id;
