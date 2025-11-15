@@ -198,6 +198,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SmallCard: {fileID: 9197481963319205126, guid: 171182a60c819d946b4758b59a2bbe91, type: 3}
   CardPreview: {fileID: 9197481963319205126, guid: 9ef0118a520caa84a9726503e938cae2, type: 3}
+  EmptyCardPreview: {fileID: 9197481963319205126, guid: e3e9516851c0fdc4a83abb4d8b0eb9c4, type: 3}
 --- !u!1 &960676988
 GameObject:
   m_ObjectHideFlags: 0

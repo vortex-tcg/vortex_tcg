@@ -6,8 +6,9 @@ using UnityEngine.UIElements;
 public class HandManager : MonoBehaviour
 {
     [Header("UI Toolkit References")]
-    [SerializeField] private VisualTreeAsset SmallCard;     // pour la main
-    [SerializeField] private VisualTreeAsset CardPreview;   // pour la preview
+    [SerializeField] private VisualTreeAsset SmallCard;
+    [SerializeField] private VisualTreeAsset CardPreview;
+    [SerializeField] private VisualTreeAsset EmptyCardPreview;
     private VisualElement handZone;
     private VisualElement previewZone;
 
@@ -79,7 +80,17 @@ public class HandManager : MonoBehaviour
     {
         if (previewZone == null) return;
         previewZone.Clear();
-        previewZone.style.display = DisplayStyle.None;
+
+        if (EmptyCardPreview != null)
+        {
+            var emptyPreview = EmptyCardPreview.Instantiate();
+            previewZone.Add(emptyPreview);
+            previewZone.style.display = DisplayStyle.Flex;
+        }
+        else
+        {
+            previewZone.style.display = DisplayStyle.None;
+        }
     }
 
     private void SetLabel(VisualElement parent, string name, string value)
