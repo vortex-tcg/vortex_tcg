@@ -4,11 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using VortexTCG.Auth.Controllers;
 using VortexTCG.DataAccess;
-using VortexTCG.DataAccess.Models;
+using UserModel = VortexTCG.DataAccess.Models.User;
 using VortexTCG.Common.Services;
 using VortexTCG.Auth.DTOs;
 using Scrypt;
 using VortexTCG.Common.DTO;
+using RoleEnum = VortexTCG.DataAccess.Models.Role;
 using Microsoft.EntityFrameworkCore;
 using VortexTCG.Auth.Services;
 
@@ -21,8 +22,8 @@ namespace Tests
             ScryptEncoder encoder = new ScryptEncoder();
             string hashedPassword = encoder.Encode("CorrectPassword1!");
 
-            Rank rank = db.Ranks.Add(new Rank { Label = "Bronze", nbVictory = 0 }).Entity;
-            db.Users.Add(new User
+            var rank = db.Ranks.Add(new VortexTCG.DataAccess.Models.Rank { Label = "Bronze", nbVictory = 0 }).Entity;
+            db.Users.Add(new UserModel
             {
                 FirstName = "John",
                 LastName = "Doe",
@@ -31,7 +32,7 @@ namespace Tests
                 Password = hashedPassword,
                 Language = "fr",
                 CurrencyQuantity = 0,
-                Role = Role.USER,
+                Role = RoleEnum.USER,
                 RankId = rank.Id,
                 CreatedBy = "System",
                 CreatedAtUtc = DateTime.UtcNow
