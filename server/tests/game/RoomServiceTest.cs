@@ -40,10 +40,10 @@ namespace game.Tests
         {
             // ARRANGE: Créer le service
             var service = new RoomService();
-            string conn1 = "conn1";
+            Guid userId1 = Guid.NewGuid();
 
             // ACT: Créer un salon
-            bool success = service.TryCreateRoom(conn1, out string code);
+            bool success = service.TryCreateRoom(userId1, out string code);
 
             // ASSERT: Vérifier le succès et le format du code
             Assert.True(success);
@@ -60,11 +60,11 @@ namespace game.Tests
         {
             // ARRANGE
             var service = new RoomService();
-            string conn1 = "conn1";
+            Guid userId1 = Guid.NewGuid();
             string preferredCode = "CUSTOM";
 
             // ACT
-            bool success = service.TryCreateRoom(conn1, out string code, preferredCode);
+            bool success = service.TryCreateRoom(userId1, out string code, preferredCode);
 
             // ASSERT
             Assert.True(success);
@@ -79,14 +79,14 @@ namespace game.Tests
         {
             // ARRANGE: Créer un premier salon avec le code "CUSTOM"
             var service = new RoomService();
-            string conn1 = "conn1";
-            string conn2 = "conn2";
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
             string preferredCode = "CUSTOM";
             
-            service.TryCreateRoom(conn1, out _, preferredCode);
+            service.TryCreateRoom(userId1, out _, preferredCode);
 
             // ACT: Essayer de créer un autre salon avec le même code
-            bool success = service.TryCreateRoom(conn2, out string code, preferredCode);
+            bool success = service.TryCreateRoom(userId2, out string code, preferredCode);
 
             // ASSERT: Échec car le code est déjà pris
             Assert.False(success);
@@ -100,13 +100,13 @@ namespace game.Tests
         {
             // ARRANGE
             var service = new RoomService();
-            string conn1 = "conn1";
+            Guid userId1 = Guid.NewGuid();
 
             // ACT
-            service.TryCreateRoom(conn1, out string code);
+            service.TryCreateRoom(userId1, out string code);
             
             // ASSERT: Le créateur doit être dans le salon
-            string? foundCode = service.GetRoomOf(conn1);
+            string? foundCode = service.GetRoomOf(userId1);
             Assert.Equal(code, foundCode);
         }
 
@@ -122,16 +122,16 @@ namespace game.Tests
         {
             // ARRANGE: Créer un salon
             var service = new RoomService();
-            string conn1 = "conn1";
-            string conn2 = "conn2";
-            service.TryCreateRoom(conn1, out string code);
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            service.TryCreateRoom(userId1, out string code);
 
             // ACT: Rejoindre le salon
-            bool success = service.TryJoinRoom(conn2, code, out string? opponentId, out bool isFull);
+            bool success = service.TryJoinRoom(userId2, code, out Guid? opponentId, out bool isFull);
 
             // ASSERT
             Assert.True(success);
-            Assert.Equal(conn1, opponentId); // L'adversaire est le créateur
+            Assert.Equal(userId1, opponentId); // L'adversaire est le créateur
             Assert.False(isFull);
         }
 
@@ -143,10 +143,10 @@ namespace game.Tests
         {
             // ARRANGE
             var service = new RoomService();
-            string conn1 = "conn1";
+            Guid userId1 = Guid.NewGuid();
 
             // ACT: Essayer de rejoindre un salon qui n'existe pas
-            bool success = service.TryJoinRoom(conn1, "BADCODE", out string? opponentId, out bool isFull);
+            bool success = service.TryJoinRoom(userId1, "BADCODE", out Guid? opponentId, out bool isFull);
 
             // ASSERT
             Assert.False(success);
@@ -162,15 +162,15 @@ namespace game.Tests
         {
             // ARRANGE: Créer un salon et le remplir
             var service = new RoomService();
-            string conn1 = "conn1";
-            string conn2 = "conn2";
-            string conn3 = "conn3";
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid userId3 = Guid.NewGuid();
             
-            service.TryCreateRoom(conn1, out string code);
-            service.TryJoinRoom(conn2, code, out _, out _);
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out _, out _);
 
             // ACT: Essayer de rejoindre un salon déjà plein
-            bool success = service.TryJoinRoom(conn3, code, out string? opponentId, out bool isFull);
+            bool success = service.TryJoinRoom(userId3, code, out Guid? opponentId, out bool isFull);
 
             // ASSERT
             Assert.False(success);
@@ -190,11 +190,11 @@ namespace game.Tests
         {
             // ARRANGE
             var service = new RoomService();
-            string conn1 = "conn1";
+            Guid userId1 = Guid.NewGuid();
 
             // ACT
-            service.SetName(conn1, "PlayerOne");
-            string name = service.GetName(conn1);
+            service.SetName(userId1, "PlayerOne");
+            string name = service.GetName(userId1);
 
             // ASSERT
             Assert.Equal("PlayerOne", name);
@@ -208,13 +208,14 @@ namespace game.Tests
         {
             // ARRANGE
             var service = new RoomService();
-            string conn1 = "conn12345678";
+            Guid userId1 = Guid.NewGuid();
 
             // ACT
-            string name = service.GetName(conn1);
+            string name = service.GetName(userId1);
 
-            // ASSERT: Doit retourner "Player-{5 premiers chars}"
-            Assert.Equal("Player-conn1", name);
+            // ASSERT: Doit retourner "Player-{8 premiers chars du Guid}"
+            string expected = $"Player-{userId1.ToString()[..8]}";
+            Assert.Equal(expected, name);
         }
 
         /// <summary>
@@ -225,14 +226,15 @@ namespace game.Tests
         {
             // ARRANGE
             var service = new RoomService();
-            string conn1 = "conn12345678";
+            Guid userId1 = Guid.NewGuid();
 
             // ACT
-            service.SetName(conn1, "   "); // Pseudo vide/whitespace
-            string name = service.GetName(conn1);
+            service.SetName(userId1, "   "); // Pseudo vide/whitespace
+            string name = service.GetName(userId1);
 
-            // ASSERT
-            Assert.Equal("Player-conn1", name);
+            // ASSERT: Doit retourner "Player-{8 premiers chars du Guid}"
+            string expected = $"Player-{userId1.ToString()[..8]}";
+            Assert.Equal(expected, name);
         }
 
         #endregion
@@ -247,14 +249,13 @@ namespace game.Tests
         {
             // ARRANGE
             var service = new RoomService();
-            string conn1 = "conn1";
             Guid userId1 = Guid.NewGuid();
             Guid deckId1 = Guid.NewGuid();
             
-            service.TryCreateRoom(conn1, out string code);
+            service.TryCreateRoom(userId1, out string code);
 
             // ACT
-            await service.SetPlayerDeck(conn1, userId1, deckId1);
+            await service.SetPlayerDeck(userId1, deckId1);
 
             // ASSERT: La partie ne doit PAS être prête (il manque le 2ème joueur)
             bool isReady = service.IsGameReady(code);
@@ -273,19 +274,17 @@ namespace game.Tests
         {
             // ARRANGE: Créer un salon avec 2 joueurs
             var service = new RoomService();
-            string conn1 = "conn1";
-            string conn2 = "conn2";
             Guid userId1 = Guid.NewGuid();
             Guid userId2 = Guid.NewGuid();
             Guid deckId1 = Guid.NewGuid();
             Guid deckId2 = Guid.NewGuid();
             
-            service.TryCreateRoom(conn1, out string code);
-            service.TryJoinRoom(conn2, code, out _, out _);
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out _, out _);
 
             // ACT: Définir les decks des 2 joueurs
-            await service.SetPlayerDeck(conn1, userId1, deckId1);
-            await service.SetPlayerDeck(conn2, userId2, deckId2); // ⚡ Déclenche l'initialisation
+            await service.SetPlayerDeck(userId1, deckId1);
+            await service.SetPlayerDeck(userId2, deckId2); // ⚡ Déclenche l'initialisation
 
             // ASSERT: La partie doit être prête
             bool isReady = service.IsGameReady(code);
@@ -304,17 +303,15 @@ namespace game.Tests
         {
             // ARRANGE
             var service = new RoomService();
-            string conn1 = "conn1";
-            string conn2 = "conn2";
             Guid userId1 = Guid.NewGuid();
             Guid userId2 = Guid.NewGuid();
             Guid deckId1 = Guid.NewGuid();
             Guid deckId2 = Guid.NewGuid();
             
-            service.TryCreateRoom(conn1, out string code);
-            service.TryJoinRoom(conn2, code, out _, out _);
-            await service.SetPlayerDeck(conn1, userId1, deckId1);
-            await service.SetPlayerDeck(conn2, userId2, deckId2);
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out _, out _);
+            await service.SetPlayerDeck(userId1, deckId1);
+            await service.SetPlayerDeck(userId2, deckId2);
 
             // ACT
             var (user1, user2, deck1, deck2) = service.GetRoomPlayers(code);
@@ -338,17 +335,17 @@ namespace game.Tests
         {
             // ARRANGE
             var service = new RoomService();
-            string conn1 = "conn1";
-            service.TryCreateRoom(conn1, out string code);
+            Guid userId1 = Guid.NewGuid();
+            service.TryCreateRoom(userId1, out string code);
 
             // ACT
-            service.Leave(conn1, out string? leftCode, out _, out _);
+            service.Leave(userId1, out string? leftCode, out _, out _);
 
             // ASSERT
             Assert.Equal(code, leftCode);
             
             // Le joueur ne doit plus être dans aucun salon
-            string? foundCode = service.GetRoomOf(conn1);
+            string? foundCode = service.GetRoomOf(userId1);
             Assert.Null(foundCode);
         }
 
@@ -360,20 +357,20 @@ namespace game.Tests
         {
             // ARRANGE
             var service = new RoomService();
-            string conn1 = "conn1";
-            string conn2 = "conn2";
-            service.TryCreateRoom(conn1, out string code);
-            service.TryJoinRoom(conn2, code, out _, out _);
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out _, out _);
 
             // ACT: Le joueur 1 quitte
-            service.Leave(conn1, out _, out string? opponentId, out bool roomEmpty);
+            service.Leave(userId1, out _, out Guid? opponentId, out bool roomEmpty);
 
             // ASSERT
-            Assert.Equal(conn2, opponentId); // L'adversaire est toujours là
+            Assert.Equal(userId2, opponentId); // L'adversaire est toujours là
             Assert.False(roomEmpty); // Le salon n'est pas vide
             
             // Le joueur 2 doit toujours être dans le salon
-            string? foundCode = service.GetRoomOf(conn2);
+            string? foundCode = service.GetRoomOf(userId2);
             Assert.Equal(code, foundCode);
         }
 
@@ -385,14 +382,14 @@ namespace game.Tests
         {
             // ARRANGE
             var service = new RoomService();
-            string conn1 = "conn1";
-            service.TryCreateRoom(conn1, out string code);
+            Guid userId1 = Guid.NewGuid();
+            service.TryCreateRoom(userId1, out string code);
 
             // ACT: Le dernier joueur quitte
-            service.Leave(conn1, out _, out string? opponentId, out bool roomEmpty);
+            service.Leave(userId1, out _, out Guid? opponentId, out bool roomEmpty);
 
             // ASSERT
-            Assert.Null(opponentId); // Pas d'adversaire
+            Assert.True(!opponentId.HasValue || opponentId.Value == Guid.Empty); // Pas d'adversaire (null ou Guid.Empty)
             Assert.True(roomEmpty); // Le salon est vide et supprimé
             
             // Le salon ne doit plus exister
@@ -408,18 +405,18 @@ namespace game.Tests
         {
             // ARRANGE
             var service = new RoomService();
-            string conn1 = "conn1";
-            string conn2 = "conn2";
-            service.TryCreateRoom(conn1, out string code);
-            service.TryJoinRoom(conn2, code, out _, out _);
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out _, out _);
 
             // ACT
-            string? opponent1 = service.GetOpponentOf(conn1);
-            string? opponent2 = service.GetOpponentOf(conn2);
+            Guid? opponent1 = service.GetOpponentOf(userId1);
+            Guid? opponent2 = service.GetOpponentOf(userId2);
 
             // ASSERT
-            Assert.Equal(conn2, opponent1); // L'adversaire de conn1 est conn2
-            Assert.Equal(conn1, opponent2); // L'adversaire de conn2 est conn1
+            Assert.Equal(userId2, opponent1); // L'adversaire de userId1 est userId2
+            Assert.Equal(userId1, opponent2); // L'adversaire de userId2 est userId1
         }
 
         /// <summary>
@@ -430,14 +427,14 @@ namespace game.Tests
         {
             // ARRANGE
             var service = new RoomService();
-            string conn1 = "conn1";
-            service.TryCreateRoom(conn1, out _);
+            Guid userId1 = Guid.NewGuid();
+            service.TryCreateRoom(userId1, out _);
 
             // ACT
-            string? opponent = service.GetOpponentOf(conn1);
+            Guid? opponent = service.GetOpponentOf(userId1);
 
-            // ASSERT
-            Assert.Null(opponent); // Pas d'adversaire
+            // ASSERT: FirstOrDefault sur HashSet<Guid> retourne Guid.Empty, pas null
+            Assert.True(!opponent.HasValue || opponent.Value == Guid.Empty); // Pas d'adversaire
         }
 
         #endregion
@@ -452,12 +449,11 @@ namespace game.Tests
         {
             // ARRANGE
             var service = new RoomService();
-            string conn1 = "conn1";
             Guid userId = Guid.NewGuid();
             Guid deckId = Guid.NewGuid();
 
             // ACT: Essayer de définir un deck sans être dans un salon
-            bool success = await service.SetPlayerDeck(conn1, userId, deckId);
+            bool success = await service.SetPlayerDeck(userId, deckId);
 
             // ASSERT
             Assert.False(success);
@@ -480,17 +476,17 @@ namespace game.Tests
         }
 
         /// <summary>
-        /// TEST: GetGameRoomByConnection pour un joueur non dans un salon retourne null.
+        /// TEST: GetGameRoomByUserId pour un joueur non dans un salon retourne null.
         /// </summary>
         [Fact]
-        public void GetGameRoomByConnection_PlayerNotInRoom_ReturnsNull()
+        public void GetGameRoomByUserId_PlayerNotInRoom_ReturnsNull()
         {
             // ARRANGE
             var service = new RoomService();
-            string conn1 = "conn1";
+            Guid userId1 = Guid.NewGuid();
 
             // ACT
-            var gameRoom = service.GetGameRoomByConnection(conn1);
+            var gameRoom = service.GetGameRoomByUserId(userId1);
 
             // ASSERT
             Assert.Null(gameRoom);

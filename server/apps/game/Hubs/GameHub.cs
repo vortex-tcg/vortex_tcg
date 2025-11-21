@@ -24,6 +24,15 @@ public class GameHub : Hub
         _rooms = rooms;
     }
 
+    // Extrait l'ID utilisateur (userId) depuis le token JWT d'authentification.
+    // Cet ID est permanent (GUID) et survit aux reconnexions, contrairement au ConnectionId.
+    private Guid GetAuthenticatedUserId()
+    {
+        var userIdClaim = Context.User?.FindFirst("sub")?.Value
+            ?? throw new HubException("User not authenticated");
+        return Guid.Parse(userIdClaim);
+    }
+
     // Méthode de cycle de vie appelée lorsque le client établit la websocket avec le Hub.
     // On répond au client avec son ConnectionId pour qu'il l'affiche/log s'il veut.
     public override async Task OnConnectedAsync()
@@ -37,10 +46,15 @@ public class GameHub : Hub
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         // 1) Si le joueur était dans un salon par code, on le retire.
-        _rooms.Leave(Context.ConnectionId, out var code, out var oppCodeId, out var empty);
-        if (code is not null) await Groups.RemoveFromGroupAsync(Context.ConnectionId, code);
-        if (oppCodeId is not null && !empty)
-            await Clients.Client(oppCodeId).SendAsync("OpponentLeft", code ?? "");
+        var userId = GetAuthenticatedUserId();
+        _rooms.Leave(userId, out var code, out var oppUserId, out var empty);
+        if (code is not null)
+        {
+            // Notifier le groupe avant de quitter (autres connexions verront l'événement)
+            if (oppUserId.HasValue && !empty)
+                await Clients.OthersInGroup(code).SendAsync("OpponentLeft", code);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, code);
+        }
 
         // 2) S'il était en matchmaking, on retire la paire et on avertit l'adversaire.
         var (oppId, _) = _matchmaker.GetOpponent(Context.ConnectionId);
@@ -54,8 +68,9 @@ public class GameHub : Hub
     // Permet au client de définir son pseudo côté serveur (stocké dans Matchmaker/RoomService).
     public Task SetName(string name)
     {
+        var userId = GetAuthenticatedUserId();
         _matchmaker.SetName(Context.ConnectionId, name);
-        _rooms.SetName(Context.ConnectionId, name);
+        _rooms.SetName(userId, name);
         return Task.CompletedTask;
     }
 
@@ -109,9 +124,10 @@ public class GameHub : Hub
     public async Task CreateRoom(string? preferredCode = null)
     {
         // Si on était en matchmaking, on s'en retire, car on va jouer par code.
+        var userId = GetAuthenticatedUserId();
         _matchmaker.LeaveOrDisconnect(Context.ConnectionId);
 
-        if (!_rooms.TryCreateRoom(Context.ConnectionId, out var code, preferredCode))
+        if (!_rooms.TryCreateRoom(userId, out var code, preferredCode))
         {
             await Clients.Caller.SendAsync("RoomCreateError", "CODE_TAKEN");
             return;
@@ -126,9 +142,10 @@ public class GameHub : Hub
     // Rejoindre un salon existant par code. Si l'adversaire est déjà présent, on notifie "Matched" aux deux.
     public async Task JoinRoom(string code)
     {
+        var userId = GetAuthenticatedUserId();
         _matchmaker.LeaveOrDisconnect(Context.ConnectionId);
 
-        var ok = _rooms.TryJoinRoom(Context.ConnectionId, code, out var oppId, out var isFull);
+        var ok = _rooms.TryJoinRoom(userId, code, out var oppUserId, out var isFull);
         if (!ok)
         {
             await Clients.Caller.SendAsync("RoomJoinError", isFull ? "ROOM_FULL" : "NOT_FOUND");
@@ -137,12 +154,13 @@ public class GameHub : Hub
 
         await Groups.AddToGroupAsync(Context.ConnectionId, code);
 
-        if (oppId is not null)
+        if (oppUserId.HasValue)
         {
-            var meName = _rooms.GetName(Context.ConnectionId);
-            var otherName = _rooms.GetName(oppId);
+            var meName = _rooms.GetName(userId);
+            var otherName = _rooms.GetName(oppUserId.Value);
 
-            await Clients.Clients(new[] { Context.ConnectionId, oppId })
+            // Broadcast au groupe entier (supporte reconnexions multiples)
+            await Clients.Group(code)
                 .SendAsync("Matched", code, new { you = meName, opponent = otherName });
         }
         else
@@ -154,20 +172,25 @@ public class GameHub : Hub
     // Envoi d'un message dans un salon privé (adressage par code). Diffusé à "OthersInGroup".
     public async Task SendRoomMessageByCode(string code, string message)
     {
-        var myCode = _rooms.GetRoomOf(Context.ConnectionId);
+        var userId = GetAuthenticatedUserId();
+        var myCode = _rooms.GetRoomOf(userId);
         if (myCode != code) return; // Sécurité: on n'envoie que si l'émetteur appartient bien à ce salon.
 
-        var from = _rooms.GetName(Context.ConnectionId);
+        var from = _rooms.GetName(userId);
         await Clients.OthersInGroup(code).SendAsync("ReceiveRoomMessage", code, from, message);
     }
 
     // Quitter un salon privé (par code). Si la room devient vide, elle est supprimée côté serveur.
     public async Task LeaveRoomByCode()
     {
-        _rooms.Leave(Context.ConnectionId, out var code, out var opponentId, out var roomEmpty);
+        var userId = GetAuthenticatedUserId();
+        _rooms.Leave(userId, out var code, out var oppUserId, out var roomEmpty);
         if (code is not null) await Groups.RemoveFromGroupAsync(Context.ConnectionId, code);
-        if (opponentId is not null && !roomEmpty)
-            await Clients.Client(opponentId).SendAsync("OpponentLeft", code ?? "");
+        if (oppUserId.HasValue && !roomEmpty)
+        {
+            // Broadcast au groupe (tous les clients de l'adversaire)
+            await Clients.Group(code).SendAsync("OpponentLeft", code ?? "");
+        }
     }
 
     // Événement "jeu": jouer une carte. On supporte les deux modes:
@@ -176,10 +199,11 @@ public class GameHub : Hub
     public async Task PlayCard(string keyOrCode, int cardId)
     {
         // Mode salon privé (code)
-        var code = _rooms.GetRoomOf(Context.ConnectionId);
+        var userId = GetAuthenticatedUserId();
+        var code = _rooms.GetRoomOf(userId);
         if (code is not null && code == keyOrCode)
         {
-            var from = _rooms.GetName(Context.ConnectionId);
+            var from = _rooms.GetName(userId);
             await Clients.OthersInGroup(code).SendAsync("OpponentPlayedCard", code, from, cardId);
             return;
         }
