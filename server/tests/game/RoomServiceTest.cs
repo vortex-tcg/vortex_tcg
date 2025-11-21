@@ -1,5 +1,5 @@
 // =============================================
-// FICHIER: Tests/RoomServiceTest.cs
+// FICHIER: tests/game/RoomServiceTest.cs
 // =============================================
 // RÔLE:
 // Tests unitaires pour RoomService.
