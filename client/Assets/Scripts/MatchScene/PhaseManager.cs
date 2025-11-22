@@ -1,6 +1,6 @@
+﻿using System;
 using UnityEngine;
 using UnityEngine.UIElements;
-using System;
 
 public enum GamePhase
 {
@@ -40,7 +40,6 @@ public class PhaseManager : MonoBehaviour
         var root = uiDoc.rootVisualElement;
 
         phaseButton = root.Q<Button>("EndPhaseButton");
-
         standbyIcon = root.Q<VisualElement>("StandBy");
         attackIcon = root.Q<VisualElement>("Attack");
         defenseIcon = root.Q<VisualElement>("Defense");
@@ -80,7 +79,6 @@ public class PhaseManager : MonoBehaviour
     private void SetHighlight(VisualElement icon, bool active)
     {
         if (icon == null) return;
-
         icon.style.opacity = active ? 1f : 0.3f;
     }
 }

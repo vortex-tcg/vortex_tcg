@@ -46,11 +46,11 @@
             <ui:VisualElement name="Board" style="flex-grow: 1; height: 25%; background-image: url(&quot;project://database/Assets/Images/Logo/vortexlogo.png?fileID=2800000&amp;guid=38722d95bcbc71a429b79acc4098f555&amp;type=3#vortexlogo&quot;); -unity-background-scale-mode: scale-to-fit; -unity-background-image-tint-color: rgba(255, 255, 255, 0.48); flex-direction: column; align-items: center;">
                 <ui:VisualElement style="flex-grow: 1; width: 60%; height: auto; align-items: center; justify-content: center;">
                     <ui:VisualElement name="P2BoardCards" style="flex-grow: 1; width: auto; flex-direction: row; align-items: flex-end; margin-bottom: 10px; justify-content: center;">
-                        <ui:VisualElement name="Card" class="card bordered" style="flex-grow: 1; height: 100px; width: 80px; max-width: 80px; margin-left: 0; flex-direction: row-reverse;" />
-                        <ui:VisualElement name="Card" class="card bordered" style="flex-grow: 1; height: 100px; width: 80px; max-width: 80px; margin-left: 0; flex-direction: row-reverse;" />
-                        <ui:VisualElement name="Card" class="card bordered" style="flex-grow: 1; height: 100px; width: 80px; max-width: 80px; margin-left: 0; flex-direction: row-reverse;" />
-                        <ui:VisualElement name="Card" class="card bordered" style="flex-grow: 1; height: 100px; width: 80px; max-width: 80px; margin-left: 0; flex-direction: row-reverse;" />
-                        <ui:VisualElement name="Card" class="card bordered" style="flex-grow: 1; height: 100px; width: 80px; max-width: 80px; margin-left: 0; flex-direction: row-reverse;" />
+                        <ui:VisualElement name="Card" class="card bordered EnemyCard" style="flex-grow: 1; height: 100px; width: 80px; max-width: 80px; margin-left: 0; flex-direction: row-reverse;" />
+                        <ui:VisualElement name="Card" class="card bordered EnemyCard" style="flex-grow: 1; height: 100px; width: 80px; max-width: 80px; margin-left: 0; flex-direction: row-reverse;" />
+                        <ui:VisualElement name="Card" class="card bordered EnemyCard" style="flex-grow: 1; height: 100px; width: 80px; max-width: 80px; margin-left: 0; flex-direction: row-reverse;" />
+                        <ui:VisualElement name="Card" class="card bordered EnemyCard" style="flex-grow: 1; height: 100px; width: 80px; max-width: 80px; margin-left: 0; flex-direction: row-reverse;" />
+                        <ui:VisualElement name="Card" class="card bordered EnemyCard" style="flex-grow: 1; height: 100px; width: 80px; max-width: 80px; margin-left: 0; flex-direction: row-reverse;" />
                     </ui:VisualElement>
                     <ui:VisualElement name="P1BoardCards" style="flex-grow: 1; width: auto; flex-direction: row;">
                         <ui:VisualElement name="Card" class="card bordered" style="flex-grow: 1; height: 100px; width: 80px; max-width: 80px; margin-left: 0; flex-direction: row-reverse;" />
