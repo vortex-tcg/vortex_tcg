@@ -252,7 +252,7 @@ namespace Tests
         public async Task Email_already_used_returns_409()
         {
             using var db = CreateDb();
-            db.Users.Add(new User
+            db.Users.Add(new UserModel
             {
                 FirstName = "Existing",
                 LastName = "User",
@@ -285,7 +285,7 @@ namespace Tests
         public async Task Username_already_used_returns_409()
         {
             using var db = CreateDb();
-            db.Users.Add(new User
+            db.Users.Add(new UserModel
             {
                 FirstName = "Existing",
                 LastName = "User",
