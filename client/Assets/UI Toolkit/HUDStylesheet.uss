@@ -33,3 +33,6 @@
 .card-preview {
     display: none;
 }
+
+.EnemyCard {
+}
