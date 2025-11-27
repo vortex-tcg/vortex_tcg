@@ -14,10 +14,10 @@ public class P2BoardManager : MonoBehaviour
 
     private void OnEnable()
     {
-        var uiDoc = GetComponent<UIDocument>();
+        UIDocument uiDoc = GetComponent<UIDocument>();
         if (uiDoc == null) return;
 
-        var root = uiDoc.rootVisualElement;
+        VisualElement root = uiDoc.rootVisualElement;
         if (root == null) return;
 
         boardZoneP2 = root.Q<VisualElement>("P2BoardCards");
@@ -34,17 +34,17 @@ public class P2BoardManager : MonoBehaviour
             return;
         }
 
-        foreach (var slot in slotsP2)
+        foreach (VisualElement slot in slotsP2)
             slot.Clear();
 
         int cardsToPlace = Mathf.Min(cards.Count, slotsP2.Count);
 
         for (int i = 0; i < cardsToPlace; i++)
         {
-            var card = cards[i];
-            var slot = slotsP2[i];
+            CardDTO card = cards[i];
+            VisualElement slot = slotsP2[i];
 
-            var cardElement = SmallCard.Instantiate();
+            TemplateContainer cardElement = SmallCard.Instantiate();
             if (cardElement == null)
                 continue;
 
@@ -59,11 +59,10 @@ public class P2BoardManager : MonoBehaviour
 
     private void SetLabel(VisualElement parent, string name, string value)
     {
-        var label = parent.Q<Label>(name);
+        Label label = parent.Q<Label>(name);
         if (label != null)
             label.text = value;
     }
-
 
     private List<CardDTO> MockFetchP2BoardCards()
     {

@@ -16,9 +16,9 @@ public class HandManager : MonoBehaviour
     private VisualElement boardZone;
     private VisualElement enemyBoardZone;
 
-    private List<VisualElement> boardSlots = new();
-    private List<VisualElement> enemySlots = new();
-    private List<CardDTO> playerHand = new();
+    private List<VisualElement> boardSlots = new List<VisualElement>();
+    private List<VisualElement> enemySlots = new List<VisualElement>();
+    private List<CardDTO> playerHand = new List<CardDTO>();
 
     private VisualElement draggedElement;
     private CardDTO draggedCard;
@@ -34,10 +34,10 @@ public class HandManager : MonoBehaviour
 
     private void OnEnable()
     {
-        var uiDoc = GetComponent<UIDocument>();
+        UIDocument uiDoc = GetComponent<UIDocument>();
         if (uiDoc == null) return;
 
-        var root = uiDoc.rootVisualElement;
+        VisualElement root = uiDoc.rootVisualElement;
         if (root == null) return;
 
         handZone = root.Q<VisualElement>("P1CardsFrame");
@@ -47,13 +47,15 @@ public class HandManager : MonoBehaviour
 
         if (boardZone != null)
             boardSlots = boardZone.Query<VisualElement>("Card").ToList();
+
         if (enemyBoardZone != null)
             enemySlots = enemyBoardZone.Query<VisualElement>("Card").ToList();
 
         root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
         root.RegisterCallback<PointerUpEvent>(OnPointerUp);
 
-        if (handZone == null || previewZone == null || SmallCard == null || CardPreview == null) return;
+        if (handZone == null || previewZone == null || SmallCard == null || CardPreview == null)
+            return;
 
         playerHand = MockFetchPlayerHand();
         GenerateHand(playerHand);
@@ -63,9 +65,9 @@ public class HandManager : MonoBehaviour
     {
         handZone.Clear();
 
-        foreach (var card in cards)
+        foreach (CardDTO card in cards)
         {
-            var cardElement = SmallCard.Instantiate();
+            VisualElement cardElement = SmallCard.Instantiate();
             if (cardElement == null) continue;
 
             cardElement.userData = false;
@@ -91,7 +93,7 @@ public class HandManager : MonoBehaviour
     private void ShowPreview(CardDTO card)
     {
         previewZone.Clear();
-        var previewCard = CardPreview.Instantiate();
+        VisualElement previewCard = CardPreview.Instantiate();
 
         SetLabel(previewCard, "Name", card.Name);
         SetLabel(previewCard, "Cost", card.Cost.ToString());
@@ -108,7 +110,7 @@ public class HandManager : MonoBehaviour
         previewZone.Clear();
         if (EmptyCardPreview != null)
         {
-            var emptyPreview = EmptyCardPreview.Instantiate();
+            VisualElement emptyPreview = EmptyCardPreview.Instantiate();
             previewZone.Add(emptyPreview);
         }
         previewZone.style.display = DisplayStyle.Flex;
@@ -116,8 +118,9 @@ public class HandManager : MonoBehaviour
 
     private void SetLabel(VisualElement parent, string name, string value)
     {
-        var label = parent.Q<Label>(name);
-        if (label != null) label.text = value;
+        Label label = parent.Q<Label>(name);
+        if (label != null)
+            label.text = value;
     }
 
     private void StartDrag(VisualElement cardElement, CardDTO card, PointerDownEvent e)
@@ -172,11 +175,11 @@ public class HandManager : MonoBehaviour
         }
         else if (PhaseManager.Instance.CurrentPhase == GamePhase.Defense)
         {
-            var enemyCard = enemySlots.FirstOrDefault(slot =>
+            VisualElement enemyCard = enemySlots.FirstOrDefault(slot =>
                 slot.childCount > 0 && slot.worldBound.Contains(mousePos));
+
             if (enemyCard != null)
             {
-
                 TakeAttackAction(draggedCard, enemyCard);
                 ResetCardPosition(draggedElement);
                 ClearDrag();
@@ -190,7 +193,10 @@ public class HandManager : MonoBehaviour
 
     private void TakeAttackAction(CardDTO myCard, VisualElement enemyCard)
     {
-        Debug.Log($"Carte '{myCard.Name}' bloque l'attaque de '{enemyCard.Q<Label>("Name")?.text}'");
+        Label nameLabel = enemyCard.Q<Label>("Name");
+        string enemyName = nameLabel != null ? nameLabel.text : "???";
+
+        Debug.Log($"Carte '{myCard.Name}' bloque l'attaque de '{enemyName}'");
     }
 
     private void ClearDrag()
@@ -199,10 +205,9 @@ public class HandManager : MonoBehaviour
         draggedCard = null;
     }
 
-
     private bool TryDropOnBoard(Vector2 mousePos, List<VisualElement> slots, bool requireCardInSlot = false)
     {
-        foreach (var slot in slots)
+        foreach (VisualElement slot in slots)
         {
             if (slot == null) continue;
             if (!slot.worldBound.Contains(mousePos)) continue;
@@ -224,7 +229,6 @@ public class HandManager : MonoBehaviour
         return false;
     }
 
-
     private void ResetCardPosition(VisualElement cardElement)
     {
         if (originalParent != null)
@@ -238,16 +242,15 @@ public class HandManager : MonoBehaviour
         cardElement.style.top = StyleKeyword.Null;
     }
 
-
     private List<CardDTO> MockFetchPlayerHand()
     {
         return new List<CardDTO>
         {
-            new CardDTO{ Id=Guid.NewGuid(), Name="Pyromancien", Hp=3, Attack=2, Cost=1, Description="Inflige 1 dmg.", CardType=CardType.Creature },
-            new CardDTO{ Id=Guid.NewGuid(), Name="Garde", Hp=6, Attack=1, Cost=2, Description="Provocation.", CardType=CardType.Creature },
-            new CardDTO{ Id=Guid.NewGuid(), Name="Boule de feu", Hp=0, Attack=0, Cost=3, Description="Inflige 4 dmg.", CardType=CardType.Spell },
-            new CardDTO{ Id=Guid.NewGuid(), Name="Archère", Hp=2, Attack=3, Cost=2, Description="Bonus si PV < 10.", CardType=CardType.Creature },
-            new CardDTO{ Id=Guid.NewGuid(), Name="Soin mineur", Hp=0, Attack=0, Cost=1, Description="Restaure 3 PV.", CardType=CardType.Spell }
+            new CardDTO{ Id = Guid.NewGuid(), Name = "Pyromancien", Hp = 3, Attack = 2, Cost = 1, Description = "Inflige 1 dmg.", CardType = CardType.Creature },
+            new CardDTO{ Id = Guid.NewGuid(), Name = "Garde", Hp = 6, Attack = 1, Cost = 2, Description = "Provocation.", CardType = CardType.Creature },
+            new CardDTO{ Id = Guid.NewGuid(), Name = "Boule de feu", Hp = 0, Attack = 0, Cost = 3, Description = "Inflige 4 dmg.", CardType = CardType.Spell },
+            new CardDTO{ Id = Guid.NewGuid(), Name = "Archère", Hp = 2, Attack = 3, Cost = 2, Description = "Bonus si PV < 10.", CardType = CardType.Creature },
+            new CardDTO{ Id = Guid.NewGuid(), Name = "Soin mineur", Hp = 0, Attack = 0, Cost = 1, Description = "Restaure 3 PV.", CardType = CardType.Spell }
         };
     }
 }

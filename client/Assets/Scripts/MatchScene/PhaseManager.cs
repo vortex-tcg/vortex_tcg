@@ -37,7 +37,7 @@ public class PhaseManager : MonoBehaviour
         if (uiDoc == null)
             uiDoc = GetComponent<UIDocument>();
 
-        var root = uiDoc.rootVisualElement;
+        VisualElement root = GetComponent<UIDocument>().rootVisualElement;
 
         phaseButton = root.Q<Button>("EndPhaseButton");
         standbyIcon = root.Q<VisualElement>("StandBy");
