@@ -7,12 +7,24 @@ namespace VortexTCG.DataAccess.Models
     public class Class : AuditableEntity
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         public string Label { get; set; } = default!;
 
-        public int? CardId { get; set; }  = default!;
-        public Card? Cards { get; set; }  = default!;
+        public ICollection<ClassCard> Cards { get; set; } = default!;
 
     }
+    
+    public class ClassCard : AuditableEntity
+    {
+        [Key]
+        public Guid Id { get; set; }
+
+        public Guid CardId { get; set; } = default!;
+        public Card Card { get; set; } = default!;
+
+        public Guid ClassId { get; set; } = default!;
+        public Class Class { get; set; } = default!;
+    }
+
 }
