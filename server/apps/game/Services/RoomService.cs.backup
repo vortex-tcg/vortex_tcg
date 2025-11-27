@@ -1,4 +1,4 @@
-// =============================================
+﻿// =============================================
 // FICHIER: Services/RoomService.cs
 // =============================================
 // RÔLE PRINCIPAL:
@@ -86,23 +86,23 @@ public class RoomService
     #region Gestion des pseudos
 
     /// <summary>
-    /// Définit le pseudo d'un joueur pour un UserId donné.
-    /// Si le nom est vide, génère un pseudo par défaut (Player-{8 premiers caractères du UserId}).
+    /// Définit le pseudo d'un joueur pour un ConnectionId donné.
+    /// Si le nom est vide, génère un pseudo par défaut (Player-{5 premiers caractères du ConnectionId}).
     /// </summary>
-    /// <param name="userId">ID utilisateur du joueur</param>
+    /// <param name="connectionId">ID de connexion SignalR du joueur</param>
     /// <param name="name">Pseudo choisi par le joueur (peut être null)</param>
-    public void SetName(Guid userId, string? name)
-        => _names[userId] = string.IsNullOrWhiteSpace(name)
-            ? $"Player-{userId.ToString()[..8]}"
+    public void SetName(string connectionId, string? name)
+        => _names[connectionId] = string.IsNullOrWhiteSpace(name)
+            ? $"Player-{connectionId[..5]}"
             : name!;
 
     /// <summary>
     /// Récupère le pseudo d'un joueur. Si non défini, retourne un pseudo par défaut.
     /// </summary>
-    /// <param name="userId">ID utilisateur du joueur</param>
+    /// <param name="connectionId">ID de connexion SignalR du joueur</param>
     /// <returns>Pseudo du joueur ou pseudo par défaut</returns>
-    public string GetName(Guid userId)
-        => _names.TryGetValue(userId, out var n) ? n : $"Player-{userId.ToString()[..8]}";
+    public string GetName(string connectionId)
+        => _names.TryGetValue(connectionId, out var n) ? n : $"Player-{connectionId[..5]}";
 
     #endregion
 
@@ -111,27 +111,19 @@ public class RoomService
     /// <summary>
     /// Crée un nouveau salon de jeu et y ajoute le créateur.
     /// </summary>
-    /// <param name="userId">ID utilisateur du joueur créant le salon</param>
+    /// <param name="connectionId">ID de connexion du joueur créant le salon</param>
     /// <param name="code">Code généré ou choisi pour le salon (ex: "F9K7ZQ")</param>
     /// <param name="preferred">Code personnalisé souhaité (optionnel). Si null, génère un code aléatoire.</param>
     /// <returns>
     /// true si le salon a été créé avec succès.
-    /// false si le code préféré est déjà utilisé ou si le joueur est déjà dans un salon.
+    /// false si le code préféré est déjà utilisé.
     /// </returns>
     /// <remarks>
     /// ATOMICITÉ: L'ajout du salon dans _rooms est atomique grâce à TryAdd.
     /// Le lock garantit que l'ajout du membre et du mapping est cohérent.
-    /// RECONNEXION: Utilise userId au lieu de connectionId, le salon persiste après reconnexion.
     /// </remarks>
-    public bool TryCreateRoom(Guid userId, out string code, string? preferred = null)
+    public bool TryCreateRoom(string connectionId, out string code, string? preferred = null)
     {
-        // Vérifier que le joueur n'est pas déjà dans un salon
-        if (_userToRoom.ContainsKey(userId))
-        {
-            code = string.Empty;
-            return false;
-        }
-
         // Cas 1: Code personnalisé demandé
         if (!string.IsNullOrWhiteSpace(preferred))
         {
@@ -154,8 +146,8 @@ public class RoomService
         var room = _rooms[code];
         lock (room)
         {
-            room.Members.Add(userId);
-            _userToRoom[userId] = code;
+            room.Members.Add(connectionId);
+            _connToRoom[connectionId] = code;
         }
         return true;
     }
@@ -164,30 +156,25 @@ public class RoomService
     /// Permet à un joueur de rejoindre un salon existant.
     /// Maximum 2 joueurs par salon.
     /// </summary>
-    /// <param name="userId">ID utilisateur du joueur rejoignant</param>
+    /// <param name="connectionId">ID de connexion du joueur rejoignant</param>
     /// <param name="code">Code du salon à rejoindre</param>
-    /// <param name="opponentId">UserId de l'adversaire déjà présent (null si erreur)</param>
+    /// <param name="opponentId">ConnectionId de l'adversaire déjà présent (null si erreur)</param>
     /// <param name="isFull">Indique si le salon est déjà plein (2/2 joueurs)</param>
     /// <returns>
     /// true si le joueur a rejoint avec succès.
-    /// false si le salon n'existe pas, est plein, ou si le joueur est déjà dans un salon.
+    /// false si le salon n'existe pas ou est plein.
     /// </returns>
     /// <remarks>
     /// VÉRIFICATIONS:
-    /// 1. Le joueur n'est pas déjà dans un autre salon
-    /// 2. Existence du salon
-    /// 3. Capacité (< 2 joueurs)
-    /// 4. Ajout atomique du membre
-    /// RECONNEXION: Utilise userId, le salon reste accessible après reconnexion.
+    /// 1. Existence du salon
+    /// 2. Capacité (< 2 joueurs)
+    /// 3. Ajout atomique du membre
     /// </remarks>
-    public bool TryJoinRoom(Guid userId, string code, out Guid? opponentId, out bool isFull)
+    public bool TryJoinRoom(string connectionId, string code, out string? opponentId, out bool isFull)
     {
         opponentId = null;
         isFull = false;
         code = code.Trim().ToUpperInvariant();
-
-        // Vérifier que le joueur n'est pas déjà dans un salon
-        if (_userToRoom.ContainsKey(userId)) return false;
 
         // Vérifier l'existence du salon
         if (!_rooms.TryGetValue(code, out var room)) return false;
@@ -202,11 +189,11 @@ public class RoomService
             }
             
             // Ajouter le joueur et enregistrer le mapping
-            room.Members.Add(userId);
-            _userToRoom[userId] = code;
+            room.Members.Add(connectionId);
+            _connToRoom[connectionId] = code;
             
             // Récupérer l'adversaire (le seul autre membre)
-            opponentId = room.Members.FirstOrDefault(id => id != userId);
+            opponentId = room.Members.FirstOrDefault(id => id != connectionId);
             return true;
         }
     }
@@ -214,48 +201,48 @@ public class RoomService
     /// <summary>
     /// Récupère le code du salon dans lequel se trouve un joueur.
     /// </summary>
-    /// <param name="userId">ID utilisateur du joueur</param>
+    /// <param name="connectionId">ID de connexion du joueur</param>
     /// <returns>Code du salon ou null si le joueur n'est dans aucun salon</returns>
-    public string? GetRoomOf(Guid userId)
-        => _userToRoom.TryGetValue(userId, out var c) ? c : null;
+    public string? GetRoomOf(string connectionId)
+        => _connToRoom.TryGetValue(connectionId, out var c) ? c : null;
 
     /// <summary>
-    /// Récupère le UserId de l'adversaire d'un joueur.
+    /// Récupère le ConnectionId de l'adversaire d'un joueur.
     /// </summary>
-    /// <param name="userId">ID utilisateur du joueur</param>
-    /// <returns>UserId de l'adversaire ou null si pas d'adversaire/salon</returns>
-    public Guid? GetOpponentOf(Guid userId)
+    /// <param name="connectionId">ID de connexion du joueur</param>
+    /// <returns>ConnectionId de l'adversaire ou null si pas d'adversaire/salon</returns>
+    public string? GetOpponentOf(string connectionId)
     {
-        var code = GetRoomOf(userId);
+        var code = GetRoomOf(connectionId);
         if (code is null) return null;
         if (!_rooms.TryGetValue(code, out var room)) return null;
 
         lock (room)
-            return room.Members.FirstOrDefault(id => id != userId);
+            return room.Members.FirstOrDefault(id => id != connectionId);
     }
 
     /// <summary>
     /// Retire un joueur d'un salon. Si le salon devient vide, il est supprimé.
     /// </summary>
-    /// <param name="userId">ID utilisateur du joueur quittant</param>
+    /// <param name="connectionId">ID de connexion du joueur quittant</param>
     /// <param name="code">Code du salon quitté (null si le joueur n'était dans aucun salon)</param>
-    /// <param name="opponentId">UserId de l'adversaire restant (null si aucun)</param>
+    /// <param name="opponentId">ConnectionId de l'adversaire restant (null si aucun)</param>
     /// <param name="roomEmpty">Indique si le salon a été supprimé car vide</param>
     /// <remarks>
     /// NETTOYAGE:
-    /// - Supprime le mapping userId -> room
+    /// - Supprime le mapping connectionId -> room
     /// - Retire le joueur de la liste des membres
     /// - Supprime le salon si vide (libération mémoire et code)
     /// - Supprime le pseudo du joueur
     /// </remarks>
-    public void Leave(Guid userId, out string? code, out Guid? opponentId, out bool roomEmpty)
+    public void Leave(string connectionId, out string? code, out string? opponentId, out bool roomEmpty)
     {
         code = null;
         opponentId = null;
         roomEmpty = false;
 
-        // Retirer le mapping userId -> room
-        if (!_userToRoom.TryRemove(userId, out var c)) return;
+        // Retirer le mapping connectionId -> room
+        if (!_connToRoom.TryRemove(connectionId, out var c)) return;
         code = c;
 
         // Retirer le joueur du salon et vérifier si vide
@@ -263,7 +250,7 @@ public class RoomService
         {
             lock (room)
             {
-                room.Members.Remove(userId);
+                room.Members.Remove(connectionId);
                 opponentId = room.Members.FirstOrDefault();
                 roomEmpty = room.Members.Count == 0;
                 
@@ -273,7 +260,7 @@ public class RoomService
         }
 
         // Nettoyer le pseudo
-        _names.TryRemove(userId, out _);
+        _names.TryRemove(connectionId, out _);
     }
 
     /// <summary>
@@ -297,16 +284,17 @@ public class RoomService
     #region Initialisation de la partie
 
     /// <summary>
-    /// Définit le deck d'un joueur dans le salon.
+    /// Définit l'utilisateur et son deck pour un joueur dans le salon.
     /// Déclenche automatiquement l'initialisation de la partie quand les 2 joueurs ont défini leur deck.
     /// </summary>
-    /// <param name="userId">ID utilisateur du joueur</param>
+    /// <param name="connectionId">ID de connexion du joueur</param>
+    /// <param name="userId">ID utilisateur (base de données)</param>
     /// <param name="deckId">ID du deck sélectionné</param>
     /// <returns>true si l'opération a réussi, false si le joueur n'est pas dans un salon</returns>
     /// <remarks>
     /// LOGIQUE D'INITIALISATION:
     /// 1. Identifie si le joueur est User1 (créateur) ou User2 (rejoint)
-    /// 2. Enregistre deckId
+    /// 2. Enregistre userId et deckId
     /// 3. Si les 2 joueurs ont défini leur deck ET que la partie n'est pas déjà initialisée:
     ///    - Crée le RoomObject
     ///    - Initialise les decks, champions, mains, etc. (via setUser1/setUser2)
@@ -315,12 +303,10 @@ public class RoomService
     /// PATTERN LOCK-ASYNC:
     /// Les appels await sont HORS du lock pour éviter les deadlocks.
     /// Le lock ne contient que les opérations synchrones sur les champs.
-    /// 
-    /// RECONNEXION: Utilise userId, la configuration du deck persiste après reconnexion.
     /// </remarks>
-    public async Task<bool> SetPlayerDeck(Guid userId, Guid deckId)
+    public async Task<bool> SetPlayerDeck(string connectionId, Guid userId, Guid deckId)
     {
-        var code = GetRoomOf(userId);
+        var code = GetRoomOf(connectionId);
         if (code is null || !_rooms.TryGetValue(code, out var room)) return false;
 
         bool needsInitialization = false;
@@ -330,29 +316,30 @@ public class RoomService
         lock (room)
         {
             var members = room.Members.ToList();
-            if (!members.Contains(userId)) return false;
+            if (!members.Contains(connectionId)) return false;
 
             // Déterminer si c'est le joueur 1 (créateur) ou 2 (rejoint)
             // Le premier membre dans la liste est toujours le créateur
-            if (members[0] == userId)
+            if (members[0] == connectionId)
             {
+                room.User1Id = userId;
                 room.User1DeckId = deckId;
             }
             else
             {
+                room.User2Id = userId;
                 room.User2DeckId = deckId;
             }
 
             // Vérifier si on peut initialiser la partie
-            // Les userId sont déjà dans Members, on a juste besoin des decks
-            if (members.Count == 2 && 
+            if (room.User1Id.HasValue && room.User2Id.HasValue && 
                 room.User1DeckId.HasValue && room.User2DeckId.HasValue && 
                 !room.IsGameInitialized)
             {
                 // Préparer l'initialisation: copier les valeurs nécessaires
                 needsInitialization = true;
-                user1Id = members[0]; // Créateur
-                user2Id = members[1]; // Rejoint
+                user1Id = room.User1Id.Value;
+                user2Id = room.User2Id.Value;
                 deck1Id = room.User1DeckId.Value;
                 deck2Id = room.User2DeckId.Value;
                 
@@ -395,14 +382,14 @@ public class RoomService
     }
 
     /// <summary>
-    /// Récupère le RoomObject à partir d'un UserId.
-    /// Utile dans les hubs SignalR où on a le UserId de l'utilisateur authentifié.
+    /// Récupère le RoomObject à partir d'un ConnectionId.
+    /// Utile dans les hubs SignalR où on a le ConnectionId mais pas le code.
     /// </summary>
-    /// <param name="userId">ID utilisateur du joueur</param>
+    /// <param name="connectionId">ID de connexion du joueur</param>
     /// <returns>RoomObject ou null</returns>
-    public VortexTCG.Game.Object.Room? GetGameRoomByUserId(Guid userId)
+    public VortexTCG.Game.Object.Room? GetGameRoomByConnection(string connectionId)
     {
-        var code = GetRoomOf(userId);
+        var code = GetRoomOf(connectionId);
         return code is not null ? GetGameRoom(code) : null;
     }
 
@@ -428,7 +415,7 @@ public class RoomService
     /// - user2Id: ID utilisateur du joueur 2 (rejoint)
     /// - deck1Id: ID du deck du joueur 1
     /// - deck2Id: ID du deck du joueur 2
-    /// Tous null si le salon n'existe pas ou n'a pas 2 joueurs.
+    /// Tous null si le salon n'existe pas.
     /// </returns>
     public (Guid? user1Id, Guid? user2Id, Guid? deck1Id, Guid? deck2Id) GetRoomPlayers(string code)
     {
@@ -437,15 +424,7 @@ public class RoomService
             return (null, null, null, null);
         
         lock (room)
-        {
-            var members = room.Members.ToList();
-            if (members.Count == 0) return (null, null, null, null);
-            
-            Guid? user1 = members.Count > 0 ? members[0] : null;
-            Guid? user2 = members.Count > 1 ? members[1] : null;
-            
-            return (user1, user2, room.User1DeckId, room.User2DeckId);
-        }
+            return (room.User1Id, room.User2Id, room.User1DeckId, room.User2DeckId);
     }
 
     #endregion
