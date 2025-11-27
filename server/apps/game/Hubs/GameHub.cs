@@ -121,7 +121,7 @@ public class GameHub : Hub
     // --- SALONS PRIVÉS PAR CODE ---
 
     // Crée un salon privé avec un code (soit proposé par le client, soit aléatoire). Le créateur rejoint automatiquement le group SignalR.
-    public async Task CreateRoom(string? preferredCode = null)
+    public async Task CreateRoom(Guid deckId, string? preferredCode = null)
     {
         // Si on était en matchmaking, on s'en retire, car on va jouer par code.
         var userId = GetAuthenticatedUserId();
@@ -133,6 +133,8 @@ public class GameHub : Hub
             return;
         }
 
+        await _rooms.SetPlayerDeck(userId, deckId);
+
         // On s'abonne au group SignalR portant le code du salon. Tout broadcast ciblé ira aux membres.
         await Groups.AddToGroupAsync(Context.ConnectionId, code);
         await Clients.Caller.SendAsync("RoomCreated", code);
@@ -140,7 +142,7 @@ public class GameHub : Hub
     }
 
     // Rejoindre un salon existant par code. Si l'adversaire est déjà présent, on notifie "Matched" aux deux.
-    public async Task JoinRoom(string code)
+    public async Task JoinRoom(Guid deckId, string code)
     {
         var userId = GetAuthenticatedUserId();
         _matchmaker.LeaveOrDisconnect(Context.ConnectionId);
@@ -151,6 +153,8 @@ public class GameHub : Hub
             await Clients.Caller.SendAsync("RoomJoinError", isFull ? "ROOM_FULL" : "NOT_FOUND");
             return;
         }
+
+        await _rooms.SetPlayerDeck(userId, deckId);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, code);
 
@@ -206,14 +210,6 @@ public class GameHub : Hub
             var from = _rooms.GetName(userId);
             await Clients.OthersInGroup(code).SendAsync("OpponentPlayedCard", code, from, cardId);
             return;
-        }
-
-        // Mode matchmaking (GUID roomId)
-        var (oppId, roomId) = _matchmaker.GetOpponent(Context.ConnectionId);
-        if (oppId is not null && roomId == keyOrCode)
-        {
-            var from = _matchmaker.GetName(Context.ConnectionId);
-            await Clients.Client(oppId).SendAsync("OpponentPlayedCard", roomId, from, cardId);
         }
     }
 }
