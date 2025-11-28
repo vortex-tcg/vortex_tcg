@@ -13,5 +13,15 @@ namespace VortexTCG.Game.Object
             _deck_id = deck_id;
             _cards = DeckFactory.genDeck();
         }
+
+        public int GetCount() => _cards.Count;
+
+        public Card? DrawCard()
+        {
+            if (_cards.Count == 0) return null;
+            Card card = _cards[0];
+            _cards.RemoveAt(0);
+            return card;
+        }
     }
 }
