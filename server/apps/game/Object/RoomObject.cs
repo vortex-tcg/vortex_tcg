@@ -22,6 +22,7 @@
 // Les méthodes setUser1() et setUser2() doivent être appelées pour charger
 // les decks depuis la base de données et configurer les champions.
 // =============================================
+using VortexTCG.Game.DTO;
 
 namespace VortexTCG.Game.Object
 {
@@ -159,6 +160,69 @@ namespace VortexTCG.Game.Object
             
             // Configurer le champion (HP, gold, capacités)
             await _champion_user_2.initChampion(deck);
+        }
+
+        #endregion
+
+        #region Actions de jeu
+
+        /// <summary>
+        /// Fait piocher des cartes à un joueur.
+        /// </summary>
+        /// <param name="playerId">ID du joueur qui pioche.</param>
+        /// <param name="cardCount">Nombre de cartes à piocher.</param>
+        /// <returns>Résultat pour le joueur et l'adversaire, ou null si joueur invalide.</returns>
+        public DrawCardsResultDTO? DrawCards(Guid playerId, int cardCount)
+        {
+            if (playerId != _user_1 && playerId != _user_2) return null;
+            if (cardCount <= 0) return null;
+
+            bool isPlayer1 = playerId == _user_1;
+            Deck deck = isPlayer1 ? _deck_user_1 : _deck_user_2;
+            Hand hand = isPlayer1 ? _hand_user_1 : _hand_user_2;
+            Champion champion = isPlayer1 ? _champion_user_1 : _champion_user_2;
+
+            List<DrawnCardDTO> drawnCards = new List<DrawnCardDTO>();
+            int fatigueCount = 0;
+
+            for (int i = 0; i < cardCount; i++)
+            {
+                Card? card = deck.DrawCard();
+                if (card != null)
+                {
+                    hand.AddCard(card);
+                    drawnCards.Add(new DrawnCardDTO
+                    {
+                        GameCardId = card.GetGameCardId(),
+                        Name = card.GetName(),
+                        Hp = card.GetHp(),
+                        Attack = card.GetAttack(),
+                        Cost = card.GetCost(),
+                        Description = card.GetDescription(),
+                        CardType = card.GetCardType()
+                    });
+                }
+                else
+                {
+                    fatigueCount++;
+                    champion.ApplyFatigueDamage();
+                }
+            }
+
+            return new DrawCardsResultDTO
+            {
+                PlayerResult = new DrawResultForPlayerDTO
+                {
+                    DrawnCards = drawnCards,
+                    FatigueCount = fatigueCount
+                },
+                OpponentResult = new DrawResultForOpponentDTO
+                {
+                    PlayerId = playerId,
+                    CardsDrawnCount = drawnCards.Count,
+                    FatigueCount = fatigueCount
+                }
+            };
         }
 
         #endregion
