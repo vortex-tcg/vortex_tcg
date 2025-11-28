@@ -26,6 +26,38 @@
 namespace VortexTCG.Game.Object
 {
     /// <summary>
+    /// Énumération des différentes phases de jeu dans un tour.
+    /// Chaque joueur passe par ces phases dans l'ordre lors de son tour.
+    /// </summary>
+    /// <remarks>
+    /// FLOW DU JEU:
+    /// Draw → Placement → Attack → Defense → EndTurn (puis tour du joueur suivant)
+    /// 
+    /// RÈGLES SPÉCIALES:
+    /// - Draw: Le serveur change automatiquement si aucune action possible
+    /// - Placement: Le joueur DOIT appeler changePhase() manuellement
+    /// - Attack/Defense: Le serveur change automatiquement si aucune action possible
+    /// - EndTurn: Timeout de 1 minute, puis changement automatique
+    /// </remarks>
+    public enum GamePhase
+    {
+        /// <summary>Phase de pioche - Le joueur pioche une ou plusieurs cartes</summary>
+        DrawCard = 0,
+
+        /// <summary>Phase de placement - Le joueur peut placer des cartes sur le board</summary>
+        PlayCard = 1,
+
+        /// <summary>Phase d'attaque - Le joueur peut attaquer avec ses cartes</summary>
+        AttackWithCard = 2,
+
+        /// <summary>Phase de défense - Le joueur adverse peut défendre</summary>
+        DefenseWithCard = 3,
+
+        /// <summary>Phase de fin de tour - Transition vers le joueur suivant</summary>
+        EndTurn = 4
+    }
+
+    /// <summary>
     /// Représente l'état complet d'une partie de jeu (match) entre 2 joueurs.
     /// Contient tous les éléments de gameplay pour chaque joueur.
     /// Instance créée par RoomService quand les 2 joueurs sont prêts.
@@ -36,7 +68,7 @@ namespace VortexTCG.Game.Object
 
         /// <summary>ID utilisateur (base de données) du joueur 1 (créateur du salon)</summary>
         private Guid _user_1;
-        
+
         /// <summary>ID utilisateur (base de données) du joueur 2 (a rejoint le salon)</summary>
         private Guid _user_2;
 
@@ -129,10 +161,10 @@ namespace VortexTCG.Game.Object
         public async Task setUser1(Guid user, Guid deck)
         {
             _user_1 = user;
-            
+
             // Charger les cartes du deck depuis la base de données
             await _deck_user_1.initDeck(deck);
-            
+
             // Configurer le champion (HP, gold, capacités)
             await _champion_user_1.initChampion(deck);
         }
@@ -153,10 +185,10 @@ namespace VortexTCG.Game.Object
         public async Task setUser2(Guid user, Guid deck)
         {
             _user_2 = user;
-            
+
             // Charger les cartes du deck depuis la base de données
             await _deck_user_2.initDeck(deck);
-            
+
             // Configurer le champion (HP, gold, capacités)
             await _champion_user_2.initChampion(deck);
         }
@@ -173,5 +205,168 @@ namespace VortexTCG.Game.Object
         // - EndTurn(int playerId) : Terminer le tour
         // - GetGameState() : Récupérer l'état complet pour l'UI
         // =============================================
-    }    
+        #region Phase Management
+
+        /// <summary>
+        /// Indique quel joueur est actuellement actif.
+        /// 1 = _user_1 (créateur du salon), 2 = _user_2 (a rejoint le salon)
+        /// </summary>
+        private int _currentPlayer = 1;
+
+        /// <summary>
+        /// Phase actuelle du jeu selon l'énumération GamePhase.
+        /// Détermine quelles actions le joueur actuel peut effectuer.
+        /// </summary>
+        private GamePhase _currentPhase = GamePhase.DrawCard;
+
+        /// <summary>
+        /// Timestamp du début de la phase actuelle (UTC).
+        /// Utilisé pour implémenter le timeout de 1 minute sur les phases.
+        /// </summary>
+        private DateTime _phaseStartTime = DateTime.UtcNow;
+
+        /// <summary>
+        /// Indique si le serveur attend un appel manuel à ChangePhase().
+        /// true = Phase de placement (le joueur doit manuellement terminer)
+        /// false = Phases automatiques (serveur peut changer si aucune action possible)
+        /// </summary>
+        private bool _waitingForManualPhaseChange = false;
+
+        /// <summary>
+        /// Change la phase actuelle du jeu selon les règles définies.
+        /// Gère les transitions automatiques et manuelles entre les phases.
+        /// </summary>
+        /// <param name="userId">ID du joueur qui demande le changement (pour validation des droits)</param>
+        /// <param name="isManual">true = changement demandé par le joueur, false = changement automatique du serveur</param>
+        /// <returns>true si le changement a réussi, false si refusé (mauvais joueur, phase incorrecte, etc.)</returns>
+        /// <remarks>
+        /// RÈGLES DE TRANSITION:
+        /// - Draw → Placement: Toujours automatique
+        /// - Placement → Attack: SEULEMENT manuel (le joueur doit appeler)
+        /// - Attack → Defense: Automatique ou manuel
+        /// - Defense → EndTurn: Automatique ou manuel
+        /// - EndTurn → Draw (joueur suivant): Automatique ou timeout
+        /// 
+        /// VALIDATION:
+        /// - Vérifie que c'est le tour du bon joueur
+        /// - Respecte les contraintes manuelles/automatiques
+        /// - Réinitialise le timer à chaque changement
+        /// </remarks>
+        public bool ChangePhase(Guid userId, bool isManual = true)
+        {
+            // Étape 1: Vérifier que c'est le tour du bon joueur
+            if (!IsCurrentPlayer(userId))
+            {
+                return false; // Ce n'est pas le tour de ce joueur
+            }
+
+            // Étape 2: Gérer le changement selon la phase actuelle
+            switch (_currentPhase)
+            {
+                case GamePhase.DrawCard:
+                    // Phase de pioche: Transition automatique vers Placement
+                    _currentPhase = GamePhase.PlayCard;
+                    _waitingForManualPhaseChange = true; // La phase placement nécessite un appel manuel
+                    break;
+
+                case GamePhase.PlayCard:
+                    // Phase de placement: SEULEMENT changement manuel autorisé
+                    if (!isManual)
+                    {
+                        return false; // Le serveur ne peut pas changer cette phase automatiquement
+                    }
+                    _currentPhase = GamePhase.AttackWithCard;
+                    _waitingForManualPhaseChange = false; // Les phases suivantes peuvent être automatiques
+                    break;
+
+                case GamePhase.AttackWithCard:
+                    // Phase d'attaque: Transition vers défense
+                    _currentPhase = GamePhase.DefenseWithCard;
+                    break;
+
+                case GamePhase.DefenseWithCard:
+                    // Phase de défense: Transition vers fin de tour
+                    _currentPhase = GamePhase.EndTurn;
+                    break;
+
+                case GamePhase.EndTurn:
+                    // Fin de tour: Passer au joueur suivant et recommencer le cycle
+                    _currentPlayer = (_currentPlayer == 1) ? 2 : 1; // Alterner entre joueur 1 et 2
+                    _currentPhase = GamePhase.DrawCard; // Recommencer le cycle des phases
+                    _waitingForManualPhaseChange = false;
+                    break;
+            }
+
+            // Étape 3: Réinitialiser le timer pour la nouvelle phase
+            _phaseStartTime = DateTime.UtcNow;
+            return true; // Changement réussi
+        }
+
+        /// <summary>
+        /// Vérifie si l'utilisateur spécifié est le joueur actuellement actif.
+        /// </summary>
+        /// <param name="userId">ID de l'utilisateur à vérifier</param>
+        /// <returns>true si c'est son tour, false sinon</returns>
+        /// <remarks>
+        /// LOGIQUE:
+        /// - Si _currentPlayer == 1, alors seul _user_1 peut jouer
+        /// - Si _currentPlayer == 2, alors seul _user_2 peut jouer
+        /// - Utilisé pour valider les droits avant les actions
+        /// </remarks>
+        private bool IsCurrentPlayer(Guid userId)
+        {
+            return (_currentPlayer == 1 && userId == _user_1) ||
+                   (_currentPlayer == 2 && userId == _user_2);
+        }
+
+        /// <summary>
+        /// Vérifie si la phase actuelle a dépassé le timeout de 1 minute.
+        /// </summary>
+        /// <returns>true si la phase a expiré, false sinon</returns>
+        /// <remarks>
+        /// UTILISATION:
+        /// - Appelé périodiquement par le serveur
+        /// - Si true, le serveur peut forcer un changement de phase
+        /// - Sauf pour la phase de placement qui nécessite toujours un appel manuel
+        /// </remarks>
+        public bool IsPhaseExpired()
+        {
+            TimeSpan elapsed = DateTime.UtcNow - _phaseStartTime;
+            return elapsed.TotalMinutes >= 1.0; // Timeout de 1 minute
+        }
+
+        /// <summary>
+        /// Détermine si le serveur peut changer automatiquement la phase actuelle.
+        /// </summary>
+        /// <returns>true si changement automatique autorisé, false si appel manuel requis</returns>
+        /// <remarks>
+        /// RÈGLES:
+        /// - Placement: Toujours false (appel manuel obligatoire)
+        /// - Autres phases: true si aucune action possible OU timeout atteint
+        /// </remarks>
+        public bool CanServerChangePhase()
+        {
+            // La phase de placement nécessite toujours un appel manuel
+            if (_currentPhase == GamePhase.PlayCard)
+            {
+                return false;
+            }
+
+            // Pour les autres phases: autoriser si timeout atteint
+            return IsPhaseExpired();
+        }
+
+        /// <summary>
+        /// Récupère des informations sur l'état actuel des phases pour debugging/logging.
+        /// </summary>
+        /// <returns>Chaîne décrivant l'état actuel des phases</returns>
+        public string GetPhaseInfo()
+        {
+            TimeSpan elapsed = DateTime.UtcNow - _phaseStartTime;
+            return $"Joueur {_currentPlayer}, Phase: {_currentPhase}, Temps écoulé: {elapsed.TotalSeconds:F1}s, Manuel requis: {_waitingForManualPhaseChange}";
+        }
+
+        #endregion
+    }
+
 }

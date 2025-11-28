@@ -212,4 +212,90 @@ public class GameHub : Hub
             return;
         }
     }
+
+    // --- GESTION DES PHASES ---
+
+    /// <summary>
+    /// Permet au client de demander un changement de phase.
+    /// Utilisé principalement pour terminer manuellement la phase de placement.
+    /// </summary>
+    /// <param name="roomCode">Code du salon où le joueur veut changer de phase</param>
+    /// <remarks>
+    /// FLOW COMPLET:
+    /// 1. Validation: Vérifier que le joueur est dans le bon salon
+    /// 2. Délégation: Appeler RoomService.ChangePhase() qui trouve la Room et appelle Room.ChangePhase()
+    /// 3. Notification: Si succès, notifier TOUS les joueurs du salon de la nouvelle phase
+    /// 4. Gestion d'erreur: Si échec, notifier seulement l'appelant
+    /// 
+    /// UTILISATIONS TYPIQUES:
+    /// - Joueur clique "Terminer Placement" → ChangePhase appelée
+    /// - Phase Attack/Defense sans actions possibles → Serveur peut appeler automatiquement
+    /// - Timeout de 1 minute → Serveur force le changement (sauf Placement)
+    /// </remarks>
+    public async Task ChangePhase(string roomCode)
+    {
+        try
+        {
+            // Étape 1: Valider que le joueur est dans ce salon
+            Guid userId = GetAuthenticatedUserId();
+            string? userRoomCode = _rooms.GetRoomOf(userId);
+
+            if (userRoomCode != roomCode)
+            {
+                // Le joueur essaie de changer la phase d'un salon où il n'est pas
+                await Clients.Caller.SendAsync("PhaseChangeError", "NOT_IN_ROOM");
+                return;
+            }
+
+            // Étape 2: Demander le changement de phase via RoomService
+            bool success = _rooms.ChangePhase(userId, isManual: true);
+
+            if (success)
+            {
+                // Étape 3: Récupérer l'état actuel pour notifier les clients
+                string phaseInfo = _rooms.GetPhaseInfo(userId);
+
+                // Notifier TOUS les joueurs du salon (y compris l'appelant)
+                await Clients.Group(roomCode).SendAsync("PhaseChanged", roomCode, phaseInfo);
+            }
+            else
+            {
+                // Étape 4: Gestion d'erreur - Changement refusé
+                await Clients.Caller.SendAsync("PhaseChangeError", "INVALID_TURN_OR_PHASE");
+            }
+        }
+        catch (Exception)
+        {
+            // Gestion d'erreur générale
+            await Clients.Caller.SendAsync("PhaseChangeError", "SERVER_ERROR");
+            // TODO: Logger l'exception pour debugging
+        }
+    }
+
+    /// <summary>
+    /// Permet au client de récupérer l'état actuel des phases du salon.
+    /// Utile après reconnexion pour synchroniser l'UI.
+    /// </summary>
+    /// <param name="roomCode">Code du salon</param>
+    public async Task GetPhaseInfo(string roomCode)
+    {
+        try
+        {
+            Guid userId = GetAuthenticatedUserId();
+            string? userRoomCode = _rooms.GetRoomOf(userId);
+
+            if (userRoomCode != roomCode)
+            {
+                await Clients.Caller.SendAsync("PhaseInfoError", "NOT_IN_ROOM");
+                return;
+            }
+
+            string phaseInfo = _rooms.GetPhaseInfo(userId);
+            await Clients.Caller.SendAsync("PhaseInfo", roomCode, phaseInfo);
+        }
+        catch (Exception)
+        {
+            await Clients.Caller.SendAsync("PhaseInfoError", "SERVER_ERROR");
+        }
+    }
 }

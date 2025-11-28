@@ -448,5 +448,130 @@ public class RoomService
         }
     }
 
+    #region Phase Management
+
+    /// <summary>
+    /// Demande un changement de phase pour un joueur dans son salon.
+    /// </summary>
+    /// <param name="userId">ID du joueur qui demande le changement</param>
+    /// <param name="isManual">true si demandé par le joueur, false si automatique serveur</param>
+    /// <returns>true si le changement a réussi, false sinon</returns>
+    /// <remarks>
+    /// LOGIQUE:
+    /// 1. Trouver le salon du joueur
+    /// 2. Vérifier que la partie est initialisée
+    /// 3. Déléguer à Room.ChangePhase() qui contient la logique métier
+    /// 
+    /// THREAD-SAFETY:
+    /// - Utilise un lock sur la room pour éviter les conditions de course
+    /// - Important car plusieurs clients peuvent appeler simultanément
+    /// </remarks>
+    public bool ChangePhase(Guid userId, bool isManual = true)
+    {
+        // Étape 1: Trouver le salon du joueur
+        string? code = GetRoomOf(userId);
+        if (code is null) return false;
+
+        // Étape 2: Obtenir la room et vérifier qu'elle existe
+        if (!_rooms.TryGetValue(code, out var room)) return false;
+
+        // Étape 3: Vérifier que la partie est initialisée
+        VortexTCG.Game.Object.Room? gameRoom;
+        lock (room)
+        {
+            if (!room.IsGameInitialized) return false;
+            gameRoom = room.GameRoom;
+        }
+
+        // Étape 4: Déléguer à l'objet Room pour la logique métier
+        if (gameRoom is null) return false;
+
+        // Thread-safety: La Room elle-même gère ses propres locks si nécessaire
+        return gameRoom.ChangePhase(userId, isManual);
+    }
+
+    /// <summary>
+    /// Récupère les informations actuelles sur les phases pour un joueur.
+    /// </summary>
+    /// <param name="userId">ID du joueur</param>
+    /// <returns>Chaîne décrivant l'état actuel des phases, ou message d'erreur</returns>
+    public string GetPhaseInfo(Guid userId)
+    {
+        // Trouver le salon du joueur
+        string? code = GetRoomOf(userId);
+        if (code is null) return "Erreur: Joueur pas dans un salon";
+
+        if (!_rooms.TryGetValue(code, out var room)) 
+            return "Erreur: Salon non trouvé";
+
+        VortexTCG.Game.Object.Room? gameRoom;
+        lock (room)
+        {
+            if (!room.IsGameInitialized) 
+                return "Erreur: Partie pas encore initialisée";
+            gameRoom = room.GameRoom;
+        }
+
+        if (gameRoom is null) 
+            return "Erreur: État de jeu non disponible";
+
+        return gameRoom.GetPhaseInfo();
+    }
+
+    /// <summary>
+    /// Vérifie si le serveur peut automatiquement changer la phase pour un salon.
+    /// Utilisé par des tâches périodiques pour gérer les timeouts.
+    /// </summary>
+    /// <param name="code">Code du salon</param>
+    /// <returns>true si changement automatique possible</returns>
+    public bool CanServerChangePhase(string code)
+    {
+        if (!_rooms.TryGetValue(code, out var room)) return false;
+
+        VortexTCG.Game.Object.Room? gameRoom;
+        lock (room)
+        {
+            if (!room.IsGameInitialized) return false;
+            gameRoom = room.GameRoom;
+        }
+
+        return gameRoom?.CanServerChangePhase() ?? false;
+    }
+
+    /// <summary>
+    /// Force un changement de phase automatique (utilisé par le serveur pour les timeouts).
+    /// </summary>
+    /// <param name="code">Code du salon</param>
+    /// <returns>true si le changement a réussi</returns>
+    /// <remarks>
+    /// ATTENTION: Cette méthode ne valide PAS l'utilisateur qui appelle.
+    /// Elle est destinée aux tâches serveur automatiques uniquement.
+    /// </remarks>
+    public bool ForcePhaseChange(string code)
+    {
+        if (!_rooms.TryGetValue(code, out var room)) return false;
+
+        VortexTCG.Game.Object.Room? gameRoom;
+        Guid? currentPlayerId;
+        
+        lock (room)
+        {
+            if (!room.IsGameInitialized) return false;
+            gameRoom = room.GameRoom;
+            
+            // Pour forcer un changement, on a besoin de l'ID du joueur actuel
+            // On utilise le premier joueur par défaut (la Room validera si c'est correct)
+            var members = room.Members.ToList();
+            currentPlayerId = members.Count > 0 ? members[0] : null;
+        }
+
+        if (gameRoom is null || currentPlayerId is null) return false;
+
+        // Appeler avec isManual = false pour indiquer que c'est automatique
+        return gameRoom.ChangePhase(currentPlayerId.Value, isManual: false);
+    }
+
+    #endregion
+
     #endregion
 }
