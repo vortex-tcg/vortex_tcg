@@ -46,10 +46,10 @@ public class HandManager : MonoBehaviour
         enemyBoardZone = root.Q<VisualElement>("P2BoardCards");
 
         if (boardZone != null)
-            boardSlots = boardZone.Query<VisualElement>("Card").ToList();
+            boardSlots = boardZone.Query<VisualElement>("P1Slot").ToList();
 
         if (enemyBoardZone != null)
-            enemySlots = enemyBoardZone.Query<VisualElement>("Card").ToList();
+            enemySlots = enemyBoardZone.Query<VisualElement>("P2Slot").ToList();
 
         root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
         root.RegisterCallback<PointerUpEvent>(OnPointerUp);
@@ -221,6 +221,14 @@ public class HandManager : MonoBehaviour
             draggedElement.style.position = Position.Relative;
             draggedElement.style.left = StyleKeyword.Null;
             draggedElement.style.top = StyleKeyword.Null;
+
+            draggedElement.userData = true;
+
+            var attackManager = FindObjectOfType<AttackManager>();
+            if (attackManager != null)
+                attackManager.RegisterCard(draggedElement);
+
+            return true;
 
             draggedElement.userData = true;
             return true;

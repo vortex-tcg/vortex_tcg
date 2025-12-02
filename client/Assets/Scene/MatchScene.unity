@@ -132,6 +132,8 @@ GameObject:
   - component: {fileID: 208303040}
   - component: {fileID: 208303042}
   - component: {fileID: 208303043}
+  - component: {fileID: 208303044}
+  - component: {fileID: 208303045}
   m_Layer: 5
   m_Name: HUD
   m_TagString: Untagged
@@ -213,6 +215,32 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiDoc: {fileID: 208303041}
+--- !u!114 &208303044
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 208303038}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 811b178474b9bb747923371576753eb2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SmallCard: {fileID: 9197481963319205126, guid: 171182a60c819d946b4758b59a2bbe91, type: 3}
+--- !u!114 &208303045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 208303038}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c7df7e4724f09548b673b8ae5a5f706, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boardDocument: {fileID: 208303041}
 --- !u!1 &960676988
 GameObject:
   m_ObjectHideFlags: 0
