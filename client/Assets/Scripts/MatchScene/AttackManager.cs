@@ -22,16 +22,27 @@ public class AttackManager : MonoBehaviour
         RegisterAllExistingCards();
 
         if (PhaseManager.Instance != null)
+        {
             PhaseManager.Instance.OnEnterAttack += OnEnterAttackPhase;
+            PhaseManager.Instance.OnEnterStandBy += OnEndDefensePhase;
+        }
     }
 
     private void OnDisable()
     {
         if (PhaseManager.Instance != null)
+        {
             PhaseManager.Instance.OnEnterAttack -= OnEnterAttackPhase;
+            PhaseManager.Instance.OnEnterStandBy -= OnEndDefensePhase;
+        }
     }
 
     private void OnEnterAttackPhase()
+    {
+        ClearSelections();
+    }
+
+    private void OnEndDefensePhase()
     {
         ClearSelections();
     }
@@ -132,14 +143,13 @@ public class AttackManager : MonoBehaviour
 
             Label orderLabel = card.Q<Label>("AttackOrder");
             if (orderLabel != null)
+            {
                 orderLabel.text = "";
+                orderLabel.style.display = DisplayStyle.None;
+            }
         }
 
         selectedCards.Clear();
     }
 
-    public List<VisualElement> GetAttackOrder()
-    {
-        return new List<VisualElement>(selectedCards);
-    }
 }
