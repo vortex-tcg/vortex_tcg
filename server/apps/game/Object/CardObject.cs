@@ -44,7 +44,13 @@ namespace VortexTCG.Game.Object
             _attack = card.Attack;
             _cost = card.Cost;
 
-            _type = card.CardType;
+            _type = card.CardType switch
+            {
+                DataAccess.Models.CardType.GUARD => CardType.Faction,
+                DataAccess.Models.CardType.SPELL => CardType.Spell,
+                DataAccess.Models.CardType.EQUIPMENT => CardType.Equipment,
+                _ => CardType.Faction
+            };
 
             _class = new List<string>(card.Class);
 

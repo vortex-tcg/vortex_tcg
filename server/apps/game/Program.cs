@@ -30,6 +30,7 @@ builder.Services.AddCors(options =>
 
 // Injections des services applicatifs
 builder.Services.AddSingleton<Matchmaker>();
+builder.Services.AddSingleton<GameService>();
 builder.Services.AddSingleton<RoomService>();
 
 // Logs console

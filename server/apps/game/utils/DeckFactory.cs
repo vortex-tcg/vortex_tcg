@@ -19,7 +19,7 @@ namespace VortexTCG.Game.Utils
                 Hp = random.Next(10),
                 Attack = random.Next(10),
                 Cost = random.Next(10),
-                CardType = CardType.GUARD,
+                CardType = DataAccess.Models.CardType.GUARD,
                 Class = ["guerrier"]
             };
             return new VortexTCG.Game.Object.Card(card, i);

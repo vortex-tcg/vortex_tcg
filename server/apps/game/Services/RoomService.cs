@@ -1,4 +1,4 @@
-// =============================================
+﻿// =============================================
 // FICHIER: Services/RoomService.cs
 // =============================================
 // RÔLE PRINCIPAL:
@@ -24,6 +24,8 @@
 
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
+using Microsoft.EntityFrameworkCore;
+using VortexTCG.DataAccess;
 using VortexTCG.Game.Object;
 
 namespace game.Services;
@@ -81,6 +83,22 @@ public class RoomService
     /// <summary>Générateur de nombres aléatoires cryptographiquement sécurisé</summary>
     private readonly RandomNumberGenerator _rng = RandomNumberGenerator.Create();
     
+    /// <summary>Service provider pour résoudre le DbContext scoped</summary>
+    private readonly IServiceProvider _serviceProvider;
+    
+    #endregion
+
+    #region Constructeur
+
+    /// <summary>
+    /// Constructeur avec injection du service provider.
+    /// Permet de créer des scopes pour accéder au DbContext (Scoped) depuis un Singleton.
+    /// </summary>
+    public RoomService(IServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+    }
+
     #endregion
 
     #region Gestion des pseudos
@@ -364,9 +382,13 @@ public class RoomService
         // PHASE 2: Initialiser la partie (HORS du lock car opérations async)
         if (needsInitialization && room.GameRoom != null)
         {
-            // Ces appels initialisent les decks, champions, mains, boards, etc.
-            await room.GameRoom.setUser1(user1Id!.Value, deck1Id!.Value);
-            await room.GameRoom.setUser2(user2Id!.Value, deck2Id!.Value);
+            // 🎯 CHARGER TOUTES LES CARTES DES DECKS DEPUIS LA DB (une seule fois)
+            var deck1Cards = await LoadDeckCards(deck1Id!.Value);
+            var deck2Cards = await LoadDeckCards(deck2Id!.Value);
+            
+            // Initialiser les joueurs avec leurs cartes chargées
+            room.GameRoom.setUser1(user1Id!.Value, deck1Id!.Value, deck1Cards);
+            room.GameRoom.setUser2(user2Id!.Value, deck2Id!.Value, deck2Cards);
             
             // Marquer comme initialisé (lock court)
             lock (room)
@@ -376,6 +398,40 @@ public class RoomService
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Charge TOUTES les cartes d'un deck depuis la base de données (une seule fois).
+    /// Les cartes restent en mémoire pendant toute la partie.
+    /// </summary>
+    /// <param name="deckId">ID du deck à charger</param>
+    /// <returns>Liste de toutes les instances de cartes du deck</returns>
+    private async Task<List<CardInstance>> LoadDeckCards(Guid deckId)
+    {
+        // Créer un scope pour résoudre le DbContext (Scoped) depuis le Singleton
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<VortexDbContext>();
+        
+        var deckCards = await dbContext.DeckCards
+            .Where(dc => dc.DeckId == deckId)
+            .Include(dc => dc.Card)
+            .ThenInclude(c => c.Card)
+            .ThenInclude(c => c.Effect)
+            .ThenInclude(ec => ec.Effect)
+            .Select(dc => new CardInstance
+            {
+                CardModelId = dc.Card.Card.Id,
+                Name = dc.Card.Card.Name,
+                Type = (CardType)dc.Card.Card.CardType,
+                Cost = dc.Card.Card.Cost,
+                Attack = dc.Card.Card.Attack ?? 0,
+                Defense = dc.Card.Card.Hp ?? 0,
+                Description = dc.Card.Card.Description ?? string.Empty,
+                Effects = dc.Card.Card.Effect.Select(ec => ec.Effect.Title).ToList()
+            })
+            .ToListAsync();
+
+        return deckCards;
     }
 
     #endregion

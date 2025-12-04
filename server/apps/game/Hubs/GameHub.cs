@@ -12,16 +12,19 @@ namespace game.Hubs;
 
 public class GameHub : Hub
 {
-    // Le Hub dépend de deux services singleton:
+    // Le Hub dépend de trois services singleton:
     // - Matchmaker: gère une file d'attente (queue) pour appairer deux joueurs aléatoirement.
     // - RoomService: gère des salons identifiés par un code (type "K3H9Z8") pour jeu privé.
+    // - GameService: gère la logique de jeu (validation des actions, règles, etc.)
     private readonly Matchmaker _matchmaker;
     private readonly RoomService _rooms;
+    private readonly GameService _gameService;
 
-    public GameHub(Matchmaker matchmaker, RoomService rooms)
+    public GameHub(Matchmaker matchmaker, RoomService rooms, GameService gameService)
     {
         _matchmaker = matchmaker;
         _rooms = rooms;
+        _gameService = gameService;
     }
 
     // Extrait l'ID utilisateur (userId) depuis le token JWT d'authentification.
@@ -190,26 +193,59 @@ public class GameHub : Hub
         var userId = GetAuthenticatedUserId();
         _rooms.Leave(userId, out var code, out var oppUserId, out var roomEmpty);
         if (code is not null) await Groups.RemoveFromGroupAsync(Context.ConnectionId, code);
-        if (oppUserId.HasValue && !roomEmpty)
+        if (code is not null && oppUserId.HasValue && !roomEmpty)
         {
             // Broadcast au groupe (tous les clients de l'adversaire)
-            await Clients.Group(code).SendAsync("OpponentLeft", code ?? "");
+            await Clients.Group(code).SendAsync("OpponentLeft", code);
         }
     }
 
-    // Événement "jeu": jouer une carte. On supporte les deux modes:
-    // - par code (rooms privées) -> broadcast au group
-    // - par roomId (matchmaking GUID) -> envoi direct à l'adversaire
-    public async Task PlayCard(string keyOrCode, int cardId)
+    // 🎮 NOUVELLE FONCTIONNALITÉ: Jouer une carte depuis la main
+    /// <summary>
+    /// Joue une carte depuis la main du joueur.
+    /// Le serveur valide toutes les règles (coût, tour, position, type de carte).
+    /// </summary>
+    /// <param name="cardInstanceId">ID de l'instance de carte dans la main</param>
+    /// <param name="position">Position sur le plateau (0-6), ou -1 si pas de position</param>
+    public async Task PlayCard(Guid cardInstanceId, int position)
     {
-        // Mode salon privé (code)
         var userId = GetAuthenticatedUserId();
-        var code = _rooms.GetRoomOf(userId);
-        if (code is not null && code == keyOrCode)
+        var roomCode = _rooms.GetRoomOf(userId);
+        
+        if (roomCode == null)
         {
-            var from = _rooms.GetName(userId);
-            await Clients.OthersInGroup(code).SendAsync("OpponentPlayedCard", code, from, cardId);
+            await Clients.Caller.SendAsync("PlayCardError", "Vous n'êtes pas dans une partie");
             return;
+        }
+
+        var gameRoom = _rooms.GetGameRoom(roomCode);
+        if (gameRoom == null)
+        {
+            await Clients.Caller.SendAsync("PlayCardError", "Partie non initialisée");
+            return;
+        }
+
+        // 🎯 Déléguer toute la logique au GameService
+        var result = _gameService.PlayCard(gameRoom, userId, cardInstanceId, position);
+
+        if (result.Success)
+        {
+            // 📢 Notifier LES DEUX joueurs (broadcast au groupe)
+            await Clients.Group(roomCode).SendAsync("CardPlayed", new
+            {
+                playerId = userId,
+                cardInstanceId = cardInstanceId,
+                cardName = result.CardPlayed?.Name,
+                cardType = result.CardPlayed?.Type.ToString(),
+                position = result.Position,
+                remainingGold = result.RemainingGold,
+                message = result.Message
+            });
+        }
+        else
+        {
+            // ❌ Erreur : notifier uniquement le joueur qui a tenté l'action
+            await Clients.Caller.SendAsync("PlayCardError", result.Message);
         }
     }
 }
