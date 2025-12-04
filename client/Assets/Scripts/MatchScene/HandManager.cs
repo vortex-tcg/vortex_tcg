@@ -224,7 +224,7 @@ public class HandManager : MonoBehaviour
 
             draggedElement.userData = true;
 
-            var attackManager = FindObjectOfType<AttackManager>();
+            AttackManager attackManager = FindObjectOfType<AttackManager>();
             if (attackManager != null)
                 attackManager.RegisterCard(draggedElement);
 
