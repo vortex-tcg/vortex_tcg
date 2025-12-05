@@ -40,12 +40,12 @@ public class GameService
     public PlayCardResponse PlayCard(Room gameRoom, Guid userId, Guid cardInstanceId, int position)
     {
         // 1️⃣ Identifier le joueur actif
-        var playerNumber = DeterminePlayerNumber(gameRoom, userId);
+        int playerNumber = DeterminePlayerNumber(gameRoom, userId);
         if (playerNumber == 0)
             return PlayCardResponse.CreateError("Joueur non trouvé dans la partie");
 
-        var player = playerNumber == 1 ? gameRoom.Player1 : gameRoom.Player2;
-        var opponent = playerNumber == 1 ? gameRoom.Player2 : gameRoom.Player1;
+        Player player = playerNumber == 1 ? gameRoom.Player1 : gameRoom.Player2;
+        Player opponent = playerNumber == 1 ? gameRoom.Player2 : gameRoom.Player1;
 
         // 2️⃣ Vérifier que c'est son tour
         if (gameRoom.CurrentPlayer != playerNumber)
@@ -56,7 +56,7 @@ public class GameService
             return PlayCardResponse.CreateError("Vous ne pouvez jouer des cartes qu'en phase principale");
 
         // 4️⃣ Trouver la carte dans la main (toutes les données sont déjà chargées)
-        var card = player.Hand.FirstOrDefault(c => c.InstanceId == cardInstanceId);
+        CardInstance? card = player.Hand.FirstOrDefault(c => c.InstanceId == cardInstanceId);
         if (card == null)
             return PlayCardResponse.CreateError("Carte non trouvée dans votre main");
 
@@ -100,7 +100,7 @@ public class GameService
             return PlayCardResponse.CreateError("Cette position est déjà occupée");
 
         // Créer l'unité sur le plateau
-        var unit = new BoardUnit
+        BoardUnit unit = new BoardUnit
         {
             InstanceId = card.InstanceId,
             CardModelId = card.CardModelId,

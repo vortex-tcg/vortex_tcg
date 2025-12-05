@@ -49,8 +49,8 @@ public class GameHub : Hub
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         // 1) Si le joueur était dans un salon par code, on le retire.
-        var userId = GetAuthenticatedUserId();
-        _rooms.Leave(userId, out var code, out var oppUserId, out var empty);
+        Guid userId = GetAuthenticatedUserId();
+        _rooms.Leave(userId, out string? code, out Guid? oppUserId, out bool empty);
         if (code is not null)
         {
             // Notifier le groupe avant de quitter (autres connexions verront l'événement)
@@ -60,7 +60,7 @@ public class GameHub : Hub
         }
 
         // 2) S'il était en matchmaking, on retire la paire et on avertit l'adversaire.
-        var (oppId, _) = _matchmaker.GetOpponent(Context.ConnectionId);
+        (string? oppId, string? _) = _matchmaker.GetOpponent(Context.ConnectionId);
         _matchmaker.LeaveOrDisconnect(Context.ConnectionId);
         if (oppId is not null)
             await Clients.Client(oppId).SendAsync("OpponentLeft", "");
@@ -71,7 +71,7 @@ public class GameHub : Hub
     // Permet au client de définir son pseudo côté serveur (stocké dans Matchmaker/RoomService).
     public Task SetName(string name)
     {
-        var userId = GetAuthenticatedUserId();
+        Guid userId = GetAuthenticatedUserId();
         _matchmaker.SetName(Context.ConnectionId, name);
         _rooms.SetName(userId, name);
         return Task.CompletedTask;
@@ -86,11 +86,11 @@ public class GameHub : Hub
         // S'il était dans un salon privé, on le quitte d'abord pour éviter les situations mixtes.
         await LeaveRoomByCode();
 
-        var result = _matchmaker.Enqueue(Context.ConnectionId);
+        (bool matched, string? roomId, string? otherId) result = _matchmaker.Enqueue(Context.ConnectionId);
         if (result.matched && result.roomId is not null && result.otherId is not null)
         {
-            var meName = _matchmaker.GetName(Context.ConnectionId);
-            var otherName = _matchmaker.GetName(result.otherId);
+            string meName = _matchmaker.GetName(Context.ConnectionId);
+            string otherName = _matchmaker.GetName(result.otherId);
 
             await Clients.Clients(new[] { Context.ConnectionId, result.otherId })
                 .SendAsync("Matched", result.roomId, new { you = meName, opponent = otherName });
@@ -105,7 +105,7 @@ public class GameHub : Hub
     // Le client sort de la file d'attente. On prévient l'adversaire si un match était déjà formé.
     public async Task LeaveQueue()
     {
-        var (oppId, roomId) = _matchmaker.GetOpponent(Context.ConnectionId);
+        (string? oppId, string? roomId) = _matchmaker.GetOpponent(Context.ConnectionId);
         _matchmaker.LeaveOrDisconnect(Context.ConnectionId);
         if (oppId is not null && roomId is not null)
             await Clients.Client(oppId).SendAsync("OpponentLeft", roomId);
@@ -114,10 +114,10 @@ public class GameHub : Hub
     // Envoi d'un message texte au sein d'un "match" (roomId = GUID coté matchmaking).
     public async Task SendRoomMessage(string roomId, string message)
     {
-        var (oppId, myRoomId) = _matchmaker.GetOpponent(Context.ConnectionId);
+        (string? oppId, string? myRoomId) = _matchmaker.GetOpponent(Context.ConnectionId);
         if (oppId is null || myRoomId != roomId) return; // Sécurité: ignorer si pas dans la même room.
 
-        var from = _matchmaker.GetName(Context.ConnectionId);
+        string from = _matchmaker.GetName(Context.ConnectionId);
         await Clients.Client(oppId).SendAsync("ReceiveRoomMessage", roomId, from, message);
     }
 
@@ -127,7 +127,7 @@ public class GameHub : Hub
     public async Task CreateRoom(Guid deckId, string? preferredCode = null)
     {
         // Si on était en matchmaking, on s'en retire, car on va jouer par code.
-        var userId = GetAuthenticatedUserId();
+        Guid userId = GetAuthenticatedUserId();
         _matchmaker.LeaveOrDisconnect(Context.ConnectionId);
 
         if (!_rooms.TryCreateRoom(userId, out var code, preferredCode))
@@ -147,10 +147,10 @@ public class GameHub : Hub
     // Rejoindre un salon existant par code. Si l'adversaire est déjà présent, on notifie "Matched" aux deux.
     public async Task JoinRoom(Guid deckId, string code)
     {
-        var userId = GetAuthenticatedUserId();
+        Guid userId = GetAuthenticatedUserId();
         _matchmaker.LeaveOrDisconnect(Context.ConnectionId);
 
-        var ok = _rooms.TryJoinRoom(userId, code, out var oppUserId, out var isFull);
+        bool ok = _rooms.TryJoinRoom(userId, code, out Guid? oppUserId, out bool isFull);
         if (!ok)
         {
             await Clients.Caller.SendAsync("RoomJoinError", isFull ? "ROOM_FULL" : "NOT_FOUND");
@@ -163,8 +163,8 @@ public class GameHub : Hub
 
         if (oppUserId.HasValue)
         {
-            var meName = _rooms.GetName(userId);
-            var otherName = _rooms.GetName(oppUserId.Value);
+            string meName = _rooms.GetName(userId);
+            string otherName = _rooms.GetName(oppUserId.Value);
 
             // Broadcast au groupe entier (supporte reconnexions multiples)
             await Clients.Group(code)
@@ -179,19 +179,19 @@ public class GameHub : Hub
     // Envoi d'un message dans un salon privé (adressage par code). Diffusé à "OthersInGroup".
     public async Task SendRoomMessageByCode(string code, string message)
     {
-        var userId = GetAuthenticatedUserId();
-        var myCode = _rooms.GetRoomOf(userId);
+        Guid userId = GetAuthenticatedUserId();
+        string? myCode = _rooms.GetRoomOf(userId);
         if (myCode != code) return; // Sécurité: on n'envoie que si l'émetteur appartient bien à ce salon.
 
-        var from = _rooms.GetName(userId);
+        string from = _rooms.GetName(userId);
         await Clients.OthersInGroup(code).SendAsync("ReceiveRoomMessage", code, from, message);
     }
 
     // Quitter un salon privé (par code). Si la room devient vide, elle est supprimée côté serveur.
     public async Task LeaveRoomByCode()
     {
-        var userId = GetAuthenticatedUserId();
-        _rooms.Leave(userId, out var code, out var oppUserId, out var roomEmpty);
+        Guid userId = GetAuthenticatedUserId();
+        _rooms.Leave(userId, out string? code, out Guid? oppUserId, out bool roomEmpty);
         if (code is not null) await Groups.RemoveFromGroupAsync(Context.ConnectionId, code);
         if (code is not null && oppUserId.HasValue && !roomEmpty)
         {
@@ -209,8 +209,8 @@ public class GameHub : Hub
     /// <param name="position">Position sur le plateau (0-6), ou -1 si pas de position</param>
     public async Task PlayCard(Guid cardInstanceId, int position)
     {
-        var userId = GetAuthenticatedUserId();
-        var roomCode = _rooms.GetRoomOf(userId);
+        Guid userId = GetAuthenticatedUserId();
+        string? roomCode = _rooms.GetRoomOf(userId);
         
         if (roomCode == null)
         {
@@ -218,7 +218,7 @@ public class GameHub : Hub
             return;
         }
 
-        var gameRoom = _rooms.GetGameRoom(roomCode);
+        VortexTCG.Game.Object.Room? gameRoom = _rooms.GetGameRoom(roomCode);
         if (gameRoom == null)
         {
             await Clients.Caller.SendAsync("PlayCardError", "Partie non initialisée");
@@ -226,7 +226,7 @@ public class GameHub : Hub
         }
 
         // 🎯 Déléguer toute la logique au GameService
-        var result = _gameService.PlayCard(gameRoom, userId, cardInstanceId, position);
+        PlayCardResponse result = _gameService.PlayCard(gameRoom, userId, cardInstanceId, position);
 
         if (result.Success)
         {

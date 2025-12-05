@@ -409,10 +409,10 @@ public class RoomService
     private async Task<List<CardInstance>> LoadDeckCards(Guid deckId)
     {
         // Créer un scope pour résoudre le DbContext (Scoped) depuis le Singleton
-        using var scope = _serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<VortexDbContext>();
+        using IServiceScope scope = _serviceProvider.CreateScope();
+        VortexDbContext dbContext = scope.ServiceProvider.GetRequiredService<VortexDbContext>();
         
-        var deckCards = await dbContext.DeckCards
+        List<CardInstance> deckCards = await dbContext.DeckCards
             .Where(dc => dc.DeckId == deckId)
             .Include(dc => dc.Card)
             .ThenInclude(c => c.Card)
