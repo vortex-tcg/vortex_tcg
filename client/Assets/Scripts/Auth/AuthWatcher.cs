@@ -84,7 +84,7 @@ public class AuthWatcher : MonoBehaviour
         _redirecting = true;
 
         Jwt.I.Clear(); 
-        LoadingScreen.Load("LoginScene", loadMenu: false, unloadMenu: true);
+        //LoadingScreen.Load("LoginScene", loadMenu: false, unloadMenu: true);
 
     }
 }

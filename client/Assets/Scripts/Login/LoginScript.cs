@@ -83,8 +83,8 @@ public class LoginScript : MonoBehaviour
         string password = passwordField?.text ?? "";
 
         string url = baseUrl.EndsWith("/api", System.StringComparison.OrdinalIgnoreCase)
-            ? baseUrl + "/auth/Login"
-            : baseUrl + "/api/auth/Login";
+            ? baseUrl + "/auth/login"
+            : baseUrl + "/api/auth/login";
 
         string jsonBody = JsonUtility.ToJson(new LoginData(email, password));
 
