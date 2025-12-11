@@ -6,13 +6,12 @@ on:
       environment:
         description: "Environment to deploy to"
         required: true
-        default: "dev"
+        default: "feature/ci-cd"
         type: choice
         options:
           - dev
           - feature/ci-cd
           - main
-
 jobs:
   connect_to_dockerhub:
     runs-on: ubuntu-latest
@@ -23,7 +22,7 @@ jobs:
       - name: Login to docker hub
         uses: docker/login-action@v3
         with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up QEMU
