@@ -13,13 +13,14 @@ namespace VortexTCG.Game.Object
         private int _secondary_currency;
 
 
-        public async Task initChampion(Guid deck)
+        public void initChampion(Guid deck)
         {
             _deck_id = deck;
             _base_hp = 30;
             _base_gold = 1;
             _gold = 1;
             _hp = 30;
+            return;
         }
     }
 }
