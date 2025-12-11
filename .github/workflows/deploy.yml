@@ -39,6 +39,25 @@ jobs:
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/vortex-game:latest
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/vortex-api:latest
 
+      - name: Create env file on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cat > .env << EOF
+            AUTH_PORT=${{ secrets.AUTH_PORT }}
+            AUTH_INTERNAL_PORT=${{ secrets.AUTH_INTERNAL_PORT }}
+            GAME_PORT=${{ secrets.GAME_PORT }}
+            GAME_INTERNAL_PORT=${{ secrets.GAME_INTERNAL_PORT }}
+            API_PORT=${{ secrets.API_PORT }}
+            API_INTERNAL_PORT=${{ secrets.API_INTERNAL_PORT }}
+            ASP_NETCORE_ENVIRONMENT=${{ secrets.ASP_NETCORE_ENVIRONMENT }}
+            SONARQUBE_PORT=${{ secrets.SONARQUBE_PORT }}
+            EOF
+
       - name: Start services
         uses: appleboy/ssh-action@v1.0.3
         with:
