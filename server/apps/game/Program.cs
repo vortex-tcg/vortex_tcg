@@ -9,6 +9,7 @@ using VortexTCG.DataAccess;
 using VortexTCG.Common.Services;
 using game.Hubs;
 using game.Services;
+using VortexTCG.Game.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
@@ -46,6 +47,11 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddRazorPages();
 
 var jwtSecret = builder.Configuration["JwtSettings:SecretKey"];
+
+if (string.IsNullOrEmpty(jwtSecret))
+{
+    throw new InvalidOperationException("JwtSettings:SecretKey is not configured");
+}
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -107,7 +113,7 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        if (db.Database.CanConnect())
+        if (await db.Database.CanConnectAsync())
         {
             logger.LogInformation("Connexion DB OK");
         }
@@ -155,4 +161,4 @@ app.MapGet("/health/db", async (VortexDbContext db) =>
     }
 });
 
-app.Run();
+await app.RunAsync();

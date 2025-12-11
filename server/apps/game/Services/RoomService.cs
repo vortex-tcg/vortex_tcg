@@ -43,7 +43,7 @@ public class RoomService
     /// Représente un salon de jeu avec ses métadonnées.
     /// Contient à la fois les informations de connexion (Members) et l'état de jeu (GameRoom).
     /// </summary>
-    private class Room
+    private sealed class Room
     {
         /// <summary>Ensemble des UserId des joueurs dans le salon (max 2) - RÉSISTE aux reconnexions</summary>
         public HashSet<Guid> Members { get; } = new();
@@ -83,20 +83,15 @@ public class RoomService
     /// <summary>Générateur de nombres aléatoires cryptographiquement sécurisé</summary>
     private readonly RandomNumberGenerator _rng = RandomNumberGenerator.Create();
     
-    /// <summary>Service provider pour résoudre le DbContext scoped</summary>
-    private readonly IServiceProvider _serviceProvider;
-    
     #endregion
 
     #region Constructeur
 
     /// <summary>
-    /// Constructeur avec injection du service provider.
-    /// Permet de créer des scopes pour accéder au DbContext (Scoped) depuis un Singleton.
+    /// Constructeur par défaut.
     /// </summary>
-    public RoomService(IServiceProvider serviceProvider)
+    public RoomService()
     {
-        _serviceProvider = serviceProvider;
     }
 
     #endregion
@@ -383,8 +378,8 @@ public class RoomService
         if (needsInitialization && room.GameRoom != null)
         {
             // 🎯 CHARGER TOUTES LES CARTES DES DECKS DEPUIS LA DB (une seule fois)
-            var deck1Cards = await LoadDeckCards(deck1Id!.Value);
-            var deck2Cards = await LoadDeckCards(deck2Id!.Value);
+            var deck1Cards = await LoadDeckCards();
+            var deck2Cards = await LoadDeckCards();
             
             // Initialiser les joueurs avec leurs cartes chargées
             room.GameRoom.setUser1(user1Id!.Value, deck1Id!.Value, deck1Cards);
@@ -406,7 +401,7 @@ public class RoomService
     /// </summary>
     /// <param name="deckId">ID du deck à charger</param>
     /// <returns>Liste de toutes les instances de cartes du deck</returns>
-    private async Task<List<VortexTCG.Game.Object.CardInstance>> LoadDeckCards(Guid deckId)
+    private async Task<List<VortexTCG.Game.Object.CardInstance>> LoadDeckCards()
     {
         // TEMPORAIRE: Mock via DeckFactory pour éviter tout appel DB pendant le dev/test
         // (ancien code EF Core conservé ci-dessous en commentaire)

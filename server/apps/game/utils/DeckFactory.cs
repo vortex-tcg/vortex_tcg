@@ -4,7 +4,7 @@ using VortexTCG.Game.Object;
 
 namespace VortexTCG.Game.Utils
 {
-    public class DeckFactory
+    public static class DeckFactory
     {
         private static VortexTCG.Game.Object.Card genRandomCard(int i)
         {
@@ -13,7 +13,7 @@ namespace VortexTCG.Game.Utils
 
             CardDTO card = new CardDTO
             {
-                Id = new Guid(),
+                Id = Guid.NewGuid(),
                 Name = new string(Enumerable.Repeat(chars, 8).Select(s => s[random.Next(s.Length)]).ToArray()),
                 Description = new string(Enumerable.Repeat(chars, 50).Select(s => s[random.Next(s.Length)]).ToArray()),
                 Hp = random.Next(10),

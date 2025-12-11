@@ -6,13 +6,19 @@
 //       Les commentaires expliquent le cycle de vie et les patterns utilisés.
 // =============================================
 using Microsoft.AspNetCore.SignalR;
+using System;
 using System.Security.Claims;
+using System.Threading.Tasks;
+using VortexTCG.Game.Services;
 using game.Services;
 
 namespace game.Hubs;
 
 public class GameHub : Hub
 {
+    // Constantes pour les événements SignalR
+    private const string OpponentLeftEvent = "OpponentLeft";
+
     // Le Hub dépend de trois services singleton:
     // - Matchmaker: gère une file d'attente (queue) pour appairer deux joueurs aléatoirement.
     // - RoomService: gère des salons identifiés par un code (type "K3H9Z8") pour jeu privé.
@@ -56,7 +62,7 @@ public class GameHub : Hub
         {
             // Notifier le groupe avant de quitter (autres connexions verront l'événement)
             if (oppUserId.HasValue && !empty)
-                await Clients.OthersInGroup(code).SendAsync("OpponentLeft", code);
+                await Clients.OthersInGroup(code).SendAsync(OpponentLeftEvent, code);
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, code);
         }
 
@@ -64,7 +70,7 @@ public class GameHub : Hub
         (string? oppId, string? _) = _matchmaker.GetOpponent(Context.ConnectionId);
         _matchmaker.LeaveOrDisconnect(Context.ConnectionId);
         if (oppId is not null)
-            await Clients.Client(oppId).SendAsync("OpponentLeft", "");
+            await Clients.Client(oppId).SendAsync(OpponentLeftEvent, "");
 
         await base.OnDisconnectedAsync(exception);
     }
@@ -197,7 +203,7 @@ public class GameHub : Hub
         if (code is not null && oppUserId.HasValue && !roomEmpty)
         {
             // Broadcast au groupe (tous les clients de l'adversaire)
-            await Clients.Group(code).SendAsync("OpponentLeft", code);
+            await Clients.Group(code).SendAsync(OpponentLeftEvent, code);
         }
     }
 
@@ -227,7 +233,7 @@ public class GameHub : Hub
         }
 
         // 🎯 Déléguer toute la logique au GameService
-        PlayCardResponse result = _gameService.PlayCard(gameRoom, userId, cardInstanceId, position);
+        VortexTCG.Game.Services.PlayCardResponse result = _gameService.PlayCard(gameRoom, userId, cardInstanceId, position);
 
         if (result.Success)
         {

@@ -18,9 +18,12 @@
 // - Aucun appel à la base de données (tout est chargé en mémoire au départ)
 // =============================================
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using VortexTCG.Game.Object;
 
-namespace game.Services;
+namespace VortexTCG.Game.Services;
 
 /// <summary>
 /// Service de gestion de la logique de jeu.
@@ -45,7 +48,6 @@ public class GameService
             return PlayCardResponse.CreateError("Joueur non trouvé dans la partie");
 
         Player player = playerNumber == 1 ? gameRoom.Player1 : gameRoom.Player2;
-        Player opponent = playerNumber == 1 ? gameRoom.Player2 : gameRoom.Player1;
 
         // 2️⃣ Vérifier que c'est son tour
         if (gameRoom.CurrentPlayer != playerNumber)
@@ -63,7 +65,7 @@ public class GameService
         // 6️⃣ Déléguer selon le type de carte
         PlayCardResponse response = card.Type switch
         {
-            CardType.Faction => PlayFactionCard(gameRoom, player, opponent, card, position),
+            CardType.Faction => PlayFactionCard(player, card, position),
             CardType.Equipment => PlayCardResponse.CreateError("Équipements pas encore implémentés"),
             CardType.Spell => PlayCardResponse.CreateError("Sortilèges pas encore implémentés"),
             _ => PlayCardResponse.CreateError("Type de carte inconnu")
@@ -83,7 +85,7 @@ public class GameService
     /// Joue une carte factionnaire (unité) sur le plateau.
     /// Valide la position et crée l'unité avec summoning sickness.
     /// </summary>
-    private PlayCardResponse PlayFactionCard(Room gameRoom, Player player, Player opponent, VortexTCG.Game.Object.CardInstance card, int position)
+    private PlayCardResponse PlayFactionCard(Player player, VortexTCG.Game.Object.CardInstance card, int position)
     {
         // Validation de la position
         if (position == -1)
@@ -111,9 +113,11 @@ public class GameService
 
         player.Board[position] = unit;
 
-        // TODO: Résoudre les effets "OnPlay" si présents
-        // if (card.Effects.Contains("OnPlay"))
-        //     ResolveOnPlayEffects(gameRoom, player, opponent, unit, card);
+        // Résoudre les effets "OnPlay" si présents
+        if (card.Effects.Any(e => e.StartsWith("OnPlay", StringComparison.OrdinalIgnoreCase)))
+        {
+            ResolveOnPlayEffects(player, unit, card);
+        }
 
         return PlayCardResponse.CreateSuccess(
             cardPlayed: card,
@@ -124,15 +128,59 @@ public class GameService
     }
 
     /// <summary>
-    /// Détermine quel numéro de joueur (1 ou 2) correspond à l'userId donné.
     /// </summary>
     /// <returns>1 pour Player1, 2 pour Player2, 0 si non trouvé</returns>
-    private int DeterminePlayerNumber(Room gameRoom, Guid userId)
+    private static int DeterminePlayerNumber(Room gameRoom, Guid userId)
     {
         if (gameRoom.Player1?.UserId == userId) return 1;
         if (gameRoom.Player2?.UserId == userId) return 2;
-        return 0;
+    return 0;
+}
+
+/// <summary>
+/// Résolution minimaliste des effets "OnPlay".
+/// Applique quelques mots-clés connus aux statistiques de l'unité ou aux ressources du joueur.
+/// </summary>
+private static void ResolveOnPlayEffects(Player player, BoardUnit unit, VortexTCG.Game.Object.CardInstance card)
+{
+    foreach (string effect in card.Effects)
+    {
+        if (string.IsNullOrWhiteSpace(effect)) continue;
+
+        // Normaliser
+        string e = effect.Trim();
+
+        // OnPlay:Haste -> l'unité peut attaquer immédiatement
+        if (e.Equals("OnPlay:Haste", StringComparison.OrdinalIgnoreCase))
+        {
+            unit.CanAttackThisTurn = true;
+            continue;
+        }
+
+        // OnPlay:Buff+1/+1 -> +1 ATK et +1 DEF
+        if (e.Equals("OnPlay:Buff+1/+1", StringComparison.OrdinalIgnoreCase))
+        {
+            unit.CurrentAttack += 1;
+            unit.CurrentDefense += 1;
+            continue;
+        }
+
+        // OnPlay:GainGold1 -> +1 or immédiat
+        if (e.Equals("OnPlay:GainGold1", StringComparison.OrdinalIgnoreCase))
+        {
+            player.Gold += 1;
+            if (player.Gold > player.MaxGold) player.Gold = player.MaxGold;
+            continue;
+        }
+
+        // OnPlay:Shield -> +2 DEF
+        if (e.Equals("OnPlay:Shield", StringComparison.OrdinalIgnoreCase))
+        {
+            unit.CurrentDefense += 2;
+        }
     }
+}
+
 }
 
 /// <summary>

@@ -77,7 +77,7 @@ public class Room
         DrawCards(Player2, 3);
     }
 
-    private void DrawCards(Player player, int count)
+    private static void DrawCards(Player player, int count)
     {
         for (int i = 0; i < count && player.Deck.Count > 0; i++)
         {
