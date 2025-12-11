@@ -11,7 +11,7 @@ public class AttackManager : MonoBehaviour
     private VisualElement p1BoardRoot;
     private readonly List<VisualElement> selectedCards = new List<VisualElement>();
 
-    private void OnEnable()
+    private void Start()
     {
         if (boardDocument == null)
             boardDocument = GetComponent<UIDocument>();
@@ -21,14 +21,13 @@ public class AttackManager : MonoBehaviour
 
         RegisterAllExistingCards();
 
-        if (PhaseManager.Instance != null)
-        {
-            PhaseManager.Instance.OnEnterAttack += OnEnterAttackPhase;
-            PhaseManager.Instance.OnEnterStandBy += OnEndDefensePhase;
-        }
+        PhaseManager.Instance.OnEnterAttack += OnEnterAttackPhase;
+        PhaseManager.Instance.OnEnterStandBy += OnEndDefensePhase;
+
+        Debug.Log("AttackManager subscribed to phase events");
     }
 
-    private void OnDisable()
+    private void OnDestroy()
     {
         if (PhaseManager.Instance != null)
         {

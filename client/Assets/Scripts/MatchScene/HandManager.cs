@@ -28,6 +28,8 @@ public class HandManager : MonoBehaviour
     private VisualElement originalParent;
     private int originalIndex;
 
+    private DefenseManager defenseManager;
+
     private bool CanDrag => PhaseManager.Instance != null &&
                             (PhaseManager.Instance.CurrentPhase == GamePhase.StandBy ||
                              PhaseManager.Instance.CurrentPhase == GamePhase.Defense);
@@ -46,13 +48,15 @@ public class HandManager : MonoBehaviour
         enemyBoardZone = root.Q<VisualElement>("P2BoardCards");
 
         if (boardZone != null)
-            boardSlots = boardZone.Query<VisualElement>("P1Slot").ToList();
+            boardSlots = boardZone.Query<VisualElement>(className: "P1Slot").ToList();
 
         if (enemyBoardZone != null)
-            enemySlots = enemyBoardZone.Query<VisualElement>("P2Slot").ToList();
+            enemySlots = enemyBoardZone.Query<VisualElement>(className: "P2Slot").ToList();
 
         root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
         root.RegisterCallback<PointerUpEvent>(OnPointerUp);
+
+        defenseManager = FindObjectOfType<DefenseManager>();
 
         if (handZone == null || previewZone == null || SmallCard == null || CardPreview == null)
             return;
@@ -175,12 +179,17 @@ public class HandManager : MonoBehaviour
         }
         else if (PhaseManager.Instance.CurrentPhase == GamePhase.Defense)
         {
-            VisualElement enemyCard = enemySlots.FirstOrDefault(slot =>
+            VisualElement enemySlot = enemySlots.FirstOrDefault(slot =>
                 slot.childCount > 0 && slot.worldBound.Contains(mousePos));
 
-            if (enemyCard != null)
+            if (enemySlot != null)
             {
-                TakeAttackAction(draggedCard, enemyCard);
+                VisualElement enemyCard = enemySlot.Q<VisualElement>(className: "small-card");
+                if (enemyCard != null && defenseManager != null)
+                {
+                    defenseManager.TryAssignDefense(draggedElement, enemyCard);
+                }
+
                 ResetCardPosition(draggedElement);
                 ClearDrag();
                 return;
@@ -191,18 +200,17 @@ public class HandManager : MonoBehaviour
         ClearDrag();
     }
 
-    private void TakeAttackAction(CardDTO myCard, VisualElement enemyCard)
+    private void ResetCardPosition(VisualElement cardElement)
     {
-        Label nameLabel = enemyCard.Q<Label>("Name");
-        string enemyName = nameLabel != null ? nameLabel.text : "???";
+        if (originalParent != null)
+        {
+            cardElement.RemoveFromHierarchy();
+            originalParent.Insert(originalIndex, cardElement);
+        }
 
-        Debug.Log($"Carte '{myCard.Name}' bloque l'attaque de '{enemyName}'");
-    }
-
-    private void ClearDrag()
-    {
-        draggedElement = null;
-        draggedCard = null;
+        cardElement.style.position = Position.Relative;
+        cardElement.style.left = StyleKeyword.Null;
+        cardElement.style.top = StyleKeyword.Null;
     }
 
     private bool TryDropOnBoard(Vector2 mousePos, List<VisualElement> slots, bool requireCardInSlot = false)
@@ -223,31 +231,23 @@ public class HandManager : MonoBehaviour
             draggedElement.style.top = StyleKeyword.Null;
 
             draggedElement.userData = true;
+            draggedElement.AddToClassList("on-board");
 
             AttackManager attackManager = FindObjectOfType<AttackManager>();
             if (attackManager != null)
                 attackManager.RegisterCard(draggedElement);
 
             return true;
-
-            draggedElement.userData = true;
-            return true;
         }
 
         return false;
     }
 
-    private void ResetCardPosition(VisualElement cardElement)
-    {
-        if (originalParent != null)
-        {
-            cardElement.RemoveFromHierarchy();
-            originalParent.Insert(originalIndex, cardElement);
-        }
 
-        cardElement.style.position = Position.Relative;
-        cardElement.style.left = StyleKeyword.Null;
-        cardElement.style.top = StyleKeyword.Null;
+    private void ClearDrag()
+    {
+        draggedElement = null;
+        draggedCard = null;
     }
 
     private List<CardDTO> MockFetchPlayerHand()
