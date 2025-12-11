@@ -13,80 +13,47 @@ permissions:
 
 jobs:
   deploy:
-    name: Deploy
+    name: Deploy to EC2
     runs-on: ubuntu-latest
     environment: production
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to EC2
+      - name: Login to docker hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Pull new Docker images
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          timeout: 60s
-          command_timeout: 10m
-          script: |
-            # Create network if it doesn't exist
-            echo "Creating Docker network..."
-            docker network create vortex-network 2>/dev/null || echo "Network already exists"
+          command: |
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/vortex-auth:latest
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/vortex-game:latest
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/vortex-api:latest
 
-            # Stop existing containers
-            echo "Stopping existing containers..."
-            docker stop vortex-api vortex-auth vortex-game vortex-migrations 2>/dev/null || true
-            docker rm vortex-api vortex-auth vortex-game vortex-migrations 2>/dev/null || true
+      - name: Start services
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          command: |
+            cd /home/ubuntu/vortex_tcg/server
+            docker-compose -f docker-compose.prod.yaml up -d
 
-            # Pull latest images from Docker Hub
-            echo "Pulling latest images..."
-            docker pull vortextcg/vortex_repository:api-prod
-            docker pull vortextcg/vortex_repository:auth-prod
-            docker pull vortextcg/vortex_repository:game-prod
-            docker pull vortextcg/vortex_repository:migrations-prod
-
-            # Start new containers
-            echo "Starting new containers..."
-
-            # Start database migrations first
-            docker run -d \
-              --name vortex-migrations \
-              --network vortex-network \
-              --restart unless-stopped \
-              vortextcg/vortex_repository:migrations-prod
-
-            # Wait for migrations to complete
-            echo "Waiting for migrations to complete..."
-            sleep 30
-
-            # Start API services
-            docker run -d \
-              --name vortex-api \
-              --network vortex-network \
-              --restart unless-stopped \
-              -p 3000:3000 \
-              vortextcg/vortex_repository:api-prod
-              
-            docker run -d \
-              --name vortex-auth \
-              --network vortex-network \
-              --restart unless-stopped \
-              -p 3001:3000 \
-              vortextcg/vortex_repository:auth-prod
-              
-            docker run -d \
-              --name vortex-game \
-              --network vortex-network \
-              --restart unless-stopped \
-              -p 3002:3000 \
-              vortextcg/vortex_repository:game-prod
-
-            # Clean up old images
-            echo "Cleaning up old images..."
-            docker image prune -f
-
-            echo "Deployment completed!"
-            echo "Running containers:"
-            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+      - name: Clean up unused Docker resources
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
