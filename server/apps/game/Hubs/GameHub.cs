@@ -6,6 +6,7 @@
 //       Les commentaires expliquent le cycle de vie et les patterns utilisés.
 // =============================================
 using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
 using game.Services;
 
 namespace game.Hubs;
@@ -31,7 +32,7 @@ public class GameHub : Hub
     // Cet ID est permanent (GUID) et survit aux reconnexions, contrairement au ConnectionId.
     private Guid GetAuthenticatedUserId()
     {
-        var userIdClaim = Context.User?.FindFirst("sub")?.Value
+        var userIdClaim = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
             ?? throw new HubException("User not authenticated");
         return Guid.Parse(userIdClaim);
     }

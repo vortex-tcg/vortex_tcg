@@ -135,91 +135,41 @@ public class Player
     public int Health { get; set; }
 }
 
-/// <summary>
-/// Instance d'une carte (avec TOUTES ses données chargées depuis la DB).
-/// Chaque carte dans le deck est une instance unique avec son propre ID.
-/// </summary>
-public class CardInstance
-{
-    /// <summary>ID unique de cette instance de carte (généré)</summary>
-    public Guid InstanceId { get; set; } = Guid.NewGuid();
+        /// <summary>
+        /// Configure le joueur 2 avec son deck et son champion.
+        /// Charge les cartes depuis la base de données et initialise le champion.
+        /// </summary>
+        /// <param name="user">ID utilisateur (base de données) du joueur 2</param>
+        /// <param name="deck">ID du deck sélectionné par le joueur 2</param>
+        /// <remarks>
+        /// APPELÉ PAR: RoomService.SetPlayerDeck() quand les 2 joueurs sont prêts.
+        /// EFFETS:
+        /// - Enregistre l'ID utilisateur
+        /// - Charge les cartes du deck depuis la BDD (via DeckFactory)
+        /// - Configure le champion avec ses stats de base (30 HP, 1 gold, etc.)
+        /// </remarks>
+        public async Task setUser2(Guid user, Guid deck)
+        {
+            _user_2 = user;
+            
+            // Charger les cartes du deck depuis la base de données
+            _deck_user_2.initDeck(deck);
+            
+            // Configurer le champion (HP, gold, capacités)
+            _champion_user_2.initChampion(deck);
+        }
 
-    /// <summary>ID du modèle de carte (référence au CardModel en DB)</summary>
-    public Guid CardModelId { get; set; }
+        #endregion
 
-    /// <summary>Nom de la carte</summary>
-    public string Name { get; set; } = string.Empty;
-
-    /// <summary>Type de carte (Faction, Equipment, Spell)</summary>
-    public CardType Type { get; set; }
-
-    /// <summary>Coût en or pour jouer la carte</summary>
-    public int Cost { get; set; }
-
-    /// <summary>Points d'attaque (pour les unités)</summary>
-    public int? Attack { get; set; }
-
-    /// <summary>Points de défense (pour les unités)</summary>
-    public int? Defense { get; set; }
-
-    /// <summary>Description textuelle de la carte</summary>
-    public string Description { get; set; } = string.Empty;
-
-    /// <summary>Liste des effets de la carte (noms des effets)</summary>
-    public List<string> Effects { get; set; } = new();
-}
-
-/// <summary>
-/// Unité sur le plateau (carte factionnaire jouée).
-/// Représente l'état actuel d'une unité en jeu.
-/// </summary>
-public class BoardUnit
-{
-    /// <summary>ID de l'instance de carte d'origine</summary>
-    public Guid InstanceId { get; set; }
-
-    /// <summary>ID du modèle de carte (référence)</summary>
-    public Guid CardModelId { get; set; }
-
-    /// <summary>Nom de l'unité</summary>
-    public string Name { get; set; } = string.Empty;
-
-    /// <summary>Attaque actuelle (peut être modifiée par des effets)</summary>
-    public int CurrentAttack { get; set; }
-
-    /// <summary>Défense actuelle (peut être modifiée par des effets)</summary>
-    public int CurrentDefense { get; set; }
-
-    /// <summary>Position sur le plateau (0-6)</summary>
-    public int Position { get; set; }
-
-    /// <summary>A déjà attaqué ce tour ?</summary>
-    public bool IsTapped { get; set; }
-
-    /// <summary>Peut attaquer ce tour ? (false = summoning sickness)</summary>
-    public bool CanAttackThisTurn { get; set; }
-
-    /// <summary>Effets actifs sur cette unité</summary>
-    public List<string> ActiveEffects { get; set; } = new();
-}
-
-/// <summary>
-/// Types de cartes disponibles dans le jeu.
-/// </summary>
-public enum CardType
-{
-    Faction = 1,    // Unité combattante
-    Equipment = 2,  // Équipement pour unité
-    Spell = 3       // Sortilège à effet immédiat
-}
-
-/// <summary>
-/// Phases d'un tour de jeu.
-/// </summary>
-public enum GamePhase
-{
-    Draw,   // Phase de pioche
-    Main,   // Phase principale (jouer des cartes)
-    Combat, // Phase de combat
-    End     // Phase de fin de tour
+        // =============================================
+        // TODO: Ajouter les méthodes de gameplay ici
+        // =============================================
+        // Exemples de méthodes à implémenter:
+        // - DrawCard(int playerId) : Piocher une carte
+        // - PlayCard(int playerId, Card card) : Jouer une carte
+        // - AttackWithCard(int playerId, Card attacker, Card target) : Attaquer
+        // - EndTurn(int playerId) : Terminer le tour
+        // - GetGameState() : Récupérer l'état complet pour l'UI
+        // =============================================
+    }    
 }
