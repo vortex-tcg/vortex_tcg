@@ -1,17 +1,20 @@
+# Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 WORKDIR /workspace
 
-# Copie tout le code source
 COPY . .
 
 WORKDIR /workspace/apps/migrations
 
-# Restore les dépendances
 RUN dotnet restore
+RUN dotnet publish -c Release -o /app/publish
 
-# Build le projet
-RUN dotnet build -c Release
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/runtime:8.0 AS runtime
 
-# Exécute le programme de migration
-CMD ["dotnet", "run", "--no-build", "-c", "Release"]
+WORKDIR /app
+
+COPY --from=build /app/publish .
+
+CMD ["dotnet", "migrations.dll"]

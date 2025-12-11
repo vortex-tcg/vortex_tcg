@@ -1,4 +1,5 @@
-﻿FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+﻿# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 WORKDIR /workspace
 
@@ -7,11 +8,15 @@ COPY . .
 WORKDIR /workspace/apps/api
 
 RUN dotnet restore
-# Install the deps
+RUN dotnet publish -c Release -o /app/publish
+
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+
+WORKDIR /app
+
+COPY --from=build /app/publish .
 
 EXPOSE 5238
 
-RUN apt-get update && apt-get install -y inotify-tools
-# Install deps to watch files changing
-
-CMD ["sh", "-c", "while true; do echo 'Démarrage API...'; dotnet run --urls http://0.0.0.0:5238 & PID=$!; inotifywait -r -e modify,create,delete /workspace/apps/api --exclude '(bin|obj)'; echo 'Changement détecté - Redémarrage API...'; kill $PID; wait $PID; done"]
+CMD ["dotnet", "api.dll", "--urls", "http://0.0.0.0:5238"]
