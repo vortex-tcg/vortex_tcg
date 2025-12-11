@@ -34,7 +34,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          command: |
+          script: |
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/vortex-auth:latest
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/vortex-game:latest
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/vortex-api:latest
@@ -47,6 +47,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
+            cd /var/www/vortex_tcg/server
             cat > .env << EOF
             AUTH_PORT=${{ secrets.AUTH_PORT }}
             AUTH_INTERNAL_PORT=${{ secrets.AUTH_INTERNAL_PORT }}
@@ -65,7 +66,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          command: |
+          script: |
             cd /var/www/vortex_tcg/server
             docker-compose -f docker-compose.prod.yaml up -d --build
 
