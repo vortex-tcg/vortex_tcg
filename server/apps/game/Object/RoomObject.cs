@@ -131,10 +131,10 @@ namespace VortexTCG.Game.Object
             _user_1 = user;
             
             // Charger les cartes du deck depuis la base de données
-            await _deck_user_1.initDeck(deck);
+            _deck_user_1.initDeck(deck);
             
             // Configurer le champion (HP, gold, capacités)
-            await _champion_user_1.initChampion(deck);
+            _champion_user_1.initChampion(deck);
         }
 
         /// <summary>
@@ -155,10 +155,10 @@ namespace VortexTCG.Game.Object
             _user_2 = user;
             
             // Charger les cartes du deck depuis la base de données
-            await _deck_user_2.initDeck(deck);
+            _deck_user_2.initDeck(deck);
             
             // Configurer le champion (HP, gold, capacités)
-            await _champion_user_2.initChampion(deck);
+            _champion_user_2.initChampion(deck);
         }
 
         #endregion
