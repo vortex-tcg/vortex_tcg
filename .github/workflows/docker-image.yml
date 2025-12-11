@@ -1,4 +1,4 @@
-name: send-docker-image
+name: build-and-push-docker-images
 
 on:
   workflow_dispatch:
@@ -12,9 +12,17 @@ on:
           - dev
           - feature/ci-cd
           - main
+  pull_request: 
+    types:
+      - closed
+    branches:
+      - dev
 jobs:
-  connect_to_dockerhub:
+  build-and-push:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [api, auth, game, migrations]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -31,10 +39,27 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push API
+      - name: Set Docker file and tag based on environment
+        id: docker-config
+        run: |
+          # Sanitize environment name for Docker tag (replace / and other invalid chars with -)
+          SANITIZED_ENV=$(echo "${{ github.event.inputs.environment }}" | sed 's/[^a-zA-Z0-9._-]/-/g')
+
+          if [ "${{ github.event.inputs.environment }}" == "dev" ]; then
+            echo "dockerfile=./server/apps/${{ matrix.service }}/Dockerfile.dev" >> $GITHUB_OUTPUT
+            echo "tag=vortextcg/vortex_repository:${{ matrix.service }}-dev" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.inputs.environment }}" == "main" ]; then
+            echo "dockerfile=./server/apps/${{ matrix.service }}/Dockerfile" >> $GITHUB_OUTPUT
+            echo "tag=vortextcg/vortex_repository:${{ matrix.service }}-prod" >> $GITHUB_OUTPUT
+          else
+            echo "dockerfile=./server/apps/${{ matrix.service }}/Dockerfile.dev" >> $GITHUB_OUTPUT
+            echo "tag=vortextcg/vortex_repository:${{ matrix.service }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push ${{ matrix.service }}
         uses: docker/build-push-action@v6
         with:
-          context: ./server/apps/api
-          file: ./server/apps/api/Dockerfile
+          context: ./server
+          file: ${{ steps.docker-config.outputs.dockerfile }}
           push: true
-          tags: vortextcg/vortex_repository:api
+          tags: ${{ steps.docker-config.outputs.tag }}
