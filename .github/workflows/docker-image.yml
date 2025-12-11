@@ -1,4 +1,4 @@
-name: send-docker-image
+name: build-and-push-docker-images
 
 on:
   workflow_dispatch:
@@ -13,8 +13,11 @@ on:
           - feature/ci-cd
           - main
 jobs:
-  connect_to_dockerhub:
+  build-and-push:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [api, auth, game, migrations]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -38,17 +41,17 @@ jobs:
           SANITIZED_ENV=$(echo "${{ github.event.inputs.environment }}" | sed 's/[^a-zA-Z0-9._-]/-/g')
 
           if [ "${{ github.event.inputs.environment }}" == "dev" ]; then
-            echo "dockerfile=./server/apps/api/Dockerfile.dev" >> $GITHUB_OUTPUT
-            echo "tag=vortextcg/vortex_repository:api-dev" >> $GITHUB_OUTPUT
+            echo "dockerfile=./server/apps/${{ matrix.service }}/Dockerfile.dev" >> $GITHUB_OUTPUT
+            echo "tag=vortextcg/vortex_repository:${{ matrix.service }}-dev" >> $GITHUB_OUTPUT
           elif [ "${{ github.event.inputs.environment }}" == "main" ]; then
-            echo "dockerfile=./server/apps/api/Dockerfile" >> $GITHUB_OUTPUT
-            echo "tag=vortextcg/vortex_repository:api-prod" >> $GITHUB_OUTPUT
+            echo "dockerfile=./server/apps/${{ matrix.service }}/Dockerfile" >> $GITHUB_OUTPUT
+            echo "tag=vortextcg/vortex_repository:${{ matrix.service }}-prod" >> $GITHUB_OUTPUT
           else
-            echo "dockerfile=./server/apps/api/Dockerfile.dev" >> $GITHUB_OUTPUT
-            echo "tag=vortextcg/vortex_repository:api-${SANITIZED_ENV}" >> $GITHUB_OUTPUT
+            echo "dockerfile=./server/apps/${{ matrix.service }}/Dockerfile.dev" >> $GITHUB_OUTPUT
+            echo "tag=vortextcg/vortex_repository:${{ matrix.service }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build and push API
+      - name: Build and push ${{ matrix.service }}
         uses: docker/build-push-action@v6
         with:
           context: ./server

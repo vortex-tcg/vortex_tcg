@@ -2,7 +2,7 @@ services:
   migrations:
     build:
       context: .
-      dockerfile: ./apps/migrations/Dockerfile
+      dockerfile: ./apps/migrations/Dockerfile.dev
     env_file:
       - .env
     depends_on:
@@ -13,7 +13,7 @@ services:
   auth:
     build:
       context: .
-      dockerfile: ./apps/auth/Dockerfile
+      dockerfile: ./apps/auth/Dockerfile.dev
     env_file:
       - .env
     ports:
@@ -32,7 +32,7 @@ services:
   game:
     build:
       context: .
-      dockerfile: ./apps/game/Dockerfile
+      dockerfile: ./apps/game/Dockerfile.dev
     env_file:
       - .env
     ports:
