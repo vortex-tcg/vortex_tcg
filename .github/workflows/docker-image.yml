@@ -12,6 +12,11 @@ on:
           - dev
           - feature/ci-cd
           - main
+  pull_request: 
+    types:
+      - closed
+    branches:
+      - dev
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
