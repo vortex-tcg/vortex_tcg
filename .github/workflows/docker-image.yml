@@ -34,6 +34,9 @@ jobs:
       - name: Set Docker file and tag based on environment
         id: docker-config
         run: |
+          # Sanitize environment name for Docker tag (replace / and other invalid chars with -)
+          SANITIZED_ENV=$(echo "${{ github.event.inputs.environment }}" | sed 's/[^a-zA-Z0-9._-]/-/g')
+
           if [ "${{ github.event.inputs.environment }}" == "dev" ]; then
             echo "dockerfile=./server/apps/api/Dockerfile.dev" >> $GITHUB_OUTPUT
             echo "tag=vortextcg/vortex_repository:api-dev" >> $GITHUB_OUTPUT
@@ -42,7 +45,7 @@ jobs:
             echo "tag=vortextcg/vortex_repository:api-prod" >> $GITHUB_OUTPUT
           else
             echo "dockerfile=./server/apps/api/Dockerfile.dev" >> $GITHUB_OUTPUT
-            echo "tag=vortextcg/vortex_repository:api-${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+            echo "tag=vortextcg/vortex_repository:api-${SANITIZED_ENV}" >> $GITHUB_OUTPUT
           fi
 
       - name: Build and push API
