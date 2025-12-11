@@ -37,7 +37,7 @@ namespace VortexTCG.Game.Object
 
         /// <summary>ID utilisateur (base de données) du joueur 1 (créateur du salon)</summary>
         private Guid _user_1;
-        
+
         /// <summary>ID utilisateur (base de données) du joueur 2 (a rejoint le salon)</summary>
         private Guid _user_2;
 
@@ -127,15 +127,17 @@ namespace VortexTCG.Game.Object
         /// - Charge les cartes du deck depuis la BDD (via DeckFactory)
         /// - Configure le champion avec ses stats de base (30 HP, 1 gold, etc.)
         /// </remarks>
-        public async Task setUser1(Guid user, Guid deck)
+        public Task setUser1(Guid user, Guid deck)
         {
             _user_1 = user;
-            
+
             // Charger les cartes du deck depuis la base de données
-            await _deck_user_1.initDeck(deck);
-            
+            _deck_user_1.initDeck(deck);
+
             // Configurer le champion (HP, gold, capacités)
-            await _champion_user_1.initChampion(deck);
+            _champion_user_1.initChampion(deck);
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -151,15 +153,17 @@ namespace VortexTCG.Game.Object
         /// - Charge les cartes du deck depuis la BDD (via DeckFactory)
         /// - Configure le champion avec ses stats de base (30 HP, 1 gold, etc.)
         /// </remarks>
-        public async Task setUser2(Guid user, Guid deck)
+        public Task setUser2(Guid user, Guid deck)
         {
             _user_2 = user;
-            
+
             // Charger les cartes du deck depuis la base de données
-            await _deck_user_2.initDeck(deck);
-            
+            _deck_user_2.initDeck(deck);
+
             // Configurer le champion (HP, gold, capacités)
-            await _champion_user_2.initChampion(deck);
+            _champion_user_2.initChampion(deck);
+
+            return Task.CompletedTask;
         }
 
         #endregion
@@ -237,5 +241,5 @@ namespace VortexTCG.Game.Object
         // - EndTurn(int playerId) : Terminer le tour
         // - GetGameState() : Récupérer l'état complet pour l'UI
         // =============================================
-    }    
+    }
 }

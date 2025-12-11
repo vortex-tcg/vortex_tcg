@@ -8,10 +8,12 @@ namespace VortexTCG.Game.Object
 
         private List<Card> _cards = new List<Card>();
 
-        public async Task initDeck(Guid deck_id)
+        public void initDeck(Guid deck_id)
         {
             _deck_id = deck_id;
             _cards = DeckFactory.genDeck();
+
+            return;
         }
 
         public int GetCount() => _cards.Count;
