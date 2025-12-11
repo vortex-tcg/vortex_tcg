@@ -51,12 +51,8 @@ public class GameService
         if (gameRoom.CurrentPlayer != playerNumber)
             return PlayCardResponse.CreateError("Ce n'est pas votre tour");
 
-        // 3️⃣ Vérifier qu'on est en phase Main
-        if (gameRoom.Phase != GamePhase.Main)
-            return PlayCardResponse.CreateError("Vous ne pouvez jouer des cartes qu'en phase principale");
-
         // 4️⃣ Trouver la carte dans la main (toutes les données sont déjà chargées)
-        CardInstance? card = player.Hand.FirstOrDefault(c => c.InstanceId == cardInstanceId);
+        VortexTCG.Game.Object.CardInstance? card = player.Hand.FirstOrDefault(c => c.InstanceId == cardInstanceId);
         if (card == null)
             return PlayCardResponse.CreateError("Carte non trouvée dans votre main");
 
@@ -87,7 +83,7 @@ public class GameService
     /// Joue une carte factionnaire (unité) sur le plateau.
     /// Valide la position et crée l'unité avec summoning sickness.
     /// </summary>
-    private PlayCardResponse PlayFactionCard(Room gameRoom, Player player, Player opponent, CardInstance card, int position)
+    private PlayCardResponse PlayFactionCard(Room gameRoom, Player player, Player opponent, VortexTCG.Game.Object.CardInstance card, int position)
     {
         // Validation de la position
         if (position == -1)
@@ -147,13 +143,13 @@ public record PlayCardResponse
 {
     public bool Success { get; init; }
     public string Message { get; init; } = string.Empty;
-    public CardInstance? CardPlayed { get; init; }
+    public VortexTCG.Game.Object.CardInstance? CardPlayed { get; init; }
     public int? Position { get; init; }
     public int RemainingGold { get; init; }
 
     /// <summary>Crée une réponse de succès</summary>
     public static PlayCardResponse CreateSuccess(
-        CardInstance cardPlayed,
+        VortexTCG.Game.Object.CardInstance cardPlayed,
         int? position,
         int remainingGold,
         string message)

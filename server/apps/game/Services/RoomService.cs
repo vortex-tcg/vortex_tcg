@@ -406,19 +406,41 @@ public class RoomService
     /// </summary>
     /// <param name="deckId">ID du deck à charger</param>
     /// <returns>Liste de toutes les instances de cartes du deck</returns>
-    private async Task<List<CardInstance>> LoadDeckCards(Guid deckId)
+    private async Task<List<VortexTCG.Game.Object.CardInstance>> LoadDeckCards(Guid deckId)
     {
+        // TEMPORAIRE: Mock via DeckFactory pour éviter tout appel DB pendant le dev/test
+        // (ancien code EF Core conservé ci-dessous en commentaire)
+
+        List<VortexTCG.Game.Object.Card> rawDeck = VortexTCG.Game.Utils.DeckFactory.genDeck();
+        List<VortexTCG.Game.Object.CardInstance> mock = new List<VortexTCG.Game.Object.CardInstance>(rawDeck.Count);
+        for (int i = 0; i < rawDeck.Count; i++)
+        {
+            mock.Add(new VortexTCG.Game.Object.CardInstance
+            {
+                CardModelId = Guid.NewGuid(),
+                Name = $"Card {i + 1}",
+                Type = VortexTCG.Game.Object.CardType.Faction,
+                Cost = 1,
+                Attack = 1,
+                Defense = 1,
+                Description = string.Empty,
+                Effects = new List<string>()
+            });
+        }
+        return mock;
+
+        /*
         // Créer un scope pour résoudre le DbContext (Scoped) depuis le Singleton
         using IServiceScope scope = _serviceProvider.CreateScope();
         VortexDbContext dbContext = scope.ServiceProvider.GetRequiredService<VortexDbContext>();
         
-        List<CardInstance> deckCards = await dbContext.DeckCards
+        List<VortexTCG.Game.Object.CardInstance> deckCards = await dbContext.DeckCards
             .Where(dc => dc.DeckId == deckId)
             .Include(dc => dc.Card)
             .ThenInclude(c => c.Card)
             .ThenInclude(c => c.Effect)
             .ThenInclude(ec => ec.Effect)
-            .Select(dc => new CardInstance
+            .Select(dc => new VortexTCG.Game.Object.CardInstance
             {
                 CardModelId = dc.Card.Card.Id,
                 Name = dc.Card.Card.Name,
@@ -432,6 +454,7 @@ public class RoomService
             .ToListAsync();
 
         return deckCards;
+        */
     }
 
     #endregion
@@ -496,7 +519,6 @@ public class RoomService
         {
             var members = room.Members.ToList();
             if (members.Count == 0) return (null, null, null, null);
-            
             Guid? user1 = members.Count > 0 ? members[0] : null;
             Guid? user2 = members.Count > 1 ? members[1] : null;
             

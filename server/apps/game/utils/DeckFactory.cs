@@ -36,5 +36,34 @@ namespace VortexTCG.Game.Utils
 
             return deck;
         }
+
+        // --- MOCK POUR LE SERVEUR: génère des CardInstance aléatoires (Faction uniquement pour tests) ---
+        public static List<VortexTCG.Game.Object.CardInstance> GenDeckInstances(int count = 30)
+        {
+            Random random = new Random();
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+            List<VortexTCG.Game.Object.CardInstance> instances = new List<VortexTCG.Game.Object.CardInstance>(count);
+            for (int i = 0; i < count; i++)
+            {
+                string name = new string(Enumerable.Repeat(chars, 8).Select(s => s[random.Next(s.Length)]).ToArray());
+                int atk = random.Next(1, 10);
+                int hp = random.Next(1, 10);
+                int cost = Math.Max(0, (atk + hp) / 3);
+
+                instances.Add(new VortexTCG.Game.Object.CardInstance
+                {
+                    CardModelId = Guid.NewGuid(),
+                    Name = name,
+                    Type = VortexTCG.Game.Object.CardType.Faction,
+                    Cost = cost,
+                    Attack = atk,
+                    Defense = hp,
+                    Description = string.Empty,
+                    Effects = new List<string>()
+                });
+            }
+            return instances;
+        }
     }
 }
