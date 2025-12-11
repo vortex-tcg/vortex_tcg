@@ -31,10 +31,24 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Set Docker file and tag based on environment
+        id: docker-config
+        run: |
+          if [ "${{ github.event.inputs.environment }}" == "dev" ]; then
+            echo "dockerfile=./server/apps/api/Dockerfile.dev" >> $GITHUB_OUTPUT
+            echo "tag=vortextcg/vortex_repository:api-dev" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.inputs.environment }}" == "main" ]; then
+            echo "dockerfile=./server/apps/api/Dockerfile" >> $GITHUB_OUTPUT
+            echo "tag=vortextcg/vortex_repository:api-prod" >> $GITHUB_OUTPUT
+          else
+            echo "dockerfile=./server/apps/api/Dockerfile.dev" >> $GITHUB_OUTPUT
+            echo "tag=vortextcg/vortex_repository:api-${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build and push API
         uses: docker/build-push-action@v6
         with:
-          context: ./server/apps/api
-          file: ./server/apps/api/Dockerfile
+          context: ./server
+          file: ${{ steps.docker-config.outputs.dockerfile }}
           push: true
-          tags: vortextcg/vortex_repository:api
+          tags: ${{ steps.docker-config.outputs.tag }}
