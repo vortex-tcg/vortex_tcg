@@ -22,8 +22,6 @@ public class DefenseManager : MonoBehaviour
 
         PhaseManager.Instance.OnEnterDefense += OnEnterDefensePhase;
         PhaseManager.Instance.OnEnterStandBy += OnEndDefensePhase;
-
-        Debug.Log("DefenseManager subscribed to phase events");
     }
 
     private void OnDestroy()
@@ -37,20 +35,18 @@ public class DefenseManager : MonoBehaviour
 
     private void OnEnterDefensePhase()
     {
-        Debug.Log("=== DEFENSE PHASE STARTED ===");
         ClearSelections();
     }
 
     private void OnEndDefensePhase()
     {
-        Debug.Log("=== STANDBY PHASE - CLEARING DEFENSE ===");
         ClearSelections();
     }
 
     private void RegisterAllExistingCards()
     {
-        var allSlots = p1BoardRoot.Query<VisualElement>(className: "P1Slot").ToList();
-        foreach (var slot in allSlots)
+        List<VisualElement> allSlots = p1BoardRoot.Query<VisualElement>(className: "P1Slot").ToList();
+        foreach (VisualElement slot in allSlots)
         {
             slot.RegisterCallback<ClickEvent>(_ =>
             {
@@ -71,23 +67,14 @@ public class DefenseManager : MonoBehaviour
 
         if (defenderCard == null || targetCard == null) return;
         if (defenderCard.parent == null || !defenderCard.parent.ClassListContains("P1Slot"))
-        {
-            Debug.LogWarning("La carte défensive doit être sur le board !");
             return;
-        }
 
         if (!targetCard.ClassListContains("engaged"))
-        {
-            Debug.LogWarning("La cible doit être une carte en mode attaque !");
             return;
-        }
 
         VisualElement existingDefender = defenseAssignments.FirstOrDefault(kvp => kvp.Value == targetCard).Key;
         if (existingDefender != null)
-        {
-            Debug.LogWarning($"Une carte défend déjà contre {targetCard.name} !");
             return;
-        }
 
         ClearDefense(defenderCard);
 
@@ -96,8 +83,6 @@ public class DefenseManager : MonoBehaviour
 
         if (!selectedCards.Contains(defenderCard))
             selectedCards.Add(defenderCard);
-
-        Debug.Log($"{defenderCard.name} est maintenant en mode défense contre {targetCard.name}");
     }
 
     private void ToggleCard(VisualElement card)
@@ -117,8 +102,6 @@ public class DefenseManager : MonoBehaviour
         selectedCards.Add(card);
         if (!card.ClassListContains("defense"))
             card.AddToClassList("defense");
-
-        Debug.Log($"{card.name} est maintenant en mode défense");
     }
 
     private void DeselectCard(VisualElement card)
@@ -145,17 +128,10 @@ public class DefenseManager : MonoBehaviour
 
     private void ClearSelections()
     {
-        Debug.Log($"[DefenseManager] Clearing {selectedCards.Count} defense cards");
-
-        foreach (var card in selectedCards.ToList())
+        List<VisualElement> cardsCopy = new List<VisualElement>(selectedCards);
+        foreach (VisualElement card in cardsCopy)
         {
-            if (card == null)
-            {
-                Debug.LogWarning("[DefenseManager] Found null card in selectedCards");
-                continue;
-            }
-
-            Debug.Log($"[DefenseManager] Removing 'defense' class from {card.name}");
+            if (card == null) continue;
 
             if (card.ClassListContains("defense"))
                 card.RemoveFromClassList("defense");
@@ -163,7 +139,5 @@ public class DefenseManager : MonoBehaviour
 
         selectedCards.Clear();
         defenseAssignments.Clear();
-
-        Debug.Log("[DefenseManager] Defense selections cleared");
     }
 }

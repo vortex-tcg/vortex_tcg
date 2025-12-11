@@ -29,7 +29,7 @@ public class P2BoardManager : MonoBehaviour
 
     private void ApplyRandomEngaged()
     {
-        var allCards = slotsP2
+        List<VisualElement> allCards = slotsP2
             .Select(s => s.Q<VisualElement>(className: "small-card"))
             .Where(c => c != null)
             .ToList();
