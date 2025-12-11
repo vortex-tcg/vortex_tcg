@@ -13,6 +13,15 @@
 <h1>SignalR – Matchmaking & Rooms par code</h1>
 
 <div>
+    <span>Login</span>
+    <label>Email: <input id="loginEmail" value="john.doe@email.com" /></label>
+    <label>Mot de passe: <input id="loginPassword" value="Password123"/></label>
+    <button id="login">Login</button>
+    <span id="loginStatus"></span>
+</div>
+
+<div>
+    <span>Connexion GameHub</span>
     <label>Pseudo: <input id="name" value="Joueur" /></label>
     <button id="connect">Connexion</button>
     <span id="status"></span>
@@ -42,6 +51,11 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8/dist/browser/signalr.min.js"></script>
 <script>
+
+    const loginEmail = document.getElementById("loginEmail");
+    const loginPassword = document.getElementById("loginPassword")
+    const loginStatus = document.getElementById("loginStatus");
+
     const status = document.getElementById('status');
     const roomDiv = document.getElementById('room');
     const roomTitle = document.getElementById('roomTitle');
@@ -50,6 +64,7 @@
     const btnConnect = document.getElementById('connect');
     const btnQueue = document.getElementById('queue');
     const btnLeaveQueue = document.getElementById('leaveQueue');
+    const btnLogin = document.getElementById("login");
 
     const btnCreate = document.getElementById('create');
     const btnJoin   = document.getElementById('join');
@@ -62,12 +77,33 @@
 
     let connection, currentKey = null, mode = null; // mode: 'queue' | 'code'
 
+    let jwtToken = "";
+
     function append(t){ const p=document.createElement('div'); p.textContent=t; log.appendChild(p); log.scrollTop=log.scrollHeight; }
+
+    btnLogin.onclick = async () => {
+        const response = await fetch("http://localhost:4000/api/auth/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            referrerPolicy: "strict-origin-when-cross-origin",
+            body: JSON.stringify({
+                    email: loginEmail.value,
+                    password: loginPassword.value
+            })
+        })
+        const result = await response.json();
+        jwtToken = result.data.token;
+        loginStatus.textContent = "Connecté: " + jwtToken;
+    }
 
     btnConnect.onclick = async () => {
         try {
-            connection = new signalR.HubConnectionBuilder()
-                .withUrl("/hubs/game")
+            connection = await new signalR.HubConnectionBuilder()
+                .withUrl("/hubs/game", {
+                    accessTokenFactory: () => jwtToken
+                })
                 .withAutomaticReconnect()
                 .build();
 
