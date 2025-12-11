@@ -9,6 +9,10 @@ using VortexTCG.DataAccess;
 using VortexTCG.Common.Services;
 using game.Hubs;
 using game.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +43,40 @@ builder.Logging.AddConsole();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddRazorPages();
+
+var jwtSecret = builder.Configuration["JwtSettings:SecretKey"];
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey  = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            NameClaimType = ClaimTypes.NameIdentifier,
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = false,
+            RequireExpirationTime = false,
+            ClockSkew = TimeSpan.Zero
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/game")) {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
+    }
+);
+
+builder.Services.AddAuthorization();
 
 // 2) Configuration DB - Utilise directement les variables d'environnement
 builder.Configuration.AddEnvironmentVariables();
@@ -95,9 +133,10 @@ if (!app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 app.UseCors("Dev");
+app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHub<GameHub>("/hubs/game");
+app.MapHub<GameHub>("/hubs/game").RequireAuthorization();
 app.MapRazorPages();
 
 app.MapGet("/health/db", async (VortexDbContext db) =>

@@ -6,7 +6,9 @@
 //       Les commentaires expliquent le cycle de vie et les patterns utilisés.
 // =============================================
 using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
 using game.Services;
+using VortexTCG.Game.DTO;
 
 namespace game.Hubs;
 
@@ -28,7 +30,7 @@ public class GameHub : Hub
     // Cet ID est permanent (GUID) et survit aux reconnexions, contrairement au ConnectionId.
     private Guid GetAuthenticatedUserId()
     {
-        var userIdClaim = Context.User?.FindFirst("sub")?.Value
+        var userIdClaim = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
             ?? throw new HubException("User not authenticated");
         return Guid.Parse(userIdClaim);
     }
@@ -210,6 +212,40 @@ public class GameHub : Hub
             var from = _rooms.GetName(userId);
             await Clients.OthersInGroup(code).SendAsync("OpponentPlayedCard", code, from, cardId);
             return;
+        }
+    }
+
+    public async Task DrawCards(int amount)
+    {
+        Guid userId = GetAuthenticatedUserId();
+
+        string? code = _rooms.GetRoomOf(userId);
+        if (code == null)
+        {
+            await Clients.Caller.SendAsync("Error", "You are not in a room.");
+            return;
+        }
+
+        VortexTCG.Game.Object.Room? gameRoom = _rooms.GetGameRoom(code);
+
+        if (gameRoom == null)
+        {
+            await Clients.Caller.SendAsync("Error", $"Game not initialized for room {code}. Waiting for other player?");
+            return;
+        }
+
+        DrawCardsResultDTO? result = gameRoom.DrawCards(userId, amount);
+        if (result == null)
+        {
+            await Clients.Caller.SendAsync("Error", "Unable to draw cards (Invalid player or count)");
+            return;
+        }
+
+        await Clients.Caller.SendAsync("CardsDrawn", result.PlayerResult);
+
+        if (code != null)
+        {
+            await Clients.OthersInGroup(code).SendAsync("OpponentCardsDrawn", result.OpponentResult);
         }
     }
 }

@@ -13,7 +13,7 @@ namespace VortexTCG.Game.Object
         private int _secondary_currency;
         private int _fatigue_counter;
 
-        public async Task initChampion(Guid deck)
+        public void initChampion(Guid deck)
         {
             _deck_id = deck;
             _base_hp = 30;
@@ -25,11 +25,10 @@ namespace VortexTCG.Game.Object
 
         public int GetHp() => _hp;
 
-        public int ApplyFatigueDamage()
+        internal void ApplyFatigueDamage()
         {
             _fatigue_counter++;
             _hp -= _fatigue_counter;
-            return _fatigue_counter;
         }
     }
 }
