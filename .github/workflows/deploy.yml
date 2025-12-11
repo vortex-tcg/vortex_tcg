@@ -47,8 +47,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           command: |
-            cd /home/ubuntu/vortex_tcg/server
-            docker-compose -f docker-compose.prod.yaml up -d
+            cd /var/www/vortex_tcg/server
+            docker-compose -f docker-compose.prod.yaml up -d --build
 
       - name: Clean up unused Docker resources
         uses: appleboy/ssh-action@v1.0.3
