@@ -21,11 +21,28 @@ public class P2BoardManager : MonoBehaviour
         if (root == null) return;
 
         boardZoneP2 = root.Q<VisualElement>("P2BoardCards");
-        slotsP2 = boardZoneP2.Query<VisualElement>("Card").ToList();
+        slotsP2 = boardZoneP2.Query<VisualElement>("P2Slot").ToList();
 
         List<CardDTO> p2Cards = MockFetchP2BoardCards();
         GenerateP2Board(p2Cards);
     }
+
+    private void ApplyRandomEngaged()
+    {
+        var allCards = slotsP2
+            .Select(s => s.Q<VisualElement>(className: "small-card"))
+            .Where(c => c != null)
+            .ToList();
+
+        if (allCards.Count == 0)
+            return;
+
+        int randomIndex = UnityEngine.Random.Range(0, allCards.Count);
+        VisualElement randomCard = allCards[randomIndex];
+
+        randomCard.AddToClassList("engaged");
+    }
+
 
     private void GenerateP2Board(List<CardDTO> cards)
     {
@@ -54,6 +71,7 @@ public class P2BoardManager : MonoBehaviour
             SetLabel(cardElement, "DEFPoints", card.Hp.ToString());
 
             slot.Add(cardElement);
+            ApplyRandomEngaged();
         }
     }
 
