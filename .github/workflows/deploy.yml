@@ -35,9 +35,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/vortex-auth:latest
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/vortex-game:latest
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/vortex-api:latest
+            docker pull vortextcg/vortex_repository/vortex-auth:latest
+            docker pull vortextcg/vortex_repository/vortex-game:latest
+            docker pull vortextcg/vortex_repository/vortex-api:latest
 
       - name: Create env file on server
         uses: appleboy/ssh-action@v1.0.3
