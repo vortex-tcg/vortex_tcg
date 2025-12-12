@@ -1,10 +1,10 @@
-using api.Card.DTOs;
-using api.Card.Providers;
+using VortexTCG.Api.Card.DTOs;
+using VortexTCG.Api.Card.Providers;
 using VortexTCG.Common.DTO;
 using VortexTCG.DataAccess.Models;
 using CardModel = VortexTCG.DataAccess.Models.Card;
 
-namespace api.Card.Services
+namespace VortexTCG.Api.Card.Services
 {
     public class CardService
     {
@@ -21,26 +21,27 @@ namespace api.Card.Services
             _provider = provider;
         }
 
-        public async Task<ResultDTO<List<CardDTO>>> listAsync(CancellationToken ct = default)
+        public async Task<ResultDTO<CardDTO[]>> GetAllAsync(CancellationToken ct = default)
         {
-            var entities = await _provider.listAsync(ct);
-            return new ResultDTO<List<CardDTO>>
+            List<CardModel> entities = await _provider.GetAllAsync(ct);
+            ResultDTO<CardDTO[]> result = new ResultDTO<CardDTO[]>
             {
                 success = true,
                 statusCode = 200,
-                data = entities.Select(Map).ToList()
+                data = entities.Select(Map).ToArray()
             };
+            return result;
         }
 
-        public async Task<ResultDTO<CardDTO>> createAsync(CardCreateDTO input, CancellationToken ct = default)
+        public async Task<ResultDTO<CardDTO>> CreateAsync(CardCreateDTO input, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(input.Name))
                 return new ResultDTO<CardDTO> { success = false, statusCode = 400, message = "Name requis" };
 
-            if (await _provider.existsByNameAsync(input.Name, ct))
+            if (await _provider.ExistsByNameAsync(input.Name, ct))
                 return new ResultDTO<CardDTO> { success = false, statusCode = 409, message = "Une carte avec ce nom existe déjà" };
 
-            var entity = new CardModel
+            CardModel entity = new CardModel
             {
                 Id = Guid.NewGuid(),
                 Name = input.Name,
@@ -51,8 +52,37 @@ namespace api.Card.Services
                 Picture = input.Picture
             };
             
-            entity = await _provider.addAsync(entity, ct);
-            return new ResultDTO<CardDTO> { success = true, statusCode = 201, message = "Carte crée avec succès" };
+            entity = await _provider.AddAsync(entity, ct);
+            ResultDTO<CardDTO> created = new ResultDTO<CardDTO>
+            {
+                success = true,
+                statusCode = 201,
+                message = "Carte crée avec succès",
+                data = Map(entity)
+            };
+            return created;
+        }
+
+        public async Task<ResultDTO<CardDTO>> GetByIdAsync(Guid id, CancellationToken ct = default)
+        {
+            CardModel? entity = await _provider.GetByIdAsync(id, ct);
+            if (entity is null)
+            {
+                ResultDTO<CardDTO> notFound = new ResultDTO<CardDTO>
+                {
+                    success = false,
+                    statusCode = 404,
+                    message = "Carte non trouvée"
+                };
+                return notFound;
+            }
+            ResultDTO<CardDTO> ok = new ResultDTO<CardDTO>
+            {
+                success = true,
+                statusCode = 200,
+                data = Map(entity)
+            };
+            return ok;
         }
     }
 }
