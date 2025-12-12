@@ -46,6 +46,7 @@ jobs:
             docker pull vortextcg/vortex_repository:api
             docker pull vortextcg/vortex_repository:game
             docker pull vortextcg/vortex_repository:auth
+            docker pull vortextcg/vortex_repository:migrations
 
             docker logout
 
