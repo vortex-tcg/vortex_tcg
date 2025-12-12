@@ -39,6 +39,10 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
+            docker compose down
+
+            docker system prune -a -f
+
             docker pull vortextcg/vortex_repository:api
             docker pull vortextcg/vortex_repository:game
             docker pull vortextcg/vortex_repository:auth
