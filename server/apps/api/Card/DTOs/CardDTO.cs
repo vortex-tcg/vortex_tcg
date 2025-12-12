@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace api.Card.DTOs
+namespace VortexTCG.Api.Card.DTOs
 {
     // DTO de ce qui est retournée
     public class CardDTO
