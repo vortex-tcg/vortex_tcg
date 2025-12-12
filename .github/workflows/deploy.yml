@@ -72,6 +72,7 @@ jobs:
             DB_USERNAME=${{ secrets.DB_USERNAME }}
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             DB_PORT=${{ secrets.DB_PORT }}
+            CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}
             EOF
 
       - name: Start services
