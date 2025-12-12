@@ -45,8 +45,6 @@ services:
 
   sonarqube:
     image: sonarqube:latest
-    depends_on:
-      - db
     env_file:
       - .env
     environment:
