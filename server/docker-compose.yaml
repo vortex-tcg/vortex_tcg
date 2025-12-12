@@ -2,18 +2,18 @@ services:
   migrations:
     build:
       context: .
-      dockerfile: ./apps/migrations/Dockerfile
+      dockerfile: ./apps/migrations/Dockerfile.dev
     env_file:
       - .env
     depends_on:
       db:
         condition: service_healthy
     restart: "no"
-  
+
   auth:
     build:
       context: .
-      dockerfile: ./apps/auth/Dockerfile
+      dockerfile: ./apps/auth/Dockerfile.dev
     env_file:
       - .env
     ports:
@@ -28,11 +28,11 @@ services:
         condition: service_completed_successfully
       db:
         condition: service_healthy
-  
+
   game:
     build:
       context: .
-      dockerfile: ./apps/game/Dockerfile
+      dockerfile: ./apps/game/Dockerfile.dev
     env_file:
       - .env
     ports:
@@ -47,11 +47,11 @@ services:
         condition: service_completed_successfully
       db:
         condition: service_healthy
-  
+
   api:
     build:
       context: .
-      dockerfile: ./apps/api/Dockerfile
+      dockerfile: ./apps/api/Dockerfile.dev
     env_file:
       - .env
     ports:
@@ -66,7 +66,7 @@ services:
         condition: service_completed_successfully
       db:
         condition: service_healthy
-  
+
   db:
     image: mariadb:latest
     restart: always
@@ -86,7 +86,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  
+
   adminer:
     image: adminer
     restart: always
@@ -94,7 +94,7 @@ services:
       - "${DB_ADMINER_PORT}:8080"
     environment:
       ADMINER_DEFAULT_SERVER: db
-  
+
   sonarqube:
     image: sonarqube:latest
     depends_on:

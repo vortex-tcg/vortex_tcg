@@ -37,11 +37,11 @@ namespace VortexTCG.Auth.Services {
             return false;
         }
 
-        private JwtSecurityToken generateAccessToken(string userName)
+        private JwtSecurityToken generateAccessToken(Guid id)
         {
             List<Claim> claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, userName)
+                new Claim(ClaimTypes.NameIdentifier, id.ToString())
             };
 
             var secretKey = _configuration["JwtSettings:SecretKey"];
@@ -83,7 +83,7 @@ namespace VortexTCG.Auth.Services {
                 };
             }
 
-            LoginUserDTO user = await _provider.getFirstUserByEmail(data.email);
+            LoginUserDTO? user = await _provider.getFirstUserByEmail(data.email);
 
             if (user == null)
             {
@@ -119,7 +119,7 @@ namespace VortexTCG.Auth.Services {
                 };
             }
 
-            JwtSecurityToken token = generateAccessToken(user.Username);
+            JwtSecurityToken token = generateAccessToken(user.Id);
 
             return new ResultDTO<LoginResponseDTO>
             {

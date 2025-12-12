@@ -13,6 +13,15 @@
 <h1>SignalR – Matchmaking & Rooms par code</h1>
 
 <div>
+    <span>Login</span>
+    <label>Email: <input id="loginEmail" value="john.doe@email.com" /></label>
+    <label>Mot de passe: <input id="loginPassword" value="Password123"/></label>
+    <button id="login">Login</button>
+    <span id="loginStatus"></span>
+</div>
+
+<div>
+    <span>Connexion GameHub</span>
     <label>Pseudo: <input id="name" value="Joueur" /></label>
     <button id="connect">Connexion</button>
     <span id="status"></span>
@@ -28,6 +37,8 @@
 
 <h3>Mode 2 : Room par code</h3>
 <div>
+    <input id="deckId" placeholder="Deck ID (GUID)" value="d3b07384-d9a1-4d3b-92d8-4f5c6e7a8b9c" style="width: 280px;" />
+    <br/>
     <input id="roomCode" placeholder="CODE (ex: Q7D9K2)" />
     <button id="create">Créer room</button>
     <button id="join">Rejoindre room</button>
@@ -39,9 +50,15 @@
     <div id="log"></div>
     <input id="msg" placeholder="Message" />
     <button id="send">Envoyer</button>
+    <button id="drawCard">Piocher 1 carte</button>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8/dist/browser/signalr.min.js"></script>
 <script>
+
+    const loginEmail = document.getElementById("loginEmail");
+    const loginPassword = document.getElementById("loginPassword")
+    const loginStatus = document.getElementById("loginStatus");
+
     const status = document.getElementById('status');
     const roomDiv = document.getElementById('room');
     const roomTitle = document.getElementById('roomTitle');
@@ -50,6 +67,7 @@
     const btnConnect = document.getElementById('connect');
     const btnQueue = document.getElementById('queue');
     const btnLeaveQueue = document.getElementById('leaveQueue');
+    const btnLogin = document.getElementById("login");
 
     const btnCreate = document.getElementById('create');
     const btnJoin   = document.getElementById('join');
@@ -57,17 +75,40 @@
 
     const nameInput = document.getElementById('name');
     const codeInput = document.getElementById('roomCode');
+    const deckInput = document.getElementById('deckId');
     const msgInput  = document.getElementById('msg');
     const btnSend   = document.getElementById('send');
+    const btnDraw   = document.getElementById('drawCard');
 
     let connection, currentKey = null, mode = null; // mode: 'queue' | 'code'
 
+    let jwtToken = "";
+
     function append(t){ const p=document.createElement('div'); p.textContent=t; log.appendChild(p); log.scrollTop=log.scrollHeight; }
+
+    btnLogin.onclick = async () => {
+        const response = await fetch("http://localhost:4000/api/auth/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            referrerPolicy: "strict-origin-when-cross-origin",
+            body: JSON.stringify({
+                    email: loginEmail.value,
+                    password: loginPassword.value
+            })
+        })
+        const result = await response.json();
+        jwtToken = result.data.token;
+        loginStatus.textContent = "Connecté: " + jwtToken;
+    }
 
     btnConnect.onclick = async () => {
         try {
-            connection = new signalR.HubConnectionBuilder()
-                .withUrl("/hubs/game")
+            connection = await new signalR.HubConnectionBuilder()
+                .withUrl("/hubs/game", {
+                    accessTokenFactory: () => jwtToken
+                })
                 .withAutomaticReconnect()
                 .build();
 
@@ -116,6 +157,14 @@
                 append("️ L'adversaire a quitté.");
             });
 
+            connection.on("CardsDrawn", (result) => {
+                append(`J'ai pioché: ${JSON.stringify(result)}`);
+            });
+
+            connection.on("OpponentCardsDrawn", (result) => {
+                append(`L'adversaire a pioché: ${JSON.stringify(result)}`);
+            });
+
             await connection.start();
             await connection.invoke("SetName", nameInput.value || "Joueur");
             status.textContent = "Connecté au hub.";
@@ -138,13 +187,17 @@
     btnCreate.onclick = async () => {
         mode = 'code';
         const preferred = (codeInput.value || "").trim() || null;
-        await connection.invoke("CreateRoom", preferred);
+        const deckId = (deckInput.value || "").trim();
+        if (!deckId) return alert("Entre un Deck ID.");
+        await connection.invoke("CreateRoom", deckId, preferred);
     };
     btnJoin.onclick = async () => {
         mode = 'code';
         const code = (codeInput.value || "").trim();
+        const deckId = (deckInput.value || "").trim();
         if (!code) return alert("Entre un code.");
-        await connection.invoke("JoinRoom", code);
+        if (!deckId) return alert("Entre un Deck ID.");
+        await connection.invoke("JoinRoom", deckId, code);
     };
     btnLeaveCode.onclick = async () => {
         await connection.invoke("LeaveRoomByCode");
@@ -161,6 +214,11 @@
             await connection.invoke("SendRoomMessage", currentKey, t);
         append(`Moi: ${t}`);
         msgInput.value = "";
+    };
+
+    btnDraw.onclick = async () => {
+        if (!currentKey) return;
+        await connection.invoke("DrawCards", 1);
     };
 </script>
 </body>
