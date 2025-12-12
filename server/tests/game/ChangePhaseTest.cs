@@ -27,6 +27,7 @@ namespace game.Tests
     /// <summary>
     /// Suite de tests pour la gestion des phases de jeu.
     /// Chaque test vérifie un comportement spécifique de Room.ChangePhase().
+    /// ChangePhase retourne maintenant ChangePhaseResult au lieu de bool.
     /// </summary>
     public class ChangePhaseTest
     {
@@ -65,36 +66,39 @@ namespace game.Tests
             var (room, player1Id, player2Id) = await CreateConfiguredRoom();
 
             // ACT & ASSERT: Draw → Placement
-            bool result1 = room.ChangePhase(player1Id, isManual: true);
-            Assert.True(result1);
+            var result1 = room.ChangePhase(player1Id, isManual: true);
+            Assert.Equal(ChangePhaseResult.SUCCESS, result1);
             string phaseInfo1 = room.GetPhaseInfo();
             Assert.Contains("Placement", phaseInfo1);
             Assert.Contains("Joueur 1", phaseInfo1);
 
             // ACT & ASSERT: Placement → Attack
-            bool result2 = room.ChangePhase(player1Id, isManual: true);
-            Assert.True(result2);
+            var result2 = room.ChangePhase(player1Id, isManual: true);
+            Assert.Equal(ChangePhaseResult.SUCCESS, result2);
             string phaseInfo2 = room.GetPhaseInfo();
             Assert.Contains("Attack", phaseInfo2);
+            Assert.Contains("Joueur 1", phaseInfo2);
 
-            // ACT & ASSERT: Attack → Defense
-            bool result3 = room.ChangePhase(player1Id, isManual: true);
-            Assert.True(result3);
+            // ACT & ASSERT: Attack → Defense (switches to Player 2)
+            var result3 = room.ChangePhase(player1Id, isManual: true);
+            Assert.Equal(ChangePhaseResult.SUCCESS, result3);
             string phaseInfo3 = room.GetPhaseInfo();
             Assert.Contains("Defense", phaseInfo3);
+            Assert.Contains("Joueur 2", phaseInfo3); // Player switched during attack
 
-            // ACT & ASSERT: Defense → EndTurn
-            bool result4 = room.ChangePhase(player1Id, isManual: true);
-            Assert.True(result4);
+            // ACT & ASSERT: Defense → EndTurn (still Player 2)
+            var result4 = room.ChangePhase(player2Id, isManual: true); // Now player2 controls
+            Assert.Equal(ChangePhaseResult.SUCCESS, result4);
             string phaseInfo4 = room.GetPhaseInfo();
             Assert.Contains("EndTurn", phaseInfo4);
+            Assert.Contains("Joueur 2", phaseInfo4);
 
-            // ACT & ASSERT: EndTurn → Draw (Player 2's turn)
-            bool result5 = room.ChangePhase(player1Id, isManual: true);
-            Assert.True(result5);
+            // ACT & ASSERT: EndTurn → Draw (restarts cycle for Player 2)
+            var result5 = room.ChangePhase(player2Id, isManual: true);
+            Assert.Equal(ChangePhaseResult.PHASECOMPLETED, result5);
             string phaseInfo5 = room.GetPhaseInfo();
             Assert.Contains("Draw", phaseInfo5);
-            Assert.Contains("Joueur 2", phaseInfo5);
+            Assert.Contains("Joueur 2", phaseInfo5); // Same player, new round
         }
 
         /// <summary>
@@ -130,29 +134,34 @@ namespace game.Tests
             // ARRANGE: Créer une room configurée
             var (room, player1Id, player2Id) = await CreateConfiguredRoom();
 
-            // ACT: Faire un tour complet pour Player 1
+            // ACT: Player 1's turn until attack (which switches player)
             room.ChangePhase(player1Id, isManual: true); // Draw → Placement
             room.ChangePhase(player1Id, isManual: true); // Placement → Attack
-            room.ChangePhase(player1Id, isManual: true); // Attack → Defense
-            room.ChangePhase(player1Id, isManual: true); // Defense → EndTurn
-            room.ChangePhase(player1Id, isManual: true); // EndTurn → Draw (Player 2)
+            room.ChangePhase(player1Id, isManual: true); // Attack → Defense (switches to Player 2)
 
-            // ASSERT: Maintenant c'est le tour du Player 2
-            string infoPlayer2 = room.GetPhaseInfo();
-            Assert.Contains("Joueur 2", infoPlayer2);
-            Assert.Contains("Draw", infoPlayer2);
+            // ASSERT: Now it's Player 2's turn (defense phase)
+            string infoPlayer2Defense = room.GetPhaseInfo();
+            Assert.Contains("Joueur 2", infoPlayer2Defense);
+            Assert.Contains("Defense", infoPlayer2Defense);
 
-            // ACT: Faire un tour complet pour Player 2
+            // ACT: Player 2 continues their phases
+            room.ChangePhase(player2Id, isManual: true); // Defense → EndTurn
+            room.ChangePhase(player2Id, isManual: true); // EndTurn → Draw (Player 2 new round)
+
+            // ASSERT: Still Player 2, new round
+            string infoPlayer2Draw = room.GetPhaseInfo();
+            Assert.Contains("Joueur 2", infoPlayer2Draw);
+            Assert.Contains("Draw", infoPlayer2Draw);
+
+            // ACT: Player 2's full turn
             room.ChangePhase(player2Id, isManual: true); // Draw → Placement
             room.ChangePhase(player2Id, isManual: true); // Placement → Attack
-            room.ChangePhase(player2Id, isManual: true); // Attack → Defense
-            room.ChangePhase(player2Id, isManual: true); // Defense → EndTurn
-            room.ChangePhase(player2Id, isManual: true); // EndTurn → Draw (Player 1)
+            room.ChangePhase(player2Id, isManual: true); // Attack → Defense (switches to Player 1)
 
-            // ASSERT: De retour au Player 1
+            // ASSERT: Back to Player 1 (defense phase)
             string backToPlayer1 = room.GetPhaseInfo();
             Assert.Contains("Joueur 1", backToPlayer1);
-            Assert.Contains("Draw", backToPlayer1);
+            Assert.Contains("Defense", backToPlayer1);
         }
 
         #endregion
@@ -164,16 +173,16 @@ namespace game.Tests
         /// Les autres joueurs doivent être refusés.
         /// </summary>
         [Fact]
-        public async Task ChangePhase_WrongPlayer_ReturnsFalse()
+        public async Task ChangePhase_WrongPlayer_ReturnsWrongPlayer()
         {
             // ARRANGE: C'est le tour du Player 1 (début de partie)
             var (room, player1Id, player2Id) = await CreateConfiguredRoom();
 
             // ACT: Player 2 essaie de changer la phase (pas son tour)
-            bool result = room.ChangePhase(player2Id, isManual: true);
+            var result = room.ChangePhase(player2Id, isManual: true);
 
-            // ASSERT: Doit être refusé
-            Assert.False(result);
+            // ASSERT: Doit être refusé avec WRONGPLAYER
+            Assert.Equal(ChangePhaseResult.WRONGPLAYER, result);
 
             // Vérifier que la phase n'a pas changé
             string phaseInfo = room.GetPhaseInfo();
@@ -185,17 +194,17 @@ namespace game.Tests
         /// TEST: Validation avec un joueur inexistant.
         /// </summary>
         [Fact]
-        public async Task ChangePhase_NonExistentPlayer_ReturnsFalse()
+        public async Task ChangePhase_NonExistentPlayer_ReturnsWrongPlayer()
         {
             // ARRANGE
             var (room, player1Id, player2Id) = await CreateConfiguredRoom();
             Guid fakePlayerId = Guid.NewGuid(); // Joueur qui n'existe pas dans la room
 
             // ACT
-            bool result = room.ChangePhase(fakePlayerId, isManual: true);
+            var result = room.ChangePhase(fakePlayerId, isManual: true);
 
             // ASSERT
-            Assert.False(result);
+            Assert.Equal(ChangePhaseResult.WRONGPLAYER, result);
         }
 
         #endregion
@@ -207,7 +216,7 @@ namespace game.Tests
         /// Les appels automatiques (serveur) doivent être refusés.
         /// </summary>
         [Fact]
-        public async Task ChangePhase_PlacementPhaseAutomatic_ReturnsFalse()
+        public async Task ChangePhase_PlacementPhaseAutomatic_ReturnsFailedManualRequired()
         {
             // ARRANGE: Aller jusqu'à la phase Placement
             var (room, player1Id, player2Id) = await CreateConfiguredRoom();
@@ -217,19 +226,19 @@ namespace game.Tests
             Assert.Contains("Placement", room.GetPhaseInfo());
 
             // ACT: Essayer de changer automatiquement (serveur)
-            bool automaticResult = room.ChangePhase(player1Id, isManual: false);
+            var automaticResult = room.ChangePhase(player1Id, isManual: false);
 
-            // ASSERT: Doit être refusé
-            Assert.False(automaticResult);
+            // ASSERT: Doit être refusé avec FAILEDMANUALREQUIRED
+            Assert.Equal(ChangePhaseResult.FAILEDMANUALREQUIRED, automaticResult);
 
             // Vérifier qu'on est toujours en Placement
             Assert.Contains("Placement", room.GetPhaseInfo());
 
             // ACT: Changer manuellement (joueur)
-            bool manualResult = room.ChangePhase(player1Id, isManual: true);
+            var manualResult = room.ChangePhase(player1Id, isManual: true);
 
             // ASSERT: Doit fonctionner
-            Assert.True(manualResult);
+            Assert.Equal(ChangePhaseResult.SUCCESS, manualResult);
             Assert.Contains("Attack", room.GetPhaseInfo());
         }
 
@@ -244,20 +253,23 @@ namespace game.Tests
             room.ChangePhase(player1Id, isManual: true); // Draw → Placement
             room.ChangePhase(player1Id, isManual: true); // Placement → Attack
 
-            // ACT & ASSERT: Attack phase - changement automatique
-            bool attackResult = room.ChangePhase(player1Id, isManual: false);
-            Assert.True(attackResult);
+            // ACT & ASSERT: Attack phase - changement automatique (switches to player 2)
+            var attackResult = room.ChangePhase(player1Id, isManual: false);
+            Assert.Equal(ChangePhaseResult.SUCCESS, attackResult);
             Assert.Contains("Defense", room.GetPhaseInfo());
+            Assert.Contains("Joueur 2", room.GetPhaseInfo()); // Player switched
 
-            // ACT & ASSERT: Defense phase - changement automatique  
-            bool defenseResult = room.ChangePhase(player1Id, isManual: false);
-            Assert.True(defenseResult);
+            // ACT & ASSERT: Defense phase - changement automatique (player 2 now)
+            var defenseResult = room.ChangePhase(player2Id, isManual: false);
+            Assert.Equal(ChangePhaseResult.SUCCESS, defenseResult);
             Assert.Contains("EndTurn", room.GetPhaseInfo());
+            Assert.Contains("Joueur 2", room.GetPhaseInfo());
 
-            // ACT & ASSERT: EndTurn phase - changement automatique
-            bool endTurnResult = room.ChangePhase(player1Id, isManual: false);
-            Assert.True(endTurnResult);
-            Assert.Contains("Joueur 2", room.GetPhaseInfo()); // Switch to player 2
+            // ACT & ASSERT: EndTurn phase - changement automatique (restarts for player 2)
+            var endTurnResult = room.ChangePhase(player2Id, isManual: false);
+            Assert.Equal(ChangePhaseResult.PHASECOMPLETED, endTurnResult);
+            Assert.Contains("Draw", room.GetPhaseInfo());
+            Assert.Contains("Joueur 2", room.GetPhaseInfo()); // Same player, new round
         }
 
         #endregion
@@ -333,17 +345,18 @@ namespace game.Tests
             var (room, player1Id, player2Id) = await CreateConfiguredRoom();
 
             // ACT: Plusieurs appels consécutifs
-            bool result1 = room.ChangePhase(player1Id, isManual: true); // Draw → Placement
-            bool result2 = room.ChangePhase(player1Id, isManual: true); // Placement → Attack
-            bool result3 = room.ChangePhase(player1Id, isManual: true); // Attack → Defense
+            var result1 = room.ChangePhase(player1Id, isManual: true); // Draw → Placement
+            var result2 = room.ChangePhase(player1Id, isManual: true); // Placement → Attack
+            var result3 = room.ChangePhase(player1Id, isManual: true); // Attack → Defense (switches to player 2)
 
             // ASSERT: Tous doivent fonctionner
-            Assert.True(result1);
-            Assert.True(result2);
-            Assert.True(result3);
+            Assert.Equal(ChangePhaseResult.SUCCESS, result1);
+            Assert.Equal(ChangePhaseResult.SUCCESS, result2);
+            Assert.Equal(ChangePhaseResult.SUCCESS, result3);
 
-            // Vérifier l'état final
+            // Vérifier l'état final (now player 2 in defense phase)
             Assert.Contains("Defense", room.GetPhaseInfo());
+            Assert.Contains("Joueur 2", room.GetPhaseInfo());
         }
 
         /// <summary>
@@ -356,25 +369,29 @@ namespace game.Tests
             // ARRANGE
             var (room, player1Id, player2Id) = await CreateConfiguredRoom();
 
-            // ACT: Premier tour complet (Player 1)
+            // ACT: Player 1's phases until attack (switches to player 2)
             room.ChangePhase(player1Id, isManual: true); // Draw → Placement
             room.ChangePhase(player1Id, isManual: true); // Placement → Attack
-            room.ChangePhase(player1Id, isManual: true); // Attack → Defense
-            room.ChangePhase(player1Id, isManual: true); // Defense → EndTurn
-            room.ChangePhase(player1Id, isManual: true); // EndTurn → Draw (Player 2)
+            room.ChangePhase(player1Id, isManual: true); // Attack → Defense (switch to Player 2)
 
-            // Deuxième tour complet (Player 2)
+            // Player 2 continues from defense
+            room.ChangePhase(player2Id, isManual: true); // Defense → EndTurn
+            room.ChangePhase(player2Id, isManual: true); // EndTurn → Draw (Player 2's new round)
+
+            // Player 2's full turn
             room.ChangePhase(player2Id, isManual: true); // Draw → Placement
             room.ChangePhase(player2Id, isManual: true); // Placement → Attack
-            room.ChangePhase(player2Id, isManual: true); // Attack → Defense
-            room.ChangePhase(player2Id, isManual: true); // Defense → EndTurn
-            room.ChangePhase(player2Id, isManual: true); // EndTurn → Draw (Player 1)
+            room.ChangePhase(player2Id, isManual: true); // Attack → Defense (switch to Player 1)
 
-            // Troisième tour (Player 1 de nouveau)
-            bool result = room.ChangePhase(player1Id, isManual: true); // Draw → Placement
+            // Player 1 continues from defense
+            room.ChangePhase(player1Id, isManual: true); // Defense → EndTurn
+            room.ChangePhase(player1Id, isManual: true); // EndTurn → Draw (Player 1's new round)
+
+            // Player 1's new turn
+            var result = room.ChangePhase(player1Id, isManual: true); // Draw → Placement
 
             // ASSERT: Le système doit toujours fonctionner correctement
-            Assert.True(result);
+            Assert.Equal(ChangePhaseResult.SUCCESS, result);
             string finalInfo = room.GetPhaseInfo();
             Assert.Contains("Joueur 1", finalInfo);
             Assert.Contains("Placement", finalInfo);
@@ -391,29 +408,35 @@ namespace game.Tests
 
             // ACT & ASSERT: Vérifier l'ordre exact des phases
 
-            // Phase initiale: Draw
+            // Phase initiale: Draw (Player 1)
             Assert.Contains("Draw", room.GetPhaseInfo());
+            Assert.Contains("Joueur 1", room.GetPhaseInfo());
 
-            // Draw → Placement
+            // Draw → Placement (Player 1)
             room.ChangePhase(player1Id, isManual: true);
             Assert.Contains("Placement", room.GetPhaseInfo());
+            Assert.Contains("Joueur 1", room.GetPhaseInfo());
 
-            // Placement → Attack
+            // Placement → Attack (Player 1)
             room.ChangePhase(player1Id, isManual: true);
             Assert.Contains("Attack", room.GetPhaseInfo());
+            Assert.Contains("Joueur 1", room.GetPhaseInfo());
 
-            // Attack → Defense
+            // Attack → Defense (switches to Player 2)
             room.ChangePhase(player1Id, isManual: true);
             Assert.Contains("Defense", room.GetPhaseInfo());
+            Assert.Contains("Joueur 2", room.GetPhaseInfo()); // Player switched
 
-            // Defense → EndTurn
-            room.ChangePhase(player1Id, isManual: true);
+            // Defense → EndTurn (Player 2)
+            room.ChangePhase(player2Id, isManual: true);
             Assert.Contains("EndTurn", room.GetPhaseInfo());
-
-            // EndTurn → Draw (next player)
-            room.ChangePhase(player1Id, isManual: true);
-            Assert.Contains("Draw", room.GetPhaseInfo());
             Assert.Contains("Joueur 2", room.GetPhaseInfo());
+
+            // EndTurn → Draw (same player, new round)
+            var result = room.ChangePhase(player2Id, isManual: true);
+            Assert.Equal(ChangePhaseResult.PHASECOMPLETED, result);
+            Assert.Contains("Draw", room.GetPhaseInfo());
+            Assert.Contains("Joueur 2", room.GetPhaseInfo()); // Still Player 2
         }
 
         #endregion

@@ -23,6 +23,8 @@
 // les decks depuis la base de données et configurer les champions.
 // =============================================
 
+using System.Timers;
+
 namespace VortexTCG.Game.Object
 {
     /// <summary>
@@ -34,27 +36,47 @@ namespace VortexTCG.Game.Object
     /// Draw → Placement → Attack → Defense → EndTurn (puis tour du joueur suivant)
     /// 
     /// RÈGLES SPÉCIALES:
-    /// - Draw: Le serveur change automatiquement si aucune action possible
-    /// - Placement: Le joueur DOIT appeler changePhase() manuellement
-    /// - Attack/Defense: Le serveur change automatiquement si aucune action possible
-    /// - EndTurn: Timeout de 1 minute, puis changement automatique
+    /// - Draw: Changement automatique après 2.5 secondes
+    /// - Placement: 30 secondes de timeout, changement manuel ou automatique
+    /// - Attack: 30 secondes de timeout, changement manuel ou automatique
+    /// - Defense: Changement automatique après 2.5 secondes
+    /// - EndTurn: Changement automatique après 2.5 secondes
     /// </remarks>
     public enum GamePhase
     {
         /// <summary>Phase de pioche - Le joueur pioche une ou plusieurs cartes</summary>
-        DrawCard = 0,
+        DRAWCARD = 0,
 
         /// <summary>Phase de placement - Le joueur peut placer des cartes sur le board</summary>
-        PlayCard = 1,
+        PLAYCARD = 1,
 
         /// <summary>Phase d'attaque - Le joueur peut attaquer avec ses cartes</summary>
-        AttackWithCard = 2,
+        ATTACKWITHCARD = 2,
 
         /// <summary>Phase de défense - Le joueur adverse peut défendre</summary>
-        DefenseWithCard = 3,
+        DEFENSEWITHCARD = 3,
 
         /// <summary>Phase de fin de tour - Transition vers le joueur suivant</summary>
-        EndTurn = 4
+        ENDTURN = 4
+    }
+
+    /// <summary>
+    /// Résultats possibles lors d'une tentative de changement de phase.
+    /// </summary>
+    /// <remark>
+    /// UTILISATION:
+    /// - Indique si le changement de phase a réussi ou pourquoi il a échoué
+    /// </remark>
+    public enum ChangePhaseResult
+    {
+        /// <summary>Changement de phase réussi</summary>
+        SUCCESS,
+        /// <summary> Mauvais joueur - Ce n'est pas le tour de ce joueur </summary>
+        WRONGPLAYER,
+        /// <summary> Changement manuel non autorisé pour cette phase </summary>
+        FAILEDMANUALREQUIRED,
+        /// <summary> Phase changée automatiquement par le serveur </summary>
+        PHASECOMPLETED
     }
 
     /// <summary>
@@ -217,7 +239,7 @@ namespace VortexTCG.Game.Object
         /// Phase actuelle du jeu selon l'énumération GamePhase.
         /// Détermine quelles actions le joueur actuel peut effectuer.
         /// </summary>
-        private GamePhase _currentPhase = GamePhase.DrawCard;
+        private GamePhase _currentPhase = GamePhase.DRAWCARD;
 
         /// <summary>
         /// Timestamp du début de la phase actuelle (UTC).
@@ -241,65 +263,77 @@ namespace VortexTCG.Game.Object
         /// <returns>true si le changement a réussi, false si refusé (mauvais joueur, phase incorrecte, etc.)</returns>
         /// <remarks>
         /// RÈGLES DE TRANSITION:
-        /// - Draw → Placement: Toujours automatique
-        /// - Placement → Attack: SEULEMENT manuel (le joueur doit appeler)
-        /// - Attack → Defense: Automatique ou manuel
-        /// - Defense → EndTurn: Automatique ou manuel
-        /// - EndTurn → Draw (joueur suivant): Automatique ou timeout
+        /// - Draw → Placement: Automatique après 2.5 secondes
+        /// - Placement → Attack: Manuel ou automatique après 30 secondes
+        /// - Attack → Defense: Manuel ou automatique après 30 secondes
+        /// - Defense → EndTurn: Automatique après 2.5 secondes
+        /// - EndTurn → Draw (joueur suivant): Automatique après 2.5 secondes
+        /// 
+        /// TIMEOUTS:
+        /// - PLAYCARD: 30 secondes
+        /// - ATTACKWITHCARD: 30 secondes
+        /// - Autres phases (auto): 2.5 secondes
         /// 
         /// VALIDATION:
         /// - Vérifie que c'est le tour du bon joueur
-        /// - Respecte les contraintes manuelles/automatiques
+        /// - Respecte les contraintes de timeout pour PLAYCARD et ATTACKWITHCARD
         /// - Réinitialise le timer à chaque changement
         /// </remarks>
-        public bool ChangePhase(Guid userId, bool isManual = true)
+        public ChangePhaseResult ChangePhase(Guid userId, bool isManual = true)
         {
             // Étape 1: Vérifier que c'est le tour du bon joueur
             if (!IsCurrentPlayer(userId))
             {
-                return false; // Ce n'est pas le tour de ce joueur
+                return ChangePhaseResult.WRONGPLAYER; // Ce n'est pas le tour de ce joueur
             }
 
             // Étape 2: Gérer le changement selon la phase actuelle
             switch (_currentPhase)
             {
-                case GamePhase.DrawCard:
+                case GamePhase.DRAWCARD:
                     // Phase de pioche: Transition automatique vers Placement
-                    _currentPhase = GamePhase.PlayCard;
+                    _currentPhase = GamePhase.PLAYCARD;
                     _waitingForManualPhaseChange = true; // La phase placement nécessite un appel manuel
                     break;
 
-                case GamePhase.PlayCard:
-                    // Phase de placement: SEULEMENT changement manuel autorisé
-                    if (!isManual)
+                case GamePhase.PLAYCARD:
+                    // Phase de placement: Manuel ou automatique après 30 secondes
+                    if (!isManual && !IsPhaseExpired())
                     {
-                        return false; // Le serveur ne peut pas changer cette phase automatiquement
+                        return ChangePhaseResult.FAILEDMANUALREQUIRED; // Le serveur ne peut changer qu'après timeout
                     }
-                    _currentPhase = GamePhase.AttackWithCard;
-                    _waitingForManualPhaseChange = false; // Les phases suivantes peuvent être automatiques
-                    break;
-
-                case GamePhase.AttackWithCard:
-                    // Phase d'attaque: Transition vers défense
-                    _currentPhase = GamePhase.DefenseWithCard;
-                    break;
-
-                case GamePhase.DefenseWithCard:
-                    // Phase de défense: Transition vers fin de tour
-                    _currentPhase = GamePhase.EndTurn;
-                    break;
-
-                case GamePhase.EndTurn:
-                    // Fin de tour: Passer au joueur suivant et recommencer le cycle
-                    _currentPlayer = (_currentPlayer == 1) ? 2 : 1; // Alterner entre joueur 1 et 2
-                    _currentPhase = GamePhase.DrawCard; // Recommencer le cycle des phases
+                    _currentPhase = GamePhase.ATTACKWITHCARD;
                     _waitingForManualPhaseChange = false;
                     break;
+
+                case GamePhase.ATTACKWITHCARD:
+                    // Phase d'attaque: Manuel ou automatique après 30 secondes
+                    if (!isManual && !IsPhaseExpired())
+                    {
+                        return ChangePhaseResult.FAILEDMANUALREQUIRED; // Le serveur ne peut changer qu'après timeout
+                    }
+                    // Passer au joueur suivant et transition vers défense
+                    _currentPlayer = (_currentPlayer == 1) ? 2 : 1; // Alterner entre joueur 1 et 2
+                    _currentPhase = GamePhase.DEFENSEWITHCARD;
+                    break;
+
+                case GamePhase.DEFENSEWITHCARD:
+                    // Phase de défense: Transition vers fin de tour
+                    _currentPhase = GamePhase.ENDTURN;
+                    break;
+
+                case GamePhase.ENDTURN:
+                    // Fin de tour: Recommencer un nouveau cycle de phases pour le joueur actuel
+                    _currentPhase = GamePhase.DRAWCARD; // Recommencer le cycle des phases
+                    _waitingForManualPhaseChange = false;
+                    // Réinitialiser le timer pour la nouvelle phase
+                    _phaseStartTime = DateTime.UtcNow;
+                    return ChangePhaseResult.PHASECOMPLETED; // Round de phases complété avec succès
             }
 
             // Étape 3: Réinitialiser le timer pour la nouvelle phase
             _phaseStartTime = DateTime.UtcNow;
-            return true; // Changement réussi
+            return ChangePhaseResult.SUCCESS; // Changement réussi
         }
 
         /// <summary>
@@ -320,19 +354,28 @@ namespace VortexTCG.Game.Object
         }
 
         /// <summary>
-        /// Vérifie si la phase actuelle a dépassé le timeout de 1 minute.
+        /// Vérifie si la phase actuelle a dépassé son timeout.
         /// </summary>
         /// <returns>true si la phase a expiré, false sinon</returns>
         /// <remarks>
         /// UTILISATION:
         /// - Appelé périodiquement par le serveur
-        /// - Si true, le serveur peut forcer un changement de phase
-        /// - Sauf pour la phase de placement qui nécessite toujours un appel manuel
+        /// - PLAYCARD: 30 secondes
+        /// - ATTACKWITHCARD: 30 secondes
+        /// - Autres phases (auto): 2.5 secondes
         /// </remarks>
         public bool IsPhaseExpired()
         {
             TimeSpan elapsed = DateTime.UtcNow - _phaseStartTime;
-            return elapsed.TotalMinutes >= 1.0; // Timeout de 1 minute
+            
+            // PLAYCARD et ATTACKWITHCARD ont 30 secondes
+            if (_currentPhase == GamePhase.PLAYCARD || _currentPhase == GamePhase.ATTACKWITHCARD)
+            {
+                return elapsed.TotalSeconds >= 30.0;
+            }
+            
+            // Autres phases automatiques: 2.5 secondes
+            return elapsed.TotalSeconds >= 2.5;
         }
 
         /// <summary>
@@ -341,18 +384,15 @@ namespace VortexTCG.Game.Object
         /// <returns>true si changement automatique autorisé, false si appel manuel requis</returns>
         /// <remarks>
         /// RÈGLES:
-        /// - Placement: Toujours false (appel manuel obligatoire)
-        /// - Autres phases: true si aucune action possible OU timeout atteint
+        /// - PLAYCARD: Changement automatique après 30 secondes
+        /// - ATTACKWITHCARD: Changement automatique après 30 secondes
+        /// - Autres phases: Changement automatique après 2.5 secondes
         /// </remarks>
         public bool CanServerChangePhase()
         {
-            // La phase de placement nécessite toujours un appel manuel
-            if (_currentPhase == GamePhase.PlayCard)
-            {
-                return false;
-            }
-
-            // Pour les autres phases: autoriser si timeout atteint
+            // Autoriser le changement automatique si le timeout est atteint
+            // PLAYCARD et ATTACKWITHCARD: 30 secondes chacune
+            // Autres phases: pas de timeout (retourne false)
             return IsPhaseExpired();
         }
 

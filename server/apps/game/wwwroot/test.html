@@ -48,6 +48,26 @@
     <div id="log"></div>
     <input id="msg" placeholder="Message" />
     <button id="send">Envoyer</button>
+    
+    <hr/>
+    <h3>Test ChangePhase</h3>
+    <div style="background:#f0f0f0;padding:10px;border-radius:6px;margin:8px 0">
+        <div><strong>Joueur actuel:</strong> <span id="currentPlayer">-</span></div>
+        <div><strong>Phase:</strong> <span id="currentPhase">-</span></div>
+        <div><strong>Temps écoulé:</strong> <span id="timeElapsed">-</span> / <span id="maxTime">-</span></div>
+        <div><strong>Type:</strong> <span id="phaseType">-</span></div>
+        <div style="margin-top:8px;padding:8px;background:white;border-radius:4px;font-size:12px">
+            <strong>📘 Légende:</strong><br/>
+            🔵 <strong>DRAWCARD</strong>: Auto - 2.5s<br/>
+            🟫 <strong>PLAYCARD</strong>: 30s - Manuel ou auto après timeout<br/>
+            ⚔️ <strong>ATTACKWITHCARD</strong>: 30s - Manuel ou auto après timeout<br/>
+            🛱️ <strong>DEFENSEWITHCARD</strong>: Auto - 2.5s<br/>
+            ⏹️ <strong>ENDTURN</strong>: Auto - 2.5s
+        </div>
+    </div>
+    <button id="testChangePhase">Changer de phase manuellement</button>
+    <button id="getPhaseInfo">🔄 Rafraîchir Info</button>
+    <label><input type="checkbox" id="autoRefresh" /> Rafraîchissement auto (2s)</label>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8/dist/browser/signalr.min.js"></script>
 <script>
@@ -74,12 +94,97 @@
     const codeInput = document.getElementById('roomCode');
     const msgInput  = document.getElementById('msg');
     const btnSend   = document.getElementById('send');
+    const btnTestChangePhase = document.getElementById('testChangePhase');
+    const btnGetPhaseInfo = document.getElementById('getPhaseInfo');
+    const autoRefreshCheckbox = document.getElementById('autoRefresh');
 
     let connection, currentKey = null, mode = null; // mode: 'queue' | 'code'
+    let autoRefreshInterval = null;
 
     let jwtToken = "";
 
     function append(t){ const p=document.createElement('div'); p.textContent=t; log.appendChild(p); log.scrollTop=log.scrollHeight; }
+
+    function parseAndDisplayPhaseInfo(phaseInfo) {
+        // Parse: "Joueur 1, Phase: DRAWCARD, Temps écoulé: 5.2s, Manuel requis: False"
+        const playerMatch = phaseInfo.match(/Joueur (\d+)/);
+        const phaseMatch = phaseInfo.match(/Phase: (\w+)/);
+        const timeMatch = phaseInfo.match(/Temps écoulé: ([\d.]+)s/);
+
+        if (playerMatch) {
+            document.getElementById('currentPlayer').textContent = 'Joueur ' + playerMatch[1];
+        }
+        
+        if (phaseMatch) {
+            const phase = phaseMatch[1];
+            document.getElementById('currentPhase').textContent = phase;
+            
+            const phaseTypeSpan = document.getElementById('phaseType');
+            const maxTimeSpan = document.getElementById('maxTime');
+            const testButton = document.getElementById('testChangePhase');
+            
+            // Configuration selon la phase
+            if (phase === 'DRAWCARD') {
+                phaseTypeSpan.textContent = '🔵 Automatique';
+                phaseTypeSpan.style.color = 'blue';
+                maxTimeSpan.textContent = '2.5s';
+                testButton.disabled = true;
+                testButton.style.opacity = '0.5';
+            } else if (phase === 'PLAYCARD') {
+                phaseTypeSpan.textContent = '🟫 Manuel (30s max)';
+                phaseTypeSpan.style.color = 'orange';
+                maxTimeSpan.textContent = '30s';
+                testButton.disabled = false;
+                testButton.style.opacity = '1';
+            } else if (phase === 'ATTACKWITHCARD') {
+                phaseTypeSpan.textContent = '⚔️ Manuel (30s max)';
+                phaseTypeSpan.style.color = 'red';
+                maxTimeSpan.textContent = '30s';
+                testButton.disabled = false;
+                testButton.style.opacity = '1';
+            } else if (phase === 'DEFENSEWITHCARD') {
+                phaseTypeSpan.textContent = '🛱️ Automatique';
+                phaseTypeSpan.style.color = 'green';
+                maxTimeSpan.textContent = '2.5s';
+                testButton.disabled = true;
+                testButton.style.opacity = '0.5';
+            } else if (phase === 'ENDTURN') {
+                phaseTypeSpan.textContent = '⏹️ Automatique';
+                phaseTypeSpan.style.color = 'purple';
+                maxTimeSpan.textContent = '2.5s';
+                testButton.disabled = true;
+                testButton.style.opacity = '0.5';
+            }
+        }
+        
+        if (timeMatch) {
+            const timeSpan = document.getElementById('timeElapsed');
+            const seconds = parseFloat(timeMatch[1]);
+            timeSpan.textContent = seconds.toFixed(1) + 's';
+            
+            const phase = phaseMatch ? phaseMatch[1] : '';
+            
+            // Alertes pour phases manuelles (30s)
+            if ((phase === 'PLAYCARD' || phase === 'ATTACKWITHCARD') && seconds > 25) {
+                timeSpan.style.color = 'red';
+                timeSpan.style.fontWeight = 'bold';
+            } else if ((phase === 'PLAYCARD' || phase === 'ATTACKWITHCARD') && seconds > 20) {
+                timeSpan.style.color = 'orange';
+                timeSpan.style.fontWeight = 'bold';
+            }
+            // Alertes pour phases auto (2.5s)
+            else if ((phase === 'DRAWCARD' || phase === 'DEFENSEWITHCARD' || phase === 'ENDTURN') && seconds > 2.0) {
+                timeSpan.style.color = 'red';
+                timeSpan.style.fontWeight = 'bold';
+            } else if ((phase === 'DRAWCARD' || phase === 'DEFENSEWITHCARD' || phase === 'ENDTURN') && seconds > 1.5) {
+                timeSpan.style.color = 'orange';
+                timeSpan.style.fontWeight = 'bold';
+            } else {
+                timeSpan.style.color = 'black';
+                timeSpan.style.fontWeight = 'normal';
+            }
+        }
+    }
 
     btnLogin.onclick = async () => {
         const response = await fetch("http://localhost:4000/api/auth/login", {
@@ -152,6 +257,20 @@
                 append("️ L'adversaire a quitté.");
             });
 
+            connection.on("PhaseChanged", (roomCode, phaseInfo) => {
+                append(`✅ PhaseChanged: ${phaseInfo}`);
+                parseAndDisplayPhaseInfo(phaseInfo);
+            });
+
+            connection.on("PhaseChangeError", (error) => {
+                append(`❌ Erreur phase: ${error}`);
+            });
+
+            connection.on("PhaseInfo", (roomCode, phaseInfo) => {
+                append(`📊 PhaseInfo: ${phaseInfo}`);
+                parseAndDisplayPhaseInfo(phaseInfo);
+            });
+
             await connection.start();
             await connection.invoke("SetName", nameInput.value || "Joueur");
             status.textContent = "Connecté au hub.";
@@ -174,13 +293,15 @@
     btnCreate.onclick = async () => {
         mode = 'code';
         const preferred = (codeInput.value || "").trim() || null;
-        await connection.invoke("CreateRoom", preferred);
+        const deckId = "00000000-0000-0000-0000-000000000001"; // Deck ID de test
+        await connection.invoke("CreateRoom", deckId, preferred);
     };
     btnJoin.onclick = async () => {
         mode = 'code';
         const code = (codeInput.value || "").trim();
         if (!code) return alert("Entre un code.");
-        await connection.invoke("JoinRoom", code);
+        const deckId = "00000000-0000-0000-0000-000000000001"; // Deck ID de test
+        await connection.invoke("JoinRoom", deckId, code);
     };
     btnLeaveCode.onclick = async () => {
         await connection.invoke("LeaveRoomByCode");
@@ -197,6 +318,52 @@
             await connection.invoke("SendRoomMessage", currentKey, t);
         append(`Moi: ${t}`);
         msgInput.value = "";
+    };
+
+    btnTestChangePhase.onclick = async () => {
+        if (!connection || !currentKey) {
+            append("⚠️ Créez une room d'abord!");
+            return;
+        }
+        try {
+            const currentPhase = document.getElementById('currentPhase').textContent;
+            append(`🔄 Changement manuel de phase (${currentPhase})...`);
+            await connection.invoke("ChangePhase", currentKey);
+        } catch (e) {
+            append(`❌ Erreur: ${e.message || e}`);
+        }
+    };
+
+    btnGetPhaseInfo.onclick = async () => {
+        if (!connection || !currentKey) {
+            append("⚠️ Créez une room d'abord!");
+            return;
+        }
+        try {
+            await connection.invoke("GetPhaseInfo", currentKey);
+        } catch (e) {
+            append(`❌ Erreur: ${e.message || e}`);
+        }
+    };
+
+    // Gestion du rafraîchissement automatique
+    autoRefreshCheckbox.onchange = () => {
+        if (autoRefreshCheckbox.checked) {
+            // Démarrer le rafraîchissement automatique toutes les 2 secondes
+            autoRefreshInterval = setInterval(() => {
+                if (connection && currentKey) {
+                    connection.invoke("GetPhaseInfo", currentKey).catch(() => {});
+                }
+            }, 2000);
+            append("✅ Rafraîchissement auto activé (2s)");
+        } else {
+            // Arrêter le rafraîchissement automatique
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+            append("❌ Rafraîchissement auto désactivé");
+        }
     };
 </script>
 </body>

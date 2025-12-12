@@ -475,19 +475,15 @@ public class RoomService
         // Étape 2: Obtenir la room et vérifier qu'elle existe
         if (!_rooms.TryGetValue(code, out var room)) return false;
 
-        // Étape 3: Vérifier que la partie est initialisée
-        VortexTCG.Game.Object.Room? gameRoom;
+        // Étape 3 & 4: Vérifier et exécuter le changement de phase dans le lock
         lock (room)
         {
             if (!room.IsGameInitialized) return false;
-            gameRoom = room.GameRoom;
+            if (room.GameRoom is null) return false;
+
+            // Thread-safety: Toutes les actions sur gameRoom sont dans le lock
+            return room.GameRoom.ChangePhase(userId, isManual) == ChangePhaseResult.SUCCESS;
         }
-
-        // Étape 4: Déléguer à l'objet Room pour la logique métier
-        if (gameRoom is null) return false;
-
-        // Thread-safety: La Room elle-même gère ses propres locks si nécessaire
-        return gameRoom.ChangePhase(userId, isManual);
     }
 
     /// <summary>
@@ -504,18 +500,15 @@ public class RoomService
         if (!_rooms.TryGetValue(code, out var room)) 
             return "Erreur: Salon non trouvé";
 
-        VortexTCG.Game.Object.Room? gameRoom;
         lock (room)
         {
             if (!room.IsGameInitialized) 
                 return "Erreur: Partie pas encore initialisée";
-            gameRoom = room.GameRoom;
+            if (room.GameRoom is null) 
+                return "Erreur: État de jeu non disponible";
+
+            return room.GameRoom.GetPhaseInfo();
         }
-
-        if (gameRoom is null) 
-            return "Erreur: État de jeu non disponible";
-
-        return gameRoom.GetPhaseInfo();
     }
 
     /// <summary>
@@ -528,14 +521,11 @@ public class RoomService
     {
         if (!_rooms.TryGetValue(code, out var room)) return false;
 
-        VortexTCG.Game.Object.Room? gameRoom;
         lock (room)
         {
             if (!room.IsGameInitialized) return false;
-            gameRoom = room.GameRoom;
+            return room.GameRoom?.CanServerChangePhase() ?? false;
         }
-
-        return gameRoom?.CanServerChangePhase() ?? false;
     }
 
     /// <summary>
@@ -551,24 +541,21 @@ public class RoomService
     {
         if (!_rooms.TryGetValue(code, out var room)) return false;
 
-        VortexTCG.Game.Object.Room? gameRoom;
-        Guid? currentPlayerId;
-        
         lock (room)
         {
             if (!room.IsGameInitialized) return false;
-            gameRoom = room.GameRoom;
+            if (room.GameRoom is null) return false;
             
             // Pour forcer un changement, on a besoin de l'ID du joueur actuel
             // On utilise le premier joueur par défaut (la Room validera si c'est correct)
             var members = room.Members.ToList();
-            currentPlayerId = members.Count > 0 ? members[0] : null;
+            Guid? currentPlayerId = members.Count > 0 ? members[0] : null;
+            
+            if (currentPlayerId is null) return false;
+
+            // Appeler avec isManual = false pour indiquer que c'est automatique
+            return room.GameRoom.ChangePhase(currentPlayerId.Value, isManual: false) == ChangePhaseResult.FAILEDMANUALREQUIRED ? false : true;
         }
-
-        if (gameRoom is null || currentPlayerId is null) return false;
-
-        // Appeler avec isManual = false pour indiquer que c'est automatique
-        return gameRoom.ChangePhase(currentPlayerId.Value, isManual: false);
     }
 
     #endregion
