@@ -36,7 +36,7 @@ namespace game.Services;
 public class RoomService
 {
     #region Structures internes
-    
+
     /// <summary>
     /// Représente un salon de jeu avec ses métadonnées.
     /// Contient à la fois les informations de connexion (Members) et l'état de jeu (GameRoom).
@@ -45,30 +45,30 @@ public class RoomService
     {
         /// <summary>Ensemble des UserId des joueurs dans le salon (max 2) - RÉSISTE aux reconnexions</summary>
         public HashSet<Guid> Members { get; } = new();
-        
+
         /// <summary>Instance du RoomObject contenant l'état complet de la partie (decks, mains, boards, etc.)</summary>
         public VortexTCG.Game.Object.Room? GameRoom { get; set; }
-        
+
         /// <summary>ID du deck sélectionné par le joueur 1</summary>
         public Guid? User1DeckId { get; set; }
-        
+
         /// <summary>ID du deck sélectionné par le joueur 2</summary>
         public Guid? User2DeckId { get; set; }
-        
+
         /// <summary>Indique si la partie a été initialisée (RoomObject créé et configuré)</summary>
         public bool IsGameInitialized { get; set; }
     }
-    
+
     #endregion
 
     #region Champs privés
-    
+
     /// <summary>Dictionnaire thread-safe: code du salon (ex: "F9K7ZQ") -> Room</summary>
     private readonly ConcurrentDictionary<string, Room> _rooms = new();
-    
+
     /// <summary>Dictionnaire thread-safe: UserId -> code du salon</summary>
     private readonly ConcurrentDictionary<Guid, string> _userToRoom = new();
-    
+
     /// <summary>Dictionnaire thread-safe: UserId -> pseudo du joueur</summary>
     private readonly ConcurrentDictionary<Guid, string> _names = new();
 
@@ -77,10 +77,10 @@ public class RoomService
     /// Exclut: I, O (confusion avec 1, 0), voyelles pour éviter les mots offensants.
     /// </summary>
     private static readonly char[] Alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".ToCharArray();
-    
+
     /// <summary>Générateur de nombres aléatoires cryptographiquement sécurisé</summary>
     private readonly RandomNumberGenerator _rng = RandomNumberGenerator.Create();
-    
+
     #endregion
 
     #region Gestion des pseudos
@@ -200,11 +200,11 @@ public class RoomService
                 isFull = true;
                 return false;
             }
-            
+
             // Ajouter le joueur et enregistrer le mapping
             room.Members.Add(userId);
             _userToRoom[userId] = code;
-            
+
             // Récupérer l'adversaire (le seul autre membre)
             opponentId = room.Members.FirstOrDefault(id => id != userId);
             return true;
@@ -266,7 +266,7 @@ public class RoomService
                 room.Members.Remove(userId);
                 opponentId = room.Members.FirstOrDefault();
                 roomEmpty = room.Members.Count == 0;
-                
+
                 // Supprimer le salon s'il est vide (libération mémoire + rend le code disponible)
                 if (roomEmpty) _rooms.TryRemove(c, out _);
             }
@@ -345,8 +345,18 @@ public class RoomService
 
             // Vérifier si on peut initialiser la partie
             // Les userId sont déjà dans Members, on a juste besoin des decks
-            if (members.Count == 2 && 
-                room.User1DeckId.HasValue && room.User2DeckId.HasValue && 
+            if (members.Count == 1 && room.User1DeckId.HasValue && !room.IsGameInitialized)
+            {
+                // Préparer l'initialisation: copier les valeurs nécessaires
+                needsInitialization = true;
+                user1Id = members[0]; // Créateur
+                deck1Id = room.User1DeckId.Value;
+
+                // Créer l'instance RoomObject (vide pour l'instant)
+                room.GameRoom = new VortexTCG.Game.Object.Room();
+            }
+            else if (members.Count == 2 &&
+                room.User1DeckId.HasValue && room.User2DeckId.HasValue &&
                 !room.IsGameInitialized)
             {
                 // Préparer l'initialisation: copier les valeurs nécessaires
@@ -355,7 +365,7 @@ public class RoomService
                 user2Id = members[1]; // Rejoint
                 deck1Id = room.User1DeckId.Value;
                 deck2Id = room.User2DeckId.Value;
-                
+
                 // Créer l'instance RoomObject (vide pour l'instant)
                 room.GameRoom = new VortexTCG.Game.Object.Room();
             }
@@ -365,9 +375,12 @@ public class RoomService
         if (needsInitialization && room.GameRoom != null)
         {
             // Ces appels initialisent les decks, champions, mains, boards, etc.
-            await room.GameRoom.setUser1(user1Id!.Value, deck1Id!.Value);
-            await room.GameRoom.setUser2(user2Id!.Value, deck2Id!.Value);
-            
+            if (user1Id.HasValue && deck1Id.HasValue)
+                await room.GameRoom.setUser1(user1Id.Value, deck1Id.Value);
+
+            if (user2Id.HasValue && deck2Id.HasValue)
+                await room.GameRoom.setUser2(user2Id.Value, deck2Id.Value);
+
             // Marquer comme initialisé (lock court)
             lock (room)
             {
@@ -433,18 +446,36 @@ public class RoomService
     public (Guid? user1Id, Guid? user2Id, Guid? deck1Id, Guid? deck2Id) GetRoomPlayers(string code)
     {
         code = code.Trim().ToUpperInvariant();
-        if (!_rooms.TryGetValue(code, out var room)) 
+        if (!_rooms.TryGetValue(code, out var room))
             return (null, null, null, null);
-        
+
         lock (room)
         {
             var members = room.Members.ToList();
             if (members.Count == 0) return (null, null, null, null);
-            
+
             Guid? user1 = members.Count > 0 ? members[0] : null;
             Guid? user2 = members.Count > 1 ? members[1] : null;
-            
+
             return (user1, user2, room.User1DeckId, room.User2DeckId);
+        }
+    }
+
+    /// <summary>
+    /// Fait piocher des cartes à un joueur de manière thread-safe.
+    /// </summary>
+    /// <param name="userId">ID du joueur</param>
+    /// <param name="amount">Nombre de cartes</param>
+    /// <returns>Résultat de la pioche ou null si erreur</returns>
+    public VortexTCG.Game.DTO.DrawCardsResultDTO? DrawCards(Guid userId, int amount)
+    {
+        if (!_userToRoom.TryGetValue(userId, out string? code)) return null;
+        if (!_rooms.TryGetValue(code, out Room? room)) return null;
+
+        lock (room)
+        {
+            if (room.GameRoom == null) return null;
+            return room.GameRoom.DrawCards(userId, amount);
         }
     }
 

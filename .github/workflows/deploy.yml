@@ -1,0 +1,94 @@
+name: Deploy to EC2
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  EC2_HOST: ${{ secrets.EC2_HOST }}
+  EC2_USER: ${{ secrets.EC2_USER }}
+  EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ${{ env.EC2_USER }}
+          key: ${{ env.EC2_SSH_KEY }}
+          script: |
+            # Create network if it doesn't exist
+            echo "Creating Docker network..."
+            docker network create vortex-network 2>/dev/null || echo "Network already exists"
+
+            # Stop existing containers
+            echo "Stopping existing containers..."
+            docker stop vortex-api vortex-auth vortex-game vortex-migrations 2>/dev/null || true
+            docker rm vortex-api vortex-auth vortex-game vortex-migrations 2>/dev/null || true
+
+            # Pull latest images from Docker Hub
+            echo "Pulling latest images..."
+            docker pull vortextcg/vortex_repository:api-prod
+            docker pull vortextcg/vortex_repository:auth-prod
+            docker pull vortextcg/vortex_repository:game-prod
+            docker pull vortextcg/vortex_repository:migrations-prod
+
+            # Start new containers
+            echo "Starting new containers..."
+
+            # Start database migrations first
+            docker run -d \
+              --name vortex-migrations \
+              --network vortex-network \
+              --restart unless-stopped \
+              vortextcg/vortex_repository:migrations-prod
+
+            # Wait for migrations to complete
+            echo "Waiting for migrations to complete..."
+            sleep 30
+
+            # Start API services
+            docker run -d \
+              --name vortex-api \
+              --network vortex-network \
+              --restart unless-stopped \
+              -p 3000:3000 \
+              vortextcg/vortex_repository:api-prod
+              
+            docker run -d \
+              --name vortex-auth \
+              --network vortex-network \
+              --restart unless-stopped \
+              -p 3001:3000 \
+              vortextcg/vortex_repository:auth-prod
+              
+            docker run -d \
+              --name vortex-game \
+              --network vortex-network \
+              --restart unless-stopped \
+              -p 3002:3000 \
+              vortextcg/vortex_repository:game-prod
+
+            # Clean up old images
+            echo "Cleaning up old images..."
+            docker image prune -f
+
+            echo "Deployment completed!"
+            echo "Running containers:"
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
