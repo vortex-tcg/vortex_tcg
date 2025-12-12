@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using VortexTCG.DataAccess.Models;
+using Microsoft.AspNetCore.Http;
+using VortexTCG.DataAccess.Seeds;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 
 namespace VortexTCG.DataAccess
 {
@@ -17,16 +18,18 @@ namespace VortexTCG.DataAccess
             _httpContextAccessor = httpContextAccessor;
         }
 
+        // 🔹 DbSets
         public DbSet<ActionType> Actions { get; set; }
         public DbSet<Gamelog> Gamelogs { get; set; }
         public DbSet<Game> Games { get; set; }
         public DbSet<User> Users { get; set; }
-        public DbSet<Friend> Friends { get; set;  }
+        public DbSet<Friend> Friends { get; set; }
         public DbSet<Rank> Ranks { get; set; }
         public DbSet<Collection> Collections { get; set; }
         public DbSet<CollectionChampion> CollectionChampions { get; set; }
         public DbSet<Champion> Champions { get; set; }
         public DbSet<Faction> Factions { get; set; }
+        public DbSet<FactionCard> FactionCards { get; set; }
         public DbSet<CollectionCard> CollectionCards { get; set; }
         public DbSet<DeckCard> DeckCards { get; set; }
         public DbSet<Deck> Decks { get; set; }
@@ -40,41 +43,52 @@ namespace VortexTCG.DataAccess
         public DbSet<EffectType> EffectTypes { get; set; }
         public DbSet<Condition> Conditions { get; set; }
         public DbSet<ConditionType> ConditionTypes { get; set; }
-        
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Effect
             modelBuilder.Entity<Effect>()
-                        .HasOne(c => c.StartCondition)
-                        .WithMany(ct => ct.StartEffects)
-                        .HasForeignKey(c => c.StartConditionId);
-            
+                .HasOne(c => c.StartCondition)
+                .WithMany(ct => ct.StartEffects)
+                .HasForeignKey(c => c.StartConditionId);
+
             modelBuilder.Entity<Effect>()
-                        .HasOne(c => c.EndCondition)
-                        .WithMany(ct => ct.EndEffects)
-                        .HasForeignKey(c => c.EndConditionId);
-            
-            // Card
+                .HasOne(c => c.EndCondition)
+                .WithMany(ct => ct.EndEffects)
+                .HasForeignKey(c => c.EndConditionId);
+
+            modelBuilder.Entity<ActionType>()
+                .HasOne(a => a.Parent)
+                .WithMany(a => a.Childs)
+                .HasForeignKey(a => a.ParentId);
+
+            modelBuilder.Entity<Friend>()
+                .HasOne(c => c.FriendUser)
+                .WithMany(ct => ct.OtherFriends)
+                .HasForeignKey(c => c.FriendUserId);
+
+            modelBuilder.Entity<Friend>()
+                .HasOne(c => c.User)
+                .WithMany(ct => ct.Friends)
+                .HasForeignKey(c => c.UserId);
+
+            // 🔹 Enum conversions
             modelBuilder.Entity<Card>()
-                        .Property(p => p.Extension)
-                        .HasConversion<string>()
-                        .HasColumnType("varchar(256)");
+                .Property(p => p.Extension)
+                .HasConversion<string>()
+                .HasColumnType("varchar(256)");
 
             modelBuilder.Entity<Card>()
-                        .Property(p => p.CardType)
-                        .HasConversion<string>()
-                        .HasColumnType("varchar(256)");
+                .Property(p => p.CardType)
+                .HasConversion<string>()
+                .HasColumnType("varchar(256)");
 
-            // CollectionCard
             modelBuilder.Entity<CollectionCard>()
-                        .Property(p => p.Rarity)
-                        .HasConversion<string>()
-                        .HasColumnType("varchar(256)");
+                .Property(p => p.Rarity)
+                .HasConversion<string>()
+                .HasColumnType("varchar(256)");
 
-            // Friend
             modelBuilder.Entity<Friend>()
                         .HasOne(c => c.FriendUser)
                         .WithMany(ct => ct.OtherFriends)
@@ -85,31 +99,28 @@ namespace VortexTCG.DataAccess
                         .WithMany(ct => ct.Friends)
                         .HasForeignKey(c => c.UserId);
 
-            // User
             modelBuilder.Entity<User>()
-                        .Property(p => p.Status)
-                        .HasConversion<string>()
-                        .HasColumnType("varchar(256)");
-            
-            modelBuilder.Entity<User>()
-                        .Property(p => p.Role)
-                        .HasConversion<string>()
-                        .HasColumnType("varchar(256)");
+                .Property(p => p.Status)
+                .HasConversion<string>()
+                .HasColumnType("varchar(256)");
 
-            // Game
+            modelBuilder.Entity<User>()
+                .Property(p => p.Role)
+                .HasConversion<string>()
+                .HasColumnType("varchar(256)");
+
             modelBuilder.Entity<Game>()
-                        .Property(p => p.Status)
-                        .HasConversion<string>()
-                        .HasColumnType("varchar(256)");
+                .Property(p => p.Status)
+                .HasConversion<string>()
+                .HasColumnType("varchar(256)");
 
-            // Action
             modelBuilder.Entity<ActionType>()
                         .HasOne(a => a.Parent)
                         .WithMany(a => a.Childs)
                         .HasForeignKey(a => a.ParentId);
 
-
-            // Configuration des propriétés d'audit pour les entités implémentant AuditableEntity
+            modelBuilder.Entity<FactionCard>()
+                        .ToTable("FactionCard");
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 if (typeof(AuditableEntity).IsAssignableFrom(entityType.ClrType))
@@ -126,10 +137,11 @@ namespace VortexTCG.DataAccess
 
                     modelBuilder.Entity(entityType.ClrType)
                         .Property<string>("UpdatedBy");
-                }   
+                }
             }
         }
 
+        // 🔹 Override SaveChanges pour audit
         public override int SaveChanges()
         {
             SetAuditFields();
@@ -142,6 +154,7 @@ namespace VortexTCG.DataAccess
             return base.SaveChangesAsync(cancellationToken);
         }
 
+        // 🔹 Gestion automatique des champs CreatedAt/UpdatedAt
         private void SetAuditFields()
         {
             var entries = ChangeTracker.Entries<AuditableEntity>();

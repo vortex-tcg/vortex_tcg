@@ -214,6 +214,8 @@ namespace DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Cards");
+
+
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Champion", b =>
