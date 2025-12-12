@@ -22,6 +22,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           script: |
+            cd /var/www/vortex_tcg
+
             git checkout feature/ci-correct-deployment
 
             git pull
