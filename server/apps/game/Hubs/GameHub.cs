@@ -8,6 +8,7 @@
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 using game.Services;
+using VortexTCG.Game.DTO;
 
 namespace game.Hubs;
 
@@ -211,6 +212,23 @@ public class GameHub : Hub
             var from = _rooms.GetName(userId);
             await Clients.OthersInGroup(code).SendAsync("OpponentPlayedCard", code, from, cardId);
             return;
+        }
+    }
+
+    public async Task DrawCards(int amount)
+    {
+        Guid userId = GetAuthenticatedUserId();
+        DrawCardsResultDTO? result = _rooms.DrawCards(userId, amount);
+        if (result == null)
+        {
+            await Clients.Caller.SendAsync("Error", "Unable to draw cards (Invalid room, game not started, or invalid player)");
+            return;
+        }
+        await Clients.Caller.SendAsync("CardsDrawn", result.PlayerResult);
+        string? code = _rooms.GetRoomOf(userId);
+        if (code != null)
+        {
+            await Clients.OthersInGroup(code).SendAsync("OpponentCardsDrawn", result.OpponentResult);
         }
     }
 }

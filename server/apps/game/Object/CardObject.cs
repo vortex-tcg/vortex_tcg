@@ -50,5 +50,15 @@ namespace VortexTCG.Game.Object
 
             _effects = new List<Effect>();
         }
+
+        public int GetGameCardId() => _game_card_id;
+        public Guid GetCardId() => _card_id;
+        public string GetName() => _name;
+        public int GetHp() => _hp;
+        public int GetAttack() => _attack;
+        public int GetCost() => _cost;
+        public string GetDescription() => _description;
+        public CardType GetCardType() => _type;
+        public List<string> GetClasses() => new List<string>(_class);
     }
 }
