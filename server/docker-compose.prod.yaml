@@ -42,24 +42,3 @@ services:
     depends_on:
       migrations:
         condition: service_completed_successfully
-
-  sonarqube:
-    image: sonarqube:latest
-    env_file:
-      - .env
-    environment:
-      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
-      SONARQUBE_JDBC_USERNAME: ${DB_USERNAME}
-      SONARQUBE_JDBC_PASSWORD: ${DB_PASSWORD}
-      SONARQUBE_JDBC_URL: jdbc:mariadb://db:3306/${DB_NAME}
-    ports:
-      - "${SONARQUBE_PORT}:9000"
-    volumes:
-      - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_extensions:/opt/sonarqube/extensions
-      - sonarqube_logs:/opt/sonarqube/logs
-
-volumes:
-  sonarqube_data:
-  sonarqube_extensions:
-  sonarqube_logs:
