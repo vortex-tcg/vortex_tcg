@@ -20,6 +20,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          script: |
+            git checkout feature/ci-correct-deployment
+
+            git pull
 
       - name: Pull new Docker images
         uses: appleboy/ssh-action@v1.0.3
