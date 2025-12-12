@@ -461,5 +461,23 @@ public class RoomService
         }
     }
 
+    /// <summary>
+    /// Fait piocher des cartes à un joueur de manière thread-safe.
+    /// </summary>
+    /// <param name="userId">ID du joueur</param>
+    /// <param name="amount">Nombre de cartes</param>
+    /// <returns>Résultat de la pioche ou null si erreur</returns>
+    public VortexTCG.Game.DTO.DrawCardsResultDTO? DrawCards(Guid userId, int amount)
+    {
+        if (!_userToRoom.TryGetValue(userId, out string? code)) return null;
+        if (!_rooms.TryGetValue(code, out Room? room)) return null;
+
+        lock (room)
+        {
+            if (room.GameRoom == null) return null;
+            return room.GameRoom.DrawCards(userId, amount);
+        }
+    }
+
     #endregion
 }

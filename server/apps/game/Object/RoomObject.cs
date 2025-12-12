@@ -188,6 +188,7 @@ namespace VortexTCG.Game.Object
 
             List<DrawnCardDTO> drawnCards = new List<DrawnCardDTO>();
             int fatigueCount = 0;
+            int baseFatigue = champion.GetFatigue();
 
             for (int i = 0; i < cardCount; i++)
             {
@@ -218,13 +219,15 @@ namespace VortexTCG.Game.Object
                 PlayerResult = new DrawResultForPlayerDTO
                 {
                     DrawnCards = drawnCards,
-                    FatigueCount = fatigueCount
+                    FatigueCount = fatigueCount,
+                    BaseFatigue = baseFatigue
                 },
                 OpponentResult = new DrawResultForOpponentDTO
                 {
                     PlayerId = playerId,
                     CardsDrawnCount = drawnCards.Count,
-                    FatigueCount = fatigueCount
+                    FatigueCount = fatigueCount,
+                    BaseFatigue = baseFatigue
                 }
             };
         }
