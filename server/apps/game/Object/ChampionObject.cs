@@ -11,7 +11,7 @@ namespace VortexTCG.Game.Object
         private int _gold;
 
         private int _secondary_currency;
-
+        private int _fatigue_counter;
 
         public void initChampion(Guid deck)
         {
@@ -20,7 +20,16 @@ namespace VortexTCG.Game.Object
             _base_gold = 1;
             _gold = 1;
             _hp = 30;
-            return;
+            _fatigue_counter = 0;
+        }
+
+        public int GetHp() => _hp;
+        public int GetFatigue() => _fatigue_counter;
+
+        internal void ApplyFatigueDamage()
+        {
+            _fatigue_counter++;
+            _hp -= _fatigue_counter;
         }
     }
 }
