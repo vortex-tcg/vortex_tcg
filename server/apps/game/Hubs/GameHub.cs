@@ -218,31 +218,14 @@ public class GameHub : Hub
     public async Task DrawCards(int amount)
     {
         Guid userId = GetAuthenticatedUserId();
-
-        string? code = _rooms.GetRoomOf(userId);
-        if (code == null)
-        {
-            await Clients.Caller.SendAsync("Error", "You are not in a room.");
-            return;
-        }
-
-        VortexTCG.Game.Object.Room? gameRoom = _rooms.GetGameRoom(code);
-
-        if (gameRoom == null)
-        {
-            await Clients.Caller.SendAsync("Error", $"Game not initialized for room {code}. Waiting for other player?");
-            return;
-        }
-
-        DrawCardsResultDTO? result = gameRoom.DrawCards(userId, amount);
+        DrawCardsResultDTO? result = _rooms.DrawCards(userId, amount);
         if (result == null)
         {
-            await Clients.Caller.SendAsync("Error", "Unable to draw cards (Invalid player or count)");
+            await Clients.Caller.SendAsync("Error", "Unable to draw cards (Invalid room, game not started, or invalid player)");
             return;
         }
-
         await Clients.Caller.SendAsync("CardsDrawn", result.PlayerResult);
-
+        string? code = _rooms.GetRoomOf(userId);
         if (code != null)
         {
             await Clients.OthersInGroup(code).SendAsync("OpponentCardsDrawn", result.OpponentResult);

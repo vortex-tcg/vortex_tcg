@@ -24,6 +24,7 @@ namespace VortexTCG.Game.Object
         }
 
         public int GetHp() => _hp;
+        public int GetFatigue() => _fatigue_counter;
 
         internal void ApplyFatigueDamage()
         {
