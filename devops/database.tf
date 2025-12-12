@@ -1,5 +1,7 @@
 resource "aws_db_instance" "vortex_db" {
   allocated_storage = 10
+  # to create database in the same availability_zone as ec2
+  availability_zone = "eu-west-3a"
   # Define the engine and its version
   engine = var.DB_ENGINE
   engine_version = var.DB_ENGINE_VERSION
