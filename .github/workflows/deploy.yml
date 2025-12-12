@@ -27,7 +27,7 @@ jobs:
           script: |
             cd /var/www/vortex_tcg
 
-            git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/VOTRE_USERNAME/vortex_tcg.git
+            git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/vortex-tcg/vortex_tcg.git
 
             git checkout feature/ci-correct-deployment
 
