@@ -65,7 +65,7 @@ jobs:
           port: 22
           script: |
             cd /var/www/vortex_tcg/server
-            docker-compose -f docker-compose.prod.yaml up -d --build
+            docker compose -f docker-compose.prod.yaml up -d --build
 
       - name: Clean up unused Docker resources
         uses: appleboy/ssh-action@v1.0.3
