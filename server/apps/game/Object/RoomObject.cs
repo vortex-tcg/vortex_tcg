@@ -22,6 +22,7 @@
 // Les méthodes setUser1() et setUser2() doivent être appelées pour charger
 // les decks depuis la base de données et configurer les champions.
 // =============================================
+using VortexTCG.Game.DTO;
 
 namespace VortexTCG.Game.Object
 {
@@ -36,7 +37,7 @@ namespace VortexTCG.Game.Object
 
         /// <summary>ID utilisateur (base de données) du joueur 1 (créateur du salon)</summary>
         private Guid _user_1;
-        
+
         /// <summary>ID utilisateur (base de données) du joueur 2 (a rejoint le salon)</summary>
         private Guid _user_2;
 
@@ -126,15 +127,17 @@ namespace VortexTCG.Game.Object
         /// - Charge les cartes du deck depuis la BDD (via DeckFactory)
         /// - Configure le champion avec ses stats de base (30 HP, 1 gold, etc.)
         /// </remarks>
-        public async Task setUser1(Guid user, Guid deck)
+        public Task setUser1(Guid user, Guid deck)
         {
             _user_1 = user;
-            
+
             // Charger les cartes du deck depuis la base de données
             _deck_user_1.initDeck(deck);
-            
+
             // Configurer le champion (HP, gold, capacités)
             _champion_user_1.initChampion(deck);
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -150,15 +153,83 @@ namespace VortexTCG.Game.Object
         /// - Charge les cartes du deck depuis la BDD (via DeckFactory)
         /// - Configure le champion avec ses stats de base (30 HP, 1 gold, etc.)
         /// </remarks>
-        public async Task setUser2(Guid user, Guid deck)
+        public Task setUser2(Guid user, Guid deck)
         {
             _user_2 = user;
-            
+
             // Charger les cartes du deck depuis la base de données
             _deck_user_2.initDeck(deck);
-            
+
             // Configurer le champion (HP, gold, capacités)
             _champion_user_2.initChampion(deck);
+
+            return Task.CompletedTask;
+        }
+
+        #endregion
+
+        #region Actions de jeu
+
+        /// <summary>
+        /// Fait piocher des cartes à un joueur.
+        /// </summary>
+        /// <param name="playerId">ID du joueur qui pioche.</param>
+        /// <param name="cardCount">Nombre de cartes à piocher.</param>
+        /// <returns>Résultat pour le joueur et l'adversaire, ou null si joueur invalide.</returns>
+        public DrawCardsResultDTO? DrawCards(Guid playerId, int cardCount)
+        {
+            if (playerId != _user_1 && playerId != _user_2) return null;
+            if (cardCount <= 0) return null;
+
+            bool isPlayer1 = playerId == _user_1;
+            Deck deck = isPlayer1 ? _deck_user_1 : _deck_user_2;
+            Hand hand = isPlayer1 ? _hand_user_1 : _hand_user_2;
+            Champion champion = isPlayer1 ? _champion_user_1 : _champion_user_2;
+
+            List<DrawnCardDTO> drawnCards = new List<DrawnCardDTO>();
+            int fatigueCount = 0;
+            int baseFatigue = champion.GetFatigue();
+
+            for (int i = 0; i < cardCount; i++)
+            {
+                Card? card = deck.DrawCard();
+                if (card != null)
+                {
+                    hand.AddCard(card);
+                    drawnCards.Add(new DrawnCardDTO
+                    {
+                        GameCardId = card.GetGameCardId(),
+                        Name = card.GetName(),
+                        Hp = card.GetHp(),
+                        Attack = card.GetAttack(),
+                        Cost = card.GetCost(),
+                        Description = card.GetDescription(),
+                        CardType = card.GetCardType()
+                    });
+                }
+                else
+                {
+                    fatigueCount++;
+                    champion.ApplyFatigueDamage();
+                }
+            }
+
+            return new DrawCardsResultDTO
+            {
+                PlayerResult = new DrawResultForPlayerDTO
+                {
+                    DrawnCards = drawnCards,
+                    FatigueCount = fatigueCount,
+                    BaseFatigue = baseFatigue
+                },
+                OpponentResult = new DrawResultForOpponentDTO
+                {
+                    PlayerId = playerId,
+                    CardsDrawnCount = drawnCards.Count,
+                    FatigueCount = fatigueCount,
+                    BaseFatigue = baseFatigue
+                }
+            };
         }
 
         #endregion
@@ -173,5 +244,5 @@ namespace VortexTCG.Game.Object
         // - EndTurn(int playerId) : Terminer le tour
         // - GetGameState() : Récupérer l'état complet pour l'UI
         // =============================================
-    }    
+    }
 }
