@@ -1,14 +1,11 @@
 services:
-  #migrations:
-  #  build:
-  #    context: .
-  #    dockerfile: ./apps/migrations/Dockerfile
-  #  env_file:
-  #    - .env
-  #  depends_on:
-  #    db:
-  #      condition: service_healthy
-  #  restart: "no"
+  migrations:
+    build:
+      context: .
+      dockerfile: ./apps/migrations/Dockerfile
+    env_file:
+      - .env
+    restart: "no"
 
   auth:
     build:
@@ -18,11 +15,9 @@ services:
       - .env
     ports:
       - "${AUTH_PORT}:${AUTH_INTERNAL_PORT}"
-    #depends_on:
-    #  migrations:
-    #    condition: service_completed_successfully
-    #  db:
-    #    condition: service_healthy
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
 
   game:
     build:
@@ -32,11 +27,9 @@ services:
       - .env
     ports:
       - "${GAME_PORT}:${GAME_INTERNAL_PORT}"
-    #depends_on:
-    #  migrations:
-    #    condition: service_completed_successfully
-    #  db:
-    #    condition: service_healthy
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
 
   api:
     build:
@@ -46,39 +39,9 @@ services:
       - .env
     ports:
       - "${API_PORT}:${API_INTERNAL_PORT}"
-    #depends_on:
-    #  migrations:
-    #    condition: service_completed_successfully
-    #  db:
-    #    condition: service_healthy
-
-  #db:
-  #  image: mariadb:latest
-  #  restart: always
-  #  env_file:
-  #    - .env
-  #  environment:
-  #    MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-  #    MARIADB_USER: ${DB_USERNAME}
-  #    MARIADB_PASSWORD: ${DB_PASSWORD}
-  #    MARIADB_DATABASE: ${DB_NAME}
-  #  ports:
-  #    - "${DB_PORT}:3306"
-  #  volumes:
-  #    - mariadb_data:/var/lib/mysql
-  #  healthcheck:
-  #    test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-  #    interval: 10s
-  #    timeout: 5s
-  #    retries: 5
-
-  #adminer:
-  #  image: adminer
-  #  restart: always
-  #  ports:
-  #    - "${DB_ADMINER_PORT}:8080"
-  #  environment:
-  #    ADMINER_DEFAULT_SERVER: db
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
 
   sonarqube:
     image: sonarqube:latest
@@ -102,4 +65,3 @@ volumes:
   sonarqube_data:
   sonarqube_extensions:
   sonarqube_logs:
-  #mariadb_data:
