@@ -1,59 +1,63 @@
 using System;
-using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Moq;
+using Microsoft.EntityFrameworkCore;
 using VortexTCG.Api.Card.Controllers;
 using VortexTCG.Api.Card.DTOs;
+using VortexTCG.Api.Card.Providers;
 using VortexTCG.Api.Card.Services;
 using VortexTCG.Common.DTO;
+using VortexTCG.DataAccess;
 using Xunit;
 
 namespace VortexTCG.Tests.Api.Card.Controllers
 {
     public class CardControllerTest
     {
+        private VortexDbContext CreateDb()
+        {
+            var options = new DbContextOptionsBuilder<VortexDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options;
+            return new VortexDbContext(options);
+        }
+
+        private CardController CreateController(VortexDbContext db)
+        {
+            var provider = new CardProvider(db);
+            var service = new CardService(provider);
+            return new CardController(service);
+        }
+
         [Fact]
         public async Task GetAll_ReturnsOk_WithList()
         {
-            var mockService = new Mock<CardService>(MockBehavior.Strict, null!);
-            mockService.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>()))
-                       .ReturnsAsync(new ResultDTO<CardDTO[]>
-                       {
-                           success = true,
-                           statusCode = 200,
-                           data = new[] { new CardDTO { Id = Guid.NewGuid(), Name = "Test" } }
-                       });
+            using var db = CreateDb();
+            var controller = CreateController(db);
 
-            var controller = new CardController(mockService.Object);
+            // Seed one card via provider/service
+            var create = await controller.Create(new CardCreateDTO { Name = "Test", Attack = 1, Hp = 1, Price = 1, Description = "d", Picture = "p" });
+            Assert.IsType<ObjectResult>(create);
 
             var result = await controller.GetAll();
 
-            var ok = Assert.IsType<OkObjectResult>(result);
+            var ok = Assert.IsType<ObjectResult>(result);
             var payload = Assert.IsType<ResultDTO<CardDTO[]>>(ok.Value);
             Assert.True(payload.success);
             Assert.NotNull(payload.data);
             Assert.Single(payload.data!);
+            Assert.Equal("Test", payload.data![0].Name);
         }
 
         [Fact]
         public async Task GetById_NotFound_WhenMissing()
         {
-            var mockService = new Mock<CardService>(MockBehavior.Strict, null!);
-            mockService.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-                       .ReturnsAsync(new ResultDTO<CardDTO>
-                       {
-                           success = false,
-                           statusCode = 404,
-                           message = "Carte non trouvée"
-                       });
-
-            var controller = new CardController(mockService.Object);
+            using var db = CreateDb();
+            var controller = CreateController(db);
 
             var result = await controller.GetById(Guid.NewGuid());
 
-            var notFound = Assert.IsType<NotFoundObjectResult>(result);
+            var notFound = Assert.IsType<ObjectResult>(result);
             var payload = Assert.IsType<ResultDTO<CardDTO>>(notFound.Value);
             Assert.False(payload.success);
             Assert.Equal(404, payload.statusCode);
@@ -62,21 +66,17 @@ namespace VortexTCG.Tests.Api.Card.Controllers
         [Fact]
         public async Task GetById_Ok_WhenFound()
         {
-            var dto = new CardDTO { Id = Guid.NewGuid(), Name = "Found" };
-            var mockService = new Mock<CardService>(MockBehavior.Strict, null!);
-            mockService.Setup(s => s.GetByIdAsync(dto.Id, It.IsAny<CancellationToken>()))
-                       .ReturnsAsync(new ResultDTO<CardDTO>
-                       {
-                           success = true,
-                           statusCode = 200,
-                           data = dto
-                       });
+            using var db = CreateDb();
+            var controller = CreateController(db);
 
-            var controller = new CardController(mockService.Object);
+            var create = await controller.Create(new CardCreateDTO { Name = "Found", Attack = 2, Hp = 3, Price = 4, Description = "desc", Picture = "pic" });
+            var created = Assert.IsType<ObjectResult>(create);
+            var payloadCreate = Assert.IsType<ResultDTO<CardDTO>>(created.Value);
+            Assert.True(payloadCreate.success);
 
-            var result = await controller.GetById(dto.Id);
+            var result = await controller.GetById(payloadCreate.data!.Id);
 
-            var ok = Assert.IsType<OkObjectResult>(result);
+            var ok = Assert.IsType<ObjectResult>(result);
             var payload = Assert.IsType<ResultDTO<CardDTO>>(ok.Value);
             Assert.True(payload.success);
             Assert.Equal("Found", payload.data!.Name);
