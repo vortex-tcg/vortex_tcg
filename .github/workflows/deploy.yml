@@ -30,9 +30,9 @@ jobs:
           port: 22
           script: |
             echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
-            docker pull vortextcg/vortex_repository/vortex-auth:latest
-            docker pull vortextcg/vortex_repository/vortex-game:latest
-            docker pull vortextcg/vortex_repository/vortex-api:latest
+            docker pull vortextcg/vortex_repository:api
+            docker pull vortextcg/vortex_repository:game
+            docker pull vortextcg/vortex_repository:auth
 
             docker logout
 
