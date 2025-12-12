@@ -215,39 +215,6 @@ namespace DataAccess.Migrations
 
                     b.ToTable("Cards");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Attack = 5,
-                            CardTypeId = 1,
-                            Cost = 3,
-                            CreatedAtUtc = new DateTime(2025, 9, 19, 12, 50, 4, 440, DateTimeKind.Utc).AddTicks(1762),
-                            CreatedBy = "System",
-                            Description = "First card",
-                            Effect_active = 0,
-                            ExtensionId = 1,
-                            Hp = 10,
-                            Name = "Card1",
-                            Picture = "card1.png",
-                            RarityId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Attack = 6,
-                            CardTypeId = 1,
-                            Cost = 4,
-                            CreatedAtUtc = new DateTime(2025, 9, 19, 12, 50, 4, 440, DateTimeKind.Utc).AddTicks(1765),
-                            CreatedBy = "System",
-                            Description = "Second card",
-                            Effect_active = 0,
-                            ExtensionId = 1,
-                            Hp = 8,
-                            Name = "Card2",
-                            Picture = "card2.png",
-                            RarityId = 1
-                        });
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Champion", b =>

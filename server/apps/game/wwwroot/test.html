@@ -37,6 +37,7 @@
 
 <h3>Mode 2 : Room par code</h3>
 <div>
+    <input id="deckId" placeholder="DECK ID (UUID)" value="d3b07384-d9a1-4d3b-92d8-4f5c6e7a8b9c" />
     <input id="roomCode" placeholder="CODE (ex: Q7D9K2)" />
     <button id="create">Créer room</button>
     <button id="join">Rejoindre room</button>
@@ -71,6 +72,7 @@
     const btnLeaveCode = document.getElementById('leaveCode');
 
     const nameInput = document.getElementById('name');
+    const deckIdInput = document.getElementById('deckId');
     const codeInput = document.getElementById('roomCode');
     const msgInput  = document.getElementById('msg');
     const btnSend   = document.getElementById('send');
@@ -82,7 +84,7 @@
     function append(t){ const p=document.createElement('div'); p.textContent=t; log.appendChild(p); log.scrollTop=log.scrollHeight; }
 
     btnLogin.onclick = async () => {
-        const response = await fetch("http://localhost:4000/api/auth/login", {
+        const response = await fetch("http://localhost:5005/api/auth/login", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -173,14 +175,16 @@
 
     btnCreate.onclick = async () => {
         mode = 'code';
+        const deckId = deckIdInput.value.trim();
         const preferred = (codeInput.value || "").trim() || null;
-        await connection.invoke("CreateRoom", preferred);
+        await connection.invoke("CreateRoom", deckId, preferred);
     };
     btnJoin.onclick = async () => {
         mode = 'code';
+        const deckId = deckIdInput.value.trim();
         const code = (codeInput.value || "").trim();
         if (!code) return alert("Entre un code.");
-        await connection.invoke("JoinRoom", code);
+        await connection.invoke("JoinRoom", deckId, code);
     };
     btnLeaveCode.onclick = async () => {
         await connection.invoke("LeaveRoomByCode");
