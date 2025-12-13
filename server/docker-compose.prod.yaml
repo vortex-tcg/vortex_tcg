@@ -2,7 +2,7 @@ services:
   migrations:
     build:
       context: .
-      dockerfile: ./apps/migrations/Dockerfile.dev
+      dockerfile: ./apps/migrations/Dockerfile
     env_file:
       - .env
     depends_on:
@@ -13,16 +13,11 @@ services:
   auth:
     build:
       context: .
-      dockerfile: ./apps/auth/Dockerfile.dev
+      dockerfile: ./apps/auth/Dockerfile
     env_file:
       - .env
     ports:
       - "${AUTH_PORT}:${AUTH_INTERNAL_PORT}"
-    volumes:
-      - .:/workspace:delegated
-      - /workspace/apps/auth/obj
-      - /workspace/apps/auth/bin
-    working_dir: /workspace/apps/auth
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -32,16 +27,11 @@ services:
   game:
     build:
       context: .
-      dockerfile: ./apps/game/Dockerfile.dev
+      dockerfile: ./apps/game/Dockerfile
     env_file:
       - .env
     ports:
       - "${GAME_PORT}:${GAME_INTERNAL_PORT}"
-    volumes:
-      - .:/workspace:delegated
-      - /workspace/apps/game/obj
-      - /workspace/apps/game/bin
-    working_dir: /workspace/apps/game
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -51,16 +41,11 @@ services:
   api:
     build:
       context: .
-      dockerfile: ./apps/api/Dockerfile.dev
+      dockerfile: ./apps/api/Dockerfile
     env_file:
       - .env
     ports:
       - "${API_PORT}:${API_INTERNAL_PORT}"
-    volumes:
-      - .:/workspace:delegated
-      - /workspace/apps/api/obj
-      - /workspace/apps/api/bin
-    working_dir: /workspace/apps/api
     depends_on:
       migrations:
         condition: service_completed_successfully
