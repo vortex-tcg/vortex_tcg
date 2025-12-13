@@ -85,7 +85,7 @@ public class LoginScript : MonoBehaviour
     {
         if (string.IsNullOrEmpty(email)) return false;
         string pattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
-        return Regex.IsMatch(email, pattern);
+        return Regex.IsMatch(email, pattern, RegexOptions.None, TimeSpan.FromMilliseconds(100));
     }
 
     private void ShowError(string message)
