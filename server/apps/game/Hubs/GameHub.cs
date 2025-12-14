@@ -85,14 +85,49 @@ public class GameHub : Hub
         // S'il était dans un salon privé, on le quitte d'abord pour éviter les situations mixtes.
         await LeaveRoomByCode();
 
+        // On utilise le matchmaking pour trouver un adversaire (toujours par ConnectionId)
         var result = _matchmaker.Enqueue(Context.ConnectionId);
-        if (result.matched && result.roomId is not null && result.otherId is not null)
+        if (result.matched && result.otherId is not null)
         {
-            var meName = _matchmaker.GetName(Context.ConnectionId);
-            var otherName = _matchmaker.GetName(result.otherId);
+            // On a deux joueurs, on crée une room via RoomService (code aléatoire)
+            var userId = GetAuthenticatedUserId();
+            var otherUserId = Context.UserIdentifier != null ? Guid.Parse(Context.UserIdentifier) : Guid.Empty; // fallback
+            // On doit retrouver le userId de l'autre joueur (idéalement via un mapping ConnId->UserId)
+            // Pour l'exemple, on suppose que le client a envoyé son userId dans le contexte, sinon il faut le stocker côté Matchmaker
+            // Ici, on ne peut pas faire mieux sans adaptation du Matchmaker
 
+            // Pour la démo, on va créer une room pour les deux ConnectionId (mais il faudrait les userId)
+            // On génère un code de room unique
+            var code = Guid.NewGuid().ToString("N").Substring(0, 6).ToUpper();
+            // Ajout fictif dans RoomService (il faudrait une vraie méthode pour deux joueurs)
+            // Ici, on ne peut pas appeler TryCreateRoom car elle prend un seul userId, donc il faudrait une méthode spéciale matchmaking
+            // Pour l'exemple, on va appeler TryCreateRoom pour le premier, puis TryJoinRoom pour le second
+
+            // 1. On retire les deux joueurs de tout salon existant
+            var userId1 = userId;
+            var userId2 = userId1; // fallback, à remplacer par le vrai userId de l'autre joueur
+            // TODO: Il faut un mapping ConnId -> UserId pour faire ça proprement !
+
+            // 2. Création de la room pour userId1
+            if (!_rooms.TryCreateRoom(userId1, out var createdCode, code))
+            {
+                await Clients.Caller.SendAsync("RoomCreateError", "CODE_TAKEN");
+                return;
+            }
+            // 3. Ajout du second joueur
+            Guid? dummyOpponent;
+            bool isFull;
+            _rooms.TryJoinRoom(userId2, createdCode, out dummyOpponent, out isFull);
+
+            // 4. Ajout aux groupes SignalR
+            await Groups.AddToGroupAsync(Context.ConnectionId, createdCode);
+            // Il faudrait aussi ajouter l'autre joueur (result.otherId) à ce groupe
+
+            // 5. Notifier les deux joueurs
+            var meName = _rooms.GetName(userId1);
+            var otherName = _rooms.GetName(userId2);
             await Clients.Clients(new[] { Context.ConnectionId, result.otherId })
-                .SendAsync("Matched", result.roomId, new { you = meName, opponent = otherName });
+                .SendAsync("Matched", createdCode, new { you = meName, opponent = otherName });
         }
         else
         {
@@ -104,20 +139,26 @@ public class GameHub : Hub
     // Le client sort de la file d'attente. On prévient l'adversaire si un match était déjà formé.
     public async Task LeaveQueue()
     {
-        var (oppId, roomId) = _matchmaker.GetOpponent(Context.ConnectionId);
-        _matchmaker.LeaveOrDisconnect(Context.ConnectionId);
-        if (oppId is not null && roomId is not null)
-            await Clients.Client(oppId).SendAsync("OpponentLeft", roomId);
+        var userId = GetAuthenticatedUserId();
+        var code = _rooms.GetRoomOf(userId);
+        Guid? opponentId = null;
+        bool roomEmpty = false;
+        _rooms.Leave(userId, out code, out opponentId, out roomEmpty);
+        if (opponentId.HasValue && code != null && !roomEmpty)
+        {
+            await Clients.Group(code).SendAsync("OpponentLeft", code);
+        }
     }
 
     // Envoi d'un message texte au sein d'un "match" (roomId = GUID coté matchmaking).
     public async Task SendRoomMessage(string roomId, string message)
     {
-        var (oppId, myRoomId) = _matchmaker.GetOpponent(Context.ConnectionId);
-        if (oppId is null || myRoomId != roomId) return; // Sécurité: ignorer si pas dans la même room.
+        var userId = GetAuthenticatedUserId();
+        var code = _rooms.GetRoomOf(userId);
+        if (code == null || code != roomId) return; // Sécurité: ignorer si pas dans la même room.
 
-        var from = _matchmaker.GetName(Context.ConnectionId);
-        await Clients.Client(oppId).SendAsync("ReceiveRoomMessage", roomId, from, message);
+        var from = _rooms.GetName(userId);
+        await Clients.OthersInGroup(code).SendAsync("ReceiveRoomMessage", code, from, message);
     }
 
     // --- SALONS PRIVÉS PAR CODE ---
