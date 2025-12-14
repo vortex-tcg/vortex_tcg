@@ -4,6 +4,8 @@ using System.Text;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.Services;
+using VortexTCG.Api.Champion.Providers;
+using VortexTCG.Api.Champion.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -45,6 +47,8 @@ builder.Services.AddScoped<api.Effect.Providers.EffectDescriptionProvider>();
 builder.Services.AddScoped<api.Effect.Services.EffectDescriptionService>();
 builder.Services.AddScoped<api.Card.Providers.CardProvider>();
 builder.Services.AddScoped<api.Card.Services.CardService>();
+builder.Services.AddScoped<ChampionProvider>();
+builder.Services.AddScoped<ChampionService>();
 
 // CORS
 builder.Services.AddCors(options =>
