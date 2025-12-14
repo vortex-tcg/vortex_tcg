@@ -80,54 +80,49 @@ public class GameHub : Hub
 
     // Le client demande à entrer dans la file.
     // Si un autre joueur est aussi en attente, on créer une "room" logique (GUID) et on envoie "Matched" aux deux.
-    public async Task JoinQueue()
+    public async Task JoinQueue(Guid deckId)
     {
         // S'il était dans un salon privé, on le quitte d'abord pour éviter les situations mixtes.
         await LeaveRoomByCode();
 
-        // On utilise le matchmaking pour trouver un adversaire (toujours par ConnectionId)
-        var result = _matchmaker.Enqueue(Context.ConnectionId);
-        if (result.matched && result.otherId is not null)
+        var userId = GetAuthenticatedUserId();
+
+        var result = _matchmaker.Enqueue(Context.ConnectionId, userId, deckId);
+        if (result.matched && result.otherConnId is not null && result.otherUserId.HasValue && result.otherDeckId.HasValue)
         {
-            // On a deux joueurs, on crée une room via RoomService (code aléatoire)
-            var userId = GetAuthenticatedUserId();
-            var otherUserId = Context.UserIdentifier != null ? Guid.Parse(Context.UserIdentifier) : Guid.Empty; // fallback
-            // On doit retrouver le userId de l'autre joueur (idéalement via un mapping ConnId->UserId)
-            // Pour l'exemple, on suppose que le client a envoyé son userId dans le contexte, sinon il faut le stocker côté Matchmaker
-            // Ici, on ne peut pas faire mieux sans adaptation du Matchmaker
+            var otherUserId = result.otherUserId.Value;
+            var otherDeckId = result.otherDeckId.Value;
 
-            // Pour la démo, on va créer une room pour les deux ConnectionId (mais il faudrait les userId)
-            // On génère un code de room unique
-            var code = Guid.NewGuid().ToString("N").Substring(0, 6).ToUpper();
-            // Ajout fictif dans RoomService (il faudrait une vraie méthode pour deux joueurs)
-            // Ici, on ne peut pas appeler TryCreateRoom car elle prend un seul userId, donc il faudrait une méthode spéciale matchmaking
-            // Pour l'exemple, on va appeler TryCreateRoom pour le premier, puis TryJoinRoom pour le second
+            var code = Guid.NewGuid().ToString("N")[..6].ToUpper();
 
-            // 1. On retire les deux joueurs de tout salon existant
-            var userId1 = userId;
-            var userId2 = userId1; // fallback, à remplacer par le vrai userId de l'autre joueur
-            // TODO: Il faut un mapping ConnId -> UserId pour faire ça proprement !
-
-            // 2. Création de la room pour userId1
-            if (!_rooms.TryCreateRoom(userId1, out var createdCode, code))
+            // 1. Création de la room pour le premier joueur (userId)
+            if (!_rooms.TryCreateRoom(userId, out var createdCode, code))
             {
                 await Clients.Caller.SendAsync("RoomCreateError", "CODE_TAKEN");
                 return;
             }
-            // 3. Ajout du second joueur
-            Guid? dummyOpponent;
-            bool isFull;
-            _rooms.TryJoinRoom(userId2, createdCode, out dummyOpponent, out isFull);
 
-            // 4. Ajout aux groupes SignalR
+            // 2. Ajout du second joueur (otherUserId) dans la room
+            _rooms.TryJoinRoom(otherUserId, createdCode, out _, out _);
+
+            // 3. Initialiser les decks des deux joueurs (IMPORTANT pour que DrawCards fonctionne)
+            await _rooms.SetPlayerDeck(userId, deckId);
+            await _rooms.SetPlayerDeck(otherUserId, otherDeckId);
+
+            // 4. Ajout des deux connexions au groupe SignalR
             await Groups.AddToGroupAsync(Context.ConnectionId, createdCode);
-            // Il faudrait aussi ajouter l'autre joueur (result.otherId) à ce groupe
+            await Groups.AddToGroupAsync(result.otherConnId, createdCode);
 
-            // 5. Notifier les deux joueurs
-            var meName = _rooms.GetName(userId1);
-            var otherName = _rooms.GetName(userId2);
-            await Clients.Clients(new[] { Context.ConnectionId, result.otherId })
-                .SendAsync("Matched", createdCode, new { you = meName, opponent = otherName });
+            // 5. Notifier les deux joueurs avec leur position
+            var meName = _rooms.GetName(userId);
+            var otherName = _rooms.GetName(otherUserId);
+
+            // Envoyer à chaque joueur son propre point de vue (you/opponent) et sa position
+            // userId = créateur = position 1, otherUserId = rejoint = position 2
+            await Clients.Client(Context.ConnectionId)
+                .SendAsync("Matched", createdCode, new { you = meName, opponent = otherName, position = 1 });
+            await Clients.Client(result.otherConnId)
+                .SendAsync("Matched", createdCode, new { you = otherName, opponent = meName, position = 2 });
         }
         else
         {
@@ -206,9 +201,15 @@ public class GameHub : Hub
             var meName = _rooms.GetName(userId);
             var otherName = _rooms.GetName(oppUserId.Value);
 
-            // Broadcast au groupe entier (supporte reconnexions multiples)
-            await Clients.Group(code)
-                .SendAsync("Matched", code, new { you = meName, opponent = otherName });
+            // Le créateur (oppUserId) est en position 1, celui qui rejoint (userId) est en position 2
+            // Envoyer à chaque joueur sa propre position
+            var myPosition = _rooms.GetPlayerPosition(userId) ?? 2;
+            var oppPosition = _rooms.GetPlayerPosition(oppUserId.Value) ?? 1;
+
+            await Clients.Caller
+                .SendAsync("Matched", code, new { you = meName, opponent = otherName, position = myPosition });
+            await Clients.OthersInGroup(code)
+                .SendAsync("Matched", code, new { you = otherName, opponent = meName, position = oppPosition });
         }
         else
         {
@@ -256,13 +257,13 @@ public class GameHub : Hub
         }
     }
 
-    public async Task DrawCards(int amount)
+    public async Task DrawCards(int playerPosition, int amount)
     {
         Guid userId = GetAuthenticatedUserId();
-        DrawCardsResultDTO? result = _rooms.DrawCards(userId, amount);
+        DrawCardsResultDTO? result = _rooms.DrawCards(userId, playerPosition, amount);
         if (result == null)
         {
-            await Clients.Caller.SendAsync("Error", "Unable to draw cards (Invalid room, game not started, or invalid player)");
+            await Clients.Caller.SendAsync("Error", "Unable to draw cards (Invalid room, game not started, invalid player, or invalid position)");
             return;
         }
         await Clients.Caller.SendAsync("CardsDrawn", result.PlayerResult);

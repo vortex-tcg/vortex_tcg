@@ -13,6 +13,12 @@ public class Matchmaker
     private readonly ConcurrentDictionary<string, bool> _waiting = new(); // marque qui est encore "valide" en attente
     private readonly ConcurrentDictionary<string, string> _names = new(); // pseudo par ConnectionId
 
+    // Mapping ConnectionId -> UserId (nécessaire pour créer une room côté RoomService lors du matchmaking)
+    private readonly ConcurrentDictionary<string, Guid> _connToUser = new();
+
+    // Mapping ConnectionId -> DeckId (nécessaire pour initialiser le jeu)
+    private readonly ConcurrentDictionary<string, Guid> _connToDeck = new();
+
     // Rooms logiques (GUID), pas des groupes SignalR: juste pour identifier un match 1v1.
     private readonly ConcurrentDictionary<string, (string p1, string p2)> _rooms = new();
     private readonly ConcurrentDictionary<string, string> _connToRoom = new(); // map conn -> roomId (GUID)
@@ -26,15 +32,17 @@ public class Matchmaker
         => _names.TryGetValue(connectionId, out var n) ? n : $"Player-{connectionId[..5]}";
 
     // Ajoute le joueur dans la file, et tente immédiatement d'appairer 2 candidats valides.
-    public (bool matched, string? roomId, string? otherId) Enqueue(string connectionId)
+    public (bool matched, string? roomId, string? otherConnId, Guid? otherUserId, Guid? otherDeckId) Enqueue(string connectionId, Guid userId, Guid deckId)
     {
         lock (_lock)
         {
             _waiting[connectionId] = true;
             _queue.Enqueue(connectionId);
+            _connToUser[connectionId] = userId;
+            _connToDeck[connectionId] = deckId;
 
             string? p1 = DequeueValid();
-            if (p1 is null) return (false, null, null);
+            if (p1 is null) return (false, null, null, null, null);
 
             string? p2 = DequeueValid();
             if (p2 is null)
@@ -42,7 +50,7 @@ public class Matchmaker
                 // Pas encore de deuxième joueur: on remet p1 en file.
                 _queue.Enqueue(p1);
                 _waiting[p1] = true;
-                return (false, null, null);
+                return (false, null, null, null, null);
             }
 
             // Deux joueurs -> crée un match (roomId = GUID) et mappe les connexions.
@@ -51,7 +59,11 @@ public class Matchmaker
             _connToRoom[p1] = roomId;
             _connToRoom[p2] = roomId;
 
-            return (true, roomId, p1 == connectionId ? p2 : p1);
+            var otherConnId = p1 == connectionId ? p2 : p1;
+            _connToUser.TryGetValue(otherConnId, out var otherUserId);
+            _connToDeck.TryGetValue(otherConnId, out var otherDeckId);
+
+            return (true, roomId, otherConnId, otherUserId, otherDeckId);
         }
     }
 
@@ -85,6 +97,8 @@ public class Matchmaker
     public void LeaveOrDisconnect(string connectionId)
     {
         _waiting.TryRemove(connectionId, out _);
+        _connToUser.TryRemove(connectionId, out _);
+        _connToDeck.TryRemove(connectionId, out _);
 
         if (_connToRoom.TryRemove(connectionId, out var roomId))
         {

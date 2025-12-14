@@ -464,10 +464,11 @@ public class RoomService
     /// <summary>
     /// Fait piocher des cartes à un joueur de manière thread-safe.
     /// </summary>
-    /// <param name="userId">ID du joueur</param>
+    /// <param name="userId">ID du joueur qui demande la pioche</param>
+    /// <param name="playerPosition">Position du joueur qui pioche (1 ou 2)</param>
     /// <param name="amount">Nombre de cartes</param>
     /// <returns>Résultat de la pioche ou null si erreur</returns>
-    public VortexTCG.Game.DTO.DrawCardsResultDTO? DrawCards(Guid userId, int amount)
+    public VortexTCG.Game.DTO.DrawCardsResultDTO? DrawCards(Guid userId, int playerPosition, int amount)
     {
         if (!_userToRoom.TryGetValue(userId, out string? code)) return null;
         if (!_rooms.TryGetValue(code, out Room? room)) return null;
@@ -475,7 +476,31 @@ public class RoomService
         lock (room)
         {
             if (room.GameRoom == null) return null;
-            return room.GameRoom.DrawCards(userId, amount);
+
+            // Récupère le userId du joueur à la position demandée
+            var members = room.Members.ToList();
+            if (playerPosition < 1 || playerPosition > members.Count) return null;
+
+            var targetUserId = members[playerPosition - 1];
+            return room.GameRoom.DrawCards(targetUserId, amount);
+        }
+    }
+
+    /// <summary>
+    /// Récupère la position (1 ou 2) d'un joueur dans un salon.
+    /// </summary>
+    /// <param name="userId">ID utilisateur du joueur</param>
+    /// <returns>1 si créateur, 2 si rejoint, null si pas dans un salon</returns>
+    public int? GetPlayerPosition(Guid userId)
+    {
+        if (!_userToRoom.TryGetValue(userId, out string? code)) return null;
+        if (!_rooms.TryGetValue(code, out Room? room)) return null;
+
+        lock (room)
+        {
+            var members = room.Members.ToList();
+            var index = members.IndexOf(userId);
+            return index >= 0 ? index + 1 : null;
         }
     }
 
