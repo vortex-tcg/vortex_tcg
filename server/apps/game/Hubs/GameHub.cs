@@ -85,37 +85,37 @@ public class GameHub : Hub
         // S'il était dans un salon privé, on le quitte d'abord pour éviter les situations mixtes.
         await LeaveRoomByCode();
 
-        var userId = GetAuthenticatedUserId();
+        Guid userId = GetAuthenticatedUserId();
 
-        var result = _matchmaker.Enqueue(Context.ConnectionId, userId, deckId);
+        (bool matched, string? roomId, string? otherConnId, Guid? otherUserId, Guid? otherDeckId) result = _matchmaker.Enqueue(Context.ConnectionId, userId, deckId);
         if (result.matched && result.otherConnId is not null && result.otherUserId.HasValue && result.otherDeckId.HasValue)
         {
-            var otherUserId = result.otherUserId.Value;
-            var otherDeckId = result.otherDeckId.Value;
+            Guid otherUserIdValue = result.otherUserId.Value;
+            Guid otherDeckIdValue = result.otherDeckId.Value;
 
-            var code = Guid.NewGuid().ToString("N")[..6].ToUpper();
+            string code = Guid.NewGuid().ToString("N")[..6].ToUpper();
 
             // 1. Création de la room pour le premier joueur (userId)
-            if (!_rooms.TryCreateRoom(userId, out var createdCode, code))
+            if (!_rooms.TryCreateRoom(userId, out string createdCode, code))
             {
                 await Clients.Caller.SendAsync("RoomCreateError", "CODE_TAKEN");
                 return;
             }
 
             // 2. Ajout du second joueur (otherUserId) dans la room
-            _rooms.TryJoinRoom(otherUserId, createdCode, out _, out _);
+            _rooms.TryJoinRoom(otherUserIdValue, createdCode, out _, out _);
 
             // 3. Initialiser les decks des deux joueurs (IMPORTANT pour que DrawCards fonctionne)
             await _rooms.SetPlayerDeck(userId, deckId);
-            await _rooms.SetPlayerDeck(otherUserId, otherDeckId);
+            await _rooms.SetPlayerDeck(otherUserIdValue, otherDeckIdValue);
 
             // 4. Ajout des deux connexions au groupe SignalR
             await Groups.AddToGroupAsync(Context.ConnectionId, createdCode);
             await Groups.AddToGroupAsync(result.otherConnId, createdCode);
 
             // 5. Notifier les deux joueurs avec leur position
-            var meName = _rooms.GetName(userId);
-            var otherName = _rooms.GetName(otherUserId);
+            string meName = _rooms.GetName(userId);
+            string otherName = _rooms.GetName(otherUserIdValue);
 
             // Envoyer à chaque joueur son propre point de vue (you/opponent) et sa position
             // userId = créateur = position 1, otherUserId = rejoint = position 2

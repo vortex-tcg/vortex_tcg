@@ -29,7 +29,7 @@ public class Matchmaker
         => _names[connectionId] = name ?? $"Player-{connectionId[..5]}";
 
     public string GetName(string connectionId)
-        => _names.TryGetValue(connectionId, out var n) ? n : $"Player-{connectionId[..5]}";
+        => _names.TryGetValue(connectionId, out string? n) ? n : $"Player-{connectionId[..5]}";
 
     // Ajoute le joueur dans la file, et tente immédiatement d'appairer 2 candidats valides.
     public (bool matched, string? roomId, string? otherConnId, Guid? otherUserId, Guid? otherDeckId) Enqueue(string connectionId, Guid userId, Guid deckId)
@@ -54,14 +54,14 @@ public class Matchmaker
             }
 
             // Deux joueurs -> crée un match (roomId = GUID) et mappe les connexions.
-            var roomId = Guid.NewGuid().ToString("N");
+            string roomId = Guid.NewGuid().ToString("N");
             _rooms[roomId] = (p1, p2);
             _connToRoom[p1] = roomId;
             _connToRoom[p2] = roomId;
 
-            var otherConnId = p1 == connectionId ? p2 : p1;
-            _connToUser.TryGetValue(otherConnId, out var otherUserId);
-            _connToDeck.TryGetValue(otherConnId, out var otherDeckId);
+            string otherConnId = p1 == connectionId ? p2 : p1;
+            _connToUser.TryGetValue(otherConnId, out Guid otherUserId);
+            _connToDeck.TryGetValue(otherConnId, out Guid otherDeckId);
 
             return (true, roomId, otherConnId, otherUserId, otherDeckId);
         }
@@ -70,7 +70,7 @@ public class Matchmaker
     // Retire de la queue jusqu'à trouver un ConnectionId toujours marqué "en attente".
     private string? DequeueValid()
     {
-        while (_queue.TryDequeue(out var cId))
+        while (_queue.TryDequeue(out string? cId))
         {
             if (_waiting.TryRemove(cId, out _))
                 return cId;
@@ -79,15 +79,15 @@ public class Matchmaker
     }
 
     public string? GetRoomId(string connectionId)
-        => _connToRoom.TryGetValue(connectionId, out var r) ? r : null;
+        => _connToRoom.TryGetValue(connectionId, out string? r) ? r : null;
 
     // Récupère l'adversaire + roomId du match actif d'un joueur, si existe.
     public (string? opponentId, string? roomId) GetOpponent(string myConnectionId)
     {
-        if (_connToRoom.TryGetValue(myConnectionId, out var roomId)
-            && _rooms.TryGetValue(roomId, out var pair))
+        if (_connToRoom.TryGetValue(myConnectionId, out string? roomId)
+            && _rooms.TryGetValue(roomId, out (string p1, string p2) pair))
         {
-            var opp = pair.p1 == myConnectionId ? pair.p2 : pair.p1;
+            string opp = pair.p1 == myConnectionId ? pair.p2 : pair.p1;
             return (opp, roomId);
         }
         return (null, null);
@@ -100,11 +100,11 @@ public class Matchmaker
         _connToUser.TryRemove(connectionId, out _);
         _connToDeck.TryRemove(connectionId, out _);
 
-        if (_connToRoom.TryRemove(connectionId, out var roomId))
+        if (_connToRoom.TryRemove(connectionId, out string? roomId))
         {
-            if (_rooms.TryGetValue(roomId, out var pair))
+            if (_rooms.TryGetValue(roomId, out (string p1, string p2) pair))
             {
-                var opp = pair.p1 == connectionId ? pair.p2 : pair.p1;
+                string opp = pair.p1 == connectionId ? pair.p2 : pair.p1;
                 _connToRoom.TryRemove(opp, out _); // l'adversaire est "libéré"
             }
             _rooms.TryRemove(roomId, out _);
