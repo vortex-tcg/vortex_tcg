@@ -1,34 +1,97 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/UI%20Toolkit/CollectionSceneHUDStylsheet.uss?fileID=7433441132597879392&amp;guid=bdcf1244bf7cc6e4081c4d8388575ee0&amp;type=3#CollectionSceneHUDStylsheet" />
+    <ui:Template name="SmallCard" src="project://database/Assets/PreFabs/Cards/SmallCard.uxml?fileID=9197481963319205126&amp;guid=171182a60c819d946b4758b59a2bbe91&amp;type=3#SmallCard" />
+    <ui:Template name="CardPreview" src="project://database/Assets/PreFabs/Cards/CardPreview.uxml?fileID=9197481963319205126&amp;guid=9ef0118a520caa84a9726503e938cae2&amp;type=3#CardPreview" />
+    <ui:Template name="Golds" src="project://database/Assets/PreFabs/Golds.uxml?fileID=9197481963319205126&amp;guid=e7234147dc1e8fc4fbfa2ab08894b42a&amp;type=3#Golds" />
+    <Style src="project://database/Assets/UI%20Toolkit/CollectionSceneHUDStylesheet.uss?fileID=7433441132597879392&amp;guid=bdcf1244bf7cc6e4081c4d8388575ee0&amp;type=3#CollectionSceneHUDStylesheet" />
     <ui:VisualElement name="Container" style="flex-grow: 1; flex-direction: row; padding-top: 10px; padding-right: 10px; padding-bottom: 10px; padding-left: 10px;">
-        <ui:VisualElement name="LeftSide" style="flex-grow: 1; justify-content: flex-start; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px; width: auto; max-width: 400px;">
-            <ui:Label text="My Decks" name="MyDecks" style="align-items: center; justify-content: center; font-size: 30px; -unity-text-align: upper-center; margin-bottom: 10px;" />
-            <ui:VisualElement name="Deck" class="border" style="flex-grow: 1; height: auto; max-height: 100px; justify-content: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 25px; border-top-right-radius: 25px; border-bottom-right-radius: 25px; border-bottom-left-radius: 25px; margin-bottom: 20px;">
-                <ui:Label text="Deck" name="DeckLabel" style="align-items: auto; justify-content: flex-start; align-self: auto; -unity-text-align: upper-center; font-size: 30px;" />
-            </ui:VisualElement>
-            <ui:VisualElement name="Deck" class="border" style="flex-grow: 1; height: auto; max-height: 100px; justify-content: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 25px; border-top-right-radius: 25px; border-bottom-right-radius: 25px; border-bottom-left-radius: 25px; margin-bottom: 20px;">
-                <ui:Label text="Deck" name="DeckLabel" style="align-items: auto; justify-content: flex-start; align-self: auto; -unity-text-align: upper-center; font-size: 30px; margin-bottom: 20px;" />
-            </ui:VisualElement>
-            <ui:VisualElement name="Deck" class="border" style="flex-grow: 1; height: auto; max-height: 100px; justify-content: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 25px; border-top-right-radius: 25px; border-bottom-right-radius: 25px; border-bottom-left-radius: 25px; margin-bottom: 20px;">
-                <ui:Label text="Deck" name="DeckLabel" style="align-items: auto; justify-content: flex-start; align-self: auto; -unity-text-align: upper-center; font-size: 30px;" />
-            </ui:VisualElement>
-            <ui:VisualElement name="Deck" class="border" style="flex-grow: 1; height: auto; max-height: 100px; justify-content: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 25px; border-top-right-radius: 25px; border-bottom-right-radius: 25px; border-bottom-left-radius: 25px; margin-bottom: 20px; align-items: center;">
-                <ui:VisualElement name="PlusIcon" style="flex-grow: 1; background-image: url(&quot;project://database/Assets/Images/Icons/plus.png?fileID=2800000&amp;guid=52650238f87fbcb4bad80abb4489839c&amp;type=3#plus&quot;); max-width: 50px; max-height: 50px; align-items: auto; align-self: auto; height: 50px; width: 50px;" />
-            </ui:VisualElement>
-        </ui:VisualElement>
-        <ui:VisualElement name="MiddleSide" style="flex-grow: 1;">
-            <ui:VisualElement name="Searchbar" class="border" style="flex-grow: 1; width: 1093px; height: 50px; max-height: 50px; padding-top: 10px; padding-right: 40px; padding-bottom: 10px; padding-left: 20px; white-space: normal; align-items: flex-end; flex-direction: row; justify-content: space-between;">
+        <ui:VisualElement name="MiddleSide" style="flex-grow: 1; width: 1530px; max-width: 1530px; padding-top: 90px; padding-left: 10px; padding-right: 0; min-width: 1530px;">
+            <ui:VisualElement name="Searchbar" class="border" style="flex-grow: 1; width: 1510px; height: 50px; max-height: 50px; padding-top: 10px; padding-right: 40px; padding-bottom: 10px; padding-left: 20px; white-space: normal; align-items: flex-end; flex-direction: row; justify-content: space-between; border-top-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; border-bottom-left-radius: 10px;">
                 <ui:TextField placeholder-text="filler text" focusable="false" name="Input" style="-unity-background-image-tint-color: rgba(255, 255, 255, 0); max-width: 100%; width: 90%; opacity: 1;" />
                 <ui:VisualElement name="MagnifyingGlassIcon" style="flex-grow: 1; background-image: url(&quot;project://database/Assets/Images/Icons/magnifying-glass.png?fileID=2800000&amp;guid=8e342eb485a896a40b1f8427b06e761c&amp;type=3#magnifying-glass&quot;); max-width: 30px; max-height: 30px; flex-direction: row; width: 30px; height: 30px;" />
             </ui:VisualElement>
-            <ui:VisualElement name="Filters" style="flex-grow: 1; width: 100%; height: 100px; max-height: 50px; flex-direction: row;">
-                <ui:VisualElement name="FilterIcon" style="flex-grow: 1; width: 50px; height: 50px; max-width: 50px; max-height: 50px; background-image: url(&quot;project://database/Assets/Images/Icons/filter.png?fileID=2800000&amp;guid=c23d5d10bd709334b84bbd230418db25&amp;type=3#filter&quot;);" />
-                <ui:VisualElement name="FactionFilter" style="flex-grow: 1; width: 200px; max-width: 200px; flex-direction: row; align-items: center;">
-                    <ui:VisualElement name="StarIcon" style="flex-grow: 1; background-image: url(&quot;project://database/Assets/Images/Icons/star.png?fileID=2800000&amp;guid=d3768aa68699ef2469f51e250bcb0129&amp;type=3#star&quot;); width: 35px; height: 35px; max-width: 35px; max-height: 35px;" />
-                    <ui:Label text="Faction" name="Faction" />
+            <ui:VisualElement name="Filters" style="flex-grow: 1; width: 100%; height: 100px; max-height: 50px; flex-direction: row; margin-top: 20px; margin-bottom: 10px;">
+                <ui:VisualElement name="FilterIcon" style="flex-grow: 1; width: 50px; height: 50px; max-width: 50px; max-height: 50px; background-image: url(&quot;project://database/Assets/Images/Icons/filter.png?fileID=2800000&amp;guid=c23d5d10bd709334b84bbd230418db25&amp;type=3#filter&quot;); margin-right: 10px;" />
+                <ui:VisualElement name="FactionFilter" style="flex-grow: 1; width: 150px; max-width: 150px; flex-direction: row; align-items: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 25px; border-top-right-radius: 25px; border-bottom-right-radius: 25px; border-bottom-left-radius: 25px; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0); padding-top: 15px; padding-right: 15px; padding-bottom: 15px; padding-left: 15px; margin-right: 10px;">
+                    <ui:VisualElement name="StarIcon" style="flex-grow: 1; background-image: url(&quot;project://database/Assets/Images/Icons/star.png?fileID=2800000&amp;guid=d3768aa68699ef2469f51e250bcb0129&amp;type=3#star&quot;); width: 30px; height: 30px; max-width: 30px; max-height: 30px;" />
+                    <ui:Label text="Faction" name="Faction" style="justify-content: flex-start; width: 70px; -unity-text-align: middle-center; font-size: 20px;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="FactionFilter" style="flex-grow: 1; width: 150px; max-width: 150px; flex-direction: row; align-items: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 25px; border-top-right-radius: 25px; border-bottom-right-radius: 25px; border-bottom-left-radius: 25px; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0); padding-top: 15px; padding-right: 15px; padding-bottom: 15px; padding-left: 15px; margin-right: 10px;">
+                    <ui:VisualElement name="StarIcon" style="flex-grow: 1; background-image: url(&quot;project://database/Assets/Images/Icons/star.png?fileID=2800000&amp;guid=d3768aa68699ef2469f51e250bcb0129&amp;type=3#star&quot;); width: 30px; height: 30px; max-width: 30px; max-height: 30px;" />
+                    <ui:Label text="Faction" name="Faction" style="justify-content: flex-start; width: 70px; -unity-text-align: middle-center; font-size: 20px;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="FactionFilter" style="flex-grow: 1; width: 150px; max-width: 150px; flex-direction: row; align-items: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 25px; border-top-right-radius: 25px; border-bottom-right-radius: 25px; border-bottom-left-radius: 25px; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0); padding-top: 15px; padding-right: 15px; padding-bottom: 15px; padding-left: 15px;">
+                    <ui:VisualElement name="StarIcon" style="flex-grow: 1; background-image: url(&quot;project://database/Assets/Images/Icons/star.png?fileID=2800000&amp;guid=d3768aa68699ef2469f51e250bcb0129&amp;type=3#star&quot;); width: 30px; height: 30px; max-width: 30px; max-height: 30px;" />
+                    <ui:Label text="Faction" name="Faction" style="justify-content: flex-start; width: 70px; -unity-text-align: middle-center; font-size: 20px;" />
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement name="Cards" style="flex-grow: 1; flex-direction: row; flex-wrap: wrap; width: 1510px;">
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+                <ui:Instance template="SmallCard" class="cardInCollection" />
+            </ui:VisualElement>
         </ui:VisualElement>
-        <ui:VisualElement name="RightSide" style="flex-grow: 1;" />
+        <ui:VisualElement name="RightSide" style="flex-grow: 1; width: 360px; max-width: 360px; margin-left: 0; margin-top: 90px; margin-right: 0; margin-bottom: 0; justify-content: space-between;">
+            <ui:VisualElement name="MyDecks" style="flex-grow: 1; justify-content: flex-start; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; width: auto; max-width: none; max-height: none; height: 40px; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; border-bottom-left-radius: 10px; padding-top: 10px; padding-right: 10px; padding-bottom: 10px; padding-left: 10px; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0);">
+                <ui:Label text="My Decks" name="MyDecks" style="align-items: center; justify-content: center; font-size: 25px; -unity-text-align: middle-center; margin-bottom: 10px; -unity-font-style: bold; background-color: rgba(0, 0, 0, 0.4); border-top-left-radius: 20px; border-top-right-radius: 20px; border-bottom-right-radius: 20px; border-bottom-left-radius: 20px; margin-top: 0; margin-right: 0; margin-left: 0; height: 50px;" />
+                <ui:VisualElement name="Deck" class="border" style="flex-grow: 1; height: auto; max-height: 40px; justify-content: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 20px; border-top-right-radius: 20px; border-bottom-right-radius: 20px; border-bottom-left-radius: 20px; margin-bottom: 10px; width: auto;">
+                    <ui:Label text="Deck" name="DeckLabel" style="align-items: auto; justify-content: flex-start; align-self: auto; -unity-text-align: upper-center; font-size: 20px;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Deck" class="border" style="flex-grow: 1; height: auto; max-height: 40px; justify-content: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 20px; border-top-right-radius: 20px; border-bottom-right-radius: 20px; border-bottom-left-radius: 20px; margin-bottom: 10px;">
+                    <ui:Label text="Deck" name="DeckLabel" style="align-items: auto; justify-content: flex-start; align-self: auto; -unity-text-align: upper-center; font-size: 20px;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Deck" class="border" style="flex-grow: 1; height: auto; max-height: 40px; justify-content: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 20px; border-top-right-radius: 20px; border-bottom-right-radius: 20px; border-bottom-left-radius: 20px; margin-bottom: 20px; align-items: center;">
+                    <ui:VisualElement name="PlusIcon" style="flex-grow: 1; background-image: url(&quot;project://database/Assets/Images/Icons/plus.png?fileID=2800000&amp;guid=52650238f87fbcb4bad80abb4489839c&amp;type=3#plus&quot;); max-width: 30px; max-height: 30px; align-items: auto; align-self: auto; height: 30px; width: 30px;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="BottomSide" style="flex-grow: 1; justify-content: flex-end; align-items: stretch; width: 360px; height: 500px; max-height: 500px; margin-top: 5px;">
+                <ui:Instance template="CardPreview" name="CardPreview" style="width: 360px; align-items: center; height: 450px;" />
+                <ui:Instance template="Golds" name="Golds" style="align-items: stretch; width: 360px; margin-top: 10px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
