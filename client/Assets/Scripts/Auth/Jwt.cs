@@ -26,10 +26,14 @@ public static class Jwt
 
     public static string GetToken() => I != null ? I.Token : null;
 
-    public static void SetToken(string token, bool persist = true)
+    public static string GetUsername() => I != null ? I.Username : null;
+    public static string GetRole() => I != null ? I.Role : null;
+    public static string GetUserId() => I != null ? I.UserId : null;
+
+    public static void SetSession(string id, string username, string role, string token, bool persist = true)
     {
         if (I == null) return;
-        I.SetToken(token, persist);
+        I.SetSession(id, username, role, token, persist);
     }
 
     public static bool IsExpired(int leewaySeconds = 0)

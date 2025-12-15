@@ -13,6 +13,14 @@ public class LoginScript : MonoBehaviour
 
     [Header("Network")]
     [SerializeField] private NetworkRef networkRef;
+    [Serializable]
+    private class LoginResponse
+    {
+        public string id;
+        public string username;
+        public string token;
+        public string role;
+    }
 
     private TextField emailField;
     private TextField passwordField;
@@ -155,29 +163,40 @@ public class LoginScript : MonoBehaviour
             if (request.result == UnityWebRequest.Result.Success)
             {
                 string response = request.downloadHandler.text;
-                string token = ExtractTokenFromResponse(response);
+
+                LoginResponse login = null;
+                try { login = JsonUtility.FromJson<LoginResponse>(response); } catch { }
+
+                string token = login?.token;
+
+                if (string.IsNullOrEmpty(token))
+                { 
+                    token = ExtractTokenFromResponse(response);
+                }
 
                 if (string.IsNullOrEmpty(token))
                 {
+                    var mockUser = (email ?? "UnityPlayer").Split('@')[0];
                     token = BuildMockJwt(email, 3600);
+                    login = new LoginResponse { id = "0", username = mockUser, role = "DEV", token = token };
                     Debug.LogWarning("[Login] Pas de token dans la réponse — utilisation d'un JWT mock (dev).");
                 }
 
-                if (!string.IsNullOrEmpty(token))
-                {
-                    Jwt.I.SetToken(token, persist: true);
-                    var client = SignalRClient.Instance ?? new GameObject("NetworkRoot").AddComponent<SignalRClient>();
-                    networkRef?.Bind(client);
-                    client.SetAuthToken(Jwt.I.Token);
-                    var displayName = (email ?? "UnityPlayer").Split('@')[0];
-                    Debug.Log("[Login] Connecting to hub as " + displayName);
-                    var _ = client.ConnectAndIdentify(displayName);
+                Jwt.I.SetSession(login?.id, login?.username, login?.role, token, persist: true);
+                var client = SignalRClient.Instance ?? new GameObject("NetworkRoot").AddComponent<SignalRClient>();
+                networkRef?.Bind(client);
+                client.SetAuthToken(Jwt.I.Token);
 
-                    float start = Time.realtimeSinceStartup;
-                    while (!client.IsConnected && Time.realtimeSinceStartup - start < 5f)
-                        yield return null;
-                }
+                var displayName = !string.IsNullOrEmpty(Jwt.I.Username)
+                    ? Jwt.I.Username
+                    : (email ?? "UnityPlayer").Split('@')[0];
 
+                Debug.Log("[Login] Connecting to hub as " + displayName);
+                var _ = client.ConnectAndIdentify(displayName);
+
+                float start = Time.realtimeSinceStartup;
+                while (!client.IsConnected && Time.realtimeSinceStartup - start < 5f)
+                    yield return null;
                 if (!Jwt.I.IsJwtPresent())
                 {
                     ShowError("Jeton non disponible. Réessayez.");
@@ -193,6 +212,7 @@ public class LoginScript : MonoBehaviour
 
                 LoadingScreen.Load("MainPage", loadMenu: true, unloadMenu: false);
             }
+
             else if (request.responseCode == 401)
             {
                 ShowError("Email ou mot de passe incorrect.");

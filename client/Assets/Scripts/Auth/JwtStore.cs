@@ -7,15 +7,25 @@ using System.Collections.Generic;
 [CreateAssetMenu(fileName = "JwtStore", menuName = "Vortex/Auth/JWT Store")]
 public class JwtStore : ScriptableObject
 {
-    [Header("Current token (read-only)")]
+    [Header("User session (read-only)")]
+    [SerializeField] private string userId;
+    [SerializeField] private string username;
+    [SerializeField] private string role;
     [SerializeField] private string token;
 
-    [Header("Persistence")]
-    [SerializeField] private string playerPrefsKey = "jwt_token";
+    [Header("Persistence keys")]
+    [SerializeField] private string playerPrefsKeyToken = "jwt_token";
+    [SerializeField] private string playerPrefsKeyUserId = "jwt_userId";
+    [SerializeField] private string playerPrefsKeyUsername = "jwt_username";
+    [SerializeField] private string playerPrefsKeyRole = "jwt_role";
 
     private Dictionary<string, object> claims;
 
     public string Token => token;
+    public string UserId => userId;
+    public string Username => username;
+    public string Role => role;
+
     public bool IsJwtPresent() => !string.IsNullOrEmpty(token);
     public bool HasClaim(string key) => claims != null && claims.ContainsKey(key);
 
@@ -34,25 +44,50 @@ public class JwtStore : ScriptableObject
         var expUtc = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
         return (expUtc - DateTime.UtcNow).TotalSeconds;
     }
-
-    public void SetToken(string jwt, bool persist = true)
+    public void SetSession(string id, string username, string role, string jwt, bool persist = true)
     {
+        userId = id;
+        this.username = username;
+        this.role = role;
+
         token = jwt;
         ParseClaims();
-        if (persist) PlayerPrefs.SetString(playerPrefsKey, token);
+
+        if (persist)
+        {
+            PlayerPrefs.SetString(playerPrefsKeyToken, token ?? "");
+            PlayerPrefs.SetString(playerPrefsKeyUserId, userId ?? "");
+            PlayerPrefs.SetString(playerPrefsKeyUsername, this.username ?? "");
+            PlayerPrefs.SetString(playerPrefsKeyRole, this.role ?? "");
+            PlayerPrefs.Save();
+        }
     }
 
     public void Clear(bool removePersist = true)
     {
         token = null;
         claims = null;
-        if (removePersist) PlayerPrefs.DeleteKey(playerPrefsKey);
+        userId = null;
+        username = null;
+        role = null;
+
+        if (removePersist)
+        {
+            PlayerPrefs.DeleteKey(playerPrefsKeyToken);
+            PlayerPrefs.DeleteKey(playerPrefsKeyUserId);
+            PlayerPrefs.DeleteKey(playerPrefsKeyUsername);
+            PlayerPrefs.DeleteKey(playerPrefsKeyRole);
+            PlayerPrefs.Save();
+        }
     }
 
     public bool LoadFromPrefs()
     {
-        if (!PlayerPrefs.HasKey(playerPrefsKey)) return false;
-        token = PlayerPrefs.GetString(playerPrefsKey, "");
+        token = PlayerPrefs.GetString(playerPrefsKeyToken, "");
+        userId = PlayerPrefs.GetString(playerPrefsKeyUserId, "");
+        username = PlayerPrefs.GetString(playerPrefsKeyUsername, "");
+        role = PlayerPrefs.GetString(playerPrefsKeyRole, "");
+
         ParseClaims();
         return !string.IsNullOrEmpty(token);
     }
