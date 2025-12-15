@@ -478,10 +478,10 @@ public class RoomService
             if (room.GameRoom == null) return null;
 
             // Récupère le userId du joueur à la position demandée
-            var members = room.Members.ToList();
+            List<Guid> members = room.Members.ToList();
             if (playerPosition < 1 || playerPosition > members.Count) return null;
 
-            var targetUserId = members[playerPosition - 1];
+            Guid targetUserId = members[playerPosition - 1];
             return room.GameRoom.DrawCards(targetUserId, amount);
         }
     }
@@ -498,8 +498,8 @@ public class RoomService
 
         lock (room)
         {
-            var members = room.Members.ToList();
-            var index = members.IndexOf(userId);
+            List<Guid> members = room.Members.ToList();
+            int index = members.IndexOf(userId);
             return index >= 0 ? index + 1 : null;
         }
     }
