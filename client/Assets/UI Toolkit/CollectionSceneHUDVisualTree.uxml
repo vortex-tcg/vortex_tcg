@@ -1,0 +1,34 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI%20Toolkit/CollectionSceneHUDStylsheet.uss?fileID=7433441132597879392&amp;guid=bdcf1244bf7cc6e4081c4d8388575ee0&amp;type=3#CollectionSceneHUDStylsheet" />
+    <ui:VisualElement name="Container" style="flex-grow: 1; flex-direction: row; padding-top: 10px; padding-right: 10px; padding-bottom: 10px; padding-left: 10px;">
+        <ui:VisualElement name="LeftSide" style="flex-grow: 1; justify-content: flex-start; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px; width: auto; max-width: 400px;">
+            <ui:Label text="My Decks" name="MyDecks" style="align-items: center; justify-content: center; font-size: 30px; -unity-text-align: upper-center; margin-bottom: 10px;" />
+            <ui:VisualElement name="Deck" class="border" style="flex-grow: 1; height: auto; max-height: 100px; justify-content: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 25px; border-top-right-radius: 25px; border-bottom-right-radius: 25px; border-bottom-left-radius: 25px; margin-bottom: 20px;">
+                <ui:Label text="Deck" name="DeckLabel" style="align-items: auto; justify-content: flex-start; align-self: auto; -unity-text-align: upper-center; font-size: 30px;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="Deck" class="border" style="flex-grow: 1; height: auto; max-height: 100px; justify-content: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 25px; border-top-right-radius: 25px; border-bottom-right-radius: 25px; border-bottom-left-radius: 25px; margin-bottom: 20px;">
+                <ui:Label text="Deck" name="DeckLabel" style="align-items: auto; justify-content: flex-start; align-self: auto; -unity-text-align: upper-center; font-size: 30px; margin-bottom: 20px;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="Deck" class="border" style="flex-grow: 1; height: auto; max-height: 100px; justify-content: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 25px; border-top-right-radius: 25px; border-bottom-right-radius: 25px; border-bottom-left-radius: 25px; margin-bottom: 20px;">
+                <ui:Label text="Deck" name="DeckLabel" style="align-items: auto; justify-content: flex-start; align-self: auto; -unity-text-align: upper-center; font-size: 30px;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="Deck" class="border" style="flex-grow: 1; height: auto; max-height: 100px; justify-content: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 25px; border-top-right-radius: 25px; border-bottom-right-radius: 25px; border-bottom-left-radius: 25px; margin-bottom: 20px; align-items: center;">
+                <ui:VisualElement name="PlusIcon" style="flex-grow: 1; background-image: url(&quot;project://database/Assets/Images/Icons/plus.png?fileID=2800000&amp;guid=52650238f87fbcb4bad80abb4489839c&amp;type=3#plus&quot;); max-width: 50px; max-height: 50px; align-items: auto; align-self: auto; height: 50px; width: 50px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="MiddleSide" style="flex-grow: 1;">
+            <ui:VisualElement name="Searchbar" class="border" style="flex-grow: 1; width: 1093px; height: 50px; max-height: 50px; padding-top: 10px; padding-right: 40px; padding-bottom: 10px; padding-left: 20px; white-space: normal; align-items: flex-end; flex-direction: row; justify-content: space-between;">
+                <ui:TextField placeholder-text="filler text" focusable="false" name="Input" style="-unity-background-image-tint-color: rgba(255, 255, 255, 0); max-width: 100%; width: 90%; opacity: 1;" />
+                <ui:VisualElement name="MagnifyingGlassIcon" style="flex-grow: 1; background-image: url(&quot;project://database/Assets/Images/Icons/magnifying-glass.png?fileID=2800000&amp;guid=8e342eb485a896a40b1f8427b06e761c&amp;type=3#magnifying-glass&quot;); max-width: 30px; max-height: 30px; flex-direction: row; width: 30px; height: 30px;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="Filters" style="flex-grow: 1; width: 100%; height: 100px; max-height: 50px; flex-direction: row;">
+                <ui:VisualElement name="FilterIcon" style="flex-grow: 1; width: 50px; height: 50px; max-width: 50px; max-height: 50px; background-image: url(&quot;project://database/Assets/Images/Icons/filter.png?fileID=2800000&amp;guid=c23d5d10bd709334b84bbd230418db25&amp;type=3#filter&quot;);" />
+                <ui:VisualElement name="FactionFilter" style="flex-grow: 1; width: 200px; max-width: 200px; flex-direction: row; align-items: center;">
+                    <ui:VisualElement name="StarIcon" style="flex-grow: 1; background-image: url(&quot;project://database/Assets/Images/Icons/star.png?fileID=2800000&amp;guid=d3768aa68699ef2469f51e250bcb0129&amp;type=3#star&quot;); width: 35px; height: 35px; max-width: 35px; max-height: 35px;" />
+                    <ui:Label text="Faction" name="Faction" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="RightSide" style="flex-grow: 1;" />
+    </ui:VisualElement>
+</ui:UXML>
