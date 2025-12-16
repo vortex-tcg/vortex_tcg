@@ -53,32 +53,30 @@ jobs:
 
             docker logout
 
-      - name: Create .env file locally
-        run: |
-          cat > .env <<EOF
-          AUTH_PORT=${{ secrets.AUTH_PORT }}
-          AUTH_INTERNAL_PORT=${{ secrets.AUTH_INTERNAL_PORT }}
-          GAME_PORT=${{ secrets.GAME_PORT }}
-          GAME_INTERNAL_PORT=${{ secrets.GAME_INTERNAL_PORT }}
-          API_PORT=${{ secrets.API_PORT }}
-          API_INTERNAL_PORT=${{ secrets.API_INTERNAL_PORT }}
-          ASP_NETCORE_ENVIRONMENT=${{ secrets.ASP_NETCORE_ENVIRONMENT }}
-          SONARQUBE_PORT=${{ secrets.SONARQUBE_PORT }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_USERNAME=${{ secrets.DB_USERNAME }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          DB_PORT=${{ secrets.DB_PORT }}
-          CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}
-          EOF
-          - name: Copy .env file to server
-            uses: appleboy/scp-action@v1.0.3
-            with:
-              host: ${{ secrets.EC2_HOST }}
-              username: ${{ secrets.EC2_USER }}
-              key: ${{ secrets.SSH_PRIVATE_KEY }}
-              port: 22
-              source: ".env"
-              target: "/var/www/vortex_tcg/server/.env"
+      - name: Create env file on server
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /var/www/vortex_tcg/server
+            cat > .env << EOF
+            AUTH_PORT=${{ secrets.AUTH_PORT }}
+            AUTH_INTERNAL_PORT=${{ secrets.AUTH_INTERNAL_PORT }}
+            GAME_PORT=${{ secrets.GAME_PORT }}
+            GAME_INTERNAL_PORT=${{ secrets.GAME_INTERNAL_PORT }}
+            API_PORT=${{ secrets.API_PORT }}
+            API_INTERNAL_PORT=${{ secrets.API_INTERNAL_PORT }}
+            ASP_NETCORE_ENVIRONMENT=${{ secrets.ASP_NETCORE_ENVIRONMENT }}
+            SONARQUBE_PORT=${{ secrets.SONARQUBE_PORT }}
+            DB_NAME=${{ secrets.DB_NAME }}
+            DB_USERNAME=${{ secrets.DB_USERNAME }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_PORT=${{ secrets.DB_PORT }}
+            CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}
+            EOF
 
       - name: Start services
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
