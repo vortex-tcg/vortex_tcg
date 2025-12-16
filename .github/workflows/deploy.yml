@@ -27,7 +27,7 @@ jobs:
           script: |
             cd /var/www/vortex_tcg
 
-            git remote set-url origin https://${{ secrets.SSH_PRIVATE_KEY }}@github.com/vortex-tcg/vortex_tcg.git
+            git remote set-url origin git@github.com:vortex-tcg/vortex_tcg.git
 
             git checkout ${{ github.ref_name }}
 
