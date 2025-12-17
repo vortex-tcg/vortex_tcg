@@ -31,7 +31,7 @@ jobs:
 
             git checkout ${{ github.ref_name }}
 
-            git pull origin/${{ github.ref_name }}
+            git pull origin ${{ github.ref_name }}
 
       - name: Pull new Docker images
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
