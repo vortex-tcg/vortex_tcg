@@ -50,7 +50,10 @@
     <div id="log"></div>
     <input id="msg" placeholder="Message" />
     <button id="send">Envoyer</button>
-    <button id="drawCard">Piocher 1 carte</button>
+    <br/>
+    <label>Position joueur: <input id="drawPosition" type="number" value="1" min="1" max="2" style="width:50px"/></label>
+    <label>Nombre: <input id="drawAmount" type="number" value="1" min="1" style="width:50px"/></label>
+    <button id="drawCard">Piocher</button>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8/dist/browser/signalr.min.js"></script>
 <script>
@@ -79,6 +82,8 @@
     const msgInput  = document.getElementById('msg');
     const btnSend   = document.getElementById('send');
     const btnDraw   = document.getElementById('drawCard');
+    const drawPositionInput = document.getElementById('drawPosition');
+    const drawAmountInput = document.getElementById('drawAmount');
 
     let connection, currentKey = null, mode = null; // mode: 'queue' | 'code'
 
@@ -127,9 +132,11 @@
 
             connection.on("Matched", (key, payload) => {
                 currentKey = key;
-                roomTitle.textContent = `Salle ${key}`;
+                roomTitle.textContent = `Salle ${key} (Position: ${payload.position})`;
                 roomDiv.style.display = 'block';
-                append(`Match vs ${payload.opponent}.`);
+                append(`Match vs ${payload.opponent}. Tu es le joueur ${payload.position}.`);
+                // Pré-remplir la position pour DrawCards
+                document.getElementById('drawPosition').value = payload.position;
             });
 
             connection.on("RoomCreated", code => {
@@ -175,7 +182,9 @@
     };
     btnQueue.onclick = async () => {
         mode = 'queue';
-        await connection.invoke("JoinQueue");
+        const deckId = (deckInput.value || "").trim();
+        if (!deckId) return alert("Entre un Deck ID pour le matchmaking.");
+        await connection.invoke("JoinQueue", deckId);
         status.textContent = "Demande de matchmaking envoyée...";
     };
     btnLeaveQueue.onclick = async () => {
@@ -218,7 +227,10 @@
 
     btnDraw.onclick = async () => {
         if (!currentKey) return;
-        await connection.invoke("DrawCards", 1);
+        const position = parseInt(drawPositionInput.value) || 1;
+        const amount = parseInt(drawAmountInput.value) || 1;
+        await connection.invoke("DrawCards", position, amount);
+        append(`Demande de pioche: joueur ${position}, ${amount} carte(s)`);
     };
 </script>
 </body>
