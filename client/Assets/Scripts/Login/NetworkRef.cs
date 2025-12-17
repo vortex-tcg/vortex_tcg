@@ -1,26 +1,55 @@
+using System;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "NetworkRef", menuName = "Vortex/Net/Network Ref")]
 public class NetworkRef : ScriptableObject
 {
-    [SerializeField] private SignalRClient client; 
+    [SerializeField] private SignalRClient client;
+    [NonSerialized] private int playerPosition; 
+    [NonSerialized] private string roomKeyOrCode;
+
+    public int PlayerPosition => playerPosition;
+    public string RoomKeyOrCode => roomKeyOrCode;
+
+    public void SetMatch(string keyOrCode, int pos)
+    {
+        roomKeyOrCode = keyOrCode;
+        playerPosition = pos;
+    }
+
+    public void ResetMatch()
+    {
+        roomKeyOrCode = null;
+        playerPosition = 0;
+    }
 
     public SignalRClient Client
     {
         get
         {
-            if (client != null) return client;
+            if (client != null)
+            {
+                client.BindNetworkRef(this); 
+                return client;
+            }
 
-            client = SignalRClient.Instance ?? Object.FindObjectOfType<SignalRClient>(true);
-            if (client != null) return client;
+            client = SignalRClient.Instance
+                     ?? UnityEngine.Object.FindAnyObjectByType<SignalRClient>(FindObjectsInactive.Include);
 
-            var go = new GameObject("NetworkRoot");
+            if (client != null)
+            {
+                client.BindNetworkRef(this);  
+                return client;
+            }
+
+            GameObject go = new GameObject("NetworkRoot");
             client = go.AddComponent<SignalRClient>();
+            client.BindNetworkRef(this);       
             return client;
         }
     }
 
-    public void Bind(SignalRClient c) => client = c;
 
+    public void Bind(SignalRClient c) => client = c;
     public bool IsReady => client != null && client.IsConnected;
 }
