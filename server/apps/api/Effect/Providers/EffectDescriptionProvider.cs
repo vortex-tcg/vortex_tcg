@@ -23,7 +23,7 @@ namespace api.Effect.Providers
 
         public async Task<EffectDescription> addAsync(EffectDescription entity, CancellationToken ct = default)
         {
-            _db.EffectDescriptions.Add(entity);
+            await _db.EffectDescriptions.AddAsync(entity);
             await _db.SaveChangesAsync(ct);
             return entity;
         }
@@ -36,7 +36,7 @@ namespace api.Effect.Providers
 
         public async Task<bool> deleteAsync(Guid id, CancellationToken ct = default)
         {
-            var tracked = await _db.EffectDescriptions.FirstOrDefaultAsync(e => e.Id == id, ct);
+            EffectDescription tracked = await _db.EffectDescriptions.FirstOrDefaultAsync(e => e.Id == id, ct);
             if (tracked is null) return false;
             _db.EffectDescriptions.Remove(tracked);
             return (await _db.SaveChangesAsync(ct)) > 0;

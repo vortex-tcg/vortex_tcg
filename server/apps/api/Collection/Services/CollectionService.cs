@@ -14,58 +14,58 @@ namespace VortexTCG.Api.Collection.Services
             _provider = provider;
         }
 
-        private static CollectionDTO Map(CollectionModel e) => new()
+        private static CollectionDto Map(CollectionModel e) => new()
         {
             Id = e.Id
         };
 
-        public async Task<ResultDTO<CollectionDTO>> CreateAsync(CollectionCreateDTO input, CancellationToken ct = default)
+        public async Task<ResultDTO<CollectionDto>> CreateAsync(CollectionCreateDto input, CancellationToken ct = default)
         {
             if (input.UserId == Guid.Empty)
-                return new ResultDTO<CollectionDTO> { success = false, statusCode = 400, message = "UserId requis" };
+                return new ResultDTO<CollectionDto> { success = false, statusCode = 400, message = "UserId requis" };
 
-            var entity = new CollectionModel
+            CollectionModel entity = new CollectionModel
             {
                 Id = Guid.NewGuid()
             };
 
             entity = await _provider.AddAsync(entity);
-            return new ResultDTO<CollectionDTO> { success = true, statusCode = 201, message = "Collection créée avec succès", data = Map(entity) };
+            return new ResultDTO<CollectionDto> { success = true, statusCode = 201, message = "Collection créée avec succès", data = Map(entity) };
         }
 
-        public async Task<ResultDTO<CollectionDTO>> GetByIdAsync(Guid id, CancellationToken ct = default)
+        public async Task<ResultDTO<CollectionDto>> GetByIdAsync(Guid id, CancellationToken ct = default)
         {
-            var collection = await _provider.GetByIdAsync(id);
+            CollectionModel collection = await _provider.GetByIdAsync(id);
             if (collection == null)
-                return new ResultDTO<CollectionDTO> { success = false, statusCode = 404, message = "Collection non trouvée" };
-            return new ResultDTO<CollectionDTO> { success = true, statusCode = 200, data = Map(collection) };
+                return new ResultDTO<CollectionDto> { success = false, statusCode = 404, message = "Collection non trouvée" };
+            return new ResultDTO<CollectionDto> { success = true, statusCode = 200, data = Map(collection) };
         }
 
-        public async Task<ResultDTO<CollectionDTO[]>> GetAllAsync(CancellationToken ct = default)
+        public async Task<ResultDTO<CollectionDto[]>> GetAllAsync(CancellationToken ct = default)
         {
-            var collections = await _provider.GetAllAsync();
-            var dtos = collections.ConvertAll(Map).ToArray();
-            return new ResultDTO<CollectionDTO[]> { success = true, statusCode = 200, data = dtos };
+            List<CollectionModel> collections = await _provider.GetAllAsync();
+            CollectionDto[] dtos = collections.ConvertAll(Map).ToArray();
+            return new ResultDTO<CollectionDto[]> { success = true, statusCode = 200, data = dtos };
         }
 
-        public async Task<ResultDTO<CollectionDTO>> UpdateAsync(Guid id, CollectionCreateDTO input, CancellationToken ct = default)
+        public async Task<ResultDTO<CollectionDto>> UpdateAsync(Guid id, CollectionCreateDto input, CancellationToken ct = default)
         {
-            var collection = await _provider.GetByIdAsync(id);
+            CollectionModel collection = await _provider.GetByIdAsync(id);
             if (collection == null)
-                return new ResultDTO<CollectionDTO> { success = false, statusCode = 404, message = "Collection non trouvée" };
+                return new ResultDTO<CollectionDto> { success = false, statusCode = 404, message = "Collection non trouvée" };
 
-            var success = await _provider.UpdateAsync(collection);
+            bool success = await _provider.UpdateAsync(collection);
             if (!success)
-                return new ResultDTO<CollectionDTO> { success = false, statusCode = 500, message = "Erreur lors de la mise à jour" };
-            return new ResultDTO<CollectionDTO> { success = true, statusCode = 200, message = "Collection mise à jour", data = Map(collection) };
+                return new ResultDTO<CollectionDto> { success = false, statusCode = 500, message = "Erreur lors de la mise à jour" };
+            return new ResultDTO<CollectionDto> { success = true, statusCode = 200, message = "Collection mise à jour", data = Map(collection) };
         }
 
-        public async Task<ResultDTO<object>> DeleteAsync(Guid id, CancellationToken ct = default)
+        public async Task<ResultDTO<bool>> DeleteAsync(Guid id, CancellationToken ct = default)
         {
-            var success = await _provider.DeleteAsync(id);
+            bool success = await _provider.DeleteAsync(id);
             if (!success)
-                return new ResultDTO<object> { success = false, statusCode = 404, message = "Collection non trouvée" };
-            return new ResultDTO<object> { success = true, statusCode = 204, message = "Collection supprimée" };
+                return new ResultDTO<bool> { success = false, statusCode = 404, message = "Collection non trouvée" };
+            return new ResultDTO<bool> { success = true, statusCode = 204, message = "Collection supprimée", data = true };
         }
     }
 }

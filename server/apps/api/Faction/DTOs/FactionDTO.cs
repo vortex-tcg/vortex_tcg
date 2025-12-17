@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 namespace VortexTCG.Faction.DTOs
 {
 
-    public class FactionDTO
+    public class FactionDto
     {
         public Guid Id { get; set; }
         public string Label { get; set; } = "";
@@ -12,7 +12,7 @@ namespace VortexTCG.Faction.DTOs
         public string Condition { get; set; } = "";
     }
 
-    public class FactionCardDTO
+    public class FactionCardDto
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = "";
@@ -26,7 +26,7 @@ namespace VortexTCG.Faction.DTOs
         public string CardType { get; set; } = "";
     }
 
-    public class FactionChampionDTO
+    public class FactionChampionDto
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = "";
@@ -35,25 +35,25 @@ namespace VortexTCG.Faction.DTOs
         public string Picture { get; set; } = "";
     }
 
-    public class FactionWithCardsDTO
+    public class FactionWithCardsDto
     {
         public Guid Id { get; set; }
         public string Label { get; set; } = "";
         public string Currency { get; set; } = "";
         public string Condition { get; set; } = "";
-        public List<FactionCardDTO> Cards { get; set; } = new List<FactionCardDTO>();
+        public List<FactionCardDto> Cards { get; set; } = new List<FactionCardDto>();
     }
 
-    public class FactionWithChampionDTO
+    public class FactionWithChampionDto
     {
         public Guid Id { get; set; }
         public string Label { get; set; } = "";
         public string Currency { get; set; } = "";
         public string Condition { get; set; } = "";
-        public FactionChampionDTO? Champion { get; set; } // Un seul champion
+        public FactionChampionDto? Champion { get; set; } // Un seul champion
     }
 
-    public class CreateFactionDTO
+    public class CreateFactionDto
     {
         [Required]
         [StringLength(100)]
@@ -71,7 +71,7 @@ namespace VortexTCG.Faction.DTOs
         public Guid? ChampionId { get; set; } // Un seul champion optionnel
     }
 
-    public class UpdateFactionDTO
+    public class UpdateFactionDto
     {
         [StringLength(100)]
         public string? Label { get; set; }

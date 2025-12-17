@@ -17,25 +17,16 @@ namespace VortexTCG.Api.Card.Controllers
 		[HttpGet]
 
 		public async Task<IActionResult> GetAll() 
-        {
-		    var result = await _service.GetAllAsync();
-            return toActionResult<CardDTO[]>(result);
-        }
+        => toActionResult<CardDto[]>(await _service.GetAllAsync());
 
         [HttpPost]
 
-        public async Task<IActionResult> Create([FromBody] CardCreateDTO dto)
-        {
-            var result = await _service.CreateAsync(dto);
-            return toActionResult(result);   
-        }
+        public async Task<IActionResult> Create([FromBody] CardCreateDto dto)
+        => toActionResult(await _service.CreateAsync(dto));
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
-        {
-            var result = await _service.GetByIdAsync(id);
-            return toActionResult(result);
-        }
+        => toActionResult(await _service.GetByIdAsync(id));
     }
 }
 

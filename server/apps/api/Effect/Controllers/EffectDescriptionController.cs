@@ -21,11 +21,11 @@ namespace api.Effect.Controller
             toActionResult(await _service.getAsync(id, ct));
 
         [HttpPost]
-        public async Task<IActionResult> create([FromBody] EffectDescriptionInputDTO dto, CancellationToken ct) =>
+        public async Task<IActionResult> create([FromBody] EffectDescriptionInputDto dto, CancellationToken ct) =>
             toActionResult(await _service.createAsync(dto, ct));
 
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> update(Guid id, [FromBody] EffectDescriptionInputDTO dto, CancellationToken ct) =>
+        public async Task<IActionResult> update(Guid id, [FromBody] EffectDescriptionInputDto dto, CancellationToken ct) =>
             toActionResult(await _service.updateAsync(id, dto, ct));
 
         [HttpDelete("{id:guid}")]

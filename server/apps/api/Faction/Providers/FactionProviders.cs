@@ -36,10 +36,10 @@ namespace VortexTCG.Faction.Providers {
             return await _db.Champions.AnyAsync(ch => ch.Id == championId);
         }
 
-        public async Task<List<FactionDTO>> GetAllFactions()
+        public async Task<List<FactionDto>> GetAllFactions()
         {
             return await _db.Factions
-                            .Select(f => new FactionDTO
+                            .Select(f => new FactionDto
                             {
                                 Id = f.Id,
                                 Label = f.Label,
@@ -49,11 +49,11 @@ namespace VortexTCG.Faction.Providers {
                             .ToListAsync();
         }
 
-        public async Task<FactionDTO?> GetFactionById(Guid id)
+        public async Task<FactionDto?> GetFactionById(Guid id)
         {
             return await _db.Factions
                             .Where(f => f.Id == id)
-                            .Select(f => new FactionDTO
+                            .Select(f => new FactionDto
                             {
                                 Id = f.Id,
                                 Label = f.Label,
@@ -63,17 +63,17 @@ namespace VortexTCG.Faction.Providers {
                             .SingleOrDefaultAsync();
         }
 
-        public async Task<FactionWithCardsDTO?> GetFactionWithCardsById(Guid id)
+        public async Task<FactionWithCardsDto?> GetFactionWithCardsById(Guid id)
         {
             return await _db.Factions
                             .Where(f => f.Id == id)
-                            .Select(f => new FactionWithCardsDTO
+                            .Select(f => new FactionWithCardsDto
                             {
                                 Id = f.Id,
                                 Label = f.Label,
                                 Currency = f.Currency,
                                 Condition = f.Condition,
-                                Cards = f.Cards.Select(fc => new FactionCardDTO
+                                Cards = f.Cards.Select(fc => new FactionCardDto
                                 {
                                     Id = fc.Card.Id,
                                     Name = fc.Card.Name,
@@ -90,17 +90,17 @@ namespace VortexTCG.Faction.Providers {
                             .SingleOrDefaultAsync();
         }
 
-        public async Task<FactionWithChampionDTO?> GetFactionWithChampionById(Guid id)    
+        public async Task<FactionWithChampionDto?> GetFactionWithChampionById(Guid id)    
         {
             return await _db.Factions
                             .Where(f => f.Id == id)
-                            .Select(f => new FactionWithChampionDTO
+                            .Select(f => new FactionWithChampionDto
                             {
                                 Id = f.Id,
                                 Label = f.Label,
                                 Currency = f.Currency,
                                 Condition = f.Condition,
-                                Champion = f.Champions.Select(champion => new FactionChampionDTO
+                                Champion = f.Champions.Select(champion => new FactionChampionDto
                                 {
                                     Id = champion.Id,
                                     Name = champion.Name,
@@ -112,7 +112,7 @@ namespace VortexTCG.Faction.Providers {
                             .SingleOrDefaultAsync();
         }
 
-        public async Task<(bool Success, FactionDTO? Result, string ErrorMessage)> CreateFaction(CreateFactionDTO createDto)
+        public async Task<(bool Success, FactionDto? Result, string ErrorMessage)> CreateFaction(CreateFactionDto createDto)
         {
             var (cardValidation, invalidCardIds) = await ValidateCardIds(createDto.CardIds);
 
@@ -184,7 +184,7 @@ namespace VortexTCG.Faction.Providers {
 
             await _db.SaveChangesAsync();
 
-            var result = new FactionDTO
+            var result = new FactionDto
             {
                 Id = faction.Id,
                 Label = faction.Label,
@@ -195,7 +195,7 @@ namespace VortexTCG.Faction.Providers {
             return (true, result, string.Empty);
         }
 
-        public async Task<(bool Success, FactionDTO? Result, string ErrorMessage)> UpdateFaction(Guid id, UpdateFactionDTO updateDto)
+        public async Task<(bool Success, FactionDto? Result, string ErrorMessage)> UpdateFaction(Guid id, UpdateFactionDto updateDto)
         {
             var faction = await _db.Factions.FindAsync(id);
             if (faction == null)
@@ -280,7 +280,7 @@ namespace VortexTCG.Faction.Providers {
 
             await _db.SaveChangesAsync();
 
-            var result = new FactionDTO
+            var result = new FactionDto
             {
                 Id = faction.Id,
                 Label = faction.Label,

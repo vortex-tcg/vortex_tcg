@@ -13,33 +13,30 @@ namespace VortexTCG.Api.Collection.Providers
         }
 
         public async Task<List<CollectionModel>> GetAllAsync()
-        {
-            return await _db.Collections.ToListAsync();
-        }
+        => await _db.Collections.ToListAsync();
 
         public async Task<CollectionModel?> GetByIdAsync(Guid id)
-        {
-            return await _db.Collections.FindAsync(id);
-        }
+        => await _db.Collections.FindAsync(id);
 
         public async Task<CollectionModel> AddAsync(CollectionModel collection)
         {
-            _db.Collections.Add(collection);
+            await _db.Collections.AddAsync(collection);
             await _db.SaveChangesAsync();
             return collection;
         }
 
         public async Task<bool> UpdateAsync(CollectionModel collection)
         {
-            var existing = await _db.Collections.FindAsync(collection.Id);
+            CollectionModel existing = await _db.Collections.FindAsync(collection.Id);
             if (existing == null) return false;
+            _db.Collections.Update(collection);
             await _db.SaveChangesAsync();
             return true;
         }
 
         public async Task<bool> DeleteAsync(Guid id)
         {
-            var collection = await _db.Collections.FindAsync(id);
+            CollectionModel collection = await _db.Collections.FindAsync(id);
             if (collection == null) return false;
             _db.Collections.Remove(collection);
             await _db.SaveChangesAsync();
