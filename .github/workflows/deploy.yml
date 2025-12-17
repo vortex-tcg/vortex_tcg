@@ -87,4 +87,4 @@ jobs:
           port: 22
           script: |
             cd /var/www/vortex_tcg/server
-            docker compose -f docker-compose.prod.yaml up -d --remove-orphans
+            docker-compose -f docker-compose.prod.yaml up -d --remove-orphans
