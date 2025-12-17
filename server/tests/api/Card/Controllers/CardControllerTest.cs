@@ -16,7 +16,7 @@ namespace VortexTCG.Tests.Api.Card.Controllers
     {
         private VortexDbContext CreateDb()
         {
-            var options = new DbContextOptionsBuilder<VortexDbContext>()
+            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString())
                 .Options;
             return new VortexDbContext(options);
@@ -24,25 +24,25 @@ namespace VortexTCG.Tests.Api.Card.Controllers
 
         private CardController CreateController(VortexDbContext db)
         {
-            var provider = new CardProvider(db);
-            var service = new CardService(provider);
+            CardProvider provider = new CardProvider(db);
+            CardService service = new CardService(provider);
             return new CardController(service);
         }
 
         [Fact]
         public async Task GetAll_ReturnsOk_WithList()
         {
-            using var db = CreateDb();
-            var controller = CreateController(db);
+            using VortexDbContext db = CreateDb();
+            CardController controller = CreateController(db);
 
             // Seed one card via provider/service
-            var create = await controller.Create(new CardCreateDTO { Name = "Test", Attack = 1, Hp = 1, Price = 1, Description = "d", Picture = "p" });
+            IActionResult create = await controller.Create(new CardCreateDto { Name = "Test", Attack = 1, Hp = 1, Price = 1, Description = "d", Picture = "p" });
             Assert.IsType<ObjectResult>(create);
 
-            var result = await controller.GetAll();
+            IActionResult result = await controller.GetAll();
 
-            var ok = Assert.IsType<ObjectResult>(result);
-            var payload = Assert.IsType<ResultDTO<CardDTO[]>>(ok.Value);
+            ObjectResult ok = Assert.IsType<ObjectResult>(result);
+            ResultDTO<CardDto[]> payload = Assert.IsType<ResultDTO<CardDto[]>>(ok.Value);
             Assert.True(payload.success);
             Assert.NotNull(payload.data);
             Assert.Single(payload.data!);
@@ -52,13 +52,13 @@ namespace VortexTCG.Tests.Api.Card.Controllers
         [Fact]
         public async Task GetById_NotFound_WhenMissing()
         {
-            using var db = CreateDb();
-            var controller = CreateController(db);
+            using VortexDbContext db = CreateDb();
+            CardController controller = CreateController(db);
 
-            var result = await controller.GetById(Guid.NewGuid());
+            IActionResult result = await controller.GetById(Guid.NewGuid());
 
-            var notFound = Assert.IsType<ObjectResult>(result);
-            var payload = Assert.IsType<ResultDTO<CardDTO>>(notFound.Value);
+            ObjectResult notFound = Assert.IsType<ObjectResult>(result);
+            ResultDTO<CardDto> payload = Assert.IsType<ResultDTO<CardDto>>(notFound.Value);
             Assert.False(payload.success);
             Assert.Equal(404, payload.statusCode);
         }
@@ -66,18 +66,18 @@ namespace VortexTCG.Tests.Api.Card.Controllers
         [Fact]
         public async Task GetById_Ok_WhenFound()
         {
-            using var db = CreateDb();
-            var controller = CreateController(db);
+            using VortexDbContext db = CreateDb();
+            CardController controller = CreateController(db);
 
-            var create = await controller.Create(new CardCreateDTO { Name = "Found", Attack = 2, Hp = 3, Price = 4, Description = "desc", Picture = "pic" });
-            var created = Assert.IsType<ObjectResult>(create);
-            var payloadCreate = Assert.IsType<ResultDTO<CardDTO>>(created.Value);
+            IActionResult create = await controller.Create(new CardCreateDto { Name = "Found", Attack = 2, Hp = 3, Price = 4, Description = "desc", Picture = "pic" });
+            ObjectResult created = Assert.IsType<ObjectResult>(create);
+            ResultDTO<CardDto> payloadCreate = Assert.IsType<ResultDTO<CardDto>>(created.Value);
             Assert.True(payloadCreate.success);
 
-            var result = await controller.GetById(payloadCreate.data!.Id);
+            IActionResult result = await controller.GetById(payloadCreate.data!.Id);
 
-            var ok = Assert.IsType<ObjectResult>(result);
-            var payload = Assert.IsType<ResultDTO<CardDTO>>(ok.Value);
+            ObjectResult ok = Assert.IsType<ObjectResult>(result);
+            ResultDTO<CardDto> payload = Assert.IsType<ResultDTO<CardDto>>(ok.Value);
             Assert.True(payload.success);
             Assert.Equal("Found", payload.data!.Name);
         }

@@ -9,7 +9,7 @@ namespace VortexTCG.Faction.Controllers
 
     [ApiController]
     [Route("api/faction")]
-    public class FactionController : ControllerBase
+    public class FactionController : VortexBaseController
     {
         private readonly VortexDbContext _db;
         private readonly IConfiguration _configuration;
@@ -25,67 +25,36 @@ namespace VortexTCG.Faction.Controllers
         // ================= Get all factions =================
         [HttpGet]
         public async Task<IActionResult> GetAllFactions()
-        {
-            var result = await _faction_service.GetAllFactions();
-            return StatusCode(result.statusCode, result);
-        }
+        => toActionResult(await _faction_service.GetAllFactions());
 
         // ================= Get faction by ID =================
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetFactionById(Guid id)
-        {
-            var result = await _faction_service.GetFactionById(id);
-            return StatusCode(result.statusCode, result);
-        }
+        => toActionResult(await _faction_service.GetFactionById(id));
 
         // ================= Get faction with cards by ID =================
         [HttpGet("{id:guid}/cards")]
         public async Task<IActionResult> GetFactionWithCardsById(Guid id)
-        {
-            var result = await _faction_service.GetFactionWithCardsById(id);
-            return StatusCode(result.statusCode, result);
-        }
+        => toActionResult(await _faction_service.GetFactionWithCardsById(id));
 
         // ================= Get faction with champions by ID =================
         [HttpGet("{id:guid}/champions")]
         public async Task<IActionResult> GetFactionWithChampionsById(Guid id)
-        {
-            var result = await _faction_service.GetFactionWithChampionById(id);
-            return StatusCode(result.statusCode, result);
-        }
+        => toActionResult(await _faction_service.GetFactionWithChampionById(id));
 
         // ================= Create faction =================
         [HttpPost]
         public async Task<IActionResult> CreateFaction([FromBody] CreateFactionDTO createDto)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var result = await _faction_service.CreateFaction(createDto);
-            return StatusCode(result.statusCode, result);
-        }
+        => toActionResult(await _faction_service.CreateFaction(createDto));
 
         // ================= Update faction =================
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> UpdateFaction(Guid id, [FromBody] UpdateFactionDTO updateDto)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var result = await _faction_service.UpdateFaction(id, updateDto);
-            return StatusCode(result.statusCode, result);
-        }
+        => toActionResult(await _faction_service.UpdateFaction(id, updateDto));
 
         // ================= Delete faction =================
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteFaction(Guid id)
-        {
-            var result = await _faction_service.DeleteFaction(id);
-            return StatusCode(result.statusCode, result);
-        }
+        => toActionResult(await _faction_service.DeleteFaction(id));
     }
 }

@@ -12,7 +12,7 @@ namespace api.Effect.Services
 
         private static string N(string s) => s?.Trim() ?? string.Empty;
 
-        private static EffectDescriptionDTO Map(EffectDescription e) => new()
+        private static EffectDescriptionDto Map(EffectDescription e) => new()
         {
             Id = e.Id,
             Label = e.Label,
@@ -20,10 +20,10 @@ namespace api.Effect.Services
             Parameter = e.Parameter
         };
 
-        public async Task<ResultDTO<List<EffectDescriptionDTO>>> listAsync(CancellationToken ct = default)
+        public async Task<ResultDTO<List<EffectDescriptionDto>>> listAsync(CancellationToken ct = default)
         {
-            var items = await _provider.listAsync(ct);
-            return new ResultDTO<List<EffectDescriptionDTO>>
+            List<EffectDescription> items = await _provider.listAsync(ct);
+            return new ResultDTO<List<EffectDescriptionDto>>
             {
                 success = true,
                 statusCode = 200,
@@ -31,19 +31,19 @@ namespace api.Effect.Services
             };
         }
 
-        public async Task<ResultDTO<EffectDescriptionDTO>> getAsync(Guid id, CancellationToken ct = default)
+        public async Task<ResultDTO<EffectDescriptionDto>> getAsync(Guid id, CancellationToken ct = default)
         {
-            var entity = await _provider.findByIdAsync(id, ct);
+            EffectDescription entity = await _provider.findByIdAsync(id, ct);
             if (entity is null)
                 return new() { success = false, statusCode = 404, message = "EffectDescription introuvable." };
 
             return new() { success = true, statusCode = 200, data = Map(entity) };
         }
 
-        public async Task<ResultDTO<EffectDescriptionDTO>> createAsync(EffectDescriptionInputDTO input, CancellationToken ct = default)
+        public async Task<ResultDTO<EffectDescriptionDto>> createAsync(EffectDescriptionInputDto input, CancellationToken ct = default)
         {
-            var label = N(input.Label);
-            var description = N(input.Description);
+            string label = N(input.Label);
+            string description = N(input.Description);
 
             if (string.IsNullOrWhiteSpace(label))
                 return new() { success = false, statusCode = 400, message = "Label requis." };
@@ -53,7 +53,7 @@ namespace api.Effect.Services
             if (await _provider.existsByLabelAsync(label, ct))
                 return new() { success = false, statusCode = 409, message = "Un EffectDescription avec ce label existe déjà." };
 
-            var entity = await _provider.addAsync(new EffectDescription
+            EffectDescription entity = await _provider.addAsync(new EffectDescription
             {
                 Id = Guid.NewGuid(),
                 Label = label,
@@ -64,14 +64,14 @@ namespace api.Effect.Services
             return new() { success = true, statusCode = 201, data = Map(entity) };
         }
 
-        public async Task<ResultDTO<EffectDescriptionDTO>> updateAsync(Guid id, EffectDescriptionInputDTO input, CancellationToken ct = default)
+        public async Task<ResultDTO<EffectDescriptionDto>> updateAsync(Guid id, EffectDescriptionInputDto input, CancellationToken ct = default)
         {
-            var current = await _provider.findByIdAsync(id, ct);
+            EffectDescription current = await _provider.findByIdAsync(id, ct);
             if (current is null)
                 return new() { success = false, statusCode = 404, message = "EffectDescription introuvable." };
 
-            var label = N(input.Label);
-            var description = N(input.Description);
+            string label = N(input.Label);
+            string description = N(input.Description);
 
             if (string.IsNullOrWhiteSpace(label))
                 return new() { success = false, statusCode = 400, message = "Label requis." };
@@ -94,11 +94,11 @@ namespace api.Effect.Services
 
         public async Task<ResultDTO<bool>> deleteAsync(Guid id, CancellationToken ct = default)
         {
-            var inUse = await _provider.countEffectsUsingAsync(id, ct);
+            int inUse = await _provider.countEffectsUsingAsync(id, ct);
             if (inUse > 0)
                 return new() { success = false, statusCode = 409, message = "Impossible de supprimer : description utilisée par des effets." };
 
-            var ok = await _provider.deleteAsync(id, ct);
+            bool ok = await _provider.deleteAsync(id, ct);
             if (!ok) return new() { success = false, statusCode = 404, message = "EffectDescription introuvable." };
 
             return new() { success = true, statusCode = 200, data = true };

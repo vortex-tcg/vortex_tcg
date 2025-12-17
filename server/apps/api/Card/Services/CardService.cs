@@ -10,7 +10,7 @@ namespace VortexTCG.Api.Card.Services
     {
         private readonly CardProvider _provider;
         
-        private static CardDTO Map(CardModel e) => new()
+        private static CardDto Map(CardModel e) => new()
         {
             Id = e.Id,
             Name = e.Name
@@ -21,10 +21,10 @@ namespace VortexTCG.Api.Card.Services
             _provider = provider;
         }
 
-        public async Task<ResultDTO<CardDTO[]>> GetAllAsync(CancellationToken ct = default)
+        public async Task<ResultDTO<CardDto[]>> GetAllAsync(CancellationToken ct = default)
         {
             List<CardModel> entities = await _provider.GetAllAsync(ct);
-            ResultDTO<CardDTO[]> result = new ResultDTO<CardDTO[]>
+            ResultDTO<CardDto[]> result = new ResultDTO<CardDto[]>
             {
                 success = true,
                 statusCode = 200,
@@ -33,13 +33,13 @@ namespace VortexTCG.Api.Card.Services
             return result;
         }
 
-        public async Task<ResultDTO<CardDTO>> CreateAsync(CardCreateDTO input, CancellationToken ct = default)
+        public async Task<ResultDTO<CardDto>> CreateAsync(CardCreateDto input, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(input.Name))
-                return new ResultDTO<CardDTO> { success = false, statusCode = 400, message = "Name requis" };
+                return new ResultDTO<CardDto> { success = false, statusCode = 400, message = "Name requis" };
 
             if (await _provider.ExistsByNameAsync(input.Name, ct))
-                return new ResultDTO<CardDTO> { success = false, statusCode = 409, message = "Une carte avec ce nom existe déjà" };
+                return new ResultDTO<CardDto> { success = false, statusCode = 409, message = "Une carte avec ce nom existe déjà" };
 
             CardModel entity = new CardModel
             {
@@ -53,7 +53,7 @@ namespace VortexTCG.Api.Card.Services
             };
             
             entity = await _provider.AddAsync(entity, ct);
-            ResultDTO<CardDTO> created = new ResultDTO<CardDTO>
+            ResultDTO<CardDto> created = new ResultDTO<CardDto>
             {
                 success = true,
                 statusCode = 201,
@@ -63,12 +63,12 @@ namespace VortexTCG.Api.Card.Services
             return created;
         }
 
-        public async Task<ResultDTO<CardDTO>> GetByIdAsync(Guid id, CancellationToken ct = default)
+        public async Task<ResultDTO<CardDto>> GetByIdAsync(Guid id, CancellationToken ct = default)
         {
             CardModel? entity = await _provider.GetByIdAsync(id, ct);
             if (entity is null)
             {
-                ResultDTO<CardDTO> notFound = new ResultDTO<CardDTO>
+                ResultDTO<CardDto> notFound = new ResultDTO<CardDto>
                 {
                     success = false,
                     statusCode = 404,
@@ -76,7 +76,7 @@ namespace VortexTCG.Api.Card.Services
                 };
                 return notFound;
             }
-            ResultDTO<CardDTO> ok = new ResultDTO<CardDTO>
+            ResultDTO<CardDto> ok = new ResultDTO<CardDto>
             {
                 success = true,
                 statusCode = 200,

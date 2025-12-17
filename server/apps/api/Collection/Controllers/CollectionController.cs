@@ -18,37 +18,22 @@ namespace VortexTCG.Api.Collection.Controllers
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
-        {
-            var result = await _service.GetAllAsync();
-            return toActionResult<CollectionDTO[]>(result);
-        }
+        => toActionResult<CollectionDto[]>(await _service.GetAllAsync());
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
-        {
-            var result = await _service.GetByIdAsync(id);
-            return toActionResult(result);
-        }
+        => toActionResult(await _service.GetByIdAsync(id));
 
         [HttpPost]
-        public async Task<IActionResult> Add([FromBody] CollectionCreateDTO dto)
-        {
-            var result = await _service.CreateAsync(dto);
-            return toActionResult(result);
-        }
+        public async Task<IActionResult> Add([FromBody] CollectionCreateDto dto)
+        => toActionResult(await _service.CreateAsync(dto));
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] CollectionCreateDTO dto)
-        {
-            var result = await _service.UpdateAsync(id, dto);
-            return toActionResult(result);
-        }
+        public async Task<IActionResult> Update(Guid id, [FromBody] CollectionCreateDto dto)
+        => toActionResult(await _service.UpdateAsync(id, dto));
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
-        {
-            var result = await _service.DeleteAsync(id);
-            return toActionResult(result);
-        }
+        => toActionResult(await _service.DeleteAsync(id));
     }
 }

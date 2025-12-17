@@ -10,25 +10,19 @@ namespace VortexTCG.Api.Card.Providers
         public CardProvider(VortexDbContext db) => _db = db;
 
         public Task<List<CardModel>> GetAllAsync(CancellationToken ct = default)
-        {
-            return _db.Cards.AsNoTracking().OrderBy(e => e.Name).ToListAsync(ct);
-        }
+        => _db.Cards.AsNoTracking().OrderBy(e => e.Name).ToListAsync(ct);
 
         public async Task<CardModel> AddAsync(CardModel entity, CancellationToken ct = default)
         {
-            _db.Cards.Add(entity);
+            await _db.Cards.AddAsync(entity);
             await _db.SaveChangesAsync(ct);
             return entity;
         }
 
         public async Task<bool> ExistsByNameAsync(string name, CancellationToken ct = default)
-        {
-            return await _db.Cards.AnyAsync(e => e.Name == name, ct);
-        }
+        => await _db.Cards.AnyAsync(e => e.Name == name, ct);
 
         public Task<CardModel?> GetByIdAsync(Guid id, CancellationToken ct = default)
-        {
-            return _db.Cards.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, ct);
-        }
+        => _db.Cards.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, ct);
     }
 }
