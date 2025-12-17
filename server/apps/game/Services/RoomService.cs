@@ -102,7 +102,7 @@ public class RoomService
     /// <param name="userId">ID utilisateur du joueur</param>
     /// <returns>Pseudo du joueur ou pseudo par défaut</returns>
     public string GetName(Guid userId)
-        => _names.TryGetValue(userId, out var n) ? n : $"Player-{userId.ToString()[..8]}";
+        => _names.TryGetValue(userId, out string? n) ? n : $"Player-{userId.ToString()[..8]}";
 
     #endregion
 
@@ -151,7 +151,7 @@ public class RoomService
         }
 
         // Ajout du créateur au salon (lock pour éviter les races sur Members)
-        var room = _rooms[code];
+        Room room = _rooms[code];
         lock (room)
         {
             room.Members.Add(userId);
@@ -190,7 +190,7 @@ public class RoomService
         if (_userToRoom.ContainsKey(userId)) return false;
 
         // Vérifier l'existence du salon
-        if (!_rooms.TryGetValue(code, out var room)) return false;
+        if (!_rooms.TryGetValue(code, out Room? room)) return false;
 
         lock (room)
         {
@@ -217,7 +217,7 @@ public class RoomService
     /// <param name="userId">ID utilisateur du joueur</param>
     /// <returns>Code du salon ou null si le joueur n'est dans aucun salon</returns>
     public string? GetRoomOf(Guid userId)
-        => _userToRoom.TryGetValue(userId, out var c) ? c : null;
+        => _userToRoom.TryGetValue(userId, out string? c) ? c : null;
 
     /// <summary>
     /// Récupère le UserId de l'adversaire d'un joueur.
@@ -226,9 +226,9 @@ public class RoomService
     /// <returns>UserId de l'adversaire ou null si pas d'adversaire/salon</returns>
     public Guid? GetOpponentOf(Guid userId)
     {
-        var code = GetRoomOf(userId);
+        string? code = GetRoomOf(userId);
         if (code is null) return null;
-        if (!_rooms.TryGetValue(code, out var room)) return null;
+        if (!_rooms.TryGetValue(code, out Room? room)) return null;
 
         lock (room)
             return room.Members.FirstOrDefault(id => id != userId);
@@ -255,11 +255,11 @@ public class RoomService
         roomEmpty = false;
 
         // Retirer le mapping userId -> room
-        if (!_userToRoom.TryRemove(userId, out var c)) return;
+        if (!_userToRoom.TryRemove(userId, out string? c)) return;
         code = c;
 
         // Retirer le joueur du salon et vérifier si vide
-        if (_rooms.TryGetValue(c, out var room))
+        if (_rooms.TryGetValue(c, out Room? room))
         {
             lock (room)
             {
@@ -284,9 +284,9 @@ public class RoomService
     /// <returns>Code généré (ex: "F9K7ZQ")</returns>
     private string GenerateCode(int len)
     {
-        var bytes = new byte[len];
+        byte[] bytes = new byte[len];
         _rng.GetBytes(bytes); // RNG cryptographique
-        var chars = new char[len];
+        char[] chars = new char[len];
         for (int i = 0; i < len; i++)
             chars[i] = Alphabet[bytes[i] % Alphabet.Length];
         return new(chars);
@@ -320,8 +320,8 @@ public class RoomService
     /// </remarks>
     public async Task<bool> SetPlayerDeck(Guid userId, Guid deckId)
     {
-        var code = GetRoomOf(userId);
-        if (code is null || !_rooms.TryGetValue(code, out var room)) return false;
+        string? code = GetRoomOf(userId);
+        if (code is null || !_rooms.TryGetValue(code, out Room? room)) return false;
 
         bool needsInitialization = false;
         Guid? user1Id = null, user2Id = null, deck1Id = null, deck2Id = null;
@@ -329,7 +329,7 @@ public class RoomService
         // PHASE 1: Enregistrer les informations du joueur (lock court)
         lock (room)
         {
-            var members = room.Members.ToList();
+            List<Guid> members = room.Members.ToList();
             if (!members.Contains(userId)) return false;
 
             // Déterminer si c'est le joueur 1 (créateur) ou 2 (rejoint)
@@ -361,8 +361,8 @@ public class RoomService
             {
                 // Préparer l'initialisation: copier les valeurs nécessaires
                 needsInitialization = true;
-                user1Id = members[0]; // Créateur
-                user2Id = members[1]; // Rejoint
+                user1Id = members[0];
+                user2Id = members[1];
                 deck1Id = room.User1DeckId.Value;
                 deck2Id = room.User2DeckId.Value;
 
@@ -404,7 +404,7 @@ public class RoomService
     public VortexTCG.Game.Object.Room? GetGameRoom(string code)
     {
         code = code.Trim().ToUpperInvariant();
-        return _rooms.TryGetValue(code, out var room) ? room.GameRoom : null;
+        return _rooms.TryGetValue(code, out Room? room) ? room.GameRoom : null;
     }
 
     /// <summary>
@@ -415,7 +415,7 @@ public class RoomService
     /// <returns>RoomObject ou null</returns>
     public VortexTCG.Game.Object.Room? GetGameRoomByUserId(Guid userId)
     {
-        var code = GetRoomOf(userId);
+        string? code = GetRoomOf(userId);
         return code is not null ? GetGameRoom(code) : null;
     }
 
@@ -427,7 +427,7 @@ public class RoomService
     public bool IsGameReady(string code)
     {
         code = code.Trim().ToUpperInvariant();
-        return _rooms.TryGetValue(code, out var room) && room.IsGameInitialized;
+        return _rooms.TryGetValue(code, out Room? room) && room.IsGameInitialized;
     }
 
     /// <summary>
@@ -446,12 +446,12 @@ public class RoomService
     public (Guid? user1Id, Guid? user2Id, Guid? deck1Id, Guid? deck2Id) GetRoomPlayers(string code)
     {
         code = code.Trim().ToUpperInvariant();
-        if (!_rooms.TryGetValue(code, out var room))
+        if (!_rooms.TryGetValue(code, out Room? room))
             return (null, null, null, null);
 
         lock (room)
         {
-            var members = room.Members.ToList();
+            List<Guid> members = room.Members.ToList();
             if (members.Count == 0) return (null, null, null, null);
 
             Guid? user1 = members.Count > 0 ? members[0] : null;
