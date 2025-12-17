@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using VortexTCG.DataAccess;
+using VortexTCG.Common.Services;
 using VortexTCG.Common.DTO;
 using VortexTCG.Faction.Services;
 using VortexTCG.Faction.DTOs;
@@ -44,12 +45,12 @@ namespace VortexTCG.Faction.Controllers
 
         // ================= Create faction =================
         [HttpPost]
-        public async Task<IActionResult> CreateFaction([FromBody] CreateFactionDTO createDto)
+        public async Task<IActionResult> CreateFaction([FromBody] CreateFactionDto createDto)
         => toActionResult(await _faction_service.CreateFaction(createDto));
 
         // ================= Update faction =================
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> UpdateFaction(Guid id, [FromBody] UpdateFactionDTO updateDto)
+        public async Task<IActionResult> UpdateFaction(Guid id, [FromBody] UpdateFactionDto updateDto)
         => toActionResult(await _faction_service.UpdateFaction(id, updateDto));
 
         // ================= Delete faction =================
