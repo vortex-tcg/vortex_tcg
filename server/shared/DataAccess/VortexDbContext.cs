@@ -29,6 +29,7 @@ namespace VortexTCG.DataAccess
         public DbSet<CollectionChampion> CollectionChampions { get; set; }
         public DbSet<Champion> Champions { get; set; }
         public DbSet<Faction> Factions { get; set; }
+        public DbSet<FactionCard> FactionCards { get; set; }
         public DbSet<CollectionCard> CollectionCards { get; set; }
         public DbSet<DeckCard> DeckCards { get; set; }
         public DbSet<Deck> Decks { get; set; }
@@ -45,7 +46,8 @@ namespace VortexTCG.DataAccess
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // 🔹 Relations spécifiques
+            base.OnModelCreating(modelBuilder);
+
             modelBuilder.Entity<Effect>()
                 .HasOne(c => c.StartCondition)
                 .WithMany(ct => ct.StartEffects)
@@ -87,6 +89,16 @@ namespace VortexTCG.DataAccess
                 .HasConversion<string>()
                 .HasColumnType("varchar(256)");
 
+            modelBuilder.Entity<Friend>()
+                        .HasOne(c => c.FriendUser)
+                        .WithMany(ct => ct.OtherFriends)
+                        .HasForeignKey(c => c.FriendUserId);
+
+            modelBuilder.Entity<Friend>()
+                        .HasOne(c => c.User)
+                        .WithMany(ct => ct.Friends)
+                        .HasForeignKey(c => c.UserId);
+
             modelBuilder.Entity<User>()
                 .Property(p => p.Status)
                 .HasConversion<string>()
@@ -102,7 +114,13 @@ namespace VortexTCG.DataAccess
                 .HasConversion<string>()
                 .HasColumnType("varchar(256)");
 
-            // 🔹 Audit automatique (timestamps & user)
+            modelBuilder.Entity<ActionType>()
+                        .HasOne(a => a.Parent)
+                        .WithMany(a => a.Childs)
+                        .HasForeignKey(a => a.ParentId);
+
+            modelBuilder.Entity<FactionCard>()
+                        .ToTable("FactionCard");
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 if (typeof(AuditableEntity).IsAssignableFrom(entityType.ClrType))
