@@ -22,6 +22,7 @@ namespace DrawDTOs
         public List<DrawnCardDTO> DrawnCards { get; set; } = new();
         public int FatigueCount { get; set; }
         public int BaseFatigue { get; set; }
+        public List<DrawnCardDTO> SentToGraveyard{ get; set; } = new(); 
     }
 
     [Serializable]
@@ -29,6 +30,7 @@ namespace DrawDTOs
     {
         public string PlayerId { get; set; }
         public int CardsDrawnCount { get; set; }
+        public int CardsBurnedCount { get; set; }
         public int FatigueCount { get; set; }
         public int BaseFatigue { get; set; }
     }
