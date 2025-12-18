@@ -35,8 +35,8 @@ public class SignalRClient : MonoBehaviour
     public event Action<string> OnMatched;
     public event Action OnOpponentLeft;
 
-    public event Action<DrawResultForPlayerDTO> OnCardsDrawn;
-    public event Action<DrawResultForOpponentDTO> OnOpponentCardsDrawn;
+    public event Action<DrawResultForPlayerDto> OnCardsDrawn;
+    public event Action<DrawResultForOpponentDto> OnOpponentCardsDrawn;
 
     private readonly ConcurrentQueue<Action> _main = new();
     private void Enqueue(Action a) => _main.Enqueue(a);
@@ -127,7 +127,7 @@ public class SignalRClient : MonoBehaviour
             OnLog?.Invoke("L'adversaire a quitté.");
         }));
 
-        _conn.On<DrawResultForPlayerDTO>("CardsDrawn", r => Enqueue(() =>
+        _conn.On<DrawResultForPlayerDto>("CardsDrawn", r => Enqueue(() =>
         {
             Debug.Log($"[SignalRClient]  CardsDrawn reçu. cards={r?.DrawnCards?.Count ?? -1}");
     		Debug.Log("[RAW CardsDrawn] " + r.ToString());
@@ -135,7 +135,7 @@ public class SignalRClient : MonoBehaviour
             OnCardsDrawn?.Invoke(r);
         }));
 
-        _conn.On<DrawResultForOpponentDTO>("OpponentCardsDrawn", r => Enqueue(() =>
+        _conn.On<DrawResultForOpponentDto>("OpponentCardsDrawn", r => Enqueue(() =>
         {
             OnOpponentCardsDrawn?.Invoke(r);
             OnLog?.Invoke($"OpponentCardsDrawn reçu: {r?.CardsDrawnCount ?? 0} cartes");

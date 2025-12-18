@@ -1,6 +1,9 @@
-public enum CardType
+namespace VortexTCG.Scripts.DTOs
 {
-    GUARD = 0,
-    SPELL = 1,
-    EQUIPMENT = 2
+    public enum CardType
+    {
+        GUARD = 0,
+        SPELL = 1,
+        EQUIPMENT = 2
+    }
 }
