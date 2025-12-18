@@ -15,5 +15,15 @@ namespace VortexTCG.Game.Object
 
             return;
         }
+
+        public int GetCount() => _cards.Count;
+
+        public Card? DrawCard()
+        {
+            if (_cards.Count == 0) return null;
+            Card card = _cards[0];
+            _cards.RemoveAt(0);
+            return card;
+        }
     }
 }
