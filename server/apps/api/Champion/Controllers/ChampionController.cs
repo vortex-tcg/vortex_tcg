@@ -31,11 +31,9 @@ namespace VortexTCG.Api.Champion.Controllers
         /// </summary>
         /// <returns>Un résultat contenant le tableau de tous les champions.</returns>
         [HttpGet]
-        public async Task<IActionResult> GetAll()
-        {
-            ResultDTO<ChampionDTO[]> result = await _service.GetAllAsync();
-            return toActionResult<ChampionDTO[]>(result);
-        }
+        public async Task<IActionResult> GetAll()=>
+            toActionResult(await _service.GetAllAsync());
+        
 
         /// <summary>
         /// Récupère un champion spécifique par son identifiant unique.
@@ -44,11 +42,8 @@ namespace VortexTCG.Api.Champion.Controllers
         /// <param name="id">L'identifiant unique du champion.</param>
         /// <returns>Un résultat contenant les données du champion ou une erreur.</returns>
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
-        {
-            ResultDTO<ChampionDTO> result = await _service.GetByIdAsync(id);
-            return toActionResult<ChampionDTO>(result);
-        }
+        public async Task<IActionResult> GetById(Guid id)=>
+            toActionResult(await _service.GetByIdAsync(id));
 
         /// <summary>
         /// Crée un nouveau champion avec les données fournies.
@@ -57,11 +52,8 @@ namespace VortexTCG.Api.Champion.Controllers
         /// <param name="dto">L'objet de transfert de données contenant les détails de création.</param>
         /// <returns>Un résultat contenant le champion créé ou une erreur de validation.</returns>
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ChampionCreateDTO dto)
-        {
-            ResultDTO<ChampionDTO> result = await _service.CreateAsync(dto);
-            return toActionResult<ChampionDTO>(result);
-        }
+        public async Task<IActionResult> Create([FromBody] ChampionCreateDTO dto)=>
+            toActionResult(await _service.CreateAsync(dto));
 
         /// <summary>
         /// Met à jour un champion existant avec les nouvelles données.
@@ -71,11 +63,8 @@ namespace VortexTCG.Api.Champion.Controllers
         /// <param name="dto">L'objet de transfert de données contenant les détails mis à jour.</param>
         /// <returns>Un résultat contenant le champion mis à jour ou une erreur.</returns>
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] ChampionCreateDTO dto)
-        {
-            ResultDTO<ChampionDTO> result = await _service.UpdateAsync(id, dto);
-            return toActionResult<ChampionDTO>(result);
-        }
+        public async Task<IActionResult> Update(Guid id, [FromBody] ChampionCreateDTO dto)=>
+            toActionResult(await _service.UpdateAsync(id, dto));
 
         /// <summary>
         /// Supprime un champion par son identifiant unique.
@@ -84,10 +73,7 @@ namespace VortexTCG.Api.Champion.Controllers
         /// <param name="id">L'identifiant unique du champion à supprimer.</param>
         /// <returns>Un résultat indiquant le succès ou une erreur 404 s'il n'est pas trouvé.</returns>
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            ResultDTO<object> result = await _service.DeleteAsync(id);
-            return toActionResult<object>(result);
-        }
+        public async Task<IActionResult> Delete(Guid id)=>
+            toActionResult(await _service.DeleteAsync(id));
     }
 }
