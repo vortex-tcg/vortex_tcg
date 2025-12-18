@@ -35,7 +35,7 @@ namespace Tests.Champion
         {
             using VortexDbContext db = CreateDb();
             ChampionController controller = CreateController(db);
-            ChampionCreateDTO dto = new ChampionCreateDTO
+            ChampionCreateDto dto = new ChampionCreateDto
             {
                 Name = "Test Champion",
                 Description = "A test champion for unit testing",
@@ -46,7 +46,7 @@ namespace Tests.Champion
             };
             IActionResult result = await controller.Create(dto);
             ObjectResult created = Assert.IsType<ObjectResult>(result);
-            ResultDTO<ChampionDTO> payload = Assert.IsType<ResultDTO<ChampionDTO>>(created.Value);
+            ResultDTO<ChampionDto> payload = Assert.IsType<ResultDTO<ChampionDto>>(created.Value);
             Assert.True(payload.success);
             Assert.Equal(201, payload.statusCode);
             Assert.NotEqual(Guid.Empty, payload.data.Id);
@@ -59,7 +59,7 @@ namespace Tests.Champion
         {
             using VortexDbContext db = CreateDb();
             ChampionController controller = CreateController(db);
-            ChampionCreateDTO dto = new ChampionCreateDTO
+            ChampionCreateDto dto = new ChampionCreateDto
             {
                 Name = "Test Champion",
                 Description = "A test champion",
@@ -70,10 +70,10 @@ namespace Tests.Champion
             };
             IActionResult createResult = await controller.Create(dto);
             ObjectResult created = Assert.IsType<ObjectResult>(createResult);
-            ResultDTO<ChampionDTO> payloadCreate = Assert.IsType<ResultDTO<ChampionDTO>>(created.Value);
+            ResultDTO<ChampionDto> payloadCreate = Assert.IsType<ResultDTO<ChampionDto>>(created.Value);
             IActionResult getResult = await controller.GetById(payloadCreate.data.Id);
             ObjectResult ok = Assert.IsType<ObjectResult>(getResult);
-            ResultDTO<ChampionDTO> payload = Assert.IsType<ResultDTO<ChampionDTO>>(ok.Value);
+            ResultDTO<ChampionDto> payload = Assert.IsType<ResultDTO<ChampionDto>>(ok.Value);
             Assert.True(payload.success);
             Assert.Equal(payloadCreate.data.Id, payload.data.Id);
             Assert.Equal("Test Champion", payload.data.Name);
@@ -87,7 +87,7 @@ namespace Tests.Champion
             Guid nonExistentId = Guid.NewGuid();
             IActionResult result = await controller.GetById(nonExistentId);
             ObjectResult notFound = Assert.IsType<ObjectResult>(result);
-            ResultDTO<ChampionDTO> payload = Assert.IsType<ResultDTO<ChampionDTO>>(notFound.Value);
+            ResultDTO<ChampionDto> payload = Assert.IsType<ResultDTO<ChampionDto>>(notFound.Value);
             Assert.False(payload.success);
             Assert.Equal(404, payload.statusCode);
         }
@@ -97,7 +97,7 @@ namespace Tests.Champion
         {
             using VortexDbContext db = CreateDb();
             ChampionController controller = CreateController(db);
-            ChampionCreateDTO dto = new ChampionCreateDTO
+            ChampionCreateDto dto = new ChampionCreateDto
             {
                 Name = "Original Champion",
                 Description = "Original description",
@@ -108,8 +108,8 @@ namespace Tests.Champion
             };
             IActionResult createResult = await controller.Create(dto);
             ObjectResult created = Assert.IsType<ObjectResult>(createResult);
-            ResultDTO<ChampionDTO> payloadCreate = Assert.IsType<ResultDTO<ChampionDTO>>(created.Value);
-            ChampionCreateDTO updateDto = new ChampionCreateDTO
+            ResultDTO<ChampionDto> payloadCreate = Assert.IsType<ResultDTO<ChampionDto>>(created.Value);
+            ChampionCreateDto updateDto = new ChampionCreateDto
             {
                 Name = "Updated Champion",
                 Description = "Updated description",
@@ -120,7 +120,7 @@ namespace Tests.Champion
             };
             IActionResult updateResult = await controller.Update(payloadCreate.data.Id, updateDto);
             ObjectResult ok = Assert.IsType<ObjectResult>(updateResult);
-            ResultDTO<ChampionDTO> payload = Assert.IsType<ResultDTO<ChampionDTO>>(ok.Value);
+            ResultDTO<ChampionDto> payload = Assert.IsType<ResultDTO<ChampionDto>>(ok.Value);
             Assert.True(payload.success);
             Assert.Equal("Updated Champion", payload.data.Name);
             Assert.Equal(150, payload.data.HP);
@@ -133,7 +133,7 @@ namespace Tests.Champion
             using VortexDbContext db = CreateDb();
             ChampionController controller = CreateController(db);
             Guid nonExistentId = Guid.NewGuid();
-            ChampionCreateDTO updateDto = new ChampionCreateDTO
+            ChampionCreateDto updateDto = new ChampionCreateDto
             {
                 Name = "Updated Champion",
                 Description = "Updated description",
@@ -144,7 +144,7 @@ namespace Tests.Champion
             };
             IActionResult result = await controller.Update(nonExistentId, updateDto);
             ObjectResult notFound = Assert.IsType<ObjectResult>(result);
-            ResultDTO<ChampionDTO> payload = Assert.IsType<ResultDTO<ChampionDTO>>(notFound.Value);
+            ResultDTO<ChampionDto> payload = Assert.IsType<ResultDTO<ChampionDto>>(notFound.Value);
             Assert.False(payload.success);
             Assert.Equal(404, payload.statusCode);
         }
@@ -154,7 +154,7 @@ namespace Tests.Champion
         {
             using VortexDbContext db = CreateDb();
             ChampionController controller = CreateController(db);
-            ChampionCreateDTO dto = new ChampionCreateDTO
+            ChampionCreateDto dto = new ChampionCreateDto
             {
                 Name = "Test Champion",
                 Description = "A test champion",
@@ -165,14 +165,14 @@ namespace Tests.Champion
             };
             IActionResult createResult = await controller.Create(dto);
             ObjectResult created = Assert.IsType<ObjectResult>(createResult);
-            ResultDTO<ChampionDTO> payloadCreate = Assert.IsType<ResultDTO<ChampionDTO>>(created.Value);
+            ResultDTO<ChampionDto> payloadCreate = Assert.IsType<ResultDTO<ChampionDto>>(created.Value);
             IActionResult deleteResult = await controller.Delete(payloadCreate.data.Id);
             ObjectResult deleted = Assert.IsType<ObjectResult>(deleteResult);
             ResultDTO<object> payload = Assert.IsType<ResultDTO<object>>(deleted.Value);
             Assert.True(payload.success);
             IActionResult getResult = await controller.GetById(payloadCreate.data.Id);
             ObjectResult notFound = Assert.IsType<ObjectResult>(getResult);
-            ResultDTO<ChampionDTO> payloadGet = Assert.IsType<ResultDTO<ChampionDTO>>(notFound.Value);
+            ResultDTO<ChampionDto> payloadGet = Assert.IsType<ResultDTO<ChampionDto>>(notFound.Value);
             Assert.False(payloadGet.success);
             Assert.Equal(404, payloadGet.statusCode);
         }
@@ -195,7 +195,7 @@ namespace Tests.Champion
         {
             using VortexDbContext db = CreateDb();
             ChampionController controller = CreateController(db);
-            ChampionCreateDTO dto1 = new ChampionCreateDTO
+            ChampionCreateDto dto1 = new ChampionCreateDto
             {
                 Name = "Champion One",
                 Description = "First champion",
@@ -204,7 +204,7 @@ namespace Tests.Champion
                 FactionId = Guid.NewGuid(),
                 EffectId = Guid.NewGuid()
             };
-            ChampionCreateDTO dto2 = new ChampionCreateDTO
+            ChampionCreateDto dto2 = new ChampionCreateDto
             {
                 Name = "Champion Two",
                 Description = "Second champion",
@@ -217,7 +217,7 @@ namespace Tests.Champion
             await controller.Create(dto2);
             IActionResult result = await controller.GetAll();
             ObjectResult ok = Assert.IsType<ObjectResult>(result);
-            ResultDTO<ChampionDTO[]> payload = Assert.IsType<ResultDTO<ChampionDTO[]>>(ok.Value);
+            ResultDTO<ChampionDto[]> payload = Assert.IsType<ResultDTO<ChampionDto[]>>(ok.Value);
             Assert.True(payload.success);
             Assert.Equal(2, payload.data.Length);
         }
@@ -229,7 +229,7 @@ namespace Tests.Champion
             ChampionController controller = CreateController(db);
             IActionResult result = await controller.GetAll();
             ObjectResult ok = Assert.IsType<ObjectResult>(result);
-            ResultDTO<ChampionDTO[]> payload = Assert.IsType<ResultDTO<ChampionDTO[]>>(ok.Value);
+            ResultDTO<ChampionDto[]> payload = Assert.IsType<ResultDTO<ChampionDto[]>>(ok.Value);
             Assert.True(payload.success);
             Assert.Empty(payload.data);
         }
@@ -239,7 +239,7 @@ namespace Tests.Champion
         {
             using VortexDbContext db = CreateDb();
             ChampionController controller = CreateController(db);
-            ChampionCreateDTO dto = new ChampionCreateDTO
+            ChampionCreateDto dto = new ChampionCreateDto
             {
                 Name = "Zero HP Champion",
                 Description = "Champion with zero HP",
@@ -250,7 +250,7 @@ namespace Tests.Champion
             };
             IActionResult result = await controller.Create(dto);
             ObjectResult created = Assert.IsType<ObjectResult>(result);
-            ResultDTO<ChampionDTO> payload = Assert.IsType<ResultDTO<ChampionDTO>>(created.Value);
+            ResultDTO<ChampionDto> payload = Assert.IsType<ResultDTO<ChampionDto>>(created.Value);
             Assert.True(payload.success);
             Assert.Equal(0, payload.data.HP);
         }
@@ -260,7 +260,7 @@ namespace Tests.Champion
         {
             using VortexDbContext db = CreateDb();
             ChampionController controller = CreateController(db);
-            ChampionCreateDTO dto = new ChampionCreateDTO
+            ChampionCreateDto dto = new ChampionCreateDto
             {
                 Name = "High HP Champion",
                 Description = "Champion with high HP",
@@ -271,7 +271,7 @@ namespace Tests.Champion
             };
             IActionResult result = await controller.Create(dto);
             ObjectResult created = Assert.IsType<ObjectResult>(result);
-            ResultDTO<ChampionDTO> payload = Assert.IsType<ResultDTO<ChampionDTO>>(created.Value);
+            ResultDTO<ChampionDto> payload = Assert.IsType<ResultDTO<ChampionDto>>(created.Value);
             Assert.True(payload.success);
             Assert.Equal(9999, payload.data.HP);
         }

@@ -28,11 +28,11 @@ namespace VortexTCG.Api.Champion.Services
 		/// Retourne une liste complète avec le nombre de champions trouvés.
 		/// </summary>
 		/// <returns>Un résultat contenant le tableau des DTOs de champions.</returns>
-		public async Task<ResultDTO<ChampionDTO[]>> GetAllAsync()
+		public async Task<ResultDTO<ChampionDto[]>> GetAllAsync()
 		{
 			List<ChampionModel> champions = await Task.Run(() => _provider.Query().ToList());
-			ChampionDTO[] dtos = champions.Select(c => ToDTO(c)).ToArray();
-			return new ResultDTO<ChampionDTO[]>
+			ChampionDto[] dtos = champions.Select(c => ToDTO(c)).ToArray();
+			return new ResultDTO<ChampionDto[]>
 			{
 				success = true,
 				statusCode = 200,
@@ -47,12 +47,12 @@ namespace VortexTCG.Api.Champion.Services
 		/// </summary>
 		/// <param name="id">L'identifiant unique du champion.</param>
 		/// <returns>Un résultat contenant le DTO du champion ou une erreur.</returns>
-		public async Task<ResultDTO<ChampionDTO>> GetByIdAsync(Guid id)
+		public async Task<ResultDTO<ChampionDto>> GetByIdAsync(Guid id)
 		{
 			ChampionModel? champion = await _provider.GetByIdAsync(id);
 			if (champion == null)
 			{
-				return new ResultDTO<ChampionDTO>
+				return new ResultDTO<ChampionDto>
 				{
 					success = false,
 					statusCode = 404,
@@ -60,7 +60,7 @@ namespace VortexTCG.Api.Champion.Services
 					data = null
 				};
 			}
-			return new ResultDTO<ChampionDTO>
+			return new ResultDTO<ChampionDto>
 			{
 				success = true,
 				statusCode = 200,
@@ -75,11 +75,11 @@ namespace VortexTCG.Api.Champion.Services
 		/// </summary>
 		/// <param name="dto">L'objet de transfert de données pour la création.</param>
 		/// <returns>Un résultat contenant le nouveau champion ou les erreurs de validation.</returns>
-		public async Task<ResultDTO<ChampionDTO>> CreateAsync(ChampionCreateDTO dto)
+		public async Task<ResultDTO<ChampionDto>> CreateAsync(ChampionCreateDto dto)
 		{
 			if (string.IsNullOrWhiteSpace(dto.Name))
 			{
-				return new ResultDTO<ChampionDTO>
+				return new ResultDTO<ChampionDto>
 				{
 					success = false,
 					statusCode = 400,
@@ -91,7 +91,7 @@ namespace VortexTCG.Api.Champion.Services
 			ChampionModel? existingChampion = await _provider.GetByNameAsync(dto.Name);
 			if (existingChampion != null)
 			{
-				return new ResultDTO<ChampionDTO>
+				return new ResultDTO<ChampionDto>
 				{
 					success = false,
 					statusCode = 409,
@@ -117,12 +117,12 @@ namespace VortexTCG.Api.Champion.Services
 
 			if (validationErrors.Count == 0)
 			{
-				if (!await _provider.FactionExistsAsync(dto.FactionId))
+				if (!await _provider.FactionExistsAsync(dto.FactionId ?? Guid.Empty))
 				{
 					validationErrors.Add($"Invalid FactionId: '{dto.FactionId}' not found.");
 				}
 
-				if (!await _provider.EffectExistsAsync(dto.EffectId))
+				if (!await _provider.EffectExistsAsync(dto.EffectId ?? Guid.Empty))
 				{
 					validationErrors.Add($"Invalid EffectId: '{dto.EffectId}' not found.");
 				}
@@ -130,7 +130,7 @@ namespace VortexTCG.Api.Champion.Services
 
 			if (validationErrors.Count > 0)
 			{
-				return new ResultDTO<ChampionDTO>
+				return new ResultDTO<ChampionDto>
 				{
 					success = false,
 					statusCode = 400,
@@ -144,14 +144,14 @@ namespace VortexTCG.Api.Champion.Services
 				Id = Guid.NewGuid(),
 				Name = dto.Name,
 				Description = dto.Description,
-				HP = dto.HP,
+				HP = dto.HP ?? 0,
 				Picture = dto.Picture,
-                FactionId = dto.FactionId,
-				EffectId = dto.EffectId
+				FactionId = dto.FactionId ?? Guid.Empty,
+				EffectId = dto.EffectId ?? Guid.Empty
 			};
 
 			await _provider.AddAsync(champion);
-			return new ResultDTO<ChampionDTO>
+			return new ResultDTO<ChampionDto>
 			{
 				success = true,
 				statusCode = 201,
@@ -167,12 +167,12 @@ namespace VortexTCG.Api.Champion.Services
 		/// <param name="id">L'identifiant unique du champion à mettre à jour.</param>
 		/// <param name="dto">L'objet de transfert de données avec les nouvelles informations.</param>
 		/// <returns>Un résultat contenant le champion mis à jour ou une erreur.</returns>
-		public async Task<ResultDTO<ChampionDTO>> UpdateAsync(Guid id, ChampionCreateDTO dto)
+		public async Task<ResultDTO<ChampionDto>> UpdateAsync(Guid id, ChampionCreateDto dto)
 		{
 			ChampionModel? champion = await _provider.GetByIdAsync(id);
 			if (champion == null)
 			{
-				return new ResultDTO<ChampionDTO>
+				return new ResultDTO<ChampionDto>
 				{
 					success = false,
 					statusCode = 404,
@@ -183,7 +183,7 @@ namespace VortexTCG.Api.Champion.Services
 
 			if (string.IsNullOrWhiteSpace(dto.Name))
 			{
-				return new ResultDTO<ChampionDTO>
+				return new ResultDTO<ChampionDto>
 				{
 					success = false,
 					statusCode = 400,
@@ -194,13 +194,13 @@ namespace VortexTCG.Api.Champion.Services
 
 			champion.Name = dto.Name;
 			champion.Description = dto.Description;
-			champion.HP = dto.HP;
+			champion.HP = dto.HP ?? 0;
 			champion.Picture = dto.Picture;
-			champion.FactionId = dto.FactionId;
-			champion.EffectId = dto.EffectId;
+			champion.FactionId = dto.FactionId ?? Guid.Empty;
+			champion.EffectId = dto.EffectId ?? Guid.Empty;
 
 			await _provider.UpdateAsync(champion);
-			return new ResultDTO<ChampionDTO>
+			return new ResultDTO<ChampionDto>
 			{
 				success = true,
 				statusCode = 200,
@@ -240,9 +240,9 @@ namespace VortexTCG.Api.Champion.Services
 			};
 		}
 
-		private static ChampionDTO ToDTO(ChampionModel champion)
+		private static ChampionDto ToDTO(ChampionModel champion)
 		{
-			return new ChampionDTO
+			return new ChampionDto
 			{
 				Id = champion.Id,
 				Name = champion.Name,
