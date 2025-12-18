@@ -9,28 +9,29 @@ namespace VortexTCG.Script.MatchScene {
     {
         [Header("UI Toolkit")]
         [SerializeField] private UIDocument boardDocument;
-    
+
         private const string engageToken = "engaged";
-    
+        private const string attackOrderToken = "AttackOrder"
+
         private VisualElement p1BoardRoot;
         private readonly List<VisualElement> selectedCards = new List<VisualElement>();
-    
+
         private void Start()
         {
             if (boardDocument == null)
                 boardDocument = GetComponent<UIDocument>();
-    
+
             VisualElement root = boardDocument.rootVisualElement;
             p1BoardRoot = root.Q<VisualElement>("P1BoardCards");
-    
+
             RegisterAllExistingCards();
-    
+
             PhaseManager.Instance.OnEnterAttack += OnEnterAttackPhase;
             PhaseManager.Instance.OnEnterStandBy += OnEndDefensePhase;
-    
+
             Debug.Log("AttackManager subscribed to phase events");
         }
-    
+
         private void OnDestroy()
         {
             if (PhaseManager.Instance != null)
@@ -39,17 +40,17 @@ namespace VortexTCG.Script.MatchScene {
                 PhaseManager.Instance.OnEnterStandBy -= OnEndDefensePhase;
             }
         }
-    
+
         private void OnEnterAttackPhase()
         {
             ClearSelections();
         }
-    
+
         private void OnEndDefensePhase()
         {
             ClearSelections();
         }
-    
+
         private void RegisterAllExistingCards()
         {
             List<VisualElement> allSlots = p1BoardRoot.Query<VisualElement>(className: "P1Slot").ToList();
@@ -63,72 +64,72 @@ namespace VortexTCG.Script.MatchScene {
                 });
             }
         }
-    
+
         public void RegisterCard(VisualElement card)
         {
             if (!card.ClassListContains("small-card"))
                 return;
             if (card.userData is bool alreadyRegistered && alreadyRegistered)
                 return;
-    
+
             card.userData = true;
-    
+
             card.RegisterCallback<ClickEvent>(ClickEvent =>
             {
                 if (PhaseManager.Instance.CurrentPhase != GamePhase.Attack)
                     return;
-    
+
                 if (card.parent == null || card.parent != p1BoardRoot && !p1BoardRoot.Contains(card))
                     return;
-    
+
                 ToggleCard(card);
             });
         }
-    
+
         private void ToggleCard(VisualElement card)
         {
             if (card == null || card.parent == null || card.parent.childCount == 0)
                 return;
-    
+
             if (selectedCards.Contains(card))
                 DeselectCard(card);
             else
                 SelectCard(card);
-    
+
             UpdateAttackOrderLabels();
         }
-    
+
         private void SelectCard(VisualElement card)
         {
             selectedCards.Add(card);
             if (!card.ClassListContains(engageToken))
                 card.AddToClassList(engageToken);
-    
-            Label orderLabel = card.Q<Label>("AttackOrder");
+
+            Label orderLabel = card.Q<Label>(attackOrderToken);
             if (orderLabel != null)
                 orderLabel.style.display = DisplayStyle.Flex;
         }
-    
+
         private void DeselectCard(VisualElement card)
         {
             selectedCards.Remove(card);
             if (card.ClassListContains(engageToken))
                 card.RemoveFromClassList(engageToken);
-    
-            Label orderLabel = card.Q<Label>("AttackOrder");
+
+            Label orderLabel = card.Q<Label>(attackOrderToken);
             if (orderLabel != null)
             {
                 orderLabel.text = "";
                 orderLabel.style.display = DisplayStyle.None;
             }
         }
-    
+
         private void UpdateAttackOrderLabels()
         {
             for (int i = 0; i < selectedCards.Count; i++)
             {
                 VisualElement card = selectedCards[i];
-                Label orderLabel = card.Q<Label>("AttackOrder");
+                Label orderLabel = card.Q<Label>(attackOrderToken);
                 if (orderLabel != null)
                 {
                     orderLabel.text = (i + 1).ToString();
@@ -136,24 +137,24 @@ namespace VortexTCG.Script.MatchScene {
                 }
             }
         }
-    
+
         private void ClearSelections()
         {
             foreach (VisualElement card in selectedCards)
             {
                 if (card.ClassListContains(engageToken))
                     card.RemoveFromClassList(engageToken);
-    
-                Label orderLabel = card.Q<Label>("AttackOrder");
+
+                Label orderLabel = card.Q<Label>(attackOrderToken);
                 if (orderLabel != null)
                 {
                     orderLabel.text = "";
                     orderLabel.style.display = DisplayStyle.None;
                 }
             }
-    
+
             selectedCards.Clear();
         }
-    
+
     }
 }

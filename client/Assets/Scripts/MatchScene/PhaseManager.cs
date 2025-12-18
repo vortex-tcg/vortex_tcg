@@ -65,6 +65,8 @@ namespace VortexTCG.Script.MatchScene {
                 case GamePhase.StandBy: OnEnterStandBy?.Invoke(); break;
                 case GamePhase.Attack: OnEnterAttack?.Invoke(); break;
                 case GamePhase.Defense: OnEnterDefense?.Invoke(); break;
+                default:
+                    OnEnterStandBy?.Invoke();
             }
 
             UpdateIcons(CurrentPhase);
