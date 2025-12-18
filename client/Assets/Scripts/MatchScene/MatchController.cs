@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 public class MatchController : MonoBehaviour
 {
     [SerializeField] private HandManager handManager;
+    [SerializeField] private GraveyardManager graveyardManager;
     [SerializeField] private int initialHandSize = 5;
     [SerializeField] private NetworkRef networkRef;
     private SignalRClient client;
@@ -106,16 +107,20 @@ public class MatchController : MonoBehaviour
         int count = result?.DrawnCards?.Count ?? -1;
         Debug.Log($"[MatchController] CardsDrawn received. count={count}");
 
-        if (result?.DrawnCards == null || handManager == null) return;
+        if ( handManager == null) return;
 
+        if (result?.SentToGraveyard != null && result.SentToGraveyard.Count > 0)
+            graveyardManager?.AddCards(result.SentToGraveyard);
         HandUpdateMode mode = _pendingHandModes.Count > 0
             ? _pendingHandModes.Dequeue()
             : HandUpdateMode.Append;
-
-        if (mode == HandUpdateMode.Replace)
-            handManager.SetHand(result.DrawnCards);
-        else
-            handManager.AddCards(result.DrawnCards);
+        if (result?.DrawnCards != null)
+        {
+            if (mode == HandUpdateMode.Replace)
+                handManager.SetHand(result.DrawnCards);
+            else
+                handManager.AddCards(result.DrawnCards);
+        }
         if (!_startStandbyBonusDone
             && mode == HandUpdateMode.Replace
             && PhaseManager.Instance != null

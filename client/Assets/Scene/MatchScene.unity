@@ -134,6 +134,7 @@ GameObject:
   - component: {fileID: 208303043}
   - component: {fileID: 208303044}
   - component: {fileID: 208303045}
+  - component: {fileID: 208303046}
   m_Layer: 5
   m_Name: HUD
   m_TagString: Untagged
@@ -241,6 +242,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   boardDocument: {fileID: 208303041}
+--- !u!114 &208303046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 208303038}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 677e58bdf9f96224390a222f379fb5af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &960676988
 GameObject:
   m_ObjectHideFlags: 0
@@ -514,9 +527,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   handManager: {fileID: 208303042}
+  graveyardManager: {fileID: 208303046}
   initialHandSize: 5
   networkRef: {fileID: 11400000, guid: adba553b1733d8841aca87392be0c551, type: 2}
-  matchRef: {fileID: 11400000, guid: 08b77d8279cd0f04480da0cc1cb5b7c9, type: 2}
 --- !u!4 &1577553663
 Transform:
   m_ObjectHideFlags: 0
