@@ -15,7 +15,6 @@ namespace VortexTCG.Script.MatchScene {
 
         private VisualElement handZone;
         private VisualElement previewZone;
-        private VisualElement boardZone;
 
         private List<VisualElement> boardSlots = new List<VisualElement>();
         private List<VisualElement> enemySlots = new List<VisualElement>();
