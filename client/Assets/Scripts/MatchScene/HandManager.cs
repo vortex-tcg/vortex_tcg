@@ -21,10 +21,10 @@ public class HandManager : MonoBehaviour
 
     private List<VisualElement> boardSlots = new List<VisualElement>();
     private List<VisualElement> enemySlots = new List<VisualElement>();
-    private List<DrawnCardDTO> playerHand = new List<DrawnCardDTO>();
+    private List<DrawnCardDto> playerHand = new List<DrawnCardDto>();
 
     private VisualElement draggedElement;
-    private DrawnCardDTO draggedCard;
+    private DrawnCardDto draggedCard;
     private bool isDragging;
     private Vector2 dragOffset;
 
@@ -68,31 +68,31 @@ public class HandManager : MonoBehaviour
             return;
     }
 
-    public void SetHand(List<DrawnCardDTO> cards)
+    public void SetHand(List<DrawnCardDto> cards)
     {
         Debug.Log($"[HandManager] SetHand called. cards={(cards == null ? "NULL" : cards.Count.ToString())}");
 
-        playerHand = cards ?? new List<DrawnCardDTO>();
+        playerHand = cards ?? new List<DrawnCardDto>();
         GenerateHand(playerHand);
         ClearPreview();
 
         Debug.Log($"[HandManager] Hand UI generated. children={handZone?.childCount}");
     }
 
-    public void AddCards(List<DrawnCardDTO> newCards)
+    public void AddCards(List<DrawnCardDto> newCards)
     {
         Debug.Log($"[HandManager] AddCards called. cards={(newCards == null ? "NULL" : newCards.Count.ToString())}");
 
         if (newCards == null || newCards.Count == 0) return;
 
-        if (playerHand == null) playerHand = new List<DrawnCardDTO>();
+        if (playerHand == null) playerHand = new List<DrawnCardDto>();
         playerHand.AddRange(newCards);
 
         GenerateHand(playerHand);
         ClearPreview();
     }
 
-    private void GenerateHand(List<DrawnCardDTO> cards)
+    private void GenerateHand(List<DrawnCardDto> cards)
     {
         if (handZone == null)
         {
@@ -104,7 +104,7 @@ public class HandManager : MonoBehaviour
 
         handZone.Clear();
 
-        foreach (DrawnCardDTO card in cards)
+        foreach (DrawnCardDto card in cards)
         {
             VisualElement cardElement = SmallCard.Instantiate();
             if (cardElement == null) continue;
@@ -129,7 +129,7 @@ public class HandManager : MonoBehaviour
         }
     }
 
-    private void ShowPreview(DrawnCardDTO card)
+    private void ShowPreview(DrawnCardDto card)
     {
         previewZone.Clear();
         VisualElement previewCard = CardPreview.Instantiate();
@@ -162,13 +162,13 @@ public class HandManager : MonoBehaviour
             label.text = value;
     }
 
-    private void RemoveFromHand(DrawnCardDTO card)
+    private void RemoveFromHand(DrawnCardDto card)
     {
         if (card == null || playerHand == null) return;
         playerHand.RemoveAll(c => c.GameCardId == card.GameCardId);
     }
 
-    private void StartDrag(VisualElement cardElement, DrawnCardDTO card, PointerDownEvent e)
+    private void StartDrag(VisualElement cardElement, DrawnCardDto card, PointerDownEvent e)
     {
         draggedElement = cardElement;
         draggedCard = card;

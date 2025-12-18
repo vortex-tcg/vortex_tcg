@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-
+using VortexTCG.Scripts.DTOs;
 namespace DrawDTOs
 {
     [Serializable]
-    public class DrawnCardDTO
+    public class DrawnCardDto
     {
         public string Id { get; set; }           
         public int GameCardId { get; set; }
@@ -17,16 +17,16 @@ namespace DrawDTOs
     }
 
     [Serializable]
-    public class DrawResultForPlayerDTO
+    public class DrawResultForPlayerDto
     {
-        public List<DrawnCardDTO> DrawnCards { get; set; } = new();
+        public List<DrawnCardDto> DrawnCards { get; set; } = new();
         public int FatigueCount { get; set; }
         public int BaseFatigue { get; set; }
-        public List<DrawnCardDTO> SentToGraveyard{ get; set; } = new(); 
+        public List<DrawnCardDto> SentToGraveyard{ get; set; } = new(); 
     }
 
     [Serializable]
-    public class DrawResultForOpponentDTO
+    public class DrawResultForOpponentDto
     {
         public string PlayerId { get; set; }
         public int CardsDrawnCount { get; set; }
