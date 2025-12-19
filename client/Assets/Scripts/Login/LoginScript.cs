@@ -1,6 +1,5 @@
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
+using UnityEngine.UIElements;
 using UnityEngine.Networking;
 using System.Collections;
 using System.Text;
@@ -9,26 +8,51 @@ using System;
 
 public class LoginScript : MonoBehaviour
 {
-    [Header("UI")]
-    public TMP_InputField emailField;
-    public TMP_InputField passwordField;
-    public TMP_Text emailErrorText;
-    public Button loginButton;
+    [Header("UI Toolkit")]
+    [SerializeField] private UIDocument uiDocument;
+
+    [Header("Network")]
     [SerializeField] private NetworkRef networkRef;
+
+    private TextField emailField;
+    private TextField passwordField;
+    private Label emailErrorLabel;
+    private Button loginButton;
+    private Button togglePasswordButton;
 
     private bool passwordVisible = false;
     private bool isSubmitting = false;
 
-    public void TogglePasswordVisibility()
+    private void OnEnable()
     {
-        passwordVisible = !passwordVisible;
-        passwordField.contentType = passwordVisible
-            ? TMP_InputField.ContentType.Standard
-            : TMP_InputField.ContentType.Password;
-        passwordField.ForceLabelUpdate();
+        var root = uiDocument.rootVisualElement;
+
+        emailField = root.Q<TextField>("UsernameField");
+        passwordField = root.Q<TextField>("PasswordField");
+        emailErrorLabel = root.Q<Label>("ErrorLabel");
+        loginButton = root.Q<Button>("LoginButton");
+        togglePasswordButton = root.Q<Button>("TogglePasswordButton");
+
+        if (passwordField != null)
+            passwordField.isPasswordField = true;
+
+        if (emailField != null)
+            emailField.RegisterValueChangedCallback(evt => UpdateLoginButtonState());
+
+        if (passwordField != null)
+            passwordField.RegisterValueChangedCallback(evt => UpdateLoginButtonState());
+
+        if (loginButton != null)
+            loginButton.clicked += OnLoginClicked;
+
+        if (togglePasswordButton != null)
+            togglePasswordButton.clicked += TogglePasswordVisibility;
+
+        HideError();
+        UpdateLoginButtonState();
     }
 
-    private void Start()
+    private void OnDisable()
     {
         UpdateLoginButtonState();
 
@@ -42,7 +66,7 @@ public class LoginScript : MonoBehaviour
             loginButton.onClick.AddListener(() => StartCoroutine(Login()));
     }
 
-    private bool IsValidEmail(string email)
+    private void TogglePasswordVisibility()
     {
         string pattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
         return Regex.IsMatch(email ?? string.Empty, pattern);
@@ -55,7 +79,7 @@ public class LoginScript : MonoBehaviour
 
         if (isSubmitting)
         {
-            loginButton.interactable = false;
+            loginButton.SetEnabled(false);
             return;
         }
 
@@ -70,6 +94,7 @@ public class LoginScript : MonoBehaviour
     {
         isSubmitting = true;
         UpdateLoginButtonState();
+        HideError();
 
         AppConfig cfg = ConfigLoader.Load();
         string baseUrl = (cfg != null ? cfg.apiBaseUrl : string.Empty) ?? string.Empty;
@@ -77,7 +102,7 @@ public class LoginScript : MonoBehaviour
 
         if (string.IsNullOrEmpty(baseUrl))
         {
-            emailErrorText.text = "Configuration API manquante.";
+            ShowError("Configuration API manquante.");
             isSubmitting = false;
             UpdateLoginButtonState();
             yield break;
@@ -86,7 +111,7 @@ public class LoginScript : MonoBehaviour
         string email = emailField != null ? emailField.text : string.Empty;
         if (!IsValidEmail(email))
         {
-            emailErrorText.text = "Adresse email invalide";
+            ShowError("Adresse email invalide");
             isSubmitting = false;
             UpdateLoginButtonState();
             yield break;
@@ -133,13 +158,13 @@ public class LoginScript : MonoBehaviour
 
                 if (!Jwt.I.IsJwtPresent())
                 {
-                    emailErrorText.text = "Jeton non disponible. Réessayez.";
+                    ShowError("Jeton non disponible. Réessayez.");
                     yield break;
                 }
 
                 if (Jwt.I.IsExpired(30))
                 {
-                    emailErrorText.text = "Session expirée. Réessayez.";
+                    ShowError("Session expirée. Réessayez.");
                     Jwt.I.Clear();
                     yield break;
                 }
@@ -148,12 +173,12 @@ public class LoginScript : MonoBehaviour
             }
             else if (request.responseCode == 401)
             {
-                emailErrorText.text = "Email ou mot de passe incorrect.";
+                ShowError("Email ou mot de passe incorrect.");
             }
             else
             {
                 Debug.LogError($"[Login] Erreur HTTP {request.responseCode} : {request.error}");
-                emailErrorText.text = "Connexion avec le serveur impossible.";
+                ShowError("Connexion avec le serveur impossible.");
             }
         }
         finally

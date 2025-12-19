@@ -1,0 +1,9 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI%20Toolkit/HUDStylesheet.uss?fileID=7433441132597879392&amp;guid=2177595ec7397e54f8540429d6376417&amp;type=3#HUDStylesheet" />
+    <ui:VisualElement name="Container" style="flex-grow: 1; flex-direction: column; justify-content: flex-end; align-items: center;">
+        <ui:VisualElement name="Buttons" style="flex-grow: 1; flex-direction: row; max-height: 50px; max-width: 600px; margin-bottom: 50px;">
+            <ui:Button text="Jouer" name="PlayButton" class="button" style="width: 300px; -unity-text-align: middle-center; font-size: 25px; height: 60px;" />
+            <ui:Button text="Inviter un ami" enable-rich-text="true" selectable="true" name="PlayWithFriendsButton" class="button" style="width: 300px; -unity-text-align: middle-center; font-size: 25px; height: 60px;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
