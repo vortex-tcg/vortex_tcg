@@ -17,11 +17,10 @@ public class AttackManager : MonoBehaviour
 
     private void Start()
     {
-        // S'abonner aux phases
         PhaseManager.Instance.OnEnterAttack += OnEnterAttackPhase;
+        PhaseManager.Instance.OnEnterDefense += OnEnterDefensePhase;
         PhaseManager.Instance.OnEnterStandBy += OnEndDefensePhase;
 
-        // Register existing cards in slots
         foreach (CardSlot slot in P1BoardSlots)
         {
             if (slot.CurrentCard != null)
@@ -38,6 +37,7 @@ public class AttackManager : MonoBehaviour
         if (PhaseManager.Instance != null)
         {
             PhaseManager.Instance.OnEnterAttack -= OnEnterAttackPhase;
+            PhaseManager.Instance.OnEnterDefense -= OnEnterDefensePhase;
             PhaseManager.Instance.OnEnterStandBy -= OnEndDefensePhase;
         }
     }
@@ -47,8 +47,16 @@ public class AttackManager : MonoBehaviour
         ClearSelections();
     }
 
+    private void OnEnterDefensePhase()
+    {
+        // Verouiller les cartes sélectionnées en gardant leur état visuel
+        // mais en empêchant toute modification
+        Debug.Log($"Phase Defense: {selectedCards.Count} cartes verrouillées en mode attaque");
+    }
+
     private void OnEndDefensePhase()
     {
+        // Clear après la phase Defense
         ClearSelections();
     }
 
@@ -101,7 +109,6 @@ public class AttackManager : MonoBehaviour
     {
         selectedCards.Add(card);
         card.SetSelected(true);
-        card.ShowAttackOrder(selectedCards.Count);
     }
 
     private void DeselectCard(Card card)

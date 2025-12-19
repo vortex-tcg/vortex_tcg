@@ -380,6 +380,7 @@ GameObject:
   m_Component:
   - component: {fileID: 135012867}
   - component: {fileID: 135012868}
+  - component: {fileID: 135012869}
   m_Layer: 0
   m_Name: P1CardSlots
   m_TagString: Untagged
@@ -427,6 +428,32 @@ MonoBehaviour:
   - {fileID: 895805916}
   - {fileID: 1815969846}
   - {fileID: 1420422367}
+--- !u!114 &135012869
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 135012866}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0227df736e11b904a9a915b10569d016, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  P1BoardSlots:
+  - {fileID: 4091392992480967430}
+  - {fileID: 445152687}
+  - {fileID: 31235708}
+  - {fileID: 895805916}
+  - {fileID: 1815969846}
+  - {fileID: 1420422367}
+  P2BoardSlots:
+  - {fileID: 1533037578}
+  - {fileID: 1409120809}
+  - {fileID: 874342795}
+  - {fileID: 41569730}
+  - {fileID: 1478103548}
+  - {fileID: 1473649192}
 --- !u!1 &195556721
 GameObject:
   m_ObjectHideFlags: 0
@@ -566,8 +593,8 @@ Transform:
   m_GameObject: {fileID: 210017370}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 17.130001, y: 0.05, z: 10}
+  m_LocalPosition: {x: 0, y: -489.67, z: 55.023}
+  m_LocalScale: {x: 2311.6394, y: 6.747341, z: 1349.4681}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 135012867}
@@ -589,6 +616,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 220707239}
+  - component: {fileID: 220707240}
   m_Layer: 0
   m_Name: P2CardsInHand
   m_TagString: Untagged
@@ -618,6 +646,32 @@ Transform:
   - {fileID: 1476356599}
   m_Father: {fileID: 210017374}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &220707240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 220707238}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ccdf822d8d2a834ab737c21f4752676, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardPrefab: {fileID: 1737039046195383164, guid: 1827e53d8835b62479162113f94e0daf, type: 3}
+  p2HandParent: {fileID: 220707239}
+  p2BoardSlots:
+  - {fileID: 1533037578}
+  - {fileID: 1409120809}
+  - {fileID: 874342795}
+  - {fileID: 41569730}
+  - {fileID: 1478103548}
+  - {fileID: 1473649192}
+  handSize: 5
+  minBoardCards: 2
+  maxBoardCards: 4
+  boardTargetHeight: 1
+  runOnStart: 1
 --- !u!1 &240132716
 GameObject:
   m_ObjectHideFlags: 0
@@ -3813,8 +3867,8 @@ Transform:
   m_GameObject: {fileID: 1833318994}
   serializedVersion: 2
   m_LocalRotation: {x: 0.4935713, y: -0, z: -0, w: 0.8697054}
-  m_LocalPosition: {x: 0, y: 7.6, z: -5.09}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 535.94, z: -631.84}
+  m_LocalScale: {x: 134.94682, y: 134.94682, z: 134.94682}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -4509,7 +4563,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 200, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -4526,7 +4580,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CurrentCard: {fileID: 0}
-  targetHeight: 0.2
+  targetHeight: 1
 --- !u!33 &5498880637139304567
 MeshFilter:
   m_ObjectHideFlags: 0
