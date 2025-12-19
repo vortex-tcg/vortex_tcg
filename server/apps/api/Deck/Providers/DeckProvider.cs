@@ -1,6 +1,7 @@
-using Deck.DTOs;
+using VortexTCG.Api.Deck.DTOs;
+using VortexTCG.Api.Champion.DTOs;
 
-namespace Deck.Providers
+namespace VortexTCG.Api.Deck.Providers
 {
     public class DeckProvider
     {
@@ -9,6 +10,14 @@ namespace Deck.Providers
             List<VortexTCG.Api.Card.DTOs.CardDto> cards = new List<VortexTCG.Api.Card.DTOs.CardDto>();
             Random random = new Random();
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+            DeckChampionDto champion = new DeckChampionDto {
+                ChampionID = new Guid(),
+                Name = "Emporio PingChilling",
+                Description = "Le premier empereur berzerkouin",
+                HP = 30,
+            };
+
             for (int i = 0; i < 30; i++)
             {
                 VortexTCG.Api.Card.DTOs.CardDto card = new VortexTCG.Api.Card.DTOs.CardDto
@@ -32,7 +41,8 @@ namespace Deck.Providers
             {
                 Id = deckId,
                 Name = $"Mock Deck {deckId}",
-                Cards = cards
+                Cards = cards,
+                Champion = champion
             };
             return deck;
         }

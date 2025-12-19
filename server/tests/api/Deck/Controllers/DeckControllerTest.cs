@@ -1,8 +1,9 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Deck.Controllers;
-using Deck.DTOs;
-using Deck.Services;
+using VortexTCG.Common.DTO;
+using VortexTCG.Api.Deck.Controllers;
+using VortexTCG.Api.Deck.DTOs;
+using VortexTCG.Api.Deck.Services;
 using Xunit;
 
 namespace VortexTCG.Tests.Api.Deck.Controllers
@@ -22,11 +23,12 @@ namespace VortexTCG.Tests.Api.Deck.Controllers
             string testDeckId = "deck42";
 
             // Act
-            ActionResult<DeckDTO> result = controller.GetDeckById(testDeckId);
+            IActionResult result = await controller.GetDeckById(testDeckId);
 
             // Assert
-            OkObjectResult okResult = Assert.IsType<OkObjectResult>(result.Result);
-            DeckDTO deck = Assert.IsType<DeckDTO>(okResult.Value);
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
+            ResultDTO<DeckDTO> response = Assert.IsType<ResultDTO<DeckDTO>>(okResult.Value);
+            DeckDTO deck = response.data;
             Assert.Equal(testDeckId, deck.Id);
             Assert.StartsWith("Mock Deck", deck.Name);
             Assert.NotNull(deck.Cards);

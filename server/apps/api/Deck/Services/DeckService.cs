@@ -1,7 +1,8 @@
-using Deck.DTOs;
-using Deck.Providers;
+using VortexTCG.Api.Deck.DTOs;
+using VortexTCG.Api.Deck.Providers;
+using VortexTCG.Common.DTO;
 
-namespace Deck.Services
+namespace VortexTCG.Api.Deck.Services
 {
     public class DeckService
     {
@@ -12,10 +13,11 @@ namespace Deck.Services
             _deckProvider = new DeckProvider();
         }
 
-        public DeckDTO GetDeckById(string deckId)
-        {
-            DeckDTO deck = _deckProvider.GetMockDeck(deckId);
-            return deck;
-        }
+        public ResultDTO<DeckDTO> GetDeckById(string deckId)
+        => new ResultDTO<DeckDTO> {
+            success = true,
+            statusCode = 200,
+            data = _deckProvider.GetMockDeck(deckId)
+        };
     }
 }
