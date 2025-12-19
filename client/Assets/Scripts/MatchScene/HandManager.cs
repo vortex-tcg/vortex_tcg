@@ -19,10 +19,8 @@ public class HandManager : MonoBehaviour
 
     public void SelectCard(Card card)
     {
-        // V�rifier si on peut s�lectionner la carte selon la phase
         if (PhaseManager.Instance.CurrentPhase == GamePhase.Attack)
         {
-            Debug.Log("Impossible de s�lectionner pendant la phase d'attaque !");
             return;
         }
 
@@ -46,10 +44,8 @@ public class HandManager : MonoBehaviour
     {
         if (SelectedCard == null) return;
 
-        // V�rifier la phase avant de placer
         if (PhaseManager.Instance.CurrentPhase != GamePhase.StandBy)
         {
-            Debug.Log("Impossible de placer la carte dans cette phase !");
             return;
         }
 

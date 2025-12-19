@@ -63,7 +63,7 @@ public class DefenseManager : MonoBehaviour
         if (card == null) return;
         if (PhaseManager.Instance == null || PhaseManager.Instance.CurrentPhase != GamePhase.Defense) return;
 
-        var slot = card.GetComponentInParent<CardSlot>();
+        CardSlot slot = card.GetComponentInParent<CardSlot>();
         if (slot == null) return;
 
         if (IsP1BoardSlot(slot))
@@ -80,38 +80,22 @@ public class DefenseManager : MonoBehaviour
     {
         if (currentDefender == defender) return;
 
-        // Ne pas désactiver l'ancien défenseur : il reste en mode défense visible
         currentDefender = defender;
         currentDefender.SetDefenseSelected(true);
-
-        Debug.Log($"[Defense] Defender selected (keeps previous in defense): {CardLabel(defender)}");
     }
 
     private void TryAssignDefense(Card targetAttacker)
     {
-        if (currentDefender == null)
-        {
-            Debug.LogWarning("[Defense] No defender selected. Click a P1 card first.");
-            return;
-        }
+        if (currentDefender == null) return;
 
-        // Only allow assigning to attacking enemy cards (outline active)
-        if (!targetAttacker.IsAttackingOutlineActive())
-        {
-            Debug.Log("[Defense] Target is not marked as attacking; assignment ignored.");
-            return;
-        }
+        if (!targetAttacker.IsAttackingOutlineActive()) return;
 
-        // Remove previous assignment for this defender if any
         if (defenseAssignments.ContainsKey(currentDefender))
         {
-            Debug.Log($"[Defense] Replacing previous assignment for {CardLabel(currentDefender)}");
             defenseAssignments.Remove(currentDefender);
         }
 
         defenseAssignments[currentDefender] = targetAttacker;
-
-        Debug.Log($"[Defense] Assigned {CardLabel(currentDefender)} to defend against {CardLabel(targetAttacker)}");
     }
 
     private void ClearAllDefense()
@@ -122,15 +106,13 @@ public class DefenseManager : MonoBehaviour
             currentDefender = null;
         }
 
-        foreach (var kvp in defenseAssignments)
+        foreach (KeyValuePair<Card, Card> kvp in defenseAssignments)
         {
             if (kvp.Key != null)
                 kvp.Key.SetDefenseSelected(false);
         }
 
         defenseAssignments.Clear();
-
-        Debug.Log("[Defense] Cleared all defense selections/assignments");
     }
 
     private string CardLabel(Card c)

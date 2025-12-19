@@ -8,7 +8,7 @@ public class EndPhaseButtonHandler : MonoBehaviour
 
     void OnEnable()
     {
-        var root = GetComponent<UIDocument>().rootVisualElement;
+        VisualElement root = GetComponent<UIDocument>().rootVisualElement;
         endPhaseButton = root.Q<Button>("EndPhaseButton");
 
         if (endPhaseButton != null)
