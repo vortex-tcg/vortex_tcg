@@ -4,6 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
@@ -23,7 +25,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\apps\auth\auth.csproj" />
-    <ProjectReference Include="..\apps\game\game.csproj" />
+    <ProjectReference Include="..\apps\api\api.csproj" />
+    <ProjectReference Include="..\apps\game\game.csproj">
+      <ExcludeAssets>contentfiles</ExcludeAssets>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>
