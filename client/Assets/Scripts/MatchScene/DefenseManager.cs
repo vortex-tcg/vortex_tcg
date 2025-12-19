@@ -1,147 +1,123 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
-using System.Linq;
 
-namespace VortexTCG.Script.MatchScene {
+// Runtime DefenseManager: selects a P1 defender during Defense phase, then assigns it to an attacking P2 card.
+public class DefenseManager : MonoBehaviour
+{
+    public static DefenseManager Instance { get; private set; }
 
-    public class DefenseManager : MonoBehaviour
+    [Header("Board Slots")]
+    [SerializeField] private List<CardSlot> P1BoardSlots = new List<CardSlot>();
+    [SerializeField] private List<CardSlot> P2BoardSlots = new List<CardSlot>();
+
+    private Card currentDefender;
+    private readonly Dictionary<Card, Card> defenseAssignments = new Dictionary<Card, Card>(); // defender -> attacker
+
+    private void Awake()
     {
-        [SerializeField] private UIDocument boardDocument;
-        private VisualElement p1BoardRoot;
-        private const string defenseToken = "defense";
-        private readonly List<VisualElement> selectedCards = new List<VisualElement>();
-        private readonly Dictionary<VisualElement, VisualElement> defenseAssignments = new Dictionary<VisualElement, VisualElement>();
-    
-        private void Start()
+        Instance = this;
+    }
+
+    private void Start()
+    {
+        if (PhaseManager.Instance != null)
         {
-            if (boardDocument == null)
-                boardDocument = GetComponent<UIDocument>();
-    
-            VisualElement root = boardDocument.rootVisualElement;
-            p1BoardRoot = root.Q<VisualElement>("P1BoardCards");
-    
-            RegisterAllExistingCards();
-    
-            PhaseManager.Instance.OnEnterDefense += OnEnterDefensePhase;
-            PhaseManager.Instance.OnEnterStandBy += OnEndDefensePhase;
+            PhaseManager.Instance.OnEnterDefense += OnEnterDefense;
+            PhaseManager.Instance.OnEnterStandBy += OnExitDefense;
+            PhaseManager.Instance.OnEnterAttack += OnExitDefense;
         }
-    
-        private void OnDestroy()
+    }
+
+    private void OnDestroy()
+    {
+        if (PhaseManager.Instance != null)
         {
-            if (PhaseManager.Instance != null)
-            {
-                PhaseManager.Instance.OnEnterDefense -= OnEnterDefensePhase;
-                PhaseManager.Instance.OnEnterStandBy -= OnEndDefensePhase;
-            }
+            PhaseManager.Instance.OnEnterDefense -= OnEnterDefense;
+            PhaseManager.Instance.OnEnterStandBy -= OnExitDefense;
+            PhaseManager.Instance.OnEnterAttack -= OnExitDefense;
         }
-    
-        private void OnEnterDefensePhase()
+    }
+
+    private void OnEnterDefense()
+    {
+        ClearAllDefense();
+    }
+
+    private void OnExitDefense()
+    {
+        ClearAllDefense();
+    }
+
+    public bool IsP1BoardSlot(CardSlot slot)
+    {
+        return slot != null && P1BoardSlots.Contains(slot);
+    }
+
+    public bool IsP2BoardSlot(CardSlot slot)
+    {
+        return slot != null && P2BoardSlots.Contains(slot);
+    }
+
+    public void HandleCardClicked(Card card)
+    {
+        if (card == null) return;
+        if (PhaseManager.Instance == null || PhaseManager.Instance.CurrentPhase != GamePhase.Defense) return;
+
+        CardSlot slot = card.GetComponentInParent<CardSlot>();
+        if (slot == null) return;
+
+        if (IsP1BoardSlot(slot))
         {
-            ClearSelections();
+            SelectDefender(card);
         }
-    
-        private void OnEndDefensePhase()
+        else if (IsP2BoardSlot(slot))
         {
-            ClearSelections();
+            TryAssignDefense(card);
         }
-    
-        private void RegisterAllExistingCards()
+    }
+
+    private void SelectDefender(Card defender)
+    {
+        if (currentDefender == defender) return;
+
+        currentDefender = defender;
+        currentDefender.SetDefenseSelected(true);
+    }
+
+    private void TryAssignDefense(Card targetAttacker)
+    {
+        if (currentDefender == null) return;
+
+        if (!targetAttacker.IsAttackingOutlineActive()) return;
+
+        if (defenseAssignments.ContainsKey(currentDefender))
         {
-            List<VisualElement> allSlots = p1BoardRoot.Query<VisualElement>(className: "P1Slot").ToList();
-            foreach (VisualElement slot in allSlots)
-            {
-                slot.RegisterCallback<ClickEvent>(_ =>
-                {
-                    if (PhaseManager.Instance.CurrentPhase != GamePhase.Defense)
-                        return;
-    
-                    VisualElement card = slot.Q<VisualElement>(className: "small-card");
-                    if (card != null)
-                        ToggleCard(card);
-                });
-            }
+            defenseAssignments.Remove(currentDefender);
         }
-    
-        public void TryAssignDefense(VisualElement defenderCard, VisualElement targetCard)
+
+        defenseAssignments[currentDefender] = targetAttacker;
+    }
+
+    private void ClearAllDefense()
+    {
+        if (currentDefender != null)
         {
-            if (PhaseManager.Instance.CurrentPhase != GamePhase.Defense)
-                return;
-    
-            if (defenderCard == null || targetCard == null) return;
-            if (defenderCard.parent == null || !defenderCard.parent.ClassListContains("P1Slot"))
-                return;
-    
-            if (!targetCard.ClassListContains("engaged"))
-                return;
-    
-            VisualElement existingDefender = defenseAssignments.FirstOrDefault(kvp => kvp.Value == targetCard).Key;
-            if (existingDefender != null)
-                return;
-    
-            ClearDefense(defenderCard);
-    
-            defenderCard.AddToClassList(defenseToken);
-            defenseAssignments[defenderCard] = targetCard;
-    
-            if (!selectedCards.Contains(defenderCard))
-                selectedCards.Add(defenderCard);
+            currentDefender.SetDefenseSelected(false);
+            currentDefender = null;
         }
-    
-        private void ToggleCard(VisualElement card)
+
+        foreach (KeyValuePair<Card, Card> kvp in defenseAssignments)
         {
-            if (card == null) return;
-    
-            if (selectedCards.Contains(card))
-                DeselectCard(card);
-            else
-                SelectCard(card);
+            if (kvp.Key != null)
+                kvp.Key.SetDefenseSelected(false);
         }
-    
-        private void SelectCard(VisualElement card)
-        {
-            if (card == null) return;
-    
-            selectedCards.Add(card);
-            if (!card.ClassListContains(defenseToken))
-                card.AddToClassList(defenseToken);
-        }
-    
-        private void DeselectCard(VisualElement card)
-        {
-            if (card == null) return;
-    
-            selectedCards.Remove(card);
-            if (card.ClassListContains(defenseToken))
-                card.RemoveFromClassList(defenseToken);
-        }
-    
-        private void ClearDefense(VisualElement defenderCard)
-        {
-            if (defenderCard == null) return;
-    
-            if (defenseAssignments.ContainsKey(defenderCard))
-                defenseAssignments.Remove(defenderCard);
-    
-            if (defenderCard.ClassListContains(defenseToken))
-                defenderCard.RemoveFromClassList(defenseToken);
-    
-            selectedCards.Remove(defenderCard);
-        }
-    
-        private void ClearSelections()
-        {
-            List<VisualElement> cardsCopy = new List<VisualElement>(selectedCards);
-            foreach (VisualElement card in cardsCopy)
-            {
-                if (card == null) continue;
-    
-                if (card.ClassListContains(defenseToken))
-                    card.RemoveFromClassList(defenseToken);
-            }
-    
-            selectedCards.Clear();
-            defenseAssignments.Clear();
-        }
+
+        defenseAssignments.Clear();
+    }
+
+    private string CardLabel(Card c)
+    {
+        if (c == null) return "null";
+        return string.IsNullOrEmpty(c.cardId) ? c.cardName : $"{c.cardName} ({c.cardId})";
     }
 }
