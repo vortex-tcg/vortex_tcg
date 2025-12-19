@@ -4,280 +4,281 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using System.Linq;
 
-public class HandManager : MonoBehaviour
-{
-    [Header("UI Toolkit References")]
-    [SerializeField] private VisualTreeAsset SmallCard;
-    [SerializeField] private VisualTreeAsset CardPreview;
-    [SerializeField] private VisualTreeAsset EmptyCardPreview;
+namespace VortexTCG.Script.MatchScene {
 
-    private VisualElement handZone;
-    private VisualElement previewZone;
-    private VisualElement boardZone;
-    private VisualElement enemyBoardZone;
-
-    private List<VisualElement> boardSlots = new List<VisualElement>();
-    private List<VisualElement> enemySlots = new List<VisualElement>();
-    private List<CardDTO> playerHand = new List<CardDTO>();
-
-    private VisualElement draggedElement;
-    private CardDTO draggedCard;
-    private bool isDragging;
-    private Vector2 dragOffset;
-
-    private VisualElement originalParent;
-    private int originalIndex;
-
-    private DefenseManager defenseManager;
-
-    private bool CanDrag => PhaseManager.Instance != null &&
-                            (PhaseManager.Instance.CurrentPhase == GamePhase.StandBy ||
-                             PhaseManager.Instance.CurrentPhase == GamePhase.Defense);
-
-    private void OnEnable()
+    public class HandManager : MonoBehaviour
     {
-        UIDocument uiDoc = GetComponent<UIDocument>();
-        if (uiDoc == null) return;
+        [Header("UI Toolkit References")]
+        [SerializeField] private VisualTreeAsset SmallCard;
+        [SerializeField] private VisualTreeAsset CardPreview;
+        [SerializeField] private VisualTreeAsset EmptyCardPreview;
 
-        VisualElement root = uiDoc.rootVisualElement;
-        if (root == null) return;
+        private VisualElement handZone;
+        private VisualElement previewZone;
 
-        handZone = root.Q<VisualElement>("P1CardsFrame");
-        previewZone = root.Q<VisualElement>("CardPreview");
-        boardZone = root.Q<VisualElement>("P1BoardCards");
-        enemyBoardZone = root.Q<VisualElement>("P2BoardCards");
+        private List<VisualElement> boardSlots = new List<VisualElement>();
+        private List<VisualElement> enemySlots = new List<VisualElement>();
 
-        if (boardZone != null)
-            boardSlots = boardZone.Query<VisualElement>(className: "P1Slot").ToList();
+        private VisualElement draggedElement;
+        private CardDTO draggedCard;
+        private bool isDragging;
+        private Vector2 dragOffset;
 
-        if (enemyBoardZone != null)
-            enemySlots = enemyBoardZone.Query<VisualElement>(className: "P2Slot").ToList();
+        private VisualElement originalParent;
+        private int originalIndex;
 
-        root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
-        root.RegisterCallback<PointerUpEvent>(OnPointerUp);
+        private DefenseManager defenseManager;
 
-        defenseManager = FindObjectOfType<DefenseManager>();
+        private static bool CanDrag => PhaseManager.Instance != null &&
+                                (PhaseManager.Instance.CurrentPhase == GamePhase.StandBy ||
+                                 PhaseManager.Instance.CurrentPhase == GamePhase.Defense);
 
-        if (handZone == null || previewZone == null || SmallCard == null || CardPreview == null)
-            return;
-
-        playerHand = MockFetchPlayerHand();
-        GenerateHand(playerHand);
-    }
-
-    private void GenerateHand(List<CardDTO> cards)
-    {
-        handZone.Clear();
-
-        foreach (CardDTO card in cards)
+        private void OnEnable()
         {
-            VisualElement cardElement = SmallCard.Instantiate();
-            if (cardElement == null) continue;
+            UIDocument uiDoc = GetComponent<UIDocument>();
+            if (uiDoc == null) return;
 
-            cardElement.userData = false;
+            VisualElement root = uiDoc.rootVisualElement;
+            if (root == null) return;
 
-            SetLabel(cardElement, "Name", card.Name);
-            SetLabel(cardElement, "Cost", card.Cost.ToString());
+            handZone = root.Q<VisualElement>("P1CardsFrame");
+            previewZone = root.Q<VisualElement>("CardPreview");
+            VisualElement boardZone = root.Q<VisualElement>("P1BoardCards");
+            VisualElement enemyBoardZone = root.Q<VisualElement>("P2BoardCards");
 
-            cardElement.RegisterCallback<MouseEnterEvent>(_ => ShowPreview(card));
+            if (boardZone != null)
+                boardSlots = boardZone.Query<VisualElement>(className: "P1Slot").ToList();
 
-            cardElement.RegisterCallback<PointerDownEvent>(e =>
-            {
-                if (CanDrag)
-                    StartDrag(cardElement, card, e);
-                e.StopPropagation();
-            });
+            if (enemyBoardZone != null)
+                enemySlots = enemyBoardZone.Query<VisualElement>(className: "P2Slot").ToList();
 
-            cardElement.RegisterCallback<MouseLeaveEvent>(_ => ClearPreview());
+            root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
+            root.RegisterCallback<PointerUpEvent>(OnPointerUp);
 
-            handZone.Add(cardElement);
-        }
-    }
+            defenseManager = FindObjectOfType<DefenseManager>();
 
-    private void ShowPreview(CardDTO card)
-    {
-        previewZone.Clear();
-        VisualElement previewCard = CardPreview.Instantiate();
-
-        SetLabel(previewCard, "Name", card.Name);
-        SetLabel(previewCard, "Cost", card.Cost.ToString());
-        SetLabel(previewCard, "ATKPoints", card.Attack > 0 ? card.Attack.ToString() : "-");
-        SetLabel(previewCard, "DEFPoints", card.Hp > 0 ? card.Hp.ToString() : "-");
-        SetLabel(previewCard, "LoreDesc", card.Description);
-
-        previewZone.Add(previewCard);
-        previewZone.style.display = DisplayStyle.Flex;
-    }
-
-    private void ClearPreview()
-    {
-        previewZone.Clear();
-        if (EmptyCardPreview != null)
-        {
-            VisualElement emptyPreview = EmptyCardPreview.Instantiate();
-            previewZone.Add(emptyPreview);
-        }
-        previewZone.style.display = DisplayStyle.Flex;
-    }
-
-    private void SetLabel(VisualElement parent, string name, string value)
-    {
-        Label label = parent.Q<Label>(name);
-        if (label != null)
-            label.text = value;
-    }
-
-    private void StartDrag(VisualElement cardElement, CardDTO card, PointerDownEvent e)
-    {
-        draggedElement = cardElement;
-        draggedCard = card;
-        isDragging = true;
-
-        originalParent = cardElement.parent;
-        originalIndex = originalParent.IndexOf(cardElement);
-
-        Vector2 mousePos = e.position;
-        Vector2 elementWorldPos = cardElement.worldBound.position;
-        dragOffset = mousePos - elementWorldPos;
-
-        draggedElement.style.position = Position.Absolute;
-        draggedElement.BringToFront();
-
-        Vector2 parentWorldPos = draggedElement.parent.worldBound.position;
-        Vector2 local = mousePos - parentWorldPos - dragOffset;
-
-        draggedElement.style.left = local.x;
-        draggedElement.style.top = local.y;
-    }
-
-    private void OnPointerMove(PointerMoveEvent e)
-    {
-        if (!isDragging || draggedElement == null) return;
-
-        Vector2 mousePos = e.position;
-        Vector2 parentWorldPos = draggedElement.parent.worldBound.position;
-        Vector2 local = mousePos - parentWorldPos - dragOffset;
-
-        draggedElement.style.left = local.x;
-        draggedElement.style.top = local.y;
-    }
-
-    private void OnPointerUp(PointerUpEvent e)
-    {
-        if (!isDragging || draggedElement == null) return;
-
-        isDragging = false;
-        Vector2 mousePos = e.position;
-
-        if (PhaseManager.Instance.CurrentPhase == GamePhase.StandBy)
-        {
-            if (TryDropOnBoard(mousePos, boardSlots))
-            {
-                ClearDrag();
+            if (handZone == null || previewZone == null || SmallCard == null || CardPreview == null)
                 return;
-            }
-        }
-        else if (PhaseManager.Instance.CurrentPhase == GamePhase.Defense)
-        {
-            VisualElement enemySlot = enemySlots.FirstOrDefault(slot =>
-                slot.childCount > 0 && slot.worldBound.Contains(mousePos));
 
-            if (enemySlot != null)
+            List<CardDTO> playerHand = MockFetchPlayerHand();
+            GenerateHand(playerHand);
+        }
+
+        private void GenerateHand(List<CardDTO> cards)
+        {
+            handZone.Clear();
+
+            foreach (CardDTO card in cards)
             {
-                VisualElement enemyCard = enemySlot.Q<VisualElement>(className: "small-card");
-                if (enemyCard != null && defenseManager != null)
+                VisualElement cardElement = SmallCard.Instantiate();
+                if (cardElement == null) continue;
+
+                cardElement.userData = false;
+
+                SetLabel(cardElement, "Name", card.Name);
+                SetLabel(cardElement, "Cost", card.Cost.ToString());
+
+                cardElement.RegisterCallback<MouseEnterEvent>(_ => ShowPreview(card));
+
+                cardElement.RegisterCallback<PointerDownEvent>(e =>
                 {
-                    defenseManager.TryAssignDefense(draggedElement, enemyCard);
-                }
+                    if (CanDrag)
+                        StartDrag(cardElement, card, e);
+                    e.StopPropagation();
+                });
 
-                ResetCardPosition(draggedElement);
-                ClearDrag();
-                return;
+                cardElement.RegisterCallback<MouseLeaveEvent>(_ => ClearPreview());
+
+                handZone.Add(cardElement);
             }
         }
 
-        ResetCardPosition(draggedElement);
-        ClearDrag();
-    }
-
-    private void ResetCardPosition(VisualElement cardElement)
-    {
-        if (originalParent != null)
+        private void ShowPreview(CardDTO card)
         {
-            cardElement.RemoveFromHierarchy();
-            originalParent.Insert(originalIndex, cardElement);
+            previewZone.Clear();
+            VisualElement previewCard = CardPreview.Instantiate();
+
+            SetLabel(previewCard, "Name", card.Name);
+            SetLabel(previewCard, "Cost", card.Cost.ToString());
+            SetLabel(previewCard, "ATKPoints", card.Attack > 0 ? card.Attack.ToString() : "-");
+            SetLabel(previewCard, "DEFPoints", card.Hp > 0 ? card.Hp.ToString() : "-");
+            SetLabel(previewCard, "LoreDesc", card.Description);
+
+            previewZone.Add(previewCard);
+            previewZone.style.display = DisplayStyle.Flex;
         }
 
-        cardElement.style.position = Position.Relative;
-        cardElement.style.left = StyleKeyword.Null;
-        cardElement.style.top = StyleKeyword.Null;
-    }
-
-    private bool TryDropOnBoard(Vector2 mousePos, List<VisualElement> slots, bool requireCardInSlot = false)
-    {
-        foreach (VisualElement slot in slots)
+        private void ClearPreview()
         {
-            if (slot == null) continue;
-            if (!slot.worldBound.Contains(mousePos)) continue;
-
-            if (!requireCardInSlot && slot.childCount > 0) return false;
-            if (requireCardInSlot && slot.childCount == 0) continue;
-
-            draggedElement.RemoveFromHierarchy();
-            slot.Add(draggedElement);
-
-            draggedElement.style.position = Position.Relative;
-            draggedElement.style.left = StyleKeyword.Null;
-            draggedElement.style.top = StyleKeyword.Null;
-
-            draggedElement.userData = true;
-            draggedElement.AddToClassList("on-board");
-
-            AttackManager attackManager = FindObjectOfType<AttackManager>();
-            if (attackManager != null)
-                attackManager.RegisterCard(draggedElement);
-
-            return true;
+            previewZone.Clear();
+            if (EmptyCardPreview != null)
+            {
+                VisualElement emptyPreview = EmptyCardPreview.Instantiate();
+                previewZone.Add(emptyPreview);
+            }
+            previewZone.style.display = DisplayStyle.Flex;
         }
 
-        return false;
-    }
-
-
-    private void ClearDrag()
-    {
-        draggedElement = null;
-        draggedCard = null;
-    }
-
-    private List<CardDTO> MockFetchPlayerHand()
-    {
-        return new List<CardDTO>
+        private void SetLabel(VisualElement parent, string name, string value)
         {
-            new CardDTO{ Id = Guid.NewGuid(), Name = "Pyromancien", Hp = 3, Attack = 2, Cost = 1, Description = "Inflige 1 dmg.", CardType = CardType.Creature },
-            new CardDTO{ Id = Guid.NewGuid(), Name = "Garde", Hp = 6, Attack = 1, Cost = 2, Description = "Provocation.", CardType = CardType.Creature },
-            new CardDTO{ Id = Guid.NewGuid(), Name = "Boule de feu", Hp = 0, Attack = 0, Cost = 3, Description = "Inflige 4 dmg.", CardType = CardType.Spell },
-            new CardDTO{ Id = Guid.NewGuid(), Name = "Archère", Hp = 2, Attack = 3, Cost = 2, Description = "Bonus si PV < 10.", CardType = CardType.Creature },
-            new CardDTO{ Id = Guid.NewGuid(), Name = "Soin mineur", Hp = 0, Attack = 0, Cost = 1, Description = "Restaure 3 PV.", CardType = CardType.Spell }
-        };
+            Label label = parent.Q<Label>(name);
+            if (label != null)
+                label.text = value;
+        }
+
+        private void StartDrag(VisualElement cardElement, CardDTO card, PointerDownEvent e)
+        {
+            draggedElement = cardElement;
+            draggedCard = card;
+            isDragging = true;
+
+            originalParent = cardElement.parent;
+            originalIndex = originalParent.IndexOf(cardElement);
+
+            Vector2 mousePos = e.position;
+            Vector2 elementWorldPos = cardElement.worldBound.position;
+            dragOffset = mousePos - elementWorldPos;
+
+            draggedElement.style.position = Position.Absolute;
+            draggedElement.BringToFront();
+
+            Vector2 parentWorldPos = draggedElement.parent.worldBound.position;
+            Vector2 local = mousePos - parentWorldPos - dragOffset;
+
+            draggedElement.style.left = local.x;
+            draggedElement.style.top = local.y;
+        }
+
+        private void OnPointerMove(PointerMoveEvent e)
+        {
+            if (!isDragging || draggedElement == null) return;
+
+            Vector2 mousePos = e.position;
+            Vector2 parentWorldPos = draggedElement.parent.worldBound.position;
+            Vector2 local = mousePos - parentWorldPos - dragOffset;
+
+            draggedElement.style.left = local.x;
+            draggedElement.style.top = local.y;
+        }
+
+        private void OnPointerUp(PointerUpEvent e)
+        {
+            if (!isDragging || draggedElement == null) return;
+
+            isDragging = false;
+            Vector2 mousePos = e.position;
+
+            if (PhaseManager.Instance.CurrentPhase == GamePhase.StandBy)
+            {
+                if (TryDropOnBoard(mousePos, boardSlots))
+                {
+                    ClearDrag();
+                    return;
+                }
+            }
+            else if (PhaseManager.Instance.CurrentPhase == GamePhase.Defense)
+            {
+                VisualElement enemySlot = enemySlots.FirstOrDefault(slot =>
+                    slot.childCount > 0 && slot.worldBound.Contains(mousePos));
+
+                if (enemySlot != null)
+                {
+                    VisualElement enemyCard = enemySlot.Q<VisualElement>(className: "small-card");
+                    if (enemyCard != null && defenseManager != null)
+                    {
+                        defenseManager.TryAssignDefense(draggedElement, enemyCard);
+                    }
+
+                    ResetCardPosition(draggedElement);
+                    ClearDrag();
+                    return;
+                }
+            }
+
+            ResetCardPosition(draggedElement);
+            ClearDrag();
+        }
+
+        private void ResetCardPosition(VisualElement cardElement)
+        {
+            if (originalParent != null)
+            {
+                cardElement.RemoveFromHierarchy();
+                originalParent.Insert(originalIndex, cardElement);
+            }
+
+            cardElement.style.position = Position.Relative;
+            cardElement.style.left = StyleKeyword.Null;
+            cardElement.style.top = StyleKeyword.Null;
+        }
+
+        private bool TryDropOnBoard(Vector2 mousePos, List<VisualElement> slots, bool requireCardInSlot = false)
+        {
+            foreach (VisualElement slot in slots)
+            {
+                if (slot == null) continue;
+                if (!slot.worldBound.Contains(mousePos)) continue;
+
+                if (!requireCardInSlot && slot.childCount > 0) return false;
+                if (requireCardInSlot && slot.childCount == 0) continue;
+
+                draggedElement.RemoveFromHierarchy();
+                slot.Add(draggedElement);
+
+                draggedElement.style.position = Position.Relative;
+                draggedElement.style.left = StyleKeyword.Null;
+                draggedElement.style.top = StyleKeyword.Null;
+
+                draggedElement.userData = true;
+                draggedElement.AddToClassList("on-board");
+
+                AttackManager attackManager = FindObjectOfType<AttackManager>();
+                if (attackManager != null)
+                    attackManager.RegisterCard(draggedElement);
+
+                return true;
+            }
+
+            return false;
+        }
+
+
+        private void ClearDrag()
+        {
+            draggedElement = null;
+            draggedCard = null;
+        }
+
+        private List<CardDTO> MockFetchPlayerHand()
+        {
+            return new List<CardDTO>
+            {
+                new CardDTO{ Id = Guid.NewGuid(), Name = "Pyromancien", Hp = 3, Attack = 2, Cost = 1, Description = "Inflige 1 dmg.", CardType = CardType.Creature },
+                new CardDTO{ Id = Guid.NewGuid(), Name = "Garde", Hp = 6, Attack = 1, Cost = 2, Description = "Provocation.", CardType = CardType.Creature },
+                new CardDTO{ Id = Guid.NewGuid(), Name = "Boule de feu", Hp = 0, Attack = 0, Cost = 3, Description = "Inflige 4 dmg.", CardType = CardType.Spell },
+                new CardDTO{ Id = Guid.NewGuid(), Name = "Archère", Hp = 2, Attack = 3, Cost = 2, Description = "Bonus si PV < 10.", CardType = CardType.Creature },
+                new CardDTO{ Id = Guid.NewGuid(), Name = "Soin mineur", Hp = 0, Attack = 0, Cost = 1, Description = "Restaure 3 PV.", CardType = CardType.Spell }
+            };
+        }
     }
-}
 
-[Serializable]
-public class CardDTO
-{
-    public Guid Id;
-    public string Name;
-    public int Hp;
-    public int Attack;
-    public int Cost;
-    public string Description;
-    public CardType CardType;
-}
+    [Serializable]
+    public class CardDTO
+    {
+        public Guid Id;
+        public string Name;
+        public int Hp;
+        public int Attack;
+        public int Cost;
+        public string Description;
+        public CardType CardType;
+    }
 
-public enum CardType
-{
-    Creature,
-    Spell,
-    Artifact
+    public enum CardType
+    {
+        Creature,
+        Spell,
+        Artifact
+    }
+
 }
