@@ -14,7 +14,7 @@ public class CardSlot : MonoBehaviour
     {
         if (HandManager.Instance.SelectedCard != null && CanAccept(HandManager.Instance.SelectedCard))
         {
-            Debug.Log("Slot cliqu� !");
+            Debug.Log("Slot cliqué !");
             HandManager.Instance.PlaceSelectedCardOnSlot(this);
         }
     }
@@ -61,5 +61,8 @@ public class CardSlot : MonoBehaviour
         {
             AttackManager.Instance.RegisterCard(card);
         }
+
+        // Debug mise à l'échelle pour diagnostiquer les cartes allongées
+        Debug.Log($"[CardSlot] PlaceCard on {gameObject.name} | targetHeight={targetHeight} | rendererHeight={worldHeight} | parentScaleY={transform.lossyScale.y} | localScale={card.transform.localScale}");
     }
 }
