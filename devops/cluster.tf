@@ -16,6 +16,7 @@ data "aws_ami" "ubuntu" {
 resource "aws_instance" "server" {
   ami = data.aws_ami.ubuntu.id
   instance_type = "t3.micro"
+  availability_zone = "eu-west-3a"
   
   tags = {
     Name = "HelloWorld"
