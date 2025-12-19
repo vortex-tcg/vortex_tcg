@@ -345,17 +345,7 @@ public class RoomService
 
             // Vérifier si on peut initialiser la partie
             // Les userId sont déjà dans Members, on a juste besoin des decks
-            if (members.Count == 1 && room.User1DeckId.HasValue && !room.IsGameInitialized)
-            {
-                // Préparer l'initialisation: copier les valeurs nécessaires
-                needsInitialization = true;
-                user1Id = members[0]; // Créateur
-                deck1Id = room.User1DeckId.Value;
-
-                // Créer l'instance RoomObject (vide pour l'instant)
-                room.GameRoom = new VortexTCG.Game.Object.Room();
-            }
-            else if (members.Count == 2 &&
+            if (members.Count == 2 &&
                 room.User1DeckId.HasValue && room.User2DeckId.HasValue &&
                 !room.IsGameInitialized)
             {
