@@ -40,7 +40,6 @@ public class OpponentAutoSetup : MonoBehaviour
             return;
         }
 
-        // Clear existing children in hand parent
         if (p2HandParent != null)
         {
             for (int i = p2HandParent.childCount - 1; i >= 0; i--)
@@ -49,8 +48,7 @@ public class OpponentAutoSetup : MonoBehaviour
             }
         }
 
-        // Clear existing cards on P2 board slots
-        foreach (var slot in p2BoardSlots)
+        foreach (CardSlot slot in p2BoardSlots)
         {
             if (slot == null) continue;
             if (slot.CurrentCard != null)
@@ -60,14 +58,12 @@ public class OpponentAutoSetup : MonoBehaviour
             }
         }
 
-        // Spawn hand cards (not placed on board)
         for (int i = 0; i < handSize; i++)
         {
             Card handCard = Instantiate(cardPrefab, p2HandParent ? p2HandParent : transform);
             ApplyRandomData(handCard, i);
         }
 
-        // Determine how many cards go to board
         int boardCards = Mathf.Clamp(Random.Range(minBoardCards, maxBoardCards + 1), 0, p2BoardSlots.Count);
         List<int> slotIndices = new List<int>();
         for (int i = 0; i < p2BoardSlots.Count; i++) slotIndices.Add(i);
@@ -75,23 +71,20 @@ public class OpponentAutoSetup : MonoBehaviour
 
         for (int i = 0; i < boardCards; i++)
         {
-            var slot = p2BoardSlots[slotIndices[i]];
+            CardSlot slot = p2BoardSlots[slotIndices[i]];
             if (slot == null) continue;
 
             Card card = Instantiate(cardPrefab);
-            ApplyRandomData(card, i + 1000); // offset seed
+            ApplyRandomData(card, i + 1000);
 
-            // Reuse slot.PlaceCard to keep same sizing/position rules as P1
             slot.PlaceCard(card);
 
-            // Randomly set some cards as "attacking" (red outline)
             bool setAttacking = Random.value > 0.5f;
             card.SetOpponentAttacking(setAttacking);
 
-            // If you want a different target height for P2, override after placement
             if (boardTargetHeight > 0f)
             {
-                var renderers = card.GetComponentsInChildren<Renderer>();
+                Renderer[] renderers = card.GetComponentsInChildren<Renderer>();
                 float worldHeight = 1f;
                 if (renderers != null && renderers.Length > 0)
                 {
@@ -106,8 +99,6 @@ public class OpponentAutoSetup : MonoBehaviour
                 }
             }
         }
-
-        Debug.Log($"OpponentAutoSetup: generated hand={handSize}, board={boardCards}");
     }
 
     private void ApplyRandomData(Card card, int seedOffset)

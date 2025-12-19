@@ -28,8 +28,6 @@ public class AttackManager : MonoBehaviour
                 RegisterCard(slot.CurrentCard);
             }
         }
-
-        Debug.Log("AttackManager initialized and subscribed to phase events");
     }
 
     private void OnDestroy()
@@ -49,14 +47,10 @@ public class AttackManager : MonoBehaviour
 
     private void OnEnterDefensePhase()
     {
-        // Verouiller les cartes sélectionnées en gardant leur état visuel
-        // mais en empêchant toute modification
-        Debug.Log($"Phase Defense: {selectedCards.Count} cartes verrouillées en mode attaque");
     }
 
     private void OnEndDefensePhase()
     {
-        // Clear après la phase Defense
         ClearSelections();
     }
 
@@ -64,7 +58,6 @@ public class AttackManager : MonoBehaviour
     {
         if (card == null) return;
 
-        // Ajouter un collider si nécessaire
         Collider col = card.GetComponent<Collider>();
         if (col == null)
         {
@@ -81,7 +74,7 @@ public class AttackManager : MonoBehaviour
     public bool IsCardOnP1Board(Card card)
     {
         if (card == null) return false;
-        var slot = card.GetComponentInParent<CardSlot>();
+        CardSlot slot = card.GetComponentInParent<CardSlot>();
         return IsP1BoardSlot(slot);
     }
 

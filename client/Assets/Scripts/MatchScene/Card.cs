@@ -12,7 +12,7 @@ public class Card : MonoBehaviour
     public int cost;
     [TextArea(3, 6)]
     public string description;
-    public string imageUrl; // URL de l'image pour futur usage
+    public string imageUrl;
 
     [Header("UI")]
     public TMP_Text nameText;
@@ -38,21 +38,11 @@ public class Card : MonoBehaviour
         MockData();
         RefreshUI();
         
-        // Si AttackOrder GameObject est assigné, chercher le TMP_Text dedans
         if (AttackOrder != null && attackOrderText == null)
         {
             attackOrderText = AttackOrder.GetComponentInChildren<TMP_Text>();
-            if (attackOrderText != null)
-            {
-                Debug.Log($"[Card] attackOrderText trouvé automatiquement dans {AttackOrder.name}");
-            }
-            else
-            {
-                Debug.LogWarning($"[Card] Aucun TMP_Text trouvé dans {AttackOrder.name}");
-            }
         }
         
-        // Masquer le texte d'ordre d'attaque et l'outline au démarrage
         if (attackOrderText != null)
             attackOrderText.enabled = false;
         
@@ -68,22 +58,16 @@ public class Card : MonoBehaviour
 
     void OnMouseDown()
     {
-        Debug.Log("Carte cliquée !");
-
-        // Bloquer l'interaction si l'outline d'attaque est actif, sauf en phases Attack ou Defense (Defense doit pouvoir cibler les attaquants)
         if (AttackOutline != null && AttackOutline.activeSelf)
         {
             if (PhaseManager.Instance == null ||
                 (PhaseManager.Instance.CurrentPhase != GamePhase.Attack && PhaseManager.Instance.CurrentPhase != GamePhase.Defense))
             {
-                Debug.Log("Carte verrouillée en mode attaque - interaction bloquée hors phase Attack/Defense");
                 return;
             }
         }
 
-        // Si la carte est sur le board P1 et qu'on est en phase d'attaque,
-        // déléguer au AttackManager pour la sélection d'ordre d'attaque.
-        var slot = GetComponentInParent<CardSlot>();
+        CardSlot slot = GetComponentInParent<CardSlot>();
         if (slot != null && PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.Attack)
         {
             if (AttackManager.Instance != null && AttackManager.Instance.IsP1BoardSlot(slot))
@@ -93,7 +77,6 @@ public class Card : MonoBehaviour
             }
         }
 
-        // Phase Defense : sélection ou assignment via DefenseManager
         if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.Defense)
         {
             if (DefenseManager.Instance != null)
@@ -103,7 +86,6 @@ public class Card : MonoBehaviour
             }
         }
 
-        // Sinon, comportement par défaut (sélection depuis la main, etc.)
         HandManager.Instance.SelectCard(this);
     }
 
@@ -150,29 +132,24 @@ public class Card : MonoBehaviour
 
     public void ShowAttackOrder(int order)
     {
-        // Activer le GameObject parent d'abord
+
         if (AttackOrder != null)
         {
             AttackOrder.SetActive(true);
         }
-        
-        // Ensuite mettre à jour le texte
+
         if (attackOrderText != null)
         {
             attackOrderText.text = order.ToString();
             attackOrderText.enabled = true;
-            
-            // IMPORTANT: Forcer un rebuild de la géométrie du texte
             attackOrderText.ForceMeshUpdate();
             
-            // Redimensionner le RectTransform pour accueillir le texte
-            var rectTransform = attackOrderText.GetComponent<RectTransform>();
+
+            RectTransform rectTransform = attackOrderText.GetComponent<RectTransform>();
             if (rectTransform != null)
             {
-                // Utiliser la préférence de taille du TMP_Text pour dimensionner correctement
                 LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
                 
-                // Ou simplement augmenter la taille pour accommoder le gros font
                 rectTransform.sizeDelta = new Vector2(150, -200);
 
                 
@@ -203,8 +180,6 @@ public class Card : MonoBehaviour
         
         if (DefenseOutline != null)
             DefenseOutline.SetActive(false);
-        
-        Debug.Log($"[Card] ClearAttackOrder - AttackOrder désactivé");
     }
 
 
@@ -218,11 +193,10 @@ public class Card : MonoBehaviour
             selectionBaseScale = transform.localScale;
             transform.localScale = selectionBaseScale * selectedScaleMultiplier;
             
-            // Vérifier si on est en phase Attack et dans un slot P1
             bool canShowAttackVisuals = false;
             if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.Attack)
             {
-                var slot = GetComponentInParent<CardSlot>();
+                CardSlot slot = GetComponentInParent<CardSlot>();
                 if (slot != null && AttackManager.Instance != null && AttackManager.Instance.IsP1BoardSlot(slot))
                 {
                     canShowAttackVisuals = true;
@@ -242,7 +216,6 @@ public class Card : MonoBehaviour
         {
             transform.localScale = selectionBaseScale;
             
-            // Désactiver l'outline et l'order d'attaque
             if (AttackOutline != null)
                 AttackOutline.SetActive(false);
             
@@ -251,28 +224,25 @@ public class Card : MonoBehaviour
         }
     }
 
-    // Utilisé pour marquer les cartes adverses en mode attaque (outline rouge côté P2)
     public void SetOpponentAttacking(bool active)
     {
         if (AttackOutline == null) return;
 
         AttackOutline.SetActive(active);
 
-        var renderer = AttackOutline.GetComponent<Renderer>();
+        Renderer renderer = AttackOutline.GetComponent<Renderer>();
         if (renderer != null && renderer.material != null)
         {
             renderer.material.color = active ? Color.red : Color.white;
         }
     }
 
-    // Utilisé pour marquer une carte P1 sélectionnée en défense
     public void SetDefenseSelected(bool active)
     {
         if (DefenseOutline != null)
             DefenseOutline.SetActive(active);
     }
 
-    // Permet de savoir si la carte est marquée comme attaquante (utile côté défense)
     public bool IsAttackingOutlineActive()
     {
         return AttackOutline != null && AttackOutline.activeSelf;
