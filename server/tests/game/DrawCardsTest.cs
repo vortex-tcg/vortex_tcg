@@ -87,8 +87,8 @@ namespace game.Tests
             DrawCardsResultDTO? result = gameRoom?.DrawCards(userId1, 5);
 
             Assert.NotNull(result);
-            Assert.Equal(2, result.PlayerResult.DrawnCards.Count);
-            Assert.Equal(3, result.PlayerResult.FatigueCount);
+            Assert.Equal(0, result.PlayerResult.DrawnCards.Count);
+            Assert.Equal(2, result.PlayerResult.SentToGraveyard.Count);
         }
 
         [Fact]

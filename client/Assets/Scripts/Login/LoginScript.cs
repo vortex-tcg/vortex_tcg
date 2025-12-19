@@ -54,22 +54,28 @@ public class LoginScript : MonoBehaviour
 
     private void OnDisable()
     {
+        UpdateLoginButtonState();
+
+        if (emailField != null)
+            emailField.onValueChanged.AddListener(_ => UpdateLoginButtonState());
+
+        if (passwordField != null)
+            passwordField.onValueChanged.AddListener(_ => UpdateLoginButtonState());
+
         if (loginButton != null)
-            loginButton.clicked -= OnLoginClicked;
-        if (togglePasswordButton != null)
-            togglePasswordButton.clicked -= TogglePasswordVisibility;
+            loginButton.onClick.AddListener(() => StartCoroutine(Login()));
     }
 
     private void TogglePasswordVisibility()
     {
-        passwordVisible = !passwordVisible;
-        if (passwordField != null)
-            passwordField.isPasswordField = !passwordVisible;
+        string pattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+        return Regex.IsMatch(email ?? string.Empty, pattern);
     }
 
     private void UpdateLoginButtonState()
     {
-        if (loginButton == null) return;
+        if (loginButton == null)
+            return;
 
         if (isSubmitting)
         {
@@ -77,44 +83,23 @@ public class LoginScript : MonoBehaviour
             return;
         }
 
-        bool ready = IsValidEmail(emailField?.value) && !string.IsNullOrEmpty(passwordField?.value);
-        loginButton.SetEnabled(ready);
+        bool ready =
+            IsValidEmail(emailField != null ? emailField.text : string.Empty) &&
+            !string.IsNullOrEmpty(passwordField != null ? passwordField.text : string.Empty);
+
+        loginButton.interactable = ready;
     }
 
-    private bool IsValidEmail(string email)
-    {
-        if (string.IsNullOrEmpty(email)) return false;
-        string pattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
-        return Regex.IsMatch(email, pattern, RegexOptions.None, TimeSpan.FromMilliseconds(100));
-    }
-
-    private void ShowError(string message)
-    {
-        if (emailErrorLabel == null) return;
-        emailErrorLabel.style.display = DisplayStyle.Flex;
-        emailErrorLabel.text = message;
-    }
-
-    private void HideError()
-    {
-        if (emailErrorLabel == null) return;
-        emailErrorLabel.style.display = DisplayStyle.None;
-        emailErrorLabel.text = "";
-    }
-
-    private void OnLoginClicked()
-    {
-        StartCoroutine(LoginCoroutine());
-    }
-
-    private IEnumerator LoginCoroutine()
+    private IEnumerator Login()
     {
         isSubmitting = true;
         UpdateLoginButtonState();
         HideError();
 
-        var cfg = ConfigLoader.Load();
-        string baseUrl = (cfg?.apiBaseUrl ?? "").TrimEnd('/');
+        AppConfig cfg = ConfigLoader.Load();
+        string baseUrl = (cfg != null ? cfg.apiBaseUrl : string.Empty) ?? string.Empty;
+        baseUrl = baseUrl.TrimEnd('/');
+
         if (string.IsNullOrEmpty(baseUrl))
         {
             ShowError("Configuration API manquante.");
@@ -123,7 +108,7 @@ public class LoginScript : MonoBehaviour
             yield break;
         }
 
-        string email = emailField?.value ?? "";
+        string email = emailField != null ? emailField.text : string.Empty;
         if (!IsValidEmail(email))
         {
             ShowError("Adresse email invalide");
@@ -132,7 +117,7 @@ public class LoginScript : MonoBehaviour
             yield break;
         }
 
-        string password = passwordField?.value ?? "";
+        string password = passwordField != null ? passwordField.text : string.Empty;
 
         string url = baseUrl.EndsWith("/api", StringComparison.OrdinalIgnoreCase)
             ? baseUrl + "/auth/login"
@@ -155,6 +140,8 @@ public class LoginScript : MonoBehaviour
             if (request.result == UnityWebRequest.Result.Success)
             {
                 string response = request.downloadHandler.text;
+                Debug.Log("[Login] Réponse brute du /login: " + response);
+
                 string token = ExtractTokenFromResponse(response);
 
                 if (string.IsNullOrEmpty(token))
@@ -166,16 +153,7 @@ public class LoginScript : MonoBehaviour
                 if (!string.IsNullOrEmpty(token))
                 {
                     Jwt.I.SetToken(token, persist: true);
-                    var client = SignalRClient.Instance ?? new GameObject("NetworkRoot").AddComponent<SignalRClient>();
-                    networkRef?.Bind(client);
-                    client.SetAuthToken(Jwt.I.Token);
-                    var displayName = (email ?? "UnityPlayer").Split('@')[0];
-                    Debug.Log("[Login] Connecting to hub as " + displayName);
-                    var _ = client.ConnectAndIdentify(displayName);
-
-                    float start = Time.realtimeSinceStartup;
-                    while (!client.IsConnected && Time.realtimeSinceStartup - start < 5f)
-                        yield return null;
+                    Debug.Log("[Login] Jwt.I.Token = " + Jwt.I.Token);
                 }
 
                 if (!Jwt.I.IsJwtPresent())
@@ -215,44 +193,110 @@ public class LoginScript : MonoBehaviour
     {
         public string email;
         public string password;
-        public LoginData(string email, string password) { this.email = email; this.password = password; }
+
+        public LoginData(string email, string password)
+        {
+            this.email = email;
+            this.password = password;
+        }
     }
 
-    [Serializable] private class TokenOnly { public string token; }
-    [Serializable] private class AccessTokenOnly { public string accessToken; }
+    [Serializable]
+    private class TokenOnly { public string token; }
+
+    [Serializable]
+    private class AccessTokenOnly { public string accessToken; }
+
+    [Serializable]
+    private class LoginResponseWrapper
+    {
+        public LoginResponseData data;
+    }
+
+    [Serializable]
+    private class LoginResponseData
+    {
+        public string token;
+    }
+
+    [Serializable]
+    private class TokenRoot
+    {
+        public string token;
+    }
+
+    [Serializable]
+    private class AccessTokenRoot
+    {
+        public string accessToken;
+    }
 
     private string ExtractTokenFromResponse(string json)
     {
-        if (string.IsNullOrEmpty(json)) return null;
+        if (string.IsNullOrEmpty(json))
+            return null;
+        try
+        {
+            LoginResponseWrapper wrapper = JsonUtility.FromJson<LoginResponseWrapper>(json);
+            if (wrapper != null && wrapper.data != null && !string.IsNullOrEmpty(wrapper.data.token))
+            {
+                Debug.Log("[Login] Token trouvé dans data.token");
+                return wrapper.data.token;
+            }
+        }
+        catch
+        {
+        }
+        try
+        {
+            TokenRoot root = JsonUtility.FromJson<TokenRoot>(json);
+            if (root != null && !string.IsNullOrEmpty(root.token))
+            {
+                Debug.Log("[Login] Token trouvé dans token (racine)");
+                return root.token;
+            }
+        }
+        catch
+        {
+        }
 
         try
         {
-            var raw = ExtractRawString(json, "Token");
-            if (!string.IsNullOrEmpty(raw))
+            AccessTokenRoot acc = JsonUtility.FromJson<AccessTokenRoot>(json);
+            if (acc != null && !string.IsNullOrEmpty(acc.accessToken))
             {
-                var t1 = JsonUtility.FromJson<TokenOnly>("{\"Token\":" + raw + "}");
-                if (!string.IsNullOrEmpty(t1.token)) return t1.token;
+                Debug.Log("[Login] Token trouvé dans accessToken (racine)");
+                return acc.accessToken;
             }
         }
-        catch { }
-
+        catch
+        {
+        }
         try
         {
-            var raw = ExtractRawString(json, "accessToken");
-            if (!string.IsNullOrEmpty(raw))
+            Match match = Regex.Match(
+                json,
+                "\"token\"\\s*:\\s*\"([^\"]+)\"",
+                RegexOptions.IgnoreCase
+            );
+            if (match.Success)
             {
-                var t2 = JsonUtility.FromJson<AccessTokenOnly>("{\"accessToken\":" + raw + "}");
-                if (!string.IsNullOrEmpty(t2.accessToken)) return t2.accessToken;
+                Debug.Log("[Login] Token trouvé via regex \"token\"");
+                return match.Groups[1].Value;
             }
         }
-        catch { }
+        catch
+        {
+        }
 
+        Debug.LogWarning("[Login] Impossible d'extraire un token de la réponse JSON.");
         return null;
     }
 
     private string ExtractRawString(string json, string key)
     {
-        int i = json.IndexOf($"\"{key}\"", StringComparison.Ordinal);
+        string pattern = "\"" + key + "\"";
+        int i = json.IndexOf(pattern, StringComparison.Ordinal);
         if (i < 0) return null;
         int start = json.IndexOf(':', i);
         if (start < 0) return null;
@@ -265,9 +309,9 @@ public class LoginScript : MonoBehaviour
 
     private string BuildMockJwt(string email, int lifetimeSeconds)
     {
-        var header = "{\"alg\":\"none\",\"typ\":\"JWT\"}";
+        string header = "{\"alg\":\"none\",\"typ\":\"JWT\"}";
         long exp = (long)(DateTimeOffset.UtcNow.ToUnixTimeSeconds() + lifetimeSeconds);
-        string payload = $"{{\"sub\":\"{email}\",\"email\":\"{email}\",\"exp\":{exp}}}";
+        string payload = "{\"sub\":\"" + email + "\",\"email\":\"" + email + "\",\"exp\":" + exp + "}";
 
         return Base64UrlEncode(Encoding.UTF8.GetBytes(header)) + "." +
                Base64UrlEncode(Encoding.UTF8.GetBytes(payload)) + ".";
@@ -276,6 +320,16 @@ public class LoginScript : MonoBehaviour
     private string Base64UrlEncode(byte[] bytes)
     {
         return Convert.ToBase64String(bytes)
-            .TrimEnd('=').Replace('+', '-').Replace('/', '_');
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+    }
+
+    public void OnEmailChanged(string input)
+    {
+        if (emailErrorText != null)
+            emailErrorText.text = IsValidEmail(input) ? string.Empty : "Adresse email invalide.";
+
+        UpdateLoginButtonState();
     }
 }
