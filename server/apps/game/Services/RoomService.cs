@@ -25,6 +25,7 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using VortexTCG.Game.Object;
+using VortexTCG.Game.DTO;
 
 namespace game.Services;
 
@@ -491,6 +492,142 @@ public class RoomService
             List<Guid> members = room.Members.ToList();
             int index = members.IndexOf(userId);
             return index >= 0 ? index + 1 : null;
+        }
+    }
+
+    #endregion
+
+    #region Gestion des phases de jeu
+
+    /// <summary>
+    /// Démarre une partie. Seul le joueur 1 (créateur) peut démarrer.
+    /// </summary>
+    /// <param name="userId">ID du joueur qui demande le démarrage</param>
+    /// <returns>Résultat du démarrage ou null si non autorisé</returns>
+    public VortexTCG.Game.DTO.PhaseChangeResultDTO? StartGame(Guid userId)
+    {
+        if (!_userToRoom.TryGetValue(userId, out string? code)) return null;
+        if (!_rooms.TryGetValue(code, out Room? room)) return null;
+
+        lock (room)
+        {
+            if (room.GameRoom == null || !room.IsGameInitialized) return null;
+
+            // Vérifier que c'est le joueur 1 qui démarre
+            List<Guid> members = room.Members.ToList();
+            if (members.Count < 2 || members[0] != userId) return null;
+
+            // Vérifier que la partie n'est pas déjà démarrée
+            if (room.GameRoom.GameStarted) return null;
+
+            return room.GameRoom.StartGame();
+        }
+    }
+
+    /// <summary>
+    /// Change de phase pour un joueur.
+    /// </summary>
+    /// <param name="userId">ID du joueur qui demande le changement</param>
+    /// <returns>Résultat du changement ou null si non autorisé</returns>
+    public VortexTCG.Game.DTO.PhaseChangeResultDTO? ChangePhase(Guid userId)
+    {
+        if (!_userToRoom.TryGetValue(userId, out string? code)) return null;
+        if (!_rooms.TryGetValue(code, out Room? room)) return null;
+
+        lock (room)
+        {
+            if (room.GameRoom == null || !room.IsGameInitialized) return null;
+            if (!room.GameRoom.GameStarted) return null;
+
+            return room.GameRoom.ChangePhase(userId);
+        }
+    }
+
+    /// <summary>
+    /// Force le changement de phase (utilisé par le timer).
+    /// </summary>
+    /// <param name="code">Code du salon</param>
+    /// <returns>Résultat du changement ou null si erreur</returns>
+    public PhaseChangeResultDTO? ForceChangePhase(string code)
+    {
+        code = code.Trim().ToUpperInvariant();
+        if (!_rooms.TryGetValue(code, out Room? room)) return null;
+
+        lock (room)
+        {
+            if (room.GameRoom == null || !room.IsGameInitialized) return null;
+            if (!room.GameRoom.GameStarted) return null;
+
+            return room.GameRoom.ForceChangePhase();
+        }
+    }
+
+    /// <summary>
+    /// Force l'avancement de la phase Draw vers Placement (après la pioche automatique).
+    /// Utilisé par le serveur après avoir effectué la pioche automatique.
+    /// </summary>
+    /// <param name="code">Code du salon</param>
+    /// <returns>Résultat du changement ou null si erreur</returns>
+    public PhaseChangeResultDTO? ForceAdvanceFromDraw(string code)
+    {
+        code = code.Trim().ToUpperInvariant();
+        if (!_rooms.TryGetValue(code, out Room? room)) return null;
+
+        lock (room)
+        {
+            if (room.GameRoom == null || !room.IsGameInitialized) return null;
+            if (!room.GameRoom.GameStarted) return null;
+
+            // Vérifier qu'on est bien en phase Draw
+            if (room.GameRoom.CurrentPhase != GamePhase.Draw) return null;
+
+            return room.GameRoom.AdvanceFromDraw();
+        }
+    }
+
+    /// <summary>
+    /// Fait piocher des cartes pour un joueur spécifique (utilisé pour la pioche automatique).
+    /// </summary>
+    /// <param name="playerId">ID du joueur qui pioche</param>
+    /// <param name="playerPosition">Position du joueur (1 ou 2)</param>
+    /// <param name="amount">Nombre de cartes</param>
+    /// <returns>Résultat de la pioche ou null si erreur</returns>
+    public VortexTCG.Game.DTO.DrawCardsResultDTO? DrawCardsForPlayer(Guid playerId, int playerPosition, int amount)
+    {
+        if (!_userToRoom.TryGetValue(playerId, out string? code)) return null;
+        if (!_rooms.TryGetValue(code, out Room? room)) return null;
+
+        lock (room)
+        {
+            if (room.GameRoom == null || !room.IsGameInitialized) return null;
+
+            return room.GameRoom.DrawCards(playerId, amount);
+        }
+    }
+
+    /// <summary>
+    /// Récupère l'état actuel de la phase pour un salon.
+    /// </summary>
+    /// <param name="code">Code du salon</param>
+    /// <returns>État actuel de la phase ou null si erreur</returns>
+    public VortexTCG.Game.DTO.PhaseChangeResultDTO? GetCurrentPhaseState(string code)
+    {
+        code = code.Trim().ToUpperInvariant();
+        if (!_rooms.TryGetValue(code, out Room? room)) return null;
+
+        lock (room)
+        {
+            if (room.GameRoom == null || !room.IsGameInitialized) return null;
+
+            return new VortexTCG.Game.DTO.PhaseChangeResultDTO
+            {
+                CurrentPhase = room.GameRoom.CurrentPhase,
+                ActivePlayerId = room.GameRoom.ActivePlayerId,
+                TurnNumber = room.GameRoom.TurnNumber,
+                AutoChanged = false,
+                AutoChangeReason = null,
+                CanAct = room.GameRoom.GameStarted
+            };
         }
     }
 

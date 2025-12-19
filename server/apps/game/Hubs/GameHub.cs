@@ -14,16 +14,19 @@ namespace game.Hubs;
 
 public class GameHub : Hub
 {
-    // Le Hub dépend de deux services singleton:
+    // Le Hub dépend de trois services singleton:
     // - Matchmaker: gère une file d'attente (queue) pour appairer deux joueurs aléatoirement.
     // - RoomService: gère des salons identifiés par un code (type "K3H9Z8") pour jeu privé.
+    // - PhaseTimerService: gère les timers de phase (1 minute max par phase).
     private readonly Matchmaker _matchmaker;
     private readonly RoomService _rooms;
+    private readonly PhaseTimerService _phaseTimer;
 
-    public GameHub(Matchmaker matchmaker, RoomService rooms)
+    public GameHub(Matchmaker matchmaker, RoomService rooms, PhaseTimerService phaseTimer)
     {
         _matchmaker = matchmaker;
         _rooms = rooms;
+        _phaseTimer = phaseTimer;
     }
 
     // Extrait l'ID utilisateur (userId) depuis le token JWT d'authentification.
@@ -270,5 +273,57 @@ public class GameHub : Hub
         {
             await Clients.OthersInGroup(code).SendAsync("OpponentCardsDrawn", result.OpponentResult);
         }
+    }
+
+    // --- GESTION DES PHASES DE JEU ---
+
+    /// <summary>
+    /// Démarre la partie dans une room. Seul le joueur 1 (créateur) peut démarrer.
+    /// Initialise le jeu en tour 1, phase Draw.
+    /// </summary>
+    public async Task StartGame()
+    {
+        Guid userId = GetAuthenticatedUserId();
+        PhaseChangeResultDTO? result = _rooms.StartGame(userId);
+
+        if (result == null)
+        {
+            await Clients.Caller.SendAsync("Error", "Unable to start game (Not in room, already started, or not player 1)");
+            return;
+        }
+
+        string? code = _rooms.GetRoomOf(userId);
+        if (code == null) return;
+
+        // Démarrer le timer de 1 minute
+        _phaseTimer.StartOrResetTimer(code);
+
+        // Envoyer l'état initial aux deux joueurs (phase Draw)
+        await Clients.Group(code).SendAsync("GameStarted", result);
+    }
+
+    /// <summary>
+    /// Le joueur demande à changer de phase.
+    /// Le serveur vérifie si le joueur peut changer de phase et gère les auto-skips.
+    /// </summary>
+    public async Task ChangePhase()
+    {
+        Guid userId = GetAuthenticatedUserId();
+        PhaseChangeResultDTO? result = _rooms.ChangePhase(userId);
+
+        if (result == null)
+        {
+            await Clients.Caller.SendAsync("Error", "Unable to change phase (Not in room, game not started, or not your turn)");
+            return;
+        }
+
+        string? code = _rooms.GetRoomOf(userId);
+        if (code == null) return;
+
+        // Redémarrer le timer de 1 minute pour la nouvelle phase
+        _phaseTimer.StartOrResetTimer(code);
+
+        // Envoyer le changement de phase aux deux joueurs
+        await Clients.Group(code).SendAsync("PhaseChanged", result);
     }
 }
