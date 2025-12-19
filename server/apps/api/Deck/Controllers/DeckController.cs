@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
-using Deck.DTOs;
-using Deck.Services;
+using VortexTCG.Api.Deck.DTOs;
+using VortexTCG.Api.Deck.Services;
+using VortexTCG.Common.Services;
 
-namespace Deck.Controllers
+namespace VortexTCG.Api.Deck.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class DeckController : ControllerBase
+    public class DeckController : VortexBaseController
     {
         private readonly DeckService _deckService;
 
@@ -16,10 +17,7 @@ namespace Deck.Controllers
         }
 
         [HttpGet("{deckId}")]
-        public ActionResult<DeckDTO> GetDeckById(string deckId)
-        {
-            DeckDTO deck = _deckService.GetDeckById(deckId);
-            return Ok(deck);
-        }
+        public async Task<IActionResult> GetDeckById(string deckId)
+        => toActionResult(_deckService.GetDeckById(deckId));
     }
 }
