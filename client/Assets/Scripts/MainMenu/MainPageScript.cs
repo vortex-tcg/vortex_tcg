@@ -1,15 +1,19 @@
 using System;
 using System.Threading.Tasks;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.UIElements;
 
 public class MainPageMenu : MonoBehaviour
 {
-    [Header("UI")]
-    public Button playWithFriendsButton;
-    public TMP_Text statusText; 
+    [Header("UI Toolkit")]
+    [SerializeField] private UIDocument uiDocument;
+
+    private Button playButton;
+    private Button playWithFriendsButton;
+    private Label statusLabel;
+
     [SerializeField] private NetworkRef networkRef;
+
     [Header("Options")]
     [Tooltip("Si aucune connexion n’existe, le menu la crée & s’identifie ici.")]
     public bool connectHereIfNeeded = true;
@@ -17,12 +21,22 @@ public class MainPageMenu : MonoBehaviour
 
     private SignalRClient client;
 
+
     private void OnEnable()
     {
-          var client = networkRef ? networkRef.Client : SignalRClient.Instance;
+        var root = uiDocument.rootVisualElement;
 
-        if (playWithFriendsButton)
-            playWithFriendsButton.onClick.AddListener(OnClickSearchOpponent);
+        playButton = root.Q<Button>("PlayButton");
+        playWithFriendsButton = root.Q<Button>("PlayWitchFriendsButton");
+        statusLabel = root.Q<Label>("statusLabel");
+
+        client = networkRef ? networkRef.Client : SignalRClient.Instance;
+
+        if (playButton != null)
+            playButton.clicked += OnClickPlay;
+
+        if (playWithFriendsButton != null)
+            playWithFriendsButton.clicked += OnClickSearchOpponent;
 
         if (client != null)
         {
@@ -32,68 +46,64 @@ public class MainPageMenu : MonoBehaviour
         else
         {
             SetStatus("Non connecté.");
-            if (connectHereIfNeeded) _ = ConnectIfNeeded();
+            if (connectHereIfNeeded)
+                _ = ConnectIfNeeded();
         }
     }
 
     private void OnDisable()
     {
-        if (playWithFriendsButton)
-            playWithFriendsButton.onClick.RemoveListener(OnClickSearchOpponent);
-        if (client != null) Unsubscribe(client);
+        if (playButton != null)
+            playButton.clicked -= OnClickPlay;
+
+        if (playWithFriendsButton != null)
+            playWithFriendsButton.clicked -= OnClickSearchOpponent;
+
+        if (client != null)
+            Unsubscribe(client);
     }
 
-    private void Subscribe(SignalRClient c)
-    {
-        c.OnStatus       += HandleStatus;
-        c.OnMatched      += HandleMatched;
-        c.OnOpponentLeft += HandleOpponentLeft;
-        c.OnLog          += HandleLog;
-    }
-    private void Unsubscribe(SignalRClient c)
-    {
-        c.OnStatus       -= HandleStatus;
-        c.OnMatched      -= HandleMatched;
-        c.OnOpponentLeft -= HandleOpponentLeft;
-        c.OnLog          -= HandleLog;
-    }
 
-    // ---------- Connexion (si besoin) ----------
     private async Task<bool> ConnectIfNeeded()
     {
-        // 1) Instance
         client = SignalRClient.Instance;
+
         if (client == null)
         {
-            if (!connectHereIfNeeded) { SetStatus("Réseau non prêt. Retour via Login."); return false; }
+            if (!connectHereIfNeeded)
+            {
+                SetStatus("Réseau non prêt.");
+                return false;
+            }
+
             Log("[MainPage] Création d’un SignalRClient (menu).");
             var go = new GameObject("NetworkRoot");
-            client = go.AddComponent<SignalRClient>(); // DontDestroyOnLoad dans Awake()
+            client = go.AddComponent<SignalRClient>();
             Subscribe(client);
         }
 
-        // 2) Hub URL depuis la config
         var cfg = ConfigLoader.Load();
         var hubUrl = ConfigLoader.BuildGameHubUrl(cfg);
         if (!string.IsNullOrWhiteSpace(hubUrl))
             client.hubUrl = hubUrl;
 
-        // 3) JWT si dispo
         if (Jwt.I != null && Jwt.I.IsJwtPresent())
             client.SetAuthToken(Jwt.I.Token);
 
-        // 4) Déjà connecté ?
-        if (client.IsConnected) return true;
+        if (client.IsConnected)
+            return true;
 
-        // 5) Connect + identify
         string displayName = "UnityPlayer";
-        if (Jwt.I != null && Jwt.I.TryGetClaim("email", out var email) && !string.IsNullOrEmpty(email))
+        if (Jwt.I != null &&
+            Jwt.I.TryGetClaim("email", out var email) &&
+            !string.IsNullOrEmpty(email))
+        {
             displayName = email.Split('@')[0];
+        }
 
         SetStatus("Connexion au serveur…");
         await client.ConnectAndIdentify(displayName);
 
-        // 6) Attendre un court instant l’état connecté
         bool ok = await WaitUntilConnected(client, 6f);
         SetStatus(ok ? "Connecté, prêt." : "Pas connecté.");
         return ok;
@@ -102,15 +112,22 @@ public class MainPageMenu : MonoBehaviour
     private static async Task<bool> WaitUntilConnected(SignalRClient c, float timeoutSeconds)
     {
         float start = Time.realtimeSinceStartup;
-        while (!c.IsConnected && (Time.realtimeSinceStartup - start) < timeoutSeconds)
+        while (!c.IsConnected && Time.realtimeSinceStartup - start < timeoutSeconds)
             await Task.Yield();
+
         return c.IsConnected;
     }
 
-    // ---------- Clic matchmaking ----------
+
+    private void OnClickPlay()
+    {
+        SetStatus("Mode solo sélectionné.");
+    }
+
     private async void OnClickSearchOpponent()
     {
-        playWithFriendsButton.interactable = false;
+        playWithFriendsButton?.SetEnabled(false);
+
         try
         {
             if (!await ConnectIfNeeded())
@@ -120,7 +137,7 @@ public class MainPageMenu : MonoBehaviour
             }
 
             SetStatus("Recherche d’un adversaire…");
-            await client.JoinQueue(); // SafeSend côté client → aucun arg fantôme
+            await client.JoinQueue();
             Log("[MainPage] JoinQueue envoyé.");
         }
         catch (Exception ex)
@@ -130,19 +147,31 @@ public class MainPageMenu : MonoBehaviour
         }
         finally
         {
-            playWithFriendsButton.interactable = true;
+            playWithFriendsButton?.SetEnabled(true);
         }
     }
 
-    // ---------- Events du client ----------
+    private void Subscribe(SignalRClient c)
+    {
+        c.OnStatus += HandleStatus;
+        c.OnMatched += HandleMatched;
+        c.OnOpponentLeft += HandleOpponentLeft;
+        c.OnLog += HandleLog;
+    }
+
+    private void Unsubscribe(SignalRClient c)
+    {
+        c.OnStatus -= HandleStatus;
+        c.OnMatched -= HandleMatched;
+        c.OnOpponentLeft -= HandleOpponentLeft;
+        c.OnLog -= HandleLog;
+    }
+
     private void HandleStatus(string s) => SetStatus(s);
-    private void HandleLog(string s)    { Log("[SignalR] " + s); }
 
     private void HandleMatched(string roomKey)
     {
         SetStatus("Adversaire trouvé !");
-        // TODO: charger la scène de jeu ici si besoin
-        // SceneManager.LoadScene("BoardScene");
     }
 
     private void HandleOpponentLeft()
@@ -150,11 +179,22 @@ public class MainPageMenu : MonoBehaviour
         SetStatus("L’adversaire a quitté.");
     }
 
-    // ---------- UI utils ----------
+    private void HandleLog(string s)
+    {
+        Log("[SignalR] " + s);
+    }
+
     private void SetStatus(string msg)
     {
-        if (statusText) statusText.text = msg;
+        if (statusLabel != null)
+            statusLabel.text = msg;
+
         Log("[STATUS] " + msg);
     }
-    private void Log(string m) { if (verboseLogs) Debug.Log(m); }
+
+    private void Log(string m)
+    {
+        if (verboseLogs)
+            Debug.Log(m);
+    }
 }
