@@ -20,16 +20,13 @@ public class CollectionController : MonoBehaviour
 
     private VisualElement root;
 
-    // Containers
     private VisualElement cardsContainer;
     private VisualElement decksContainer;
     private VisualElement factionsContainer;
     private VisualElement cardPreview;
 
-    // Data
     private UserCollectionDto collection;
 
-    // State
     private Guid? selectedFactionId;
     private UserCollectionCardDto selectedCard;
 
@@ -62,8 +59,7 @@ public class CollectionController : MonoBehaviour
 
     private IEnumerator FetchCollectionFromAPI()
     {
-        // Récupérer l'URL de l'API et l'ID utilisateur
-        var cfg = ConfigLoader.Load();
+        AppConfig cfg = ConfigLoader.Load();
         string baseUrl = (cfg?.apiBaseUrl ?? "").TrimEnd('/');
         
         if (string.IsNullOrEmpty(baseUrl))
@@ -72,13 +68,11 @@ public class CollectionController : MonoBehaviour
             yield break;
         }
 
-        // Construire l'URL - récupérer l'ID utilisateur du JWT
         string userId = null;
         if (Jwt.I != null)
         {
             if (!Jwt.I.TryGetClaim("sub", out userId))
             {
-                // fallback éventuel selon la structure du token
                 Jwt.I.TryGetClaim("userId", out userId);
             }
         }
@@ -94,7 +88,6 @@ public class CollectionController : MonoBehaviour
 
         UnityWebRequest request = UnityWebRequest.Get(url);
         
-        // Attacher le token d'authentification
         Jwt.I.AttachAuthHeader(request);
         
         request.SetRequestHeader("Content-Type", "application/json");
@@ -133,9 +126,9 @@ public class CollectionController : MonoBehaviour
     {
         cardsContainer.Clear();
 
-        foreach (var card in FilteredCards())
+        foreach (UserCollectionCardDto card in FilteredCards())
         {
-            var cardElement = smallCardTemplate.Instantiate();
+            TemplateContainer cardElement = smallCardTemplate.Instantiate();
 
             BindSmallCard(cardElement, card);
 
@@ -152,9 +145,9 @@ public class CollectionController : MonoBehaviour
     {
         decksContainer.Clear();
 
-        foreach (var deck in collection.Decks)
+        foreach (DeckDto deck in collection.Decks)
         {
-            var deckElement = deckTemplate.Instantiate();
+            TemplateContainer deckElement = deckTemplate.Instantiate();
 
             deckElement.Q<Label>("DeckName").text = deck.DeckName;
             deckElement.Q<VisualElement>("ChampionImage").style.backgroundImage =
@@ -173,9 +166,9 @@ public class CollectionController : MonoBehaviour
     {
         factionsContainer.Clear();
 
-        foreach (var faction in collection.Faction)
+        foreach (FactionDto faction in collection.Faction)
         {
-            var factionElement = factionTemplate.Instantiate();
+            TemplateContainer factionElement = factionTemplate.Instantiate();
 
             factionElement.Q<Label>("FactionName").text = faction.FactionName;
             factionElement.Q<VisualElement>("FactionIcon").style.backgroundImage =
@@ -197,14 +190,14 @@ public class CollectionController : MonoBehaviour
 
     private void BindSmallCard(VisualElement cardElement, UserCollectionCardDto data)
     {
-        var card = data.Card;
+        CardDto card = data.Card;
 
         cardElement.Q<Label>("Name").text = card.Name;
 
         cardElement.Q<VisualElement>("Illustration").style.backgroundImage =
             new StyleBackground(LoadSprite(card.Picture));
 
-        var aura = cardElement.Q<VisualElement>("Aura");
+        VisualElement aura = cardElement.Q<VisualElement>("Aura");
         aura.ClearClassList();
         aura.AddToClassList("aura-effect");
 
@@ -218,10 +211,10 @@ public class CollectionController : MonoBehaviour
             }
         }
 
-        var order = cardElement.Q<Label>("AttackOrder");
+        Label order = cardElement.Q<Label>("AttackOrder");
         int owned = 0;
 
-        foreach (var o in data.OwnData)
+        foreach (OwnCardDto o in data.OwnData)
             owned += o.Number;
 
         if (owned > 1)
@@ -243,7 +236,7 @@ public class CollectionController : MonoBehaviour
 
     private void ShowCardPreview(UserCollectionCardDto data)
     {
-        var card = data.Card;
+        CardDto card = data.Card;
 
         cardPreview.Q<Label>("Name").text = card.Name;
         cardPreview.Q<Label>("LoreDesc").text = card.Description;
@@ -259,7 +252,7 @@ public class CollectionController : MonoBehaviour
 
         if (card.Factions.Count > 0)
         {
-            var faction = collection.Faction
+            FactionDto faction = collection.Faction
                 .Find(f => f.FactionId == card.Factions[0]);
 
             if (faction != null)
@@ -286,7 +279,7 @@ public class CollectionController : MonoBehaviour
 
     private IEnumerable<UserCollectionCardDto> FilteredCards()
     {
-        foreach (var card in collection.Cards)
+        foreach (UserCollectionCardDto card in collection.Cards)
         {
             if (selectedFactionId.HasValue &&
                 !card.Card.Factions.Contains(selectedFactionId.Value))
