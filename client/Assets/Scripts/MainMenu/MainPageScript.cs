@@ -14,7 +14,8 @@
         public GameObject searchingPanel;     
 
         [SerializeField] private NetworkRef networkRef;
-    
+    	[SerializeField] private string deckId = "d3b07384-d9a1-4d3b-92d8-4f5c6e7a8b9c";
+
         [Header("Options")]
         [Tooltip("Si aucune connexion n’existe, le menu la crée & s’identifie ici.")]
         public bool connectHereIfNeeded = true;
@@ -107,6 +108,8 @@
                 GameObject go = new GameObject("NetworkRoot");
                 client = go.AddComponent<SignalRClient>();
                 Subscribe(client);
+				networkRef.Bind(client);
+				client.BindNetworkRef(networkRef);
             }
 
             AppConfig cfg = ConfigLoader.Load();
@@ -160,7 +163,13 @@
                 if (searchingPanel != null)
                     searchingPanel.SetActive(true);
 
-                await client.JoinQueue();
+				if (!Guid.TryParse(deckId, out Guid 	deckGuid))
+				{
+   					 SetStatus("Deck ID invalide.");
+   					 return;
+				}
+
+				await client.JoinQueue(deckGuid);
                 Log("[MainPage] JoinQueue envoyé.");
             }
             catch (Exception ex)
