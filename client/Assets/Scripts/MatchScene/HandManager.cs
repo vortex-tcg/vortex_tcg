@@ -3,21 +3,26 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Linq;
+using DrawDTOs;
 
 namespace VortexTCG.Script.MatchScene {
-
     public class HandManager : MonoBehaviour
     {
-        [Header("UI Toolkit References")]
-        [SerializeField] private VisualTreeAsset SmallCard;
-        [SerializeField] private VisualTreeAsset CardPreview;
-        [SerializeField] private VisualTreeAsset EmptyCardPreview;
+    private VisualElement _root;
 
-        private VisualElement handZone;
-        private VisualElement previewZone;
+    private VisualElement handZone;
+    private VisualElement previewZone;
+    private VisualElement boardZone;
+    private VisualElement enemyBoardZone;
 
-        private List<VisualElement> boardSlots = new List<VisualElement>();
-        private List<VisualElement> enemySlots = new List<VisualElement>();
+    private List<VisualElement> boardSlots = new List<VisualElement>();
+    private List<VisualElement> enemySlots = new List<VisualElement>();
+    private List<DrawnCardDto> playerHand = new List<DrawnCardDto>();
+
+    private VisualElement draggedElement;
+    private DrawnCardDto draggedCard;
+    private bool isDragging;
+    private Vector2 dragOffset;
 
         private VisualElement draggedElement;
         private CardDTO draggedCard;
@@ -29,17 +34,19 @@ namespace VortexTCG.Script.MatchScene {
 
         private DefenseManager defenseManager;
 
-        private static bool CanDrag => PhaseManager.Instance != null &&
-                                (PhaseManager.Instance.CurrentPhase == GamePhase.StandBy ||
-                                 PhaseManager.Instance.CurrentPhase == GamePhase.Defense);
+    private void OnEnable()
+    {
+        Debug.Log("[HandManager] onenable");
+        UIDocument uiDoc = GetComponent<UIDocument>();
+        if (uiDoc == null) return;
 
-        private void OnEnable()
-        {
-            UIDocument uiDoc = GetComponent<UIDocument>();
-            if (uiDoc == null) return;
+        _root = uiDoc.rootVisualElement;
+        if (_root == null) return;
 
-            VisualElement root = uiDoc.rootVisualElement;
-            if (root == null) return;
+        handZone = _root.Q<VisualElement>("P1CardsFrame");
+        previewZone = _root.Q<VisualElement>("CardPreview");
+        boardZone = _root.Q<VisualElement>("P1BoardCards");
+        enemyBoardZone = _root.Q<VisualElement>("P2BoardCards");
 
             handZone = root.Q<VisualElement>("P1CardsFrame");
             previewZone = root.Q<VisualElement>("CardPreview");
@@ -49,22 +56,55 @@ namespace VortexTCG.Script.MatchScene {
             if (boardZone != null)
                 boardSlots = boardZone.Query<VisualElement>(className: "P1Slot").ToList();
 
-            if (enemyBoardZone != null)
-                enemySlots = enemyBoardZone.Query<VisualElement>(className: "P2Slot").ToList();
+        _root.UnregisterCallback<PointerMoveEvent>(OnPointerMove);
+        _root.UnregisterCallback<PointerUpEvent>(OnPointerUp);
+        _root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
+        _root.RegisterCallback<PointerUpEvent>(OnPointerUp);
 
             root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
             root.RegisterCallback<PointerUpEvent>(OnPointerUp);
 
-            defenseManager = FindObjectOfType<DefenseManager>();
+        if (handZone == null || previewZone == null || SmallCard == null || CardPreview == null)
+            return;
+    }
 
-            if (handZone == null || previewZone == null || SmallCard == null || CardPreview == null)
-                return;
+    public void SetHand(List<DrawnCardDto> cards)
+    {
+        Debug.Log($"[HandManager] SetHand called. cards={(cards == null ? "NULL" : cards.Count.ToString())}");
 
-            List<CardDTO> playerHand = MockFetchPlayerHand();
-            GenerateHand(playerHand);
+        playerHand = cards ?? new List<DrawnCardDto>();
+        GenerateHand(playerHand);
+        ClearPreview();
+
+        Debug.Log($"[HandManager] Hand UI generated. children={handZone?.childCount}");
+    }
+
+    public void AddCards(List<DrawnCardDto> newCards)
+    {
+        Debug.Log($"[HandManager] AddCards called. cards={(newCards == null ? "NULL" : newCards.Count.ToString())}");
+
+        if (newCards == null || newCards.Count == 0) return;
+
+        if (playerHand == null) playerHand = new List<DrawnCardDto>();
+        playerHand.AddRange(newCards);
+
+        GenerateHand(playerHand);
+        ClearPreview();
+    }
+
+    private void GenerateHand(List<DrawnCardDto> cards)
+    {
+        if (handZone == null)
+        {
+            Debug.LogError("[HandManager] handZone NULL -> UIDocument/root.Q failed ?");
+            return;
         }
 
-        private void GenerateHand(List<CardDTO> cards)
+        Debug.Log($"[HandManager] GenerateHand. count={cards?.Count ?? -1}");
+
+        handZone.Clear();
+
+        foreach (DrawnCardDto card in cards)
         {
             handZone.Clear();
 
@@ -93,10 +133,10 @@ namespace VortexTCG.Script.MatchScene {
             }
         }
 
-        private void ShowPreview(CardDTO card)
-        {
-            previewZone.Clear();
-            VisualElement previewCard = CardPreview.Instantiate();
+    private void ShowPreview(DrawnCardDto card)
+    {
+        previewZone.Clear();
+        VisualElement previewCard = CardPreview.Instantiate();
 
             SetLabel(previewCard, "Name", card.Name);
             SetLabel(previewCard, "Cost", card.Cost.ToString());
@@ -126,14 +166,20 @@ namespace VortexTCG.Script.MatchScene {
                 label.text = value;
         }
 
-        private void StartDrag(VisualElement cardElement, CardDTO card, PointerDownEvent e)
-        {
-            draggedElement = cardElement;
-            draggedCard = card;
-            isDragging = true;
+    private void RemoveFromHand(DrawnCardDto card)
+    {
+        if (card == null || playerHand == null) return;
+        playerHand.RemoveAll(c => c.GameCardId == card.GameCardId);
+    }
 
-            originalParent = cardElement.parent;
-            originalIndex = originalParent.IndexOf(cardElement);
+    private void StartDrag(VisualElement cardElement, DrawnCardDto card, PointerDownEvent e)
+    {
+        draggedElement = cardElement;
+        draggedCard = card;
+        isDragging = true;
+
+        originalParent = cardElement.parent;
+        originalIndex = originalParent != null ? originalParent.IndexOf(cardElement) : 0;
 
             Vector2 mousePos = e.position;
             Vector2 elementWorldPos = cardElement.worldBound.position;
@@ -168,15 +214,18 @@ namespace VortexTCG.Script.MatchScene {
             isDragging = false;
             Vector2 mousePos = e.position;
 
-            if (PhaseManager.Instance.CurrentPhase == GamePhase.StandBy)
+        if (_root == null) return;
+
+        _root.schedule.Execute(() =>
+        {
+            bool dropped = false;
+
+            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.StandBy)
             {
-                if (TryDropOnBoard(mousePos, boardSlots))
-                {
-                    ClearDrag();
-                    return;
-                }
+                dropped = TryDropOnBoard(mousePos, boardSlots);
+                if (dropped) RemoveFromHand(draggedCard);
             }
-            else if (PhaseManager.Instance.CurrentPhase == GamePhase.Defense)
+            else if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.Defense)
             {
                 VisualElement enemySlot = enemySlots.FirstOrDefault(slot =>
                     slot.childCount > 0 && slot.worldBound.Contains(mousePos));
@@ -185,9 +234,7 @@ namespace VortexTCG.Script.MatchScene {
                 {
                     VisualElement enemyCard = enemySlot.Q<VisualElement>(className: "small-card");
                     if (enemyCard != null && defenseManager != null)
-                    {
                         defenseManager.TryAssignDefense(draggedElement, enemyCard);
-                    }
 
                     ResetCardPosition(draggedElement);
                     ClearDrag();
@@ -195,9 +242,12 @@ namespace VortexTCG.Script.MatchScene {
                 }
             }
 
-            ResetCardPosition(draggedElement);
+            if (!dropped)
+                ResetCardPosition(draggedElement);
+
             ClearDrag();
-        }
+        });
+    }
 
         private void ResetCardPosition(VisualElement cardElement)
         {
@@ -243,27 +293,7 @@ namespace VortexTCG.Script.MatchScene {
         }
 
 
-        private void ClearDrag()
-        {
-            draggedElement = null;
-            draggedCard = null;
-        }
-
-        private List<CardDTO> MockFetchPlayerHand()
-        {
-            return new List<CardDTO>
-            {
-                new CardDTO{ Id = Guid.NewGuid(), Name = "Pyromancien", Hp = 3, Attack = 2, Cost = 1, Description = "Inflige 1 dmg.", CardType = CardType.Creature },
-                new CardDTO{ Id = Guid.NewGuid(), Name = "Garde", Hp = 6, Attack = 1, Cost = 2, Description = "Provocation.", CardType = CardType.Creature },
-                new CardDTO{ Id = Guid.NewGuid(), Name = "Boule de feu", Hp = 0, Attack = 0, Cost = 3, Description = "Inflige 4 dmg.", CardType = CardType.Spell },
-                new CardDTO{ Id = Guid.NewGuid(), Name = "Archère", Hp = 2, Attack = 3, Cost = 2, Description = "Bonus si PV < 10.", CardType = CardType.Creature },
-                new CardDTO{ Id = Guid.NewGuid(), Name = "Soin mineur", Hp = 0, Attack = 0, Cost = 1, Description = "Restaure 3 PV.", CardType = CardType.Spell }
-            };
-        }
-    }
-
-    [Serializable]
-    public class CardDTO
+    private void ClearDrag()
     {
         public Guid Id;
         public string Name;
@@ -273,12 +303,4 @@ namespace VortexTCG.Script.MatchScene {
         public string Description;
         public CardType CardType;
     }
-
-    public enum CardType
-    {
-        Creature,
-        Spell,
-        Artifact
-    }
-
 }
