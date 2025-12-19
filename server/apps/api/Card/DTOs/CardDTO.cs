@@ -10,6 +10,13 @@ namespace VortexTCG.Api.Card.DTOs
         public int Price { get; set; } = 0;
         public int Hp { get; set; } = 0;
         public int Attack  { get; set; } = 0;
+        public int Cost { get; set; } = 0;
+        public string Description { get; set; } = default!;
+        public string Picture { get; set; } = default!;
+        public string Extension { get; set; } = default!;
+        public string CardType { get; set; } = default!;
+        public List<string> Class { get; set; } = new List<string>();
+        public List<Guid> Factions { get; set; } = new List<Guid>();
     }
 
     public class CardCreateDto
