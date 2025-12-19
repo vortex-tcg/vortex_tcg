@@ -918,7 +918,8 @@ MonoBehaviour:
   inviteFriendButton: {fileID: 56710704}
   statusText: {fileID: 73240834}
   searchingPanel: {fileID: 480980338}
-  networkRef: {fileID: 0}
+  networkRef: {fileID: 11400000, guid: adba553b1733d8841aca87392be0c551, type: 2}
+  deckId: d3b07384-d9a1-4d3b-92d8-4f5c6e7a8b9c
   connectHereIfNeeded: 1
   verboseLogs: 1
   matchSceneName: MatchScene

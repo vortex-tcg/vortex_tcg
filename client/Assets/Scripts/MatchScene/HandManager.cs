@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Linq;
+using DrawDTOs;
 
 public class HandManager : MonoBehaviour
 {
@@ -11,6 +12,8 @@ public class HandManager : MonoBehaviour
     [SerializeField] private VisualTreeAsset CardPreview;
     [SerializeField] private VisualTreeAsset EmptyCardPreview;
 
+    private VisualElement _root;
+
     private VisualElement handZone;
     private VisualElement previewZone;
     private VisualElement boardZone;
@@ -18,10 +21,10 @@ public class HandManager : MonoBehaviour
 
     private List<VisualElement> boardSlots = new List<VisualElement>();
     private List<VisualElement> enemySlots = new List<VisualElement>();
-    private List<CardDTO> playerHand = new List<CardDTO>();
+    private List<DrawnCardDto> playerHand = new List<DrawnCardDto>();
 
     private VisualElement draggedElement;
-    private CardDTO draggedCard;
+    private DrawnCardDto draggedCard;
     private bool isDragging;
     private Vector2 dragOffset;
 
@@ -36,16 +39,17 @@ public class HandManager : MonoBehaviour
 
     private void OnEnable()
     {
+        Debug.Log("[HandManager] onenable");
         UIDocument uiDoc = GetComponent<UIDocument>();
         if (uiDoc == null) return;
 
-        VisualElement root = uiDoc.rootVisualElement;
-        if (root == null) return;
+        _root = uiDoc.rootVisualElement;
+        if (_root == null) return;
 
-        handZone = root.Q<VisualElement>("P1CardsFrame");
-        previewZone = root.Q<VisualElement>("CardPreview");
-        boardZone = root.Q<VisualElement>("P1BoardCards");
-        enemyBoardZone = root.Q<VisualElement>("P2BoardCards");
+        handZone = _root.Q<VisualElement>("P1CardsFrame");
+        previewZone = _root.Q<VisualElement>("CardPreview");
+        boardZone = _root.Q<VisualElement>("P1BoardCards");
+        enemyBoardZone = _root.Q<VisualElement>("P2BoardCards");
 
         if (boardZone != null)
             boardSlots = boardZone.Query<VisualElement>(className: "P1Slot").ToList();
@@ -53,23 +57,54 @@ public class HandManager : MonoBehaviour
         if (enemyBoardZone != null)
             enemySlots = enemyBoardZone.Query<VisualElement>(className: "P2Slot").ToList();
 
-        root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
-        root.RegisterCallback<PointerUpEvent>(OnPointerUp);
+        _root.UnregisterCallback<PointerMoveEvent>(OnPointerMove);
+        _root.UnregisterCallback<PointerUpEvent>(OnPointerUp);
+        _root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
+        _root.RegisterCallback<PointerUpEvent>(OnPointerUp);
 
         defenseManager = FindObjectOfType<DefenseManager>();
 
         if (handZone == null || previewZone == null || SmallCard == null || CardPreview == null)
             return;
-
-        playerHand = MockFetchPlayerHand();
-        GenerateHand(playerHand);
     }
 
-    private void GenerateHand(List<CardDTO> cards)
+    public void SetHand(List<DrawnCardDto> cards)
     {
+        Debug.Log($"[HandManager] SetHand called. cards={(cards == null ? "NULL" : cards.Count.ToString())}");
+
+        playerHand = cards ?? new List<DrawnCardDto>();
+        GenerateHand(playerHand);
+        ClearPreview();
+
+        Debug.Log($"[HandManager] Hand UI generated. children={handZone?.childCount}");
+    }
+
+    public void AddCards(List<DrawnCardDto> newCards)
+    {
+        Debug.Log($"[HandManager] AddCards called. cards={(newCards == null ? "NULL" : newCards.Count.ToString())}");
+
+        if (newCards == null || newCards.Count == 0) return;
+
+        if (playerHand == null) playerHand = new List<DrawnCardDto>();
+        playerHand.AddRange(newCards);
+
+        GenerateHand(playerHand);
+        ClearPreview();
+    }
+
+    private void GenerateHand(List<DrawnCardDto> cards)
+    {
+        if (handZone == null)
+        {
+            Debug.LogError("[HandManager] handZone NULL -> UIDocument/root.Q failed ?");
+            return;
+        }
+
+        Debug.Log($"[HandManager] GenerateHand. count={cards?.Count ?? -1}");
+
         handZone.Clear();
 
-        foreach (CardDTO card in cards)
+        foreach (DrawnCardDto card in cards)
         {
             VisualElement cardElement = SmallCard.Instantiate();
             if (cardElement == null) continue;
@@ -94,7 +129,7 @@ public class HandManager : MonoBehaviour
         }
     }
 
-    private void ShowPreview(CardDTO card)
+    private void ShowPreview(DrawnCardDto card)
     {
         previewZone.Clear();
         VisualElement previewCard = CardPreview.Instantiate();
@@ -127,14 +162,20 @@ public class HandManager : MonoBehaviour
             label.text = value;
     }
 
-    private void StartDrag(VisualElement cardElement, CardDTO card, PointerDownEvent e)
+    private void RemoveFromHand(DrawnCardDto card)
+    {
+        if (card == null || playerHand == null) return;
+        playerHand.RemoveAll(c => c.GameCardId == card.GameCardId);
+    }
+
+    private void StartDrag(VisualElement cardElement, DrawnCardDto card, PointerDownEvent e)
     {
         draggedElement = cardElement;
         draggedCard = card;
         isDragging = true;
 
         originalParent = cardElement.parent;
-        originalIndex = originalParent.IndexOf(cardElement);
+        originalIndex = originalParent != null ? originalParent.IndexOf(cardElement) : 0;
 
         Vector2 mousePos = e.position;
         Vector2 elementWorldPos = cardElement.worldBound.position;
@@ -169,35 +210,39 @@ public class HandManager : MonoBehaviour
         isDragging = false;
         Vector2 mousePos = e.position;
 
-        if (PhaseManager.Instance.CurrentPhase == GamePhase.StandBy)
-        {
-            if (TryDropOnBoard(mousePos, boardSlots))
-            {
-                ClearDrag();
-                return;
-            }
-        }
-        else if (PhaseManager.Instance.CurrentPhase == GamePhase.Defense)
-        {
-            VisualElement enemySlot = enemySlots.FirstOrDefault(slot =>
-                slot.childCount > 0 && slot.worldBound.Contains(mousePos));
+        if (_root == null) return;
 
-            if (enemySlot != null)
+        _root.schedule.Execute(() =>
+        {
+            bool dropped = false;
+
+            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.StandBy)
             {
-                VisualElement enemyCard = enemySlot.Q<VisualElement>(className: "small-card");
-                if (enemyCard != null && defenseManager != null)
+                dropped = TryDropOnBoard(mousePos, boardSlots);
+                if (dropped) RemoveFromHand(draggedCard);
+            }
+            else if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.Defense)
+            {
+                VisualElement enemySlot = enemySlots.FirstOrDefault(slot =>
+                    slot.childCount > 0 && slot.worldBound.Contains(mousePos));
+
+                if (enemySlot != null)
                 {
-                    defenseManager.TryAssignDefense(draggedElement, enemyCard);
+                    VisualElement enemyCard = enemySlot.Q<VisualElement>(className: "small-card");
+                    if (enemyCard != null && defenseManager != null)
+                        defenseManager.TryAssignDefense(draggedElement, enemyCard);
+
+                    ResetCardPosition(draggedElement);
+                    ClearDrag();
+                    return;
                 }
-
-                ResetCardPosition(draggedElement);
-                ClearDrag();
-                return;
             }
-        }
 
-        ResetCardPosition(draggedElement);
-        ClearDrag();
+            if (!dropped)
+                ResetCardPosition(draggedElement);
+
+            ClearDrag();
+        });
     }
 
     private void ResetCardPosition(VisualElement cardElement)
@@ -243,41 +288,9 @@ public class HandManager : MonoBehaviour
         return false;
     }
 
-
     private void ClearDrag()
     {
         draggedElement = null;
         draggedCard = null;
     }
-
-    private List<CardDTO> MockFetchPlayerHand()
-    {
-        return new List<CardDTO>
-        {
-            new CardDTO{ Id = Guid.NewGuid(), Name = "Pyromancien", Hp = 3, Attack = 2, Cost = 1, Description = "Inflige 1 dmg.", CardType = CardType.Creature },
-            new CardDTO{ Id = Guid.NewGuid(), Name = "Garde", Hp = 6, Attack = 1, Cost = 2, Description = "Provocation.", CardType = CardType.Creature },
-            new CardDTO{ Id = Guid.NewGuid(), Name = "Boule de feu", Hp = 0, Attack = 0, Cost = 3, Description = "Inflige 4 dmg.", CardType = CardType.Spell },
-            new CardDTO{ Id = Guid.NewGuid(), Name = "Archère", Hp = 2, Attack = 3, Cost = 2, Description = "Bonus si PV < 10.", CardType = CardType.Creature },
-            new CardDTO{ Id = Guid.NewGuid(), Name = "Soin mineur", Hp = 0, Attack = 0, Cost = 1, Description = "Restaure 3 PV.", CardType = CardType.Spell }
-        };
-    }
-}
-
-[Serializable]
-public class CardDTO
-{
-    public Guid Id;
-    public string Name;
-    public int Hp;
-    public int Attack;
-    public int Cost;
-    public string Description;
-    public CardType CardType;
-}
-
-public enum CardType
-{
-    Creature,
-    Spell,
-    Artifact
 }
