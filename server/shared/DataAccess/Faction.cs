@@ -27,8 +27,8 @@ namespace VortexTCG.DataAccess.Models
         [Key]
         public Guid Id { get; set; }
 
-        public Guid CardId { get; set; } = default;
-        public Card Card { get; set; } = default;
+        public Guid CardId { get; set; } = default!;
+        public Card Card { get; set; } = default!;
 
         public Guid FactionId { get; set; } = default!;
         public Faction Faction { get; set; } = default!;

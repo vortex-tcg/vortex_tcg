@@ -24,6 +24,10 @@ namespace VortexTCG.Api.Collection.Controllers
         public async Task<IActionResult> GetById(Guid id)
         => toActionResult(await _service.GetByIdAsync(id));
 
+        [HttpGet("/user/{id}")]
+        public async Task<IActionResult> GetCollectionByUserId(Guid userId)
+        => toActionResult(await _service.GetCollectionByUserId(userId));
+
         [HttpPost]
         public async Task<IActionResult> Add([FromBody] CollectionCreateDto dto)
         => toActionResult(await _service.CreateAsync(dto));

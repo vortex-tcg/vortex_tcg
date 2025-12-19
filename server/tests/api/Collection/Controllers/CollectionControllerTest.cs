@@ -61,6 +61,21 @@ namespace Tests.Collection
         }
 
         [Fact]
+        public async Task GetCollectionCard()
+        {
+            using VortexDbContext db = CreateDb();
+            CollectionController controller = CreateController(db);
+            Guid userId = new Guid();
+            IActionResult getCollectionResult = await controller.GetCollectionByUserId(userId);
+            ObjectResult result = Assert.IsType<ObjectResult>(getCollectionResult);
+            ResultDTO<UserCollectionDto> data = Assert.IsType<ResultDTO<UserCollectionDto>>(result.Value);
+            Assert.True(data.success);
+            Assert.Equal(data.data.Decks.Count, 2);
+            Assert.Equal(data.data.Faction.Count, 2);
+            Assert.Equal(data.data.Cards.Count, 120);
+        }
+
+        [Fact]
         public async Task UpdateCollection_ChangesValues()
         {
             using VortexDbContext db = CreateDb();
