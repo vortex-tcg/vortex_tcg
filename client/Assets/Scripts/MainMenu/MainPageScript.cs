@@ -9,14 +9,11 @@ public class MainPageMenu : MonoBehaviour
     [Header("UI Toolkit (UXML names)")]
     [Tooltip("UIDocument qui contient MainPageHUDVisualTree. Si null, GetComponent<UIDocument>().")]
     [SerializeField] private UIDocument uiDocument;
-
-    // D'après ton UXML (dans la hiérarchie tu vois #PlayButton et #PlayWithFriendsButton)
-    [SerializeField] private string searchOpponentButtonName = "PlayButton";
+        [SerializeField] private string searchOpponentButtonName = "PlayButton";
     [SerializeField] private string inviteFriendButtonName = "PlayWithFriendsButton";
 
-    // Optionnels : seulement si tu les as dans ton UXML (sinon ça reste null et le script marche quand même)
-    [SerializeField] private string statusTextName = "StatusText";        // ex: <Label name="StatusText" />
-    [SerializeField] private string searchingPanelName = "SearchingPanel"; // ex: <VisualElement name="SearchingPanel" />
+    [SerializeField] private string statusTextName = "StatusText";        
+    [SerializeField] private string searchingPanelName = "SearchingPanel"; 
 
     [SerializeField] private NetworkRef networkRef;
     [SerializeField] private string deckId = "d3b07384-d9a1-4d3b-92d8-4f5c6e7a8b9c";
@@ -29,18 +26,15 @@ public class MainPageMenu : MonoBehaviour
 
     [Header("Navigation")]
     [SerializeField] private string matchSceneName = "3DMatchScene";
-
-    // UI refs (UI Toolkit)
     private Button searchOpponentButton;
     private Button inviteFriendButton;
-    private Label statusText;                 // remplace TMP_Text
-    private VisualElement searchingPanel;     // remplace GameObject
+    private Label statusText;                 
+    private VisualElement searchingPanel;   
 
     private SignalRClient client;
 
     private void OnEnable()
     {
-        // --- UI Toolkit bindings ---
         if (uiDocument == null) uiDocument = GetComponent<UIDocument>();
         if (uiDocument == null)
         {
@@ -49,12 +43,8 @@ public class MainPageMenu : MonoBehaviour
         }
 
         VisualElement root = uiDocument.rootVisualElement;
-
-        // ⚠️ Q() prend le name SANS le '#'
         searchOpponentButton = root.Q<Button>(searchOpponentButtonName);
         inviteFriendButton = root.Q<Button>(inviteFriendButtonName);
-
-        // Optionnels (si présents dans l'UXML)
         statusText = root.Q<Label>(statusTextName);
         searchingPanel = root.Q<VisualElement>(searchingPanelName);
 
@@ -132,6 +122,12 @@ public class MainPageMenu : MonoBehaviour
     private async Task<bool> ConnectIfNeeded()
     {
         client = SignalRClient.Instance;
+        if (client != null && networkRef != null)
+        {
+            networkRef.Bind(client);
+            client.BindNetworkRef(networkRef);
+        }
+
         if (client == null)
         {
             if (!connectHereIfNeeded)

@@ -150,9 +150,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiDocument: {fileID: 580204058}
-  networkRef: {fileID: 0}
+  searchOpponentButtonName: PlayButton
+  inviteFriendButtonName: PlayWithFriendsButton
+  statusTextName: StatusText
+  searchingPanelName: SearchingPanel
+  networkRef: {fileID: 11400000, guid: adba553b1733d8841aca87392be0c551, type: 2}
+  deckId: d3b07384-d9a1-4d3b-92d8-4f5c6e7a8b9c
   connectHereIfNeeded: 1
   verboseLogs: 1
+  matchSceneName: 3DMatchScene
 --- !u!114 &580204058
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -377,7 +383,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 480980341}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -490,3 +496,4 @@ SceneRoots:
   - {fileID: 1825345035}
   - {fileID: 580204059}
   - {fileID: 689827795}
+  - {fileID: 2050529290}
