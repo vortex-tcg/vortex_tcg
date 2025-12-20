@@ -31,12 +31,15 @@
 // les decks depuis la base de données et configurer les champions.
 // =============================================
 using VortexTCG.Game.DTO;
+using VortexTCG.Game.Interface;
 using System.Timers;
 
 namespace VortexTCG.Game.Object
 {
     public class Room
     {
+        private IRoomActionEventListener _event;
+
         #region Identifiants des joueurs
 
             private Guid _user_1;
@@ -78,7 +81,7 @@ namespace VortexTCG.Game.Object
 
         #region Constructeur
 
-            public Room()
+            public Room(IRoomActionEventListener listener)
             {
                 _deck_user_1 = new Deck();
                 _deck_user_2 = new Deck();
@@ -97,6 +100,8 @@ namespace VortexTCG.Game.Object
             
                 _timer = new System.Timers.Timer(60000); 
                 _timer.Elapsed += HandleTimerElapsed;
+
+                _event = listener;
             }
 
         #endregion
@@ -157,10 +162,10 @@ namespace VortexTCG.Game.Object
             /// <param name="playerId">ID du joueur qui pioche.</param>
             /// <param name="cardCount">Nombre de cartes à piocher.</param>
             /// <returns>Résultat pour le joueur et l'adversaire, ou null si joueur invalide.</returns>
-            public DrawCardsResultDTO? DrawCards(Guid playerId, int cardCount)
+            public void DrawCards(Guid playerId, int cardCount)
             {
-                if (playerId != _user_1 && playerId != _user_2) return null;
-                if (cardCount <= 0) return null;
+                if (playerId != _user_1 && playerId != _user_2) return;
+                if (cardCount <= 0) return;
 
                 bool isPlayer1 = playerId == _user_1;
                 Deck deck = isPlayer1 ? _deck_user_1 : _deck_user_2;
@@ -195,22 +200,24 @@ namespace VortexTCG.Game.Object
                     }
                 }
 
-                return new DrawCardsResultDTO
+                DrawCardsResultDTO data = new DrawCardsResultDTO
                 {
                     PlayerResult = new DrawResultForPlayerDTO
                     {
+                        PlayerId = isPlayer1 ? _user_1 : _user_2,
                         DrawnCards = drawnCards,
                         FatigueCount = fatigueCount,
                         BaseFatigue = baseFatigue
                     },
                     OpponentResult = new DrawResultForOpponentDTO
                     {
-                        PlayerId = playerId,
+                        PlayerId = isPlayer1 ? _user_2 : _user_1,
                         CardsDrawnCount = drawnCards.Count,
                         FatigueCount = fatigueCount,
                         BaseFatigue = baseFatigue
                     }
                 };
+                _event.sendDrawCardsData(data);
             }
 
         #endregion
@@ -220,12 +227,12 @@ namespace VortexTCG.Game.Object
             /// <summary>
             /// Handle when user don't play during 1 minute
             /// </summary>
-            public void Start(int seconds)
+            public void StartTimer(int seconds)
             {
                 _timer.Interval = seconds * 1000;
                 _timer.Start();
             }
-            public void Stop(){
+            public void StopTimer(){
                 _timer.Stop();
             }
             private void HandleTimerElapsed(object? sender, ElapsedEventArgs e)
@@ -246,9 +253,10 @@ namespace VortexTCG.Game.Object
                 _currentPhase = GamePhase.PLACEMENT;
                 _isActif = false;
 
-                DrawCards(_activePlayerId, 1);
+                DrawCards(_user_1, 6);
+                DrawCards(_user_2, 5);
 
-                Start(60);
+                StartTimer(60);
                 return new PhaseChangeResultDTO
                 {
                     CurrentPhase = _currentPhase,
@@ -287,9 +295,6 @@ namespace VortexTCG.Game.Object
             {
                 // Seul le joueur actif peut changer de phase (sauf Defense où c'est l'adversaire)
                 if (!_gameStarted) return null;
-                if (_currentPhase == GamePhase.DEFENSE) {
-                    if (playerId != _activePlayerId) return null; 
-                }
                 else if (playerId != _activePlayerId) return null;
 
                 return AdvancePhase();
@@ -308,12 +313,16 @@ namespace VortexTCG.Game.Object
                 if (ShouldAutoSkip(nextPhase, out autoChangeReason)) {
                     autoChanged = true;
                     nextPhase = GetNextPhase(nextPhase);
+                    if (_currentPhase == GamePhase.PLACEMENT) {
+                        SwitchActivePlayer();
+                    }
                 }
 
                 if (_currentPhase == GamePhase.ATTACK)
                 {
                     SwitchActivePlayer();
-                } 
+                }
+
                 
                 _currentPhase = nextPhase;
                if (_currentPhase == GamePhase.PLACEMENT) 
@@ -322,8 +331,6 @@ namespace VortexTCG.Game.Object
                     {
                         _turnNumber += 1;
                     }
-
-                    DrawCards(_activePlayerId, 1);
                 }
                 HandleChangePhaseEvent();
 
@@ -340,13 +347,22 @@ namespace VortexTCG.Game.Object
 
        public void HandleChangePhaseEvent()
         {
-            Stop(); 
-
-            if (_currentPhase == GamePhase.END_TURN)
-            {
-                ResolveBattle();
-            }
-            Start(60);
+            switch(_currentPhase) {
+                case GamePhase.PLACEMENT:
+                    DrawCards(_activePlayerId, 1);
+                    StartTimer(60);
+                    break;
+                case GamePhase.ATTACK:
+                    break;
+                case GamePhase.DEFENSE:
+                    StopTimer();
+                    StartTimer(60);
+                    break;
+                case GamePhase.END_TURN:
+                    StopTimer();
+                    ResolveBattle();
+                    break;
+            };
         }
         /// <summary>
         /// Résout le combat entre les deux joueurs.

@@ -257,22 +257,22 @@ public class GameHub : Hub
         }
     }
 
-    public async Task DrawCards(int playerPosition, int amount)
-    {
-        Guid userId = GetAuthenticatedUserId();
-        DrawCardsResultDTO? result = _rooms.DrawCards(userId, playerPosition, amount);
-        if (result == null)
-        {
-            await Clients.Caller.SendAsync("Error", "Unable to draw cards (Invalid room, game not started, invalid player, or invalid position)");
-            return;
-        }
-        await Clients.Caller.SendAsync("CardsDrawn", result.PlayerResult);
-        string? code = _rooms.GetRoomOf(userId);
-        if (code != null)
-        {
-            await Clients.OthersInGroup(code).SendAsync("OpponentCardsDrawn", result.OpponentResult);
-        }
-    }
+    // public async Task DrawCards(int playerPosition, int amount)
+    // {
+    //     Guid userId = GetAuthenticatedUserId();
+    //     DrawCardsResultDTO? result = _rooms.DrawCards(userId, playerPosition, amount);
+    //     if (result == null)
+    //     {
+    //         await Clients.Caller.SendAsync("Error", "Unable to draw cards (Invalid room, game not started, invalid player, or invalid position)");
+    //         return;
+    //     }
+    //     await Clients.Caller.SendAsync("CardsDrawn", result.PlayerResult);
+    //     string? code = _rooms.GetRoomOf(userId);
+    //     if (code != null)
+    //     {
+    //         await Clients.OthersInGroup(code).SendAsync("OpponentCardsDrawn", result.OpponentResult);
+    //     }
+    // }
 
     // --- GESTION DES PHASES DE JEU ---
 
@@ -305,7 +305,7 @@ public class GameHub : Hub
     public async Task ChangePhase()
     {
         Guid userId = GetAuthenticatedUserId();
-        PhaseChangeResultDTO? result = _rooms.ChangePhase(userId);
+        PhaseChangeResultDTO result = await _rooms.ChangePhase(userId);
 
         if (result == null)
         {
@@ -318,6 +318,7 @@ public class GameHub : Hub
 
 
         // Envoyer le changement de phase aux deux joueurs
+
         await Clients.Group(code).SendAsync("PhaseChanged", result);
     }
 }
