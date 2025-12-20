@@ -857,7 +857,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10306, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: ef1565e990d34724a9c3401e26e0f5ef, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -925,6 +925,9 @@ MonoBehaviour:
   hpText: {fileID: 8482481068044106405}
   descriptionText: {fileID: 1323706992054495503}
   attackOrderText: {fileID: 7346794668719000252}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 1944451413237304204}
   selectedScaleMultiplier: 1.08
 --- !u!1 &6776623407432013225
 GameObject:
