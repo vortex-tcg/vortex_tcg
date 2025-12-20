@@ -28,11 +28,11 @@ namespace VortexTCG.Game.Object
         public bool HasAttackableCards()
         {
             // Pour l'instant, une carte peut attaquer si elle existe sur le plateau
-            return _location_1 != null ||
-                   _location_2 != null ||
-                   _location_3 != null ||
-                   _location_4 != null ||
-                   _location_5 != null;
+            return (_location_1 != null && !_location_1.HasState(CardState.ENGAGE)) ||
+                   (_location_2 != null && !_location_2.HasState(CardState.ENGAGE)) ||
+                   (_location_3 != null && !_location_3.HasState(CardState.ENGAGE)) ||
+                   (_location_4 != null && !_location_4.HasState(CardState.ENGAGE)) ||
+                   (_location_5 != null && !_location_5.HasState(CardState.ENGAGE));
         }
 
         /// <summary>
@@ -42,11 +42,11 @@ namespace VortexTCG.Game.Object
         public bool HasDefendableCards()
         {
             // Pour l'instant, une carte peut défendre si elle existe sur le plateau
-            return _location_1 != null ||
-                   _location_2 != null ||
-                   _location_3 != null ||
-                   _location_4 != null ||
-                   _location_5 != null;
+            return (_location_1 != null && !_location_1.HasState(CardState.ATTACK_ENGAGE)) ||
+                   (_location_2 != null && !_location_2.HasState(CardState.ATTACK_ENGAGE)) ||
+                   (_location_3 != null && !_location_3.HasState(CardState.ATTACK_ENGAGE)) ||
+                   (_location_4 != null && !_location_4.HasState(CardState.ATTACK_ENGAGE)) ||
+                   (_location_5 != null && !_location_5.HasState(CardState.ATTACK_ENGAGE));
         }
 
         /// <summary>

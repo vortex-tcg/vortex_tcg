@@ -3,6 +3,12 @@ using VortexTCG.Game.DTO;
 
 namespace VortexTCG.Game.Object
 {
+    public enum CardState {
+        ENGAGE = 0
+        BATTLE_ENGAGE = 1,
+        DEFENSE_ENGAGE = 2
+    }
+
     public class Card
     {
 
@@ -27,6 +33,8 @@ namespace VortexTCG.Game.Object
         private readonly List<Effect> _effects;
 
         private readonly List<string> _class;
+
+        private List<CardState> _state;
 
         public Card(CardDTO card, int id)
         {
@@ -60,5 +68,30 @@ namespace VortexTCG.Game.Object
         public string GetDescription() => _description;
         public CardType GetCardType() => _type;
         public List<string> GetClasses() => new List<string>(_class);
+        public List<CardState> GetState() => new List<CardState>(_state);
+
+        public void AddState(CardState newState) {
+            bool isNewUniqueState = true;
+            foreach(CardState state in _state) {
+                if (state == newState) {
+                    isNewUniqueState = false;
+                }
+            }
+            if (isNewUniqueState) {
+                _state.Add(newState);
+            }
+        }
+
+        public bool HasState(CardState searchState) {
+            foreach(CardState state in _state) {
+                if (searchState == state) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void RemoveState(CardState removeState)
+        => _state.Remove(removeState);
     }
 }
