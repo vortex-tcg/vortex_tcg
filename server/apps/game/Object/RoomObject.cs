@@ -51,7 +51,8 @@ namespace VortexTCG.Game.Object
             private int _turnNumber;
             private bool _gameStarted;
             private bool _isActif = false;
-            private Timer _timer;
+            private System.Timers.Timer _timer;
+            public event Action OnTimeUp;
 
         #endregion
 
@@ -94,8 +95,8 @@ namespace VortexTCG.Game.Object
                 _board_user_1 = new Board();
                 _board_user_2 = new Board();
             
-                _timer = new Timer(60000);
-                _timer.Elapsed += HandleSkipPhase;
+                _timer = new System.Timers.Timer(60000); 
+                _timer.Elapsed += HandleTimerElapsed;
             }
 
         #endregion
@@ -219,11 +220,17 @@ namespace VortexTCG.Game.Object
             /// <summary>
             /// Handle when user don't play during 1 minute
             /// </summary>
-            private void HandleSkipPhase()
+            public void Start(int seconds)
             {
-                if (!_isActif) {
-                }
-                ForceChangePhase();
+                _timer.Interval = seconds * 1000;
+                _timer.Start();
+            }
+            public void Stop(){
+                _timer.Stop();
+            }
+            private void HandleTimerElapsed(object? sender, ElapsedEventArgs e)
+            {
+                OnTimeUp?.Invoke(); 
             }
 
             /// <summary>
@@ -236,9 +243,12 @@ namespace VortexTCG.Game.Object
                 _gameStarted = true;
                 _turnNumber = 1;
                 _activePlayerId = _user_1;
-                _currentPhase = GamePhase.Draw;
+                _currentPhase = GamePhase.PLACEMENT;
                 _isActif = false;
 
+                DrawCards(_activePlayerId, 1);
+
+                Start(60);
                 return new PhaseChangeResultDTO
                 {
                     CurrentPhase = _currentPhase,
@@ -247,6 +257,18 @@ namespace VortexTCG.Game.Object
                     AutoChanged = false,
                     AutoChangeReason = null,
                     CanAct = true
+                };
+            }
+            public PhaseChangeResultDTO GetState()
+            {
+                return new PhaseChangeResultDTO
+                {
+                    CurrentPhase = _currentPhase,
+                    ActivePlayerId = _activePlayerId,
+                    TurnNumber = _turnNumber,
+                    AutoChanged = false,
+                    AutoChangeReason = null,
+                    CanAct = _gameStarted
                 };
             }
 
@@ -265,7 +287,10 @@ namespace VortexTCG.Game.Object
             {
                 // Seul le joueur actif peut changer de phase (sauf Defense où c'est l'adversaire)
                 if (!_gameStarted) return null;
-                if (playerId != _activePlayerId) return null;
+                if (_currentPhase == GamePhase.DEFENSE) {
+                    if (playerId != _activePlayerId) return null; 
+                }
+                else if (playerId != _activePlayerId) return null;
 
                 return AdvancePhase();
             }
@@ -288,12 +313,18 @@ namespace VortexTCG.Game.Object
                 if (_currentPhase == GamePhase.ATTACK)
                 {
                     SwitchActivePlayer();
-                } else if (nextPhase == GamePhase.PLACEMENT) 
-                {
-                    _turnNumber += 1;
-                }
-
+                } 
+                
                 _currentPhase = nextPhase;
+               if (_currentPhase == GamePhase.PLACEMENT) 
+                {
+                    if (_activePlayerId == _user_1) 
+                    {
+                        _turnNumber += 1;
+                    }
+
+                    DrawCards(_activePlayerId, 1);
+                }
                 HandleChangePhaseEvent();
 
                 return new PhaseChangeResultDTO
@@ -307,11 +338,29 @@ namespace VortexTCG.Game.Object
                 };
             }
 
-            /// <summary>
-            /// Force le changement de phase (utilisé par le timer d'1 minute).
-            /// </summary>
-            /// <returns>Résultat du changement de phase forcé</returns>
-            public PhaseChangeResultDTO ForceChangePhase()
+       public void HandleChangePhaseEvent()
+        {
+            Stop(); 
+
+            if (_currentPhase == GamePhase.END_TURN)
+            {
+                ResolveBattle();
+            }
+            Start(60);
+        }
+        /// <summary>
+        /// Résout le combat entre les deux joueurs.
+        /// </summary>
+        private void ResolveBattle()
+        {    
+            Console.WriteLine("Résolution du combat en cours...");
+        }
+
+        /// <summary>
+        /// Force le changement de phase (utilisé par le timer d'1 minute).
+        /// </summary>
+        /// <returns>Résultat du changement de phase forcé</returns>
+        public PhaseChangeResultDTO ForceChangePhase()
             {
                 if (!_gameStarted)
                 {
@@ -339,7 +388,7 @@ namespace VortexTCG.Game.Object
             {
                 // En phase Defense, l'adversaire peut agir
                 // Dans les autres phases, seul le joueur actif peut agir
-                return phase != GamePhase.EndTurn;
+                return phase != GamePhase.END_TURN;
             }
 
             /// <summary>
@@ -370,12 +419,12 @@ namespace VortexTCG.Game.Object
                 switch (phase)
                 {
 
-                    case GamePhase.Placement:
+                    case GamePhase.PLACEMENT:
                         // Le joueur DOIT appeler ChangePhase manuellement
                         // Jamais auto-skip, même s'il n'a pas de cartes jouables
                         return false;
 
-                    case GamePhase.Attack:
+                    case GamePhase.ATTACK:
                         // Auto-skip si aucune carte sur le board ne peut attaquer
                         if (!CanActivePlayerAttack())
                         {
@@ -384,7 +433,7 @@ namespace VortexTCG.Game.Object
                         }
                         return false;
 
-                    case GamePhase.Defense:
+                    case GamePhase.DEFENSE:
                         // Auto-skip si l'adversaire n'a pas de cartes pour défendre
                         // ou si le joueur actif n'a pas attaqué
                         if (!CanOpponentDefend())
@@ -394,7 +443,7 @@ namespace VortexTCG.Game.Object
                         }
                         return false;
 
-                    case GamePhase.EndTurn:
+                    case GamePhase.END_TURN:
                         // EndTurn est toujours exécuté, jamais skippé
                         return false;
 
@@ -453,7 +502,7 @@ namespace VortexTCG.Game.Object
                 if (!_gameStarted) return false;
 
                 // En phase Defense, seul l'adversaire peut agir
-                if (_currentPhase == GamePhase.Defense)
+                if (_currentPhase == GamePhase.DEFENSE)
                 {
                     return playerId == GetOpponentId(_activePlayerId);
                 }
