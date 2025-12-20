@@ -35,7 +35,6 @@ builder.Services.AddCors(options =>
 // Injections des services applicatifs
 builder.Services.AddSingleton<Matchmaker>();
 builder.Services.AddSingleton<RoomService>();
-builder.Services.AddSingleton<PhaseTimerService>();
 
 // Logs console
 builder.Logging.ClearProviders();

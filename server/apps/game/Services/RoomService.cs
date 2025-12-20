@@ -26,6 +26,8 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using VortexTCG.Game.Object;
 using VortexTCG.Game.DTO;
+using Microsoft.AspNetCore.SignalR;
+using game.Hubs;
 
 namespace game.Services;
 
@@ -81,7 +83,12 @@ public class RoomService
 
     /// <summary>Générateur de nombres aléatoires cryptographiquement sécurisé</summary>
     private readonly RandomNumberGenerator _rng = RandomNumberGenerator.Create();
+    private readonly IHubContext<GameHub> _hubContext;
 
+    public RoomService(IHubContext<GameHub> hubContext)
+    {
+        _hubContext = hubContext;
+    }
     #endregion
 
     #region Gestion des pseudos
@@ -265,6 +272,10 @@ public class RoomService
             lock (room)
             {
                 room.Members.Remove(userId);
+                if (room.Members.Count == 0 && room.GameRoom != null) 
+                {
+                    room.GameRoom.Stop(); 
+                }
                 opponentId = room.Members.FirstOrDefault();
                 roomEmpty = room.Members.Count == 0;
 
@@ -359,6 +370,17 @@ public class RoomService
 
                 // Créer l'instance RoomObject (vide pour l'instant)
                 room.GameRoom = new VortexTCG.Game.Object.Room();
+              
+                string capturedCode = code; 
+                room.GameRoom.OnTimeUp += async () => 
+                {
+                    var result = room.GameRoom.ForceChangePhase();
+                    
+                    if (result != null) 
+                    {
+                       await _hubContext.Clients.Group(capturedCode).SendAsync("PhaseChanged", result);
+                    }
+                };
             }
         }
 
@@ -512,14 +534,6 @@ public class RoomService
         lock (room)
         {
             if (room.GameRoom == null || !room.IsGameInitialized) return null;
-
-            // Vérifier que c'est le joueur 1 qui démarre
-            List<Guid> members = room.Members.ToList();
-            if (members.Count < 2 || members[0] != userId) return null;
-
-            // Vérifier que la partie n'est pas déjà démarrée
-            if (room.GameRoom.GameStarted) return null;
-
             return room.GameRoom.StartGame();
         }
     }
@@ -537,8 +551,6 @@ public class RoomService
         lock (room)
         {
             if (room.GameRoom == null || !room.IsGameInitialized) return null;
-            if (!room.GameRoom.GameStarted) return null;
-
             return room.GameRoom.ChangePhase(userId);
         }
     }
@@ -556,18 +568,11 @@ public class RoomService
         lock (room)
         {
             if (room.GameRoom == null || !room.IsGameInitialized) return null;
-            if (!room.GameRoom.GameStarted) return null;
 
             return room.GameRoom.ForceChangePhase();
         }
     }
 
-    /// <summary>
-    /// Force l'avancement de la phase Draw vers Placement (après la pioche automatique).
-    /// Utilisé par le serveur après avoir effectué la pioche automatique.
-    /// </summary>
-    /// <param name="code">Code du salon</param>
-    /// <returns>Résultat du changement ou null si erreur</returns>
     public PhaseChangeResultDTO? ForceAdvanceFromDraw(string code)
     {
         code = code.Trim().ToUpperInvariant();
@@ -576,15 +581,10 @@ public class RoomService
         lock (room)
         {
             if (room.GameRoom == null || !room.IsGameInitialized) return null;
-            if (!room.GameRoom.GameStarted) return null;
 
-            // Vérifier qu'on est bien en phase Draw
-            if (room.GameRoom.CurrentPhase != GamePhase.Draw) return null;
-
-            return room.GameRoom.AdvanceFromDraw();
+            return room.GameRoom.GetState();
         }
     }
-
     /// <summary>
     /// Fait piocher des cartes pour un joueur spécifique (utilisé pour la pioche automatique).
     /// </summary>
@@ -605,31 +605,6 @@ public class RoomService
         }
     }
 
-    /// <summary>
-    /// Récupère l'état actuel de la phase pour un salon.
-    /// </summary>
-    /// <param name="code">Code du salon</param>
-    /// <returns>État actuel de la phase ou null si erreur</returns>
-    public VortexTCG.Game.DTO.PhaseChangeResultDTO? GetCurrentPhaseState(string code)
-    {
-        code = code.Trim().ToUpperInvariant();
-        if (!_rooms.TryGetValue(code, out Room? room)) return null;
-
-        lock (room)
-        {
-            if (room.GameRoom == null || !room.IsGameInitialized) return null;
-
-            return new VortexTCG.Game.DTO.PhaseChangeResultDTO
-            {
-                CurrentPhase = room.GameRoom.CurrentPhase,
-                ActivePlayerId = room.GameRoom.ActivePlayerId,
-                TurnNumber = room.GameRoom.TurnNumber,
-                AutoChanged = false,
-                AutoChangeReason = null,
-                CanAct = room.GameRoom.GameStarted
-            };
-        }
-    }
 
     #endregion
 }

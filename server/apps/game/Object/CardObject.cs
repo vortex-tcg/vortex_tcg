@@ -4,9 +4,10 @@ using VortexTCG.Game.DTO;
 namespace VortexTCG.Game.Object
 {
     public enum CardState {
-        ENGAGE = 0
+        ENGAGE = 0,
         BATTLE_ENGAGE = 1,
-        DEFENSE_ENGAGE = 2
+        DEFENSE_ENGAGE = 2,
+        ATTACK_ENGAGE = 3
     }
 
     public class Card
@@ -57,6 +58,8 @@ namespace VortexTCG.Game.Object
             _class = new List<string>(card.Class);
 
             _effects = new List<Effect>();
+            
+            _state = new List<CardState>();
         }
 
         public int GetGameCardId() => _game_card_id;
