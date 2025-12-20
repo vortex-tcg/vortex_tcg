@@ -1,30 +1,33 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
-using System.Linq;
 
 public class AttackManager : MonoBehaviour
 {
-    [Header("UI Toolkit")]
-    [SerializeField] private UIDocument boardDocument;
+    public static AttackManager Instance { get; private set; }
 
-    private VisualElement p1BoardRoot;
-    private readonly List<VisualElement> selectedCards = new List<VisualElement>();
+    [Header("Player 1 Cards on Board")]
+    [SerializeField] private List<CardSlot> P1BoardSlots;
+
+    private readonly List<Card> selectedCards = new List<Card>();
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     private void Start()
     {
-        if (boardDocument == null)
-            boardDocument = GetComponent<UIDocument>();
-
-        VisualElement root = boardDocument.rootVisualElement;
-        p1BoardRoot = root.Q<VisualElement>("P1BoardCards");
-
-        RegisterAllExistingCards();
-
         PhaseManager.Instance.OnEnterAttack += OnEnterAttackPhase;
+        PhaseManager.Instance.OnEnterDefense += OnEnterDefensePhase;
         PhaseManager.Instance.OnEnterStandBy += OnEndDefensePhase;
 
-        Debug.Log("AttackManager subscribed to phase events");
+        foreach (CardSlot slot in P1BoardSlots)
+        {
+            if (slot.CurrentCard != null)
+            {
+                RegisterCard(slot.CurrentCard);
+            }
+        }
     }
 
     private void OnDestroy()
@@ -32,6 +35,7 @@ public class AttackManager : MonoBehaviour
         if (PhaseManager.Instance != null)
         {
             PhaseManager.Instance.OnEnterAttack -= OnEnterAttackPhase;
+            PhaseManager.Instance.OnEnterDefense -= OnEnterDefensePhase;
             PhaseManager.Instance.OnEnterStandBy -= OnEndDefensePhase;
         }
     }
@@ -41,51 +45,51 @@ public class AttackManager : MonoBehaviour
         ClearSelections();
     }
 
+    private void OnEnterDefensePhase()
+    {
+    }
+
     private void OnEndDefensePhase()
     {
         ClearSelections();
     }
 
-    private void RegisterAllExistingCards()
+    public void RegisterCard(Card card)
     {
-        List<VisualElement> allSlots = p1BoardRoot.Query<VisualElement>(className: "P1Slot").ToList();
-        foreach (VisualElement slot in allSlots)
+        if (card == null) return;
+
+        Collider col = card.GetComponent<Collider>();
+        if (col == null)
         {
-            slot.RegisterCallback<ClickEvent>(ClickEvent =>
-            {
-                VisualElement card = slot.Q<VisualElement>(className: "small-card");
-                if (card != null)
-                    ToggleCard(card);
-            });
+            BoxCollider bc = card.gameObject.AddComponent<BoxCollider>();
+            bc.size = Vector3.one;
         }
     }
 
-    public void RegisterCard(VisualElement card)
+    public bool IsP1BoardSlot(CardSlot slot)
     {
-        if (!card.ClassListContains("small-card"))
-            return;
-        if (card.userData is bool alreadyRegistered && alreadyRegistered)
-            return;
-
-        card.userData = true;
-
-        card.RegisterCallback<ClickEvent>(ClickEvent =>
-        {
-            if (PhaseManager.Instance.CurrentPhase != GamePhase.Attack)
-                return;
-
-            if (card.parent == null || card.parent != p1BoardRoot && !p1BoardRoot.Contains(card))
-                return;
-
-            ToggleCard(card);
-        });
+        return slot != null && P1BoardSlots != null && P1BoardSlots.Contains(slot);
     }
 
-    private void ToggleCard(VisualElement card)
+    public bool IsCardOnP1Board(Card card)
     {
-        if (card == null || card.parent == null || card.parent.childCount == 0)
-            return;
+        if (card == null) return false;
+        CardSlot slot = card.GetComponentInParent<CardSlot>();
+        return IsP1BoardSlot(slot);
+    }
 
+    public void HandleCardClicked(Card card)
+    {
+        if (card == null) return;
+        if (PhaseManager.Instance == null) return;
+        if (PhaseManager.Instance.CurrentPhase != GamePhase.Attack) return;
+        if (!IsCardOnP1Board(card)) return;
+
+        ToggleCard(card);
+    }
+
+    private void ToggleCard(Card card)
+    {
         if (selectedCards.Contains(card))
             DeselectCard(card);
         else
@@ -94,61 +98,36 @@ public class AttackManager : MonoBehaviour
         UpdateAttackOrderLabels();
     }
 
-    private void SelectCard(VisualElement card)
+    private void SelectCard(Card card)
     {
         selectedCards.Add(card);
-        if (!card.ClassListContains("engaged"))
-            card.AddToClassList("engaged");
-
-        Label orderLabel = card.Q<Label>("AttackOrder");
-        if (orderLabel != null)
-            orderLabel.style.display = DisplayStyle.Flex;
+        card.SetSelected(true);
     }
 
-    private void DeselectCard(VisualElement card)
+    private void DeselectCard(Card card)
     {
         selectedCards.Remove(card);
-        if (card.ClassListContains("engaged"))
-            card.RemoveFromClassList("engaged");
-
-        Label orderLabel = card.Q<Label>("AttackOrder");
-        if (orderLabel != null)
-        {
-            orderLabel.text = "";
-            orderLabel.style.display = DisplayStyle.None;
-        }
+        card.SetSelected(false);
+        card.ClearAttackOrder();
     }
 
     private void UpdateAttackOrderLabels()
     {
         for (int i = 0; i < selectedCards.Count; i++)
         {
-            VisualElement card = selectedCards[i];
-            Label orderLabel = card.Q<Label>("AttackOrder");
-            if (orderLabel != null)
-            {
-                orderLabel.text = (i + 1).ToString();
-                orderLabel.style.display = DisplayStyle.Flex;
-            }
+            Card card = selectedCards[i];
+            card.ShowAttackOrder(i + 1);
         }
     }
 
     private void ClearSelections()
     {
-        foreach (VisualElement card in selectedCards)
+        foreach (Card card in selectedCards)
         {
-            if (card.ClassListContains("engaged"))
-                card.RemoveFromClassList("engaged");
-
-            Label orderLabel = card.Q<Label>("AttackOrder");
-            if (orderLabel != null)
-            {
-                orderLabel.text = "";
-                orderLabel.style.display = DisplayStyle.None;
-            }
+            card.SetSelected(false);
+            card.ClearAttackOrder();
         }
 
         selectedCards.Clear();
     }
-
 }

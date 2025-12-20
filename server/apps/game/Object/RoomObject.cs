@@ -164,9 +164,12 @@ namespace VortexTCG.Game.Object
                 bool isPlayer1 = playerId == _user_1;
                 Deck deck = isPlayer1 ? _deck_user_1 : _deck_user_2;
                 Hand hand = isPlayer1 ? _hand_user_1 : _hand_user_2;
+                Graveyard graveyard = isPlayer1 ? _graveyard_user_1 : _graveyard_user_2;
+
                 Champion champion = isPlayer1 ? _champion_user_1 : _champion_user_2;
 
-                List<DrawnCardDTO> drawnCards = new List<DrawnCardDTO>();
+                var drawnCards = new List<DrawnCardDTO>();         
+                var sentToGraveyard = new List<DrawnCardDTO>();             
                 int fatigueCount = 0;
                 int baseFatigue = champion.GetFatigue();
 
@@ -175,8 +178,7 @@ namespace VortexTCG.Game.Object
                     Card? card = deck.DrawCard();
                     if (card != null)
                     {
-                        hand.AddCard(card);
-                        drawnCards.Add(new DrawnCardDTO
+                        var dto = new DrawnCardDTO
                         {
                             GameCardId = card.GetGameCardId(),
                             Name = card.GetName(),
@@ -185,7 +187,14 @@ namespace VortexTCG.Game.Object
                             Cost = card.GetCost(),
                             Description = card.GetDescription(),
                             CardType = card.GetCardType()
-                        });
+                        };
+                        if (!hand.AddCard(card))
+                        {
+                            graveyard.AddCard(card);
+                            sentToGraveyard.Add(dto);
+                            continue;
+                        }
+                        drawnCards.Add(dto);
                     }
                     else
                     {
@@ -198,16 +207,19 @@ namespace VortexTCG.Game.Object
                 {
                     PlayerResult = new DrawResultForPlayerDTO
                     {
+                        PlayerId = isPlayer1 ? _user_1 : _user_2,
                         DrawnCards = drawnCards,
                         FatigueCount = fatigueCount,
-                        BaseFatigue = baseFatigue
+                        BaseFatigue = baseFatigue,
+                        SentToGraveyard = sentToGraveyard, 
                     },
                     OpponentResult = new DrawResultForOpponentDTO
                     {
                         PlayerId = playerId,
                         CardsDrawnCount = drawnCards.Count,
                         FatigueCount = fatigueCount,
-                        BaseFatigue = baseFatigue
+                        BaseFatigue = baseFatigue,
+                        CardsBurnedCount = sentToGraveyard.Count,
                     }
                 };
             }
