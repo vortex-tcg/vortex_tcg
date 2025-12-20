@@ -70,5 +70,42 @@ namespace VortexTCG.Game.Object
         {
             return GetCardCount() == 0;
         }
+
+        public bool IsAvailable(int location) {
+            switch(location) {
+                case 0:
+                    return _location_1 != null ? true : false;
+                case 1:
+                    return _location_2 != null ? true : false;
+                case 2:
+                    return _location_3 != null ? true : false;
+                case 3:
+                    return _location_4 != null ? true : false;
+                case 4:
+                    return _location_5 != null ? true : false;
+                default:
+                    return false;
+            }
+        }
+
+        public void PosCard(Card card, int location) {
+            switch(location) {
+                case 0:
+                    _location_1 = card;
+                    break;
+                case 1:
+                    _location_2 = card;
+                    break;
+                case 2:
+                    _location_3 = card;
+                    break;
+                case 3:
+                    _location_4 = card;
+                    break;
+                case 4:
+                    _location_5 = card;
+                    break;
+            }
+        }
     }
 }
