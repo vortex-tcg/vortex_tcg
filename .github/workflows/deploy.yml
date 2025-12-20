@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Build, Analyze and Deploy
 
 on:
   pull_request:
@@ -12,11 +12,51 @@ permissions:
   contents: read
 
 jobs:
+  sonarqube:
+    name: Build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.11
+      - name: Cache SonarQube packages
+        uses: actions/cache@v1
+        with:
+          path: ~\sonar\cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: Cache SonarQube scanner
+        id: cache-sonar-scanner
+        uses: actions/cache@v1
+        with:
+          path: .\.sonar\scanner
+          key: ${{ runner.os }}-sonar-scanner
+          restore-keys: ${{ runner.os }}-sonar-scanner
+      - name: Install SonarQube scanner
+        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        shell: powershell
+        run: |
+          New-Item -Path .\.sonar\scanner -ItemType Directory
+          dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
+      - name: Build and analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: powershell
+        run: |
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"vortex-tcg_vortex_tcg_AZs9hB9eZ5rdROOkH-9N" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
+          dotnet build
+          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+
   deploy:
     name: Deploy to EC2
+    needs: sonarqube
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     environment: production
-
     steps:
       - name: Pull latest code on EC2
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
@@ -26,15 +66,10 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/vortex_tcg
-
             git remote set-url origin git@github.com:vortex-tcg/vortex_tcg.git
-            
             git fetch --all
-
             git checkout ${{ github.ref_name }}
-
             git pull origin ${{ github.ref_name }}
-
       - name: Pull new Docker images
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
@@ -45,16 +80,12 @@ jobs:
           script: |
             cd /var/www/vortex_tcg/server
             docker compose down
-
             docker system prune -a -f
-
             docker pull vortextcg/vortex_repository:api
             docker pull vortextcg/vortex_repository:game
             docker pull vortextcg/vortex_repository:auth
             docker pull vortextcg/vortex_repository:migrations
-
             docker logout
-
       - name: Create env file on server
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
@@ -79,7 +110,6 @@ jobs:
             DB_PORT=${{ secrets.DB_PORT }}
             CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}
             EOF
-
       - name: Start services
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
@@ -90,7 +120,6 @@ jobs:
           script: |
             cd /var/www/vortex_tcg/server
             docker-compose -f docker-compose.prod.yaml up -d --remove-orphans
-            
       - name: Ensure SonarQube is running with persistence
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
@@ -100,7 +129,6 @@ jobs:
           script: |
             if [ ! "$(docker ps -q -f name=sonarqube)" ]; then
                 docker rm -f sonarqube || true
-            
                 docker run -d --name sonarqube \
                   -p ${{ secrets.SONARQUBE_PORT }}:9000 \
                   -e SONAR_WEB_CONTEXT=/sonarqube \
