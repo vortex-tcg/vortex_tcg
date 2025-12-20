@@ -3,9 +3,9 @@ namespace VortexTCG.Game.DTO
     public enum GamePhase
     {
         PLACEMENT = 0,
-        ATTACK = 0,
-        DEFENSE = 0,
-        END_TURN = 0
+        ATTACK = 1,
+        DEFENSE = 2,
+        END_TURN = 3
     }
 
     public class PhaseChangeResultDTO
