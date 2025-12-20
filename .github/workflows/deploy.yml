@@ -28,6 +28,8 @@ jobs:
             cd /var/www/vortex_tcg
 
             git remote set-url origin git@github.com:vortex-tcg/vortex_tcg.git
+            
+            git fetch --all
 
             git checkout ${{ github.ref_name }}
 
