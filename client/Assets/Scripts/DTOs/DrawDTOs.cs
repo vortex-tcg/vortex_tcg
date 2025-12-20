@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using VortexTCG.Scripts.DTOs;
-namespace DrawDTOs
+namespace VortexTCG.Scripts.DTOs
 {
     [Serializable]
     public class DrawnCardDto

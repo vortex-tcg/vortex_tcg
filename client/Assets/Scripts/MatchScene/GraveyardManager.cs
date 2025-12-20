@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using DrawDTOs;
+using VortexTCG.Scripts.DTOs;
 
 namespace VortexTCG.Scripts.MatchScene
 {

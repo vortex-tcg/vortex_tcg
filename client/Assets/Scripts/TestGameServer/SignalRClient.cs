@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using UnityEngine;
-using DrawDTOs;
+using VortexTCG.Scripts.DTOs;
 using System.Text.Json;
 
 [DefaultExecutionOrder(-1000)]

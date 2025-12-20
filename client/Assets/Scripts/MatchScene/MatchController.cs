@@ -1,8 +1,10 @@
 using System;
 using UnityEngine;
-using DrawDTOs;
+using VortexTCG.Scripts.DTOs;
 using System.Collections.Generic;
 using System.Threading.Tasks;      
+using System.Collections.Concurrent;
+
 namespace VortexTCG.Scripts.MatchScene
 {
     public class MatchController : MonoBehaviour
@@ -12,6 +14,8 @@ namespace VortexTCG.Scripts.MatchScene
         [SerializeField] private int initialHandSize = 5;
         [SerializeField] private NetworkRef networkRef;
         private SignalRClient client;
+        private readonly ConcurrentQueue<Action> _mainThread = new();
+    
 
         public enum HandUpdateMode
         {
@@ -24,6 +28,11 @@ namespace VortexTCG.Scripts.MatchScene
         private readonly Queue<HandUpdateMode> _pendingHandModes = new();
 
         private bool initialDrawRequested;
+        private void Update()
+        {
+            while (_mainThread.TryDequeue(out var a))
+                a?.Invoke();
+        }
 
         private void OnEnable()
         {
@@ -112,8 +121,12 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
 
-
         private void HandleCardsDrawn(DrawResultForPlayerDto result)
+        {
+            _mainThread.Enqueue(() => HandleCardsDrawn_MainThread(result));
+        }
+
+        private void HandleCardsDrawn_MainThread(DrawResultForPlayerDto result)
         {
             int count = result?.DrawnCards?.Count ?? -1;
             Debug.Log($"[MatchController] CardsDrawn received. count={count}");
@@ -122,9 +135,11 @@ namespace VortexTCG.Scripts.MatchScene
 
             if (result?.SentToGraveyard != null && result.SentToGraveyard.Count > 0)
                 graveyardManager?.AddCards(result.SentToGraveyard);
+
             HandUpdateMode mode = _pendingHandModes.Count > 0
                 ? _pendingHandModes.Dequeue()
                 : HandUpdateMode.Append;
+
             if (result?.DrawnCards != null)
             {
                 if (mode == HandUpdateMode.Replace)
@@ -143,5 +158,6 @@ namespace VortexTCG.Scripts.MatchScene
                 Debug.Log("[MatchController] Start StandBy bonus draw +1");
             }
         }
+
     }
 }
