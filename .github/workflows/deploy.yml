@@ -88,3 +88,25 @@ jobs:
           script: |
             cd /var/www/vortex_tcg/server
             docker-compose -f docker-compose.prod.yaml up -d --remove-orphans
+            
+      - name: Ensure SonarQube is running with persistence
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            if [ ! "$(docker ps -q -f name=sonarqube)" ]; then
+                docker rm -f sonarqube || true
+            
+                docker run -d --name sonarqube \
+                  -p ${{ secrets.SONARQUBE_PORT }}:9000 \
+                  -e SONAR_WEB_CONTEXT=/sonarqube \
+                  -v /var/sonarqube/data:/opt/sonarqube/data \
+                  -v /var/sonarqube/logs:/opt/sonarqube/logs \
+                  -v /var/sonarqube/extensions:/opt/sonarqube/extensions \
+                  --restart always \
+                  sonarqube:lts
+            else
+                echo "SonarQube is already running, skipping."
+            fi
