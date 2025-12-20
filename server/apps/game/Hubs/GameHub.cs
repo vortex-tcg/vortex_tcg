@@ -14,11 +14,13 @@ namespace game.Hubs;
 
 public class GameHub : Hub
 {
-    // Le Hub dépend de deux services singleton:
+    // Le Hub dépend de trois services singleton:
     // - Matchmaker: gère une file d'attente (queue) pour appairer deux joueurs aléatoirement.
     // - RoomService: gère des salons identifiés par un code (type "K3H9Z8") pour jeu privé.
+    // - PhaseTimerService: gère les timers de phase (1 minute max par phase).
     private readonly Matchmaker _matchmaker;
     private readonly RoomService _rooms;
+
 
     public GameHub(Matchmaker matchmaker, RoomService rooms)
     {
@@ -255,20 +257,68 @@ public class GameHub : Hub
         }
     }
 
-    public async Task DrawCards(int playerPosition, int amount)
+    // public async Task DrawCards(int playerPosition, int amount)
+    // {
+    //     Guid userId = GetAuthenticatedUserId();
+    //     DrawCardsResultDTO? result = _rooms.DrawCards(userId, playerPosition, amount);
+    //     if (result == null)
+    //     {
+    //         await Clients.Caller.SendAsync("Error", "Unable to draw cards (Invalid room, game not started, invalid player, or invalid position)");
+    //         return;
+    //     }
+    //     await Clients.Caller.SendAsync("CardsDrawn", result.PlayerResult);
+    //     string? code = _rooms.GetRoomOf(userId);
+    //     if (code != null)
+    //     {
+    //         await Clients.OthersInGroup(code).SendAsync("OpponentCardsDrawn", result.OpponentResult);
+    //     }
+    // }
+
+    // --- GESTION DES PHASES DE JEU ---
+
+    /// <summary>
+    /// Démarre la partie dans une room. Seul le joueur 1 (créateur) peut démarrer.
+    /// Initialise le jeu et envoie l'état initial (la pioche est gérée côté serveur à l'entrée en PLACEMENT).
+    /// </summary>
+    public async Task StartGame()
     {
         Guid userId = GetAuthenticatedUserId();
-        DrawCardsResultDTO? result = _rooms.DrawCards(userId, playerPosition, amount);
+        PhaseChangeResultDTO? result = _rooms.StartGame(userId);
+
         if (result == null)
         {
-            await Clients.Caller.SendAsync("Error", "Unable to draw cards (Invalid room, game not started, invalid player, or invalid position)");
+            await Clients.Caller.SendAsync("Error", "Unable to start game (Not in room, already started, or not player 1)");
             return;
         }
-        await Clients.Caller.SendAsync("CardsDrawn", result.PlayerResult);
+
         string? code = _rooms.GetRoomOf(userId);
-        if (code != null)
+        if (code == null) return;
+
+        // Envoyer l'état initial aux deux joueurs
+        await Clients.Group(code).SendAsync("GameStarted", result);
+    }
+
+    /// <summary>
+    /// Le joueur demande à changer de phase.
+    /// Le serveur vérifie si le joueur peut changer de phase et gère les auto-skips.
+    /// </summary>
+    public async Task ChangePhase()
+    {
+        Guid userId = GetAuthenticatedUserId();
+        PhaseChangeResultDTO result = await _rooms.ChangePhase(userId);
+
+        if (result == null)
         {
-            await Clients.OthersInGroup(code).SendAsync("OpponentCardsDrawn", result.OpponentResult);
+            await Clients.Caller.SendAsync("Error", "Unable to change phase (Not in room, game not started, or not your turn)");
+            return;
         }
+
+        string? code = _rooms.GetRoomOf(userId);
+        if (code == null) return;
+
+
+        // Envoyer le changement de phase aux deux joueurs
+
+        await Clients.Group(code).SendAsync("PhaseChanged", result);
     }
 }

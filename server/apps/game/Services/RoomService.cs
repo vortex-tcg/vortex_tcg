@@ -25,6 +25,10 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using VortexTCG.Game.Object;
+using VortexTCG.Game.DTO;
+using VortexTCG.Game.Interface;
+using Microsoft.AspNetCore.SignalR;
+using game.Hubs;
 
 namespace game.Services;
 
@@ -33,7 +37,7 @@ namespace game.Services;
 /// Thread-safe et conçu pour SignalR/WebSocket avec des connexions concurrentes.
 /// SUPPORTE LA RECONNEXION: Utilise userId au lieu de connectionId.
 /// </summary>
-public class RoomService
+public class RoomService: IRoomActionEventListener
 {
     #region Structures internes
 
@@ -43,6 +47,10 @@ public class RoomService
     /// </summary>
     private class Room
     {
+        public Room(IRoomActionEventListener listener) {
+            GameRoom = new VortexTCG.Game.Object.Room(listener);
+        }
+
         /// <summary>Ensemble des UserId des joueurs dans le salon (max 2) - RÉSISTE aux reconnexions</summary>
         public HashSet<Guid> Members { get; } = new();
 
@@ -80,7 +88,12 @@ public class RoomService
 
     /// <summary>Générateur de nombres aléatoires cryptographiquement sécurisé</summary>
     private readonly RandomNumberGenerator _rng = RandomNumberGenerator.Create();
+    private readonly IHubContext<GameHub> _hubContext;
 
+    public RoomService(IHubContext<GameHub> hubContext)
+    {
+        _hubContext = hubContext;
+    }
     #endregion
 
     #region Gestion des pseudos
@@ -137,7 +150,7 @@ public class RoomService
         {
             code = preferred.Trim().ToUpperInvariant();
             // TryAdd est atomique: retourne false si le code existe déjà
-            if (!_rooms.TryAdd(code, new Room())) return false;
+            if (!_rooms.TryAdd(code, new Room(this))) return false;
         }
         // Cas 2: Génération automatique d'un code unique
         else
@@ -146,7 +159,7 @@ public class RoomService
             while (true)
             {
                 code = GenerateCode(6); // ex: "F9K7ZQ"
-                if (_rooms.TryAdd(code, new Room())) break;
+                if (_rooms.TryAdd(code, new Room(this))) break;
             }
         }
 
@@ -264,6 +277,10 @@ public class RoomService
             lock (room)
             {
                 room.Members.Remove(userId);
+                if (room.Members.Count == 0 && room.GameRoom != null) 
+                {
+                    room.GameRoom.StopTimer(); 
+                }
                 opponentId = room.Members.FirstOrDefault();
                 roomEmpty = room.Members.Count == 0;
 
@@ -357,7 +374,18 @@ public class RoomService
                 deck2Id = room.User2DeckId.Value;
 
                 // Créer l'instance RoomObject (vide pour l'instant)
-                room.GameRoom = new VortexTCG.Game.Object.Room();
+                room.GameRoom = new VortexTCG.Game.Object.Room(this);
+              
+                string capturedCode = code; 
+                room.GameRoom.OnTimeUp += async () => 
+                {
+                    var result = room.GameRoom.ForceChangePhase();
+                    
+                    if (result != null) 
+                    {
+                       await _hubContext.Clients.Group(capturedCode).SendAsync("PhaseChanged", result);
+                    }
+                };
             }
         }
 
@@ -458,23 +486,23 @@ public class RoomService
     /// <param name="playerPosition">Position du joueur qui pioche (1 ou 2)</param>
     /// <param name="amount">Nombre de cartes</param>
     /// <returns>Résultat de la pioche ou null si erreur</returns>
-    public VortexTCG.Game.DTO.DrawCardsResultDTO? DrawCards(Guid userId, int playerPosition, int amount)
-    {
-        if (!_userToRoom.TryGetValue(userId, out string? code)) return null;
-        if (!_rooms.TryGetValue(code, out Room? room)) return null;
-
-        lock (room)
-        {
-            if (room.GameRoom == null) return null;
-
+    // public VortexTCG.Game.DTO.DrawCardsResultDTO? DrawCards(Guid userId, int playerPosition, int amount)
+    // {
+        // if (!_userToRoom.TryGetValue(userId, out string? code)) return null;
+        // if (!_rooms.TryGetValue(code, out Room? room)) return null;
+// 
+        // lock (room)
+        // {
+            // if (room.GameRoom == null) return null;
+// 
             // Récupère le userId du joueur à la position demandée
-            List<Guid> members = room.Members.ToList();
-            if (playerPosition < 1 || playerPosition > members.Count) return null;
-
-            Guid targetUserId = members[playerPosition - 1];
-            return room.GameRoom.DrawCards(targetUserId, amount);
-        }
-    }
+            // List<Guid> members = room.Members.ToList();
+            // if (playerPosition < 1 || playerPosition > members.Count) return null;
+// 
+            // Guid targetUserId = members[playerPosition - 1];
+            // return room.GameRoom.DrawCards(targetUserId, amount);
+        // }
+    // }
 
     /// <summary>
     /// Récupère la position (1 ou 2) d'un joueur dans un salon.
@@ -493,6 +521,86 @@ public class RoomService
             return index >= 0 ? index + 1 : null;
         }
     }
+
+    #endregion
+
+    #region Gestion des phases de jeu
+
+    /// <summary>
+    /// Démarre une partie. Seul le joueur 1 (créateur) peut démarrer.
+    /// </summary>
+    /// <param name="userId">ID du joueur qui demande le démarrage</param>
+    /// <returns>Résultat du démarrage ou null si non autorisé</returns>
+    public VortexTCG.Game.DTO.PhaseChangeResultDTO? StartGame(Guid userId)
+    {
+        if (!_userToRoom.TryGetValue(userId, out string? code)) return null;
+        if (!_rooms.TryGetValue(code, out Room? room)) return null;
+
+        lock (room)
+        {
+            if (room.GameRoom == null || !room.IsGameInitialized) return null;
+            return room.GameRoom.StartGame();
+        }
+    }
+
+    /// <summary>
+    /// Change de phase pour un joueur.
+    /// </summary>
+    /// <param name="userId">ID du joueur qui demande le changement</param>
+    /// <returns>Résultat du changement ou null si non autorisé</returns>
+    public async Task<VortexTCG.Game.DTO.PhaseChangeResultDTO>? ChangePhase(Guid userId)
+    {
+        if (!_userToRoom.TryGetValue(userId, out string? code)) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync("Error", "Code not found !");
+            return null;
+        };
+        if (!_rooms.TryGetValue(code, out Room? room)) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync("Error", "Room not found");
+            return null;
+        }
+
+        if (room.GameRoom == null) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync("Error", "Room not initialized !");
+            return null;
+        } else if (!room.IsGameInitialized) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync("Error", "Room variable is false !");
+            return null;
+        }
+
+        VortexTCG.Game.DTO.PhaseChangeResultDTO result = null;
+
+        lock (room)
+        {
+            result =  room.GameRoom.ChangePhase(userId);
+        }
+        return result;
+    }
+
+    public async void sendDrawCardsData(DrawCardsResultDTO data) {
+        await _hubContext.Clients.User(data.PlayerResult.PlayerId.ToString()).SendAsync("CardsDrawn", data.PlayerResult);
+        await _hubContext.Clients.User(data.OpponentResult.PlayerId.ToString()).SendAsync("OpponentCardsDrawn", data.OpponentResult);
+    }
+
+    /// <summary>
+    /// Fait piocher des cartes pour un joueur spécifique (utilisé pour la pioche automatique).
+    /// </summary>
+    /// <param name="playerId">ID du joueur qui pioche</param>
+    /// <param name="playerPosition">Position du joueur (1 ou 2)</param>
+    /// <param name="amount">Nombre de cartes</param>
+    /// <returns>Résultat de la pioche ou null si erreur</returns>
+    // public void DrawCardsForPlayer(Guid playerId, int playerPosition, int amount)
+    // {
+        // if (!_userToRoom.TryGetValue(playerId, out string? code)) return null;
+        // if (!_rooms.TryGetValue(code, out Room? room)) return null;
+// 
+        // lock (room)
+        // {
+            // if (room.GameRoom == null || !room.IsGameInitialized) return null;
+// 
+            // return room.GameRoom.DrawCards(playerId, amount);
+        // }
+    // }
+
 
     #endregion
 }
