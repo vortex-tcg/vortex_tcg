@@ -1,0 +1,338 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Test matchmaking & rooms</title>
+    <style>
+        body{font-family:sans-serif;max-width:760px;margin:24px auto;padding:0 12px}
+        #log{border:1px solid #999;height:180px;overflow:auto;padding:6px;border-radius:8px}
+        input,button{padding:6px 10px;margin:4px}
+    </style>
+</head>
+<body>
+<h1>SignalR – Matchmaking & Rooms par code</h1>
+
+<div>
+    <span>Login</span>
+    <label>Email: <input id="loginEmail" value="john.doe@email.com" /></label>
+    <label>Mot de passe: <input id="loginPassword" value="Password123"/></label>
+    <button id="login">Login</button>
+    <span id="loginStatus"></span>
+</div>
+
+<div>
+    <span>Connexion GameHub</span>
+    <label>Pseudo: <input id="name" value="Joueur" /></label>
+    <button id="connect">Connexion</button>
+    <span id="status"></span>
+</div>
+
+<hr/>
+
+<h3>Mode 1 : Matchmaking aléatoire</h3>
+<div>
+    <button id="queue" disabled>Se mettre en file</button>
+    <button id="leaveQueue" disabled>Quitter la file / room</button>
+</div>
+
+<h3>Mode 2 : Room par code</h3>
+<div>
+    <input id="deckId" placeholder="Deck ID (GUID)" value="d3b07384-d9a1-4d3b-92d8-4f5c6e7a8b9c" style="width: 280px;" />
+    <br/>
+    <input id="roomCode" placeholder="CODE (ex: Q7D9K2)" />
+    <button id="create">Créer room</button>
+    <button id="join">Rejoindre room</button>
+    <button id="leaveCode">Quitter room (code)</button>
+</div>
+
+<div id="room" style="display:none;">
+    <h2 id="roomTitle"></h2>
+    <div id="phaseInfo" style="background:#f0f0f0;padding:10px;margin:10px 0;border-radius:8px;">
+        <strong>État de la partie:</strong>
+        <span id="gameState">Non démarrée</span>
+        <br/>
+        <strong>Tour:</strong> <span id="turnNumber">-</span>
+        <strong>Phase:</strong> <span id="currentPhase">-</span>
+        <strong>Joueur actif:</strong> <span id="activePlayer">-</span>
+    </div>
+    <div>
+        <button id="startGame">Démarrer la partie</button>
+        <button id="changePhase">Changer de phase</button>
+    </div>
+    <div id="log"></div>
+    <input id="msg" placeholder="Message" />
+    <button id="send">Envoyer</button>
+    <br/>
+    <label>Position joueur: <input id="drawPosition" type="number" value="1" min="1" max="2" style="width:50px"/></label>
+    <label>Nombre: <input id="drawAmount" type="number" value="1" min="1" style="width:50px"/></label>
+    <button id="drawCard">Piocher</button>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8/dist/browser/signalr.min.js"></script>
+<script>
+
+    const loginEmail = document.getElementById("loginEmail");
+    const loginPassword = document.getElementById("loginPassword")
+    const loginStatus = document.getElementById("loginStatus");
+
+    const status = document.getElementById('status');
+    const roomDiv = document.getElementById('room');
+    const roomTitle = document.getElementById('roomTitle');
+    const log = document.getElementById('log');
+
+    const btnConnect = document.getElementById('connect');
+    const btnQueue = document.getElementById('queue');
+    const btnLeaveQueue = document.getElementById('leaveQueue');
+    const btnLogin = document.getElementById("login");
+
+    const btnCreate = document.getElementById('create');
+    const btnJoin   = document.getElementById('join');
+    const btnLeaveCode = document.getElementById('leaveCode');
+
+    const nameInput = document.getElementById('name');
+    const codeInput = document.getElementById('roomCode');
+    const deckInput = document.getElementById('deckId');
+    const msgInput  = document.getElementById('msg');
+    const btnSend   = document.getElementById('send');
+    const btnDraw   = document.getElementById('drawCard');
+    const drawPositionInput = document.getElementById('drawPosition');
+    const drawAmountInput = document.getElementById('drawAmount');
+
+    // Éléments de phase
+    const btnStartGame = document.getElementById('startGame');
+    const btnChangePhase = document.getElementById('changePhase');
+    const gameStateSpan = document.getElementById('gameState');
+    const turnNumberSpan = document.getElementById('turnNumber');
+    const currentPhaseSpan = document.getElementById('currentPhase');
+    const activePlayerSpan = document.getElementById('activePlayer');
+
+    // Map des phases pour l'affichage
+    const phaseNames = {
+        0: 'Draw (Pioche)',
+        1: 'Placement',
+        2: 'Attack (Attaque)',
+        3: 'Defense (Défense)',
+        4: 'EndTurn (Fin de tour)'
+    };
+
+    let connection, currentKey = null, mode = null; // mode: 'queue' | 'code'
+    let myPosition = null; // Position du joueur (1 ou 2)
+    let myUserId = null; // Notre userId (GUID)
+    let activePlayerId = null; // userId du joueur actif
+
+    let jwtToken = "";
+
+    function append(t){ const p=document.createElement('div'); p.textContent=t; log.appendChild(p); log.scrollTop=log.scrollHeight; }
+
+    btnLogin.onclick = async () => {
+        const response = await fetch("http://localhost:4000/api/auth/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            referrerPolicy: "strict-origin-when-cross-origin",
+            body: JSON.stringify({
+                    email: loginEmail.value,
+                    password: loginPassword.value
+            })
+        })
+        const result = await response.json();
+        jwtToken = result.data.token;
+        loginStatus.textContent = "Connecté: " + jwtToken;
+    }
+
+    btnConnect.onclick = async () => {
+        try {
+            connection = await new signalR.HubConnectionBuilder()
+                .withUrl("/hubs/game", {
+                    accessTokenFactory: () => jwtToken
+                })
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("Connected", id => {
+                status.textContent = "Connecté: " + id;
+                btnQueue.disabled = false;
+                btnCreate.disabled = false;
+                btnJoin.disabled = false;
+                btnLeaveQueue.disabled = false;
+                btnLeaveCode.disabled = false;
+            });
+
+            connection.on("Waiting", () => {
+                status.textContent = "En attente d'un adversaire...";
+            });
+
+            connection.on("Matched", (key, payload) => {
+                currentKey = key;
+                myPosition = payload.position;
+                roomTitle.textContent = `Salle ${key} (Position: ${payload.position})`;
+                roomDiv.style.display = 'block';
+                append(`Match vs ${payload.opponent}. Tu es le joueur ${payload.position}.`);
+                // Pré-remplir la position pour DrawCards
+                document.getElementById('drawPosition').value = payload.position;
+            });
+
+            connection.on("GameStarted", (result) => {
+                gameStateSpan.textContent = "En cours";
+                updatePhaseDisplay(result);
+                append(`🎮 Partie démarrée ! Tour ${result.turnNumber}, Phase: ${phaseNames[result.currentPhase]}`);
+            });
+
+            connection.on("PhaseChanged", (result) => {
+                updatePhaseDisplay(result);
+                let msg = `⏩ Phase changée: Tour ${result.turnNumber}, Phase: ${phaseNames[result.currentPhase]}`;
+                if (result.autoChanged) {
+                    msg += ` (Auto: ${result.autoChangeReason})`;
+                }
+                append(msg);
+            });
+
+            connection.on("AutoDraw", (result) => {
+                append(`🃏 Pioche automatique: ${JSON.stringify(result)}`);
+            });
+
+            connection.on("Error", (message) => {
+                append(`❌ Erreur: ${message}`);
+            });
+
+            connection.on("RoomCreated", code => {
+                mode = 'code';
+                currentKey = code;
+                codeInput.value = code;
+                roomTitle.textContent = `Salle ${code}`;
+                roomDiv.style.display = 'block';
+                append(`Salle créée. Partage le code: ${code}`);
+            });
+
+            connection.on("RoomCreateError", reason => {
+                status.textContent = reason === "CODE_TAKEN" ? "Code déjà pris." : "Erreur création salle.";
+            });
+
+            connection.on("RoomJoinError", reason => {
+                status.textContent = reason === "ROOM_FULL" ? "Salle pleine." : "Salle introuvable.";
+            });
+
+            connection.on("ReceiveRoomMessage", (key, from, text) => {
+                append(`${from}: ${text}`);
+            });
+
+            connection.on("OpponentLeft", (key) => {
+                append("️ L'adversaire a quitté.");
+            });
+
+            connection.on("CardsDrawn", (result) => {
+                append(`J'ai pioché: ${JSON.stringify(result)}`);
+            });
+
+            connection.on("OpponentCardsDrawn", (result) => {
+                append(`L'adversaire a pioché: ${JSON.stringify(result)}`);
+            });
+
+            await connection.start();
+            await connection.invoke("SetName", nameInput.value || "Joueur");
+            status.textContent = "Connecté au hub.";
+        } catch (e) {
+            status.textContent = "Erreur de connexion (voir console).";
+            console.error(e);
+        }
+    };
+    btnQueue.onclick = async () => {
+        mode = 'queue';
+        const deckId = (deckInput.value || "").trim();
+        if (!deckId) return alert("Entre un Deck ID pour le matchmaking.");
+        await connection.invoke("JoinQueue", deckId);
+        status.textContent = "Demande de matchmaking envoyée...";
+    };
+    btnLeaveQueue.onclick = async () => {
+        await connection.invoke("LeaveQueue");
+        append("Vous avez quitté la file/room (matchmaking).");
+        currentKey = null;
+    };
+
+    btnCreate.onclick = async () => {
+        mode = 'code';
+        const preferred = (codeInput.value || "").trim() || null;
+        const deckId = (deckInput.value || "").trim();
+        if (!deckId) return alert("Entre un Deck ID.");
+        await connection.invoke("CreateRoom", deckId, preferred);
+    };
+    btnJoin.onclick = async () => {
+        mode = 'code';
+        const code = (codeInput.value || "").trim();
+        const deckId = (deckInput.value || "").trim();
+        if (!code) return alert("Entre un code.");
+        if (!deckId) return alert("Entre un Deck ID.");
+        await connection.invoke("JoinRoom", deckId, code);
+    };
+    btnLeaveCode.onclick = async () => {
+        await connection.invoke("LeaveRoomByCode");
+        append("Vous avez quitté la room (code).");
+        currentKey = null;
+    };
+
+    btnSend.onclick = async () => {
+        const t = msgInput.value.trim();
+        if (!t || !currentKey) return;
+        if (mode === 'code')
+            await connection.invoke("SendRoomMessageByCode", currentKey, t);
+        else
+            await connection.invoke("SendRoomMessage", currentKey, t);
+        append(`Moi: ${t}`);
+        msgInput.value = "";
+    };
+
+    btnDraw.onclick = async () => {
+        if (!currentKey) return;
+        const position = parseInt(drawPositionInput.value) || 1;
+        const amount = parseInt(drawAmountInput.value) || 1;
+        await connection.invoke("DrawCards", position, amount);
+        append(`Demande de pioche: joueur ${position}, ${amount} carte(s)`);
+    };
+
+    btnStartGame.onclick = async () => {
+        if (!currentKey) return alert("Pas dans une salle.");
+        await connection.invoke("StartGame");
+        append("Demande de démarrage de la partie...");
+    };
+
+    btnChangePhase.onclick = async () => {
+        if (!currentKey) return alert("Pas dans une salle.");
+        await connection.invoke("ChangePhase");
+        append("Demande de changement de phase...");
+    };
+
+    function updatePhaseDisplay(result) {
+        turnNumberSpan.textContent = result.turnNumber;
+        currentPhaseSpan.textContent = phaseNames[result.currentPhase] || result.currentPhase;
+        
+        // Déterminer le joueur actif par position (tour impair = joueur 1, tour pair = joueur 2)
+        const activePosition = (result.turnNumber % 2 === 1) ? 1 : 2;
+        
+        let isMyTurn = false;
+        let whoCanAct = "";
+        
+        if (result.currentPhase === 3) { // Defense
+            // En défense, c'est l'adversaire du joueur actif qui joue
+            const defenderPosition = (activePosition === 1) ? 2 : 1;
+            isMyTurn = (myPosition === defenderPosition);
+            whoCanAct = isMyTurn ? "🟢 C'EST TON TOUR (Défense)" : "🔴 L'adversaire défend";
+        } else if (result.currentPhase === 4) { // EndTurn
+            isMyTurn = false;
+            whoCanAct = "⏳ Fin de tour...";
+        } else {
+            // Draw, Placement, Attack - c'est le joueur actif qui joue
+            isMyTurn = (myPosition === activePosition);
+            whoCanAct = isMyTurn ? "🟢 C'EST TON TOUR" : "🔴 C'est le tour de l'adversaire";
+        }
+        
+        activePlayerSpan.textContent = whoCanAct;
+        
+        // Changer la couleur de fond selon si c'est notre tour
+        const phaseInfo = document.getElementById('phaseInfo');
+        if (phaseInfo) {
+            phaseInfo.style.background = isMyTurn ? '#d4edda' : '#f8d7da';
+        }
+    }
+</script>
+</body>
+</html>
