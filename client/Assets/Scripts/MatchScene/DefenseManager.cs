@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace VortexTCG.Scripts.MatchScene
 {
-// Runtime DefenseManager: selects a P1 defender during Defense phase, then assigns it to an attacking P2 card.
+
     public class DefenseManager : MonoBehaviour
     {
         public static DefenseManager Instance { get; private set; }
@@ -16,7 +16,7 @@ namespace VortexTCG.Scripts.MatchScene
         private Card currentDefender;
 
         private readonly Dictionary<Card, Card>
-            defenseAssignments = new Dictionary<Card, Card>(); // defender -> attacker
+            defenseAssignments = new Dictionary<Card, Card>();
 
         private void Awake()
         {
