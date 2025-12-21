@@ -86,23 +86,23 @@ namespace VortexTCG.Scripts.MatchScene
                 bool setAttacking = Random.value > 0.5f;
                 card.SetOpponentAttacking(setAttacking);
 
-                if (boardTargetHeight > 0f)
-                {
-                    Renderer[] renderers = card.GetComponentsInChildren<Renderer>();
-                    float worldHeight = 1f;
-                    if (renderers != null && renderers.Length > 0)
-                    {
-                        Bounds b = renderers[0].bounds;
-                        for (int r = 1; r < renderers.Length; r++) b.Encapsulate(renderers[r].bounds);
-                        worldHeight = b.size.y;
-                    }
-
-                    if (worldHeight > 0f)
-                    {
-                        float scale = boardTargetHeight / worldHeight;
-                        card.transform.localScale = Vector3.one * scale;
-                    }
-                }
+                // if (boardTargetHeight > 0f)
+                // {
+                    // Renderer[] renderers = card.GetComponentsInChildren<Renderer>();
+                    // float worldHeight = 1f;
+                    // if (renderers != null && renderers.Length > 0)
+                    // {
+                        // Bounds b = renderers[0].bounds;
+                        // for (int r = 1; r < renderers.Length; r++) b.Encapsulate(renderers[r].bounds);
+                        // worldHeight = b.size.y;
+                    // }
+// 
+                    // if (worldHeight > 0f)
+                    // {
+                        // float scale = boardTargetHeight / worldHeight;
+                        // card.transform.localScale = Vector3.one * scale;
+                    // }
+                // }
             }
         }
 

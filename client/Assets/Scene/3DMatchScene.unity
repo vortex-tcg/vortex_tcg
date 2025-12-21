@@ -2011,7 +2011,7 @@ Transform:
   m_GameObject: {fileID: 1454243776}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.35726792, y: -265.2844, z: 0.65000004}
+  m_LocalPosition: {x: -0.247, y: 11, z: -0.503}
   m_LocalScale: {x: 0.058377113, y: 20, z: 0.1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3389,7 +3389,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CurrentCard: {fileID: 0}
-  targetHeight: 0.2
+  targetHeight: 1
 --- !u!33 &5498880637139304567
 MeshFilter:
   m_ObjectHideFlags: 0

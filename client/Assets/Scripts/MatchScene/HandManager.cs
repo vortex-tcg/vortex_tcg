@@ -123,6 +123,7 @@ namespace VortexTCG.Scripts.MatchScene
 
                 c.transform.localPosition = new Vector3(i * cardSpacing, 0f, 0f);
                 c.transform.localRotation = Quaternion.identity;
+                c.transform.localScale = Vector3.one;
             }
         }
 

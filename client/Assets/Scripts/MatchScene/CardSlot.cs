@@ -5,7 +5,7 @@ namespace VortexTCG.Scripts.MatchScene
     public class CardSlot : MonoBehaviour
     {
         public Card CurrentCard;
-        public float targetHeight = 1f; // hauteur souhaitée de la carte dans ce slot (unités monde)
+        public float targetHeight = 1.0f; // hauteur souhaitée de la carte dans ce slot (unités monde)
 
         public bool CanAccept(Card card)
         {
@@ -24,9 +24,10 @@ namespace VortexTCG.Scripts.MatchScene
         {
             CurrentCard = card;
 
+            Vector3 baseScale = card.transform.localScale;
             card.transform.SetParent(transform, false);
+
             card.transform.localRotation = Quaternion.identity;
-            card.transform.localScale = Vector3.one;
 
             Renderer[] renderers = card.GetComponentsInChildren<Renderer>();
             float worldHeight = 1f;
@@ -38,18 +39,20 @@ namespace VortexTCG.Scripts.MatchScene
                 worldHeight = b.size.y;
             }
 
+
             if (worldHeight > 0f && targetHeight > 0f)
             {
                 float scale = targetHeight / worldHeight;
-                card.transform.localScale = Vector3.one * scale;
+                card.transform.localScale = baseScale * scale;
                 worldHeight = targetHeight;
             }
 
             float parentScaleY = transform.lossyScale.y;
-            float localY = parentScaleY > 0f ? (worldHeight * 0.5f) / parentScaleY : worldHeight * 0.5f;
+            float localY = (parentScaleY > 0f ? (worldHeight * 0.5f) / parentScaleY : worldHeight * 0.5f);
             card.transform.localPosition = new Vector3(0f, localY, 0f);
+            card.transform.localScale = Vector3.one;
 
-            HandManager.Instance.DeselectCurrentCard();
+            // HandManager.Instance.DeselectCurrentCard();
 
             if (AttackManager.Instance != null && AttackManager.Instance.IsP1BoardSlot(this))
             {
