@@ -256,28 +256,36 @@ namespace VortexTCG.Game.Object
 
             }
 
-            public PlayCardResponseDto PlayGuardCard(Guid userId, bool isPlayer1, int location, Card card, Hand activeHand) {
+            private PlayCardResponseDto PlayGuardCard(Guid userId, bool isPlayer1, int location, Card card, Hand activeHand) {
                 Board activeBoard = isPlayer1 ? _board_user_1 : _board_user_2;
                 Champion activeChamp = isPlayer1 ? _champion_user_1 : _champion_user_2;
 
                 if (location < 0 || location > 4) return null;
-                else if (!activeBoard.IsAvailable(location)) return null;
-                else if (!activeChamp.TryPaiedCard(card.GetCost())) return null;
+                else if (!activeBoard.IsAvailable(location)){
+                    return null;
+                }
+                else if (!activeChamp.TryPaiedCard(card.GetCost())) {
+                    return null;
+                }
 
                 activeHand.DeleteFromId(card.GetGameCardId());
+                card.AddState(CardState.ENGAGE);
                 activeBoard.PosCard(card, location);
                 activeChamp.PayCard(card.GetCost());
+                _isActif = true;
 
                 return new PlayCardResponseDto {
                     PlayerResult = new PlayCardPlayerResultDto {
                         PlayerId = isPlayer1 ? _user_1 : _user_2,
-                        CardId = card.GetGameCardId(),
+                        PlayedCard = card.FormatGameCardDto(),
+                        Champion = activeChamp.FormatPlayCardChampionDto(),
                         location = location,
                         canPlayed = true
                     },
                     OpponentResult = new PlayCardOpponentResultDto {
                         PlayerId = isPlayer1 ? _user_2 : _user_1,
                         PlayedCard = card.FormatGameCardDto(),
+                        Champion = activeChamp.FormatPlayCardChampionDto(),
                         location = location
                     }
                 };
@@ -300,6 +308,7 @@ namespace VortexTCG.Game.Object
             }
             private void HandleTimerElapsed(object? sender, ElapsedEventArgs e)
             {
+                _timer.Stop();
                 OnTimeUp?.Invoke(); 
             }
 
@@ -416,14 +425,17 @@ namespace VortexTCG.Game.Object
             bool isPlayer1 = _activePlayerId == _user_1;
 
             Champion activeChamp = isPlayer1 ? _champion_user_1 : _champion_user_2;
+            Board activeBoard = isPlayer1 ? _board_user_1 : _board_user_2;
 
             switch(_currentPhase) {
                 case GamePhase.PLACEMENT:
+                _isActif = false;
                     DrawCards(_activePlayerId, 1);
                     if (activeChamp.GetBaseGold() < 10) {
                         activeChamp.SetBaseGold(activeChamp.GetBaseGold() + 1);
                     }
                     activeChamp.resetGold();
+                    activeBoard.ResetBoardEngageState();
                     StartTimer(60);
                     break;
                 case GamePhase.ATTACK:
@@ -602,5 +614,6 @@ namespace VortexTCG.Game.Object
             }
 
         #endregion
+    
     }
 }
