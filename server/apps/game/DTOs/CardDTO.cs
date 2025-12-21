@@ -1,4 +1,5 @@
 using VortexTCG.DataAccess.Models;
+using VortexTCG.Game.Object;
 
 namespace VortexTCG.Game.DTO
 {
@@ -40,6 +41,8 @@ namespace VortexTCG.Game.DTO
 
         public CardType CardType { get; set; } = default!;
 
-        public ICollection<string> Class { get; set; } = default!;   
+        public List<string> Class { get; set; } = default!;
+
+        public List<CardState> State { get; set; } = default!;
     }
 }

@@ -1,8 +1,11 @@
+using VortexTCG.Game.DTO;
+
 namespace VortexTCG.Game.Object
 {
     public class Champion
     {
         private Guid _deck_id;
+        private Guid _id;
 
         private int _base_hp;
         private int _hp;
@@ -15,6 +18,7 @@ namespace VortexTCG.Game.Object
 
         public void initChampion(Guid deck)
         {
+            _id = new Guid();
             _deck_id = deck;
             _base_hp = 30;
             _base_gold = 1;
@@ -51,6 +55,14 @@ namespace VortexTCG.Game.Object
         public void resetGold() {
             _gold = _base_gold;
         }
+
+        public PlayCardChampionDto FormatPlayCardChampionDto()
+        => new PlayCardChampionDto {
+            Id = _id,
+            Hp = _hp,
+            Gold = _gold,
+            SecondaryCurrency = _secondary_currency
+        };
 
     }
 }

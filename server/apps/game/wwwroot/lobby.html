@@ -63,9 +63,9 @@
     <input id="msg" placeholder="Message" />
     <button id="send">Envoyer</button>
     <br/>
-    <label>Position joueur: <input id="drawPosition" type="number" value="1" min="1" max="2" style="width:50px"/></label>
-    <label>Nombre: <input id="drawAmount" type="number" value="1" min="1" style="width:50px"/></label>
-    <button id="drawCard">Piocher</button>
+    <label>Id Carte: <input id="CardPlayedId" type="number" value="1" min="1" max="2" style="width:50px"/></label>
+    <label>Position Carte: <input id="CardPlayedPodition" type="number" value="1" min="1" style="width:50px"/></label>
+    <button id="PlayCard">Jouer Carte</button>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8/dist/browser/signalr.min.js"></script>
 <script>
@@ -93,9 +93,9 @@
     const deckInput = document.getElementById('deckId');
     const msgInput  = document.getElementById('msg');
     const btnSend   = document.getElementById('send');
-    const btnDraw   = document.getElementById('drawCard');
-    const drawPositionInput = document.getElementById('drawPosition');
-    const drawAmountInput = document.getElementById('drawAmount');
+    const btnPlayCard   = document.getElementById('PlayCard');
+    const CardPlayIdInput = document.getElementById('CardPlayedId');
+    const CardPlayedPositionInput = document.getElementById('CardPlayedPodition');
 
     // Éléments de phase
     const btnStartGame = document.getElementById('startGame');
@@ -228,6 +228,14 @@
                 append(`L'adversaire a pioché: ${JSON.stringify(result)}`);
             });
 
+            connection.on("PlayCardResult", (result) => {
+                append(`Carte joué: ${JSON.stringify(result)}`);
+            })
+
+            connection.on("OpponentPlayCardResult", (result) => {
+                append(`L'adversiare à joué une carte: ${JSON.stringify(result)}`);
+            })
+
             await connection.start();
             await connection.invoke("SetName", nameInput.value || "Joueur");
             status.textContent = "Connecté au hub.";
@@ -281,12 +289,12 @@
         msgInput.value = "";
     };
 
-    btnDraw.onclick = async () => {
+    btnPlayCard.onclick = async () => {
         if (!currentKey) return;
-        const position = parseInt(drawPositionInput.value) || 1;
-        const amount = parseInt(drawAmountInput.value) || 1;
-        await connection.invoke("DrawCards", position, amount);
-        append(`Demande de pioche: joueur ${position}, ${amount} carte(s)`);
+        const position = parseInt(CardPlayedPositionInput.value) || 0;
+        const id = parseInt(CardPlayIdInput.value) || 1;
+        await connection.invoke("PlayCard", id, position);
+        append(`Demande de jouer une carte: carte ${id} a la position ${position}`);
     };
 
     btnStartGame.onclick = async () => {
