@@ -36,7 +36,7 @@ public class SignalRClient : MonoBehaviour
     public event Action<string> OnMatched;
     public event Action OnOpponentLeft;
 	public event Action<PhaseChangeResultDTO> OnGameStarted;
-	public event Action<ChangePhaseResultDTO> OnPhaseChanged;
+	public event Action<PhaseChangeResultDTO> OnPhaseChanged;
 	
     public event Action<DrawResultForPlayerDto> OnCardsDrawn;
     public event Action<DrawResultForOpponentDto> OnOpponentCardsDrawn;
@@ -119,13 +119,11 @@ public class SignalRClient : MonoBehaviour
    			OnLog?.Invoke($"GameStarted: phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct}");
 		}));
 
-		_conn.On<ChangePhaseResultDTO>("PhaseChanged", r => Enqueue(() =>
+		_conn.On<PhaseChangeResultDTO>("PhaseChanged", r => Enqueue(() =>
 		{
     		OnPhaseChanged?.Invoke(r);
-    		OnLog?.Invoke($"PhaseChanged: phase={r.ActivePlayerResult?.CurrentPhase} turn={r.ActivePlayerResult?.TurnNumber} turnChanged={r.TurnChanged}");
+    		OnLog?.Invoke($"PhaseChanged: phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct} auto={r.AutoChanged}");
 		}));
-
-
         _conn.On<string, string, string>("ReceiveRoomMessage", (key, from, text) =>
             Enqueue(() => OnLog?.Invoke($"{from}: {text}")));
 
