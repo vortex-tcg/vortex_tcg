@@ -34,31 +34,27 @@ namespace VortexTCG.Scripts.MatchScene
             if (graveyardManager == null) graveyardManager = GraveyardManager.Instance;
 
             client.OnCardsDrawn += HandleCardsDrawn;
+			client.OnGameStarted += HandleGameStarted;
+			client.OnPhaseChanged += HandlePhaseChanged;
 
-            if (PhaseManager.Instance != null)
-                PhaseManager.Instance.OnEnterStandBy += HandleEnterStandByDraw;
+			if (PhaseManager.Instance != null)
+    			PhaseManager.Instance.OnRequestChangePhase += HandleRequestChangePhase;
 
-            RequestInitialHand();
         }
 
         private void OnDisable()
         {
-            if (client != null) client.OnCardsDrawn -= HandleCardsDrawn;
-            if (PhaseManager.Instance != null)
-                PhaseManager.Instance.OnEnterStandBy -= HandleEnterStandByDraw;
+            if (client != null) {
+				client.OnCardsDrawn -= HandleCardsDrawn;
+				client.OnGameStarted -= HandleGameStarted;
+				client.OnPhaseChanged -= HandlePhaseChanged;
+			}
+
+			if (PhaseManager.Instance != null)
+    			PhaseManager.Instance.OnRequestChangePhase -= HandleRequestChangePhase;
         }
 
-        private async void HandleEnterStandByDraw()
-        {
-            try
-            {
-                await RequestDraw(1, HandUpdateMode.Append);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError("[MatchController3D] StandBy draw failed: " + ex);
-            }
-        }
+        
 
         private async Task RequestDraw(int amount, HandUpdateMode mode)
         {
@@ -91,8 +87,42 @@ namespace VortexTCG.Scripts.MatchScene
                 initialDrawRequested = false;
             }
         }
+		private void HandleGameStarted(PhaseChangeResultDTO r)
+		{
+    		Debug.Log($"[MatchController] GameStarted phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct}");
 
-        private void HandleCardsDrawn(DrawResultForPlayerDto result)
+    		if (PhaseManager.Instance != null)
+    		{
+        		PhaseManager.Instance.SetPhase(r.CurrentPhase);
+    		}
+		}
+
+		private void HandlePhaseChanged(ChangePhaseResultDTO r)
+		{
+    		var a = r?.ActivePlayerResult;
+    		if (a == null) return; 
+			Debug.Log($"[MatchController] PhaseChanged phase={a.CurrentPhase} turn={a.TurnNumber} canAct={a.CanAct} auto={a.AutoChanged}");
+    		if (PhaseManager.Instance != null)
+    		{
+        		PhaseManager.Instance.SetPhase(a.CurrentPhase); 
+    		}
+    		if (a.AutoChanged && !string.IsNullOrWhiteSpace(a.AutoChangeReason))
+        		Debug.Log("[MatchController] AutoChangeReason: " + a.AutoChangeReason);
+		}
+		private async void HandleRequestChangePhase()
+		{
+    		try
+    		{
+        		if (client != null && client.IsConnected)
+            	await client.ChangePhase(); 
+    		}	
+    		catch (Exception ex)
+    		{
+        		Debug.LogError("[MatchController] ChangePhase failed: " + ex);
+    		}
+		}
+
+		private void HandleCardsDrawn(DrawResultForPlayerDto result)
         {
             int handAdded = result?.DrawnCards?.Count ?? 0;
             int burned = result?.SentToGraveyard?.Count ?? 0;
@@ -112,15 +142,6 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 if (mode == HandUpdateMode.Replace) handManager.SetHand(result.DrawnCards);
                 else handManager.AddCards(result.DrawnCards);
-            }
-    
-            if (!_startStandbyBonusDone
-                && mode == HandUpdateMode.Replace
-                && PhaseManager.Instance != null
-                && PhaseManager.Instance.CurrentPhase == GamePhase.StandBy)
-            {
-                _startStandbyBonusDone = true;
-                _ = RequestDraw(1, HandUpdateMode.Append);
             }
         }
     }

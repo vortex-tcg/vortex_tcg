@@ -64,19 +64,18 @@ namespace VortexTCG.Scripts.MatchScene
             LayoutHand();
         }
 
-        public void SelectCard(Card card)
-        {
-            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.Attack)
-                return;
+      	public void SelectCard(Card card)
+		{
+    		if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.ATTACK)
+        		return;
 
-            if (SelectedCard != null)
-                SelectedCard.SetSelected(false);
+    		if (SelectedCard != null)
+        		SelectedCard.SetSelected(false);
+    		SelectedCard = card;
 
-            SelectedCard = card;
-
-            if (SelectedCard != null)
-                SelectedCard.SetSelected(true);
-        }
+    		if (SelectedCard != null)
+        		SelectedCard.SetSelected(true);
+		}
 
         public void DeselectCurrentCard()
         {
@@ -87,12 +86,12 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
 
-        public void PlaceSelectedCardOnSlot(CardSlot slot)
-        {
-            if (SelectedCard == null) return;
+		public void PlaceSelectedCardOnSlot(CardSlot slot)
+		{
+    		if (SelectedCard == null) return;
 
-            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase != GamePhase.StandBy)
-                return;
+    		if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase != GamePhase.PLACEMENT)
+       			return;
 
             if (!slot.CanAccept(SelectedCard)) return;
 
