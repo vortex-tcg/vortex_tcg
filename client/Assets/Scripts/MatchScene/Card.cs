@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using VortexTCG.Scripts.DTOs;
 
 namespace VortexTCG.Scripts.MatchScene
 {
@@ -58,15 +59,15 @@ namespace VortexTCG.Scripts.MatchScene
             if (AttackOutline != null && AttackOutline.activeSelf)
             {
                 if (PhaseManager.Instance == null ||
-                    (PhaseManager.Instance.CurrentPhase != GamePhase.Attack &&
-                     PhaseManager.Instance.CurrentPhase != GamePhase.Defense))
+                    (PhaseManager.Instance.CurrentPhase != GamePhase.ATTACK &&
+                     PhaseManager.Instance.CurrentPhase != GamePhase.DEFENSE))
                 {
                     return;
                 }
             }
 
             CardSlot slot = GetComponentInParent<CardSlot>();
-            if (slot != null && PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.Attack)
+            if (slot != null && PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.ATTACK)
             {
                 if (AttackManager.Instance != null && AttackManager.Instance.IsP1BoardSlot(slot))
                 {
@@ -75,7 +76,7 @@ namespace VortexTCG.Scripts.MatchScene
                 }
             }
 
-            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.Defense)
+            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.DEFENSE)
             {
                 if (DefenseManager.Instance != null)
                 {
@@ -218,7 +219,7 @@ namespace VortexTCG.Scripts.MatchScene
                 transform.localScale = selectionBaseScale * selectedScaleMultiplier;
 
                 bool canShowAttackVisuals = false;
-                if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.Attack)
+                if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.ATTACK)
                 {
                     CardSlot slot = GetComponentInParent<CardSlot>();
                     if (slot != null && AttackManager.Instance != null && AttackManager.Instance.IsP1BoardSlot(slot))

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using VortexTCG.Scripts.DTOs;
 
 namespace VortexTCG.Scripts.MatchScene
 {
@@ -66,7 +67,7 @@ namespace VortexTCG.Scripts.MatchScene
         public void HandleCardClicked(Card card)
         {
             if (card == null) return;
-            if (PhaseManager.Instance == null || PhaseManager.Instance.CurrentPhase != GamePhase.Defense) return;
+            if (PhaseManager.Instance == null || PhaseManager.Instance.CurrentPhase != GamePhase.DEFENSE) return;
 
             CardSlot slot = card.GetComponentInParent<CardSlot>();
             if (slot == null) return;
