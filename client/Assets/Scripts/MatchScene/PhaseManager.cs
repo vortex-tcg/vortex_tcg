@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace VortexTCG.Script.MatchScene {
+namespace VortexTCG.Scripts	.MatchScene {
 
     public enum GamePhase
     {
@@ -66,7 +66,7 @@ namespace VortexTCG.Script.MatchScene {
                 case GamePhase.Attack: OnEnterAttack?.Invoke(); break;
                 case GamePhase.Defense: OnEnterDefense?.Invoke(); break;
                 default:
-                    OnEnterStandBy?.Invoke();
+                    OnEnterStandBy?.Invoke(); break;
             }
 
             UpdateIcons(CurrentPhase);
