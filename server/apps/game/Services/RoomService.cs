@@ -480,31 +480,6 @@ public class RoomService: IRoomActionEventListener
     }
 
     /// <summary>
-    /// Fait piocher des cartes à un joueur de manière thread-safe.
-    /// </summary>
-    /// <param name="userId">ID du joueur qui demande la pioche</param>
-    /// <param name="playerPosition">Position du joueur qui pioche (1 ou 2)</param>
-    /// <param name="amount">Nombre de cartes</param>
-    /// <returns>Résultat de la pioche ou null si erreur</returns>
-    // public VortexTCG.Game.DTO.DrawCardsResultDTO? DrawCards(Guid userId, int playerPosition, int amount)
-    // {
-        // if (!_userToRoom.TryGetValue(userId, out string? code)) return null;
-        // if (!_rooms.TryGetValue(code, out Room? room)) return null;
-// 
-        // lock (room)
-        // {
-            // if (room.GameRoom == null) return null;
-// 
-            // Récupère le userId du joueur à la position demandée
-            // List<Guid> members = room.Members.ToList();
-            // if (playerPosition < 1 || playerPosition > members.Count) return null;
-// 
-            // Guid targetUserId = members[playerPosition - 1];
-            // return room.GameRoom.DrawCards(targetUserId, amount);
-        // }
-    // }
-
-    /// <summary>
     /// Récupère la position (1 ou 2) d'un joueur dans un salon.
     /// </summary>
     /// <param name="userId">ID utilisateur du joueur</param>
@@ -576,31 +551,32 @@ public class RoomService: IRoomActionEventListener
         return result;
     }
 
+    #endregion
+
+    #region Gestion de pioche
+
     public async void sendDrawCardsData(DrawCardsResultDTO data) {
         await _hubContext.Clients.User(data.PlayerResult.PlayerId.ToString()).SendAsync("CardsDrawn", data.PlayerResult);
         await _hubContext.Clients.User(data.OpponentResult.PlayerId.ToString()).SendAsync("OpponentCardsDrawn", data.OpponentResult);
     }
 
-    /// <summary>
-    /// Fait piocher des cartes pour un joueur spécifique (utilisé pour la pioche automatique).
-    /// </summary>
-    /// <param name="playerId">ID du joueur qui pioche</param>
-    /// <param name="playerPosition">Position du joueur (1 ou 2)</param>
-    /// <param name="amount">Nombre de cartes</param>
-    /// <returns>Résultat de la pioche ou null si erreur</returns>
-    // public void DrawCardsForPlayer(Guid playerId, int playerPosition, int amount)
-    // {
-        // if (!_userToRoom.TryGetValue(playerId, out string? code)) return null;
-        // if (!_rooms.TryGetValue(code, out Room? room)) return null;
-// 
-        // lock (room)
-        // {
-            // if (room.GameRoom == null || !room.IsGameInitialized) return null;
-// 
-            // return room.GameRoom.DrawCards(playerId, amount);
-        // }
-    // }
+    #endregion
 
+    #region Jouer une carte
+
+    public async Task<PlayCardResponseDto> PlayCard(Guid userId, int cardId, int location) {
+        if (!_userToRoom.TryGetValue(userId, out string? code)) return null;
+        if (!_rooms.TryGetValue(code, out Room? room)) return null;
+        if (room.GameRoom == null || !room.IsGameInitialized) return null;
+
+        PlayCardResponseDto result = null;
+
+        lock (room)
+        {
+            result = room.GameRoom.PlayCard(userId, cardId, location);
+        }
+        return result;
+    }
 
     #endregion
 }

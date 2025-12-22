@@ -244,35 +244,21 @@ public class GameHub : Hub
     // Événement "jeu": jouer une carte. On supporte les deux modes:
     // - par code (rooms privées) -> broadcast au group
     // - par roomId (matchmaking GUID) -> envoi direct à l'adversaire
-    public async Task PlayCard(string keyOrCode, int cardId)
+    public async Task PlayCard(int cardId, int location)
     {
         // Mode salon privé (code)
         Guid userId = GetAuthenticatedUserId();
-        string? code = _rooms.GetRoomOf(userId);
-        if (code is not null && code == keyOrCode)
-        {
-            string from = _rooms.GetName(userId);
-            await Clients.OthersInGroup(code).SendAsync("OpponentPlayedCard", code, from, cardId);
+        PlayCardResponseDto? result = await _rooms.PlayCard(userId, cardId, location);
+
+        if (result == null) {
+            await Clients.Caller.SendAsync("Error", "Can't play the card!");
             return;
         }
+
+        await Clients.Caller.SendAsync("PlayCardResult", result.PlayerResult);
+        await Clients.User(result.OpponentResult.PlayerId.ToString()).SendAsync("OpponentPlayCardResult", result.OpponentResult);
     }
 
-    // public async Task DrawCards(int playerPosition, int amount)
-    // {
-    //     Guid userId = GetAuthenticatedUserId();
-    //     DrawCardsResultDTO? result = _rooms.DrawCards(userId, playerPosition, amount);
-    //     if (result == null)
-    //     {
-    //         await Clients.Caller.SendAsync("Error", "Unable to draw cards (Invalid room, game not started, invalid player, or invalid position)");
-    //         return;
-    //     }
-    //     await Clients.Caller.SendAsync("CardsDrawn", result.PlayerResult);
-    //     string? code = _rooms.GetRoomOf(userId);
-    //     if (code != null)
-    //     {
-    //         await Clients.OthersInGroup(code).SendAsync("OpponentCardsDrawn", result.OpponentResult);
-    //     }
-    // }
 
     // --- GESTION DES PHASES DE JEU ---
 
