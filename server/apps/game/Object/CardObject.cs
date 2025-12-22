@@ -5,9 +5,8 @@ namespace VortexTCG.Game.Object
 {
     public enum CardState {
         ENGAGE = 0,
-        BATTLE_ENGAGE = 1,
-        DEFENSE_ENGAGE = 2,
-        ATTACK_ENGAGE = 3
+        DEFENSE_ENGAGE = 1,
+        ATTACK_ENGAGE = 2
     }
 
     public class Card
@@ -73,28 +72,51 @@ namespace VortexTCG.Game.Object
         public List<string> GetClasses() => new List<string>(_class);
         public List<CardState> GetState() => new List<CardState>(_state);
 
-        public void AddState(CardState newState) {
-            bool isNewUniqueState = true;
-            foreach(CardState state in _state) {
-                if (state == newState) {
-                    isNewUniqueState = false;
+        #region Gestion des états
+
+            public void AddState(CardState newState) {
+                bool isNewUniqueState = true;
+                foreach(CardState state in _state) {
+                    if (state == newState) {
+                        isNewUniqueState = false;
+                    }
+                }
+                if (isNewUniqueState) {
+                    _state.Add(newState);
                 }
             }
-            if (isNewUniqueState) {
-                _state.Add(newState);
-            }
-        }
 
-        public bool HasState(CardState searchState) {
-            foreach(CardState state in _state) {
-                if (searchState == state) {
-                    return true;
+            public bool HasState(CardState searchState) {
+                foreach(CardState state in _state) {
+                    if (searchState == state) {
+                        return true;
+                    }
                 }
+                return false;
             }
-            return false;
-        }
 
-        public void RemoveState(CardState removeState)
-        => _state.Remove(removeState);
+            public void RemoveState(CardState removeState)
+            => _state.Remove(removeState);
+
+        #endregion
+
+        #region Format Dto
+
+            public GameCardDto FormatGameCardDto() {
+                return new GameCardDto {
+                    Id = _card_id,
+                    GameCardId = _game_card_id,
+                    Name = _name,
+                    Hp = _hp,
+                    Attack = _attack,
+                    Cost = _cost,
+                    Description = _description,
+                    CardType = _type,
+                    Class = new List<string>(_class),
+                    State = new List<CardState>(_state)
+                };
+            }
+
+        #endregion
     }
 }

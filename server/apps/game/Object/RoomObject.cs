@@ -32,6 +32,7 @@
 // =============================================
 using VortexTCG.Game.DTO;
 using VortexTCG.Game.Interface;
+using VortexTCG.DataAccess.Models;
 using System.Timers;
 
 namespace VortexTCG.Game.Object
@@ -233,6 +234,65 @@ namespace VortexTCG.Game.Object
 
         #endregion
 
+        #region Actions jouer une carte
+
+            public PlayCardResponseDto PlayCard(Guid userId, int cardId, int location) {
+                if (userId != _activePlayerId) return null;
+                if (_currentPhase != GamePhase.PLACEMENT) return null;
+                
+                bool isPlayer1 = _activePlayerId == _user_1 ? true : false;
+                Hand activeHand = isPlayer1 ? _hand_user_1 : _hand_user_2;
+
+                if (!activeHand.TryGetCard(cardId, out Card? playedCard)) return null;
+
+                switch(playedCard.GetCardType()) {
+                    case CardType.GUARD:
+                        return PlayGuardCard(userId, isPlayer1, location, playedCard, activeHand);
+                    case CardType.SPELL:
+                    case CardType.EQUIPMENT:
+                    default:
+                        return null;
+                }
+
+            }
+
+            private PlayCardResponseDto PlayGuardCard(Guid userId, bool isPlayer1, int location, Card card, Hand activeHand) {
+                Board activeBoard = isPlayer1 ? _board_user_1 : _board_user_2;
+                Champion activeChamp = isPlayer1 ? _champion_user_1 : _champion_user_2;
+
+                if (location < 0 || location > 4) return null;
+                else if (!activeBoard.IsAvailable(location)){
+                    return null;
+                }
+                else if (!activeChamp.TryPaiedCard(card.GetCost())) {
+                    return null;
+                }
+
+                activeHand.DeleteFromId(card.GetGameCardId());
+                card.AddState(CardState.ENGAGE);
+                activeBoard.PosCard(card, location);
+                activeChamp.PayCard(card.GetCost());
+                _isActif = true;
+
+                return new PlayCardResponseDto {
+                    PlayerResult = new PlayCardPlayerResultDto {
+                        PlayerId = isPlayer1 ? _user_1 : _user_2,
+                        PlayedCard = card.FormatGameCardDto(),
+                        Champion = activeChamp.FormatPlayCardChampionDto(),
+                        location = location,
+                        canPlayed = true
+                    },
+                    OpponentResult = new PlayCardOpponentResultDto {
+                        PlayerId = isPlayer1 ? _user_2 : _user_1,
+                        PlayedCard = card.FormatGameCardDto(),
+                        Champion = activeChamp.FormatPlayCardChampionDto(),
+                        location = location
+                    }
+                };
+            }
+
+        #endregion
+
         #region Gestion des phases et tours
 
             /// <summary>
@@ -248,6 +308,7 @@ namespace VortexTCG.Game.Object
             }
             private void HandleTimerElapsed(object? sender, ElapsedEventArgs e)
             {
+                _timer.Stop();
                 OnTimeUp?.Invoke(); 
             }
 
@@ -266,6 +327,9 @@ namespace VortexTCG.Game.Object
 
                 DrawCards(_user_1, 6);
                 DrawCards(_user_2, 5);
+
+                _champion_user_1.SetBaseGold(1);
+                _champion_user_2.SetBaseGold(1);
 
                 StartTimer(60);
                 return new PhaseChangeResultDTO
@@ -358,9 +422,20 @@ namespace VortexTCG.Game.Object
 
        public void HandleChangePhaseEvent()
         {
+            bool isPlayer1 = _activePlayerId == _user_1;
+
+            Champion activeChamp = isPlayer1 ? _champion_user_1 : _champion_user_2;
+            Board activeBoard = isPlayer1 ? _board_user_1 : _board_user_2;
+
             switch(_currentPhase) {
                 case GamePhase.PLACEMENT:
+                _isActif = false;
                     DrawCards(_activePlayerId, 1);
+                    if (activeChamp.GetBaseGold() < 10) {
+                        activeChamp.SetBaseGold(activeChamp.GetBaseGold() + 1);
+                    }
+                    activeChamp.resetGold();
+                    activeBoard.ResetBoardEngageState();
                     StartTimer(60);
                     break;
                 case GamePhase.ATTACK:
@@ -539,5 +614,6 @@ namespace VortexTCG.Game.Object
             }
 
         #endregion
+    
     }
 }

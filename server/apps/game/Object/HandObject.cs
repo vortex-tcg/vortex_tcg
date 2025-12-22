@@ -11,5 +11,27 @@ namespace VortexTCG.Game.Object
             return true;
         }   
         public int GetCount() => _cards.Count;
+
+        public bool TryGetCard(int cardId, out Card playedCard) {
+            foreach(Card card in _cards) {
+                if (card.GetGameCardId() == cardId) {
+                    playedCard = card;
+                    return true;
+                }
+            }
+            playedCard = null;
+            return false;
+        }
+
+        public void DeleteFromId(int cardId) {
+            Card cardToDelete = null;
+            foreach(Card card in _cards) {
+                if (card.GetGameCardId() == cardId) {
+                    cardToDelete = card;
+                    break;
+                }
+            }
+            _cards.Remove(cardToDelete);
+        }
     }
 }
