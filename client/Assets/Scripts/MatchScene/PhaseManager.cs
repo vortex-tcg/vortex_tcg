@@ -30,19 +30,40 @@ namespace VortexTCG.Scripts.MatchScene
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
         }
+private void OnEnable()
+{
+    Debug.Log("[PhaseManager] OnEnable");
 
-        private void OnEnable()
-        {
+    if (uiDoc == null)
+        uiDoc = GetComponent<UIDocument>();
+
+    if (uiDoc == null)
+    {
+        Debug.LogError("[PhaseManager] uiDoc NULL -> impossible de binder le bouton");
+        return;
+    }
+
+    VisualElement root = uiDoc.rootVisualElement;
+    Debug.Log("[PhaseManager] root ok");
+
+    Button phaseButton = root.Q<Button>("EndPhaseButton");
+    Debug.Log("[PhaseManager] phaseButton = " + (phaseButton == null ? "NULL" : "OK"));
+
+    if (phaseButton != null)
+    {
+        phaseButton.clicked -= RequestNextPhase;
+        phaseButton.clicked += RequestNextPhase;
+
+        // Debug hard : callback UI Toolkit (ultra fiable)
+        phaseButton.RegisterCallback<ClickEvent>(_ => Debug.Log("[PhaseManager] ClickEvent reçu sur EndPhaseButton"));
+    }
             if (uiDoc == null)
                 uiDoc = GetComponent<UIDocument>();
 
-            VisualElement root = uiDoc.rootVisualElement;
-
-            Button phaseButton = root.Q<Button>("EndPhaseButton");
             placementIcon = root.Q<VisualElement>("StandBy");
             attackIcon = root.Q<VisualElement>("Attack");
             defenseIcon = root.Q<VisualElement>("Defense");
-            endTurnIcon = root.Q<VisualElement>("EndTurn");    
+            endTurnIcon = root.Q<VisualElement>("StandBy");    
 
             if (phaseButton != null)
             {
@@ -53,7 +74,11 @@ namespace VortexTCG.Scripts.MatchScene
             UpdateIcons(CurrentPhase);
         }
 
-        private void RequestNextPhase() => OnRequestChangePhase?.Invoke();
+private void RequestNextPhase()
+{
+    Debug.Log("[PhaseManager] RequestNextPhase() -> raise event");
+    OnRequestChangePhase?.Invoke();
+}
         public void SetPhase(GamePhase phase) => ApplyServerPhase(phase);
 
         public void ApplyServerPhase(GamePhase phase)

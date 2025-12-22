@@ -20,7 +20,8 @@ namespace VortexTCG.Scripts.MatchScene
         public TMP_Text atkText;
         public TMP_Text hpText;
         public TMP_Text descriptionText;
-
+        [SerializeField] private bool faceDown;
+        public bool IsFaceDown => faceDown;
         [Header("Attack Phase")] public TMP_Text attackOrderText;
 
         [Header("Selection")] [SerializeField] private GameObject AttackOutline;
@@ -33,8 +34,6 @@ namespace VortexTCG.Scripts.MatchScene
         void Awake()
         {
             selectionBaseScale = transform.localScale;
-            MockData();
-            RefreshUI();
 
             if (AttackOrder != null && attackOrderText == null)
             {
@@ -56,6 +55,7 @@ namespace VortexTCG.Scripts.MatchScene
 
         void OnMouseDown()
         {
+            if (faceDown) return;
             if (AttackOutline != null && AttackOutline.activeSelf)
             {
                 if (PhaseManager.Instance == null ||
@@ -272,5 +272,15 @@ namespace VortexTCG.Scripts.MatchScene
         {
             return AttackOutline != null && AttackOutline.activeSelf;
         }
+   
+
+        public void SetFaceDown(bool value)
+        {
+            faceDown = value;
+            transform.localRotation = value ? Quaternion.Euler(0f, 180f, 0f) : Quaternion.identity;
+            var col = GetComponent<Collider>();
+            if (col != null) col.enabled = !value;
+        }
+
     }
 }
