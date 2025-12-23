@@ -40,6 +40,8 @@ public class SignalRClient : MonoBehaviour
 	
     public event Action<DrawResultForPlayerDto> OnCardsDrawn;
     public event Action<DrawResultForOpponentDto> OnOpponentCardsDrawn;
+    public event Action<PlayCardPlayerResultDto> OnPlayCardResult;
+    public event Action<PlayCardOpponentResultDto> OnOpponentPlayCardResult;
 
     private readonly ConcurrentQueue<Action> _main = new();
     private void Enqueue(Action a) => _main.Enqueue(a);
@@ -112,7 +114,19 @@ public class SignalRClient : MonoBehaviour
     	}
 		 }));
 
+         _conn.On<PlayCardPlayerResultDto>("PlayCardResult", dto => Enqueue(() =>
+         {
+             Debug.Log("[SignalRClient] PlayCardResult reçu");
+             OnPlayCardResult?.Invoke(dto);
+         }));
 
+
+         _conn.On<PlayCardOpponentResultDto>("OpponentPlayCardResult", dto => Enqueue(() =>
+         {
+             Debug.Log("[SignalRClient] OpponentPlayCardResult reçu");
+             OnOpponentPlayCardResult?.Invoke(dto);
+         }));
+    
 		_conn.On<PhaseChangeResultDTO>("GameStarted", r => Enqueue(() =>
 		{
     		OnGameStarted?.Invoke(r);
@@ -305,12 +319,13 @@ public class SignalRClient : MonoBehaviour
         OnLog?.Invoke($"Moi: {text}");
     }
 
-    public async Task PlayCard(int cardId)
+    public async Task PlayCard(int cardId, int location)
     {
-        if (string.IsNullOrWhiteSpace(_currentKeyOrCode)) return;
-        await SafeSend("PlayCard", _currentKeyOrCode, cardId);
-        OnLog?.Invoke($"(Action) PlayCard {cardId}");
+        RequireConnectedOrThrow();
+        Debug.Log($"[SignalRClient] -> PlayCard(cardId={cardId}, location={location})");
+        await SafeInvoke("PlayCard", cardId, location);
     }
+
 	public async Task StartGame()
 	{
     	RequireConnectedOrThrow();

@@ -240,6 +240,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  slotIndex: 2
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &41569725
@@ -363,6 +364,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  slotIndex: 0
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &135012866
@@ -922,6 +924,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  slotIndex: 1
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &776513355
@@ -1123,6 +1126,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  slotIndex: 0
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &895805911
@@ -1246,6 +1250,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  slotIndex: 3
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &967252606
@@ -1545,6 +1550,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  slotIndex: 0
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &1420422362
@@ -1668,6 +1674,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  slotIndex: 5
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &1454243776
@@ -1839,6 +1846,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  slotIndex: 0
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &1478103543
@@ -1962,6 +1970,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  slotIndex: 0
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &1497234817
@@ -2210,6 +2219,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  slotIndex: 0
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &1616338356
@@ -2454,6 +2464,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  slotIndex: 4
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &1833318994
@@ -2641,6 +2652,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  slotIndex: 0
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!33 &5498880637139304567
