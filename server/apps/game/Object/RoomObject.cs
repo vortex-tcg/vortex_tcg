@@ -37,9 +37,10 @@ using System.Timers;
 
 namespace VortexTCG.Game.Object
 {
+
     public class Room
     {
-        private IRoomActionEventListener _event;
+        private readonly IRoomActionEventListener _event;
 
         #region Identifiants des joueurs
 
@@ -54,29 +55,34 @@ namespace VortexTCG.Game.Object
             private GamePhase _currentPhase;
             private int _turnNumber;
             private bool _gameStarted;
-            private bool _isActif = false;
-            private System.Timers.Timer _timer;
+            private readonly System.Timers.Timer _timer;
             public event Action OnTimeUp;
+
+        #endregion
+
+        #region Etat de l'attaque et de la défense
+
+            private readonly AttackHandler _attackHandler = new AttackHandler();
 
         #endregion
 
         #region État de jeu - Joueur 1
 
-            private Deck _deck_user_1;
-            private Hand _hand_user_1;
-            private Champion _champion_user_1;
-            private Graveyard _graveyard_user_1;
-            private Board _board_user_1;
+            private readonly Deck _deck_user_1;
+            private readonly Hand _hand_user_1;
+            private readonly Champion _champion_user_1;
+            private readonly Graveyard _graveyard_user_1;
+            private readonly Board _board_user_1;
 
         #endregion
 
         #region État de jeu - Joueur 2
 
-            private Deck _deck_user_2;
-            private Hand _hand_user_2;
-            private Champion _champion_user_2;
-            private Graveyard _graveyard_user_2;
-            private Board _board_user_2;
+            private readonly Deck _deck_user_2;
+            private readonly Hand _hand_user_2;
+            private readonly Champion _champion_user_2;
+            private readonly Graveyard _graveyard_user_2;
+            private readonly Board _board_user_2;
 
         #endregion
 
@@ -155,6 +161,31 @@ namespace VortexTCG.Game.Object
 
         #endregion
 
+        #region Méthodes utiles
+
+            private bool checkIfPlayer1(Guid userId)
+            => userId == _user_1;
+
+            private Board getPlayerBoard(bool isPlayer1)
+            => isPlayer1 ? _board_user_1 : _board_user_2;
+
+            private Hand getPlayerHand(bool isPlayer1)
+            => isPlayer1 ? _hand_user_1 : _hand_user_2;
+
+            private Graveyard getPlayerGraveyard(bool isPlayer1)
+            => isPlayer1 ? _graveyard_user_1 : _graveyard_user_2;
+
+            private Deck getPlayerDeck(bool isPlayer1)
+            => isPlayer1 ? _deck_user_1 : _deck_user_2;
+
+            private Champion getPlayerChamp(bool isPlayer1)
+            => isPlayer1 ? _champion_user_1 : _champion_user_2;
+
+            private Guid getPlayerId(bool isPlayer1)
+            => isPlayer1 ? _user_1 : _user_2;
+
+        #endregion
+
         #region Actions de pioche
 
             /// <summary>
@@ -168,12 +199,12 @@ namespace VortexTCG.Game.Object
                 if (playerId != _user_1 && playerId != _user_2) return;
                 if (cardCount <= 0) return;
 
-                bool isPlayer1 = playerId == _user_1;
-                Deck deck = isPlayer1 ? _deck_user_1 : _deck_user_2;
-                Hand hand = isPlayer1 ? _hand_user_1 : _hand_user_2;
-                Graveyard graveyard = isPlayer1 ? _graveyard_user_1 : _graveyard_user_2;
+                bool isPlayer1 = checkIfPlayer1(playerId);
+                Deck deck = getPlayerDeck(isPlayer1);
+                Hand hand = getPlayerHand(isPlayer1);
+                Graveyard graveyard = getPlayerGraveyard(isPlayer1);
 
-                Champion champion = isPlayer1 ? _champion_user_1 : _champion_user_2;
+                Champion champion = getPlayerChamp(isPlayer1);
 
                 var drawnCards = new List<DrawnCardDTO>();         
                 var sentToGraveyard = new List<DrawnCardDTO>();             
@@ -185,7 +216,7 @@ namespace VortexTCG.Game.Object
                     Card? card = deck.DrawCard();
                     if (card != null)
                     {
-                        var dto = new DrawnCardDTO
+                        DrawnCardDTO dto = new DrawnCardDTO
                         {
                             GameCardId = card.GetGameCardId(),
                             Name = card.GetName(),
@@ -240,14 +271,14 @@ namespace VortexTCG.Game.Object
                 if (userId != _activePlayerId) return null;
                 if (_currentPhase != GamePhase.PLACEMENT) return null;
                 
-                bool isPlayer1 = _activePlayerId == _user_1 ? true : false;
+                bool isPlayer1 = checkIfPlayer1(userId);
                 Hand activeHand = isPlayer1 ? _hand_user_1 : _hand_user_2;
 
                 if (!activeHand.TryGetCard(cardId, out Card? playedCard)) return null;
 
                 switch(playedCard.GetCardType()) {
                     case CardType.GUARD:
-                        return PlayGuardCard(userId, isPlayer1, location, playedCard, activeHand);
+                        return PlayGuardCard(isPlayer1, location, playedCard, activeHand);
                     case CardType.SPELL:
                     case CardType.EQUIPMENT:
                     default:
@@ -256,11 +287,11 @@ namespace VortexTCG.Game.Object
 
             }
 
-            private PlayCardResponseDto PlayGuardCard(Guid userId, bool isPlayer1, int location, Card card, Hand activeHand) {
-                Board activeBoard = isPlayer1 ? _board_user_1 : _board_user_2;
-                Champion activeChamp = isPlayer1 ? _champion_user_1 : _champion_user_2;
+            private PlayCardResponseDto PlayGuardCard(bool isPlayer1, int location, Card card, Hand activeHand) {
+                Board activeBoard = getPlayerBoard(isPlayer1);
+                Champion activeChamp = getPlayerChamp(isPlayer1);
 
-                if (location < 0 || location > 4) return null;
+                if (location < 0 || location > 5) return null;
                 else if (!activeBoard.IsAvailable(location)){
                     return null;
                 }
@@ -272,7 +303,6 @@ namespace VortexTCG.Game.Object
                 card.AddState(CardState.ENGAGE);
                 activeBoard.PosCard(card, location);
                 activeChamp.PayCard(card.GetCost());
-                _isActif = true;
 
                 return new PlayCardResponseDto {
                     PlayerResult = new PlayCardPlayerResultDto {
@@ -293,6 +323,79 @@ namespace VortexTCG.Game.Object
 
         #endregion
 
+        #region Gestion de l'attaque
+
+            private AttackResponseDto UnEngageAttackCard(Board playerBoard, int pos, bool isPlayer1) {
+                playerBoard.UnEngageAttackCard(pos);
+                _attackHandler.RemoveAttack(playerBoard.GetCardFromSlot(pos));
+                return _attackHandler.FormatAttackResponseDto(getPlayerId(isPlayer1), getPlayerId(!isPlayer1));
+            }
+
+            private AttackResponseDto EngageAttackCard(Board playerBoard, int pos, bool isPlayer1) {
+                playerBoard.EngageAttackCard(pos);
+                _attackHandler.AddAttack(playerBoard.GetCardFromSlot(pos));
+                return _attackHandler.FormatAttackResponseDto(getPlayerId(isPlayer1), getPlayerId(!isPlayer1));
+            }
+
+            public AttackResponseDto HandleAttackEvent(Guid userId, int cardId) {
+                if (userId != _activePlayerId) return null;
+
+                bool isPlayer1 = checkIfPlayer1(userId);
+                Board playerBoard = getPlayerBoard(isPlayer1);
+
+                if (!playerBoard.TryGetCardPos(cardId, out int pos)) return null;
+                Console.WriteLine("la position est égal à " + pos);
+                CardSlotState slotState = playerBoard.canAttackSpot(pos);
+
+                if (slotState == CardSlotState.ATTACK_ENGAGE) return UnEngageAttackCard(playerBoard, pos, isPlayer1);
+                else if (slotState == CardSlotState.CAN_ATTACK) return EngageAttackCard(playerBoard, pos, isPlayer1);
+                else {
+                    Console.WriteLine("Mais c'était sûr enfaite !!!!");    
+                    return null;
+                }
+            }
+
+        #endregion
+
+        #region Gestion de la defense
+
+            private DefenseResponseDto UnEngageDefenseCard(Board board, int pos, bool isPlayer1) {
+                board.UnEngageDefenseCard(pos);
+                _attackHandler.RemoveDefense(board.GetCardFromSlot(pos));
+                return _attackHandler.FormatDefenseResponseDto(getPlayerId(isPlayer1), getPlayerId(!isPlayer1));
+            }
+
+            private DefenseResponseDto EngageDefenseCard(Board playerBoard, Board opponentBoard, int pos, int opponentPos, bool isPlayer1) {
+                playerBoard.EngageDefenseCard(pos);
+                _attackHandler.AddDefense(playerBoard.GetCardFromSlot(pos), opponentBoard.GetCardFromSlot(opponentPos));
+                return _attackHandler.FormatDefenseResponseDto(getPlayerId(isPlayer1), getPlayerId(!isPlayer1));
+            }
+
+            public DefenseResponseDto HandleDefenseEvent(Guid userId, int cardId, int opponentCardId) {
+                if (userId != _activePlayerId) return null;
+
+                bool isPlayer1 = checkIfPlayer1(userId);
+                Board playerBoard = getPlayerBoard(isPlayer1);
+
+                if (!playerBoard.TryGetCardPos(cardId, out int pos)) return null;
+                CardSlotState defenseCardState = playerBoard.canDefendSpot(pos);
+
+                if (opponentCardId < 0 && defenseCardState != CardSlotState.DEFENSE_ENGAGE) return null;
+                else if (opponentCardId >= 0 && defenseCardState != CardSlotState.CAN_DEFEND) return null;
+
+                if (opponentCardId < 0) {
+                    return UnEngageDefenseCard(playerBoard, pos, isPlayer1);
+                } else {
+                    Board opponentBoard = getPlayerBoard(!isPlayer1);
+                    if (!opponentBoard.TryGetCardPos(opponentCardId, out int opponentPos)) return null;
+                    CardSlotState attackCardState = opponentBoard.canAttackSpot(opponentPos);
+                    if (attackCardState != CardSlotState.ATTACK_ENGAGE) return null;
+                    return EngageDefenseCard(playerBoard, opponentBoard, pos, opponentPos, isPlayer1);
+                }
+            }
+
+        #endregion
+
         #region Gestion des phases et tours
 
             /// <summary>
@@ -309,7 +412,7 @@ namespace VortexTCG.Game.Object
             private void HandleTimerElapsed(object? sender, ElapsedEventArgs e)
             {
                 _timer.Stop();
-                OnTimeUp?.Invoke(); 
+                OnTimeUp?.Invoke();
             }
 
             /// <summary>
@@ -323,7 +426,6 @@ namespace VortexTCG.Game.Object
                 _turnNumber = 1;
                 _activePlayerId = _user_1;
                 _currentPhase = GamePhase.PLACEMENT;
-                _isActif = false;
 
                 DrawCards(_user_1, 6);
                 DrawCards(_user_2, 5);
@@ -381,11 +483,12 @@ namespace VortexTCG.Game.Object
             /// <returns>Résultat du changement de phase</returns>
             private PhaseChangeResultDTO AdvancePhase()
             {
+                bool isPlayer1 = checkIfPlayer1(_activePlayerId);
                 GamePhase nextPhase = GetNextPhase(_currentPhase);
                 bool autoChanged = false;
                 string? autoChangeReason;
 
-                if (ShouldAutoSkip(nextPhase, out autoChangeReason)) {
+                if (ShouldAutoSkip(nextPhase, out autoChangeReason, isPlayer1)) {
                     autoChanged = true;
                     nextPhase = GetNextPhase(nextPhase);
                     if (_currentPhase == GamePhase.PLACEMENT) {
@@ -400,14 +503,13 @@ namespace VortexTCG.Game.Object
 
                 
                 _currentPhase = nextPhase;
-               if (_currentPhase == GamePhase.PLACEMENT) 
-                {
-                    if (_activePlayerId == _user_1) 
-                    {
+               if (
+                    _currentPhase == GamePhase.PLACEMENT &&        
+                    _activePlayerId == _user_1
+                ) {
                         _turnNumber += 1;
-                    }
                 }
-                HandleChangePhaseEvent();
+                HandleChangePhaseEvent(isPlayer1);
 
                 return new PhaseChangeResultDTO
                 {
@@ -416,21 +518,19 @@ namespace VortexTCG.Game.Object
                     TurnNumber = _turnNumber,
                     AutoChanged = autoChanged,
                     AutoChangeReason = autoChangeReason,
-                    CanAct = CanPlayerActInPhase(_currentPhase, _activePlayerId)
+                    CanAct = CanPlayerActInPhase()
                 };
             }
 
-       public void HandleChangePhaseEvent()
+       private void HandleChangePhaseEvent(bool isPlayer1)
         {
-            bool isPlayer1 = _activePlayerId == _user_1;
-
-            Champion activeChamp = isPlayer1 ? _champion_user_1 : _champion_user_2;
-            Board activeBoard = isPlayer1 ? _board_user_1 : _board_user_2;
+            Champion activeChamp = getPlayerChamp(isPlayer1);
+            Board activeBoard = getPlayerBoard(isPlayer1);
 
             switch(_currentPhase) {
                 case GamePhase.PLACEMENT:
-                _isActif = false;
                     DrawCards(_activePlayerId, 1);
+                    _attackHandler.ResetAttackHandler();
                     if (activeChamp.GetBaseGold() < 10) {
                         activeChamp.SetBaseGold(activeChamp.GetBaseGold() + 1);
                     }
@@ -448,12 +548,12 @@ namespace VortexTCG.Game.Object
                     StopTimer();
                     ResolveBattle();
                     break;
-            };
+            }
         }
         /// <summary>
         /// Résout le combat entre les deux joueurs.
         /// </summary>
-        private void ResolveBattle()
+        private static void ResolveBattle()
         {    
             Console.WriteLine("Résolution du combat en cours...");
         }
@@ -486,26 +586,30 @@ namespace VortexTCG.Game.Object
             /// <summary>
             /// Vérifie si un joueur peut agir dans une phase donnée.
             /// </summary>
-            private bool CanPlayerActInPhase(GamePhase phase, Guid activePlayer)
+            private bool CanPlayerActInPhase()
             {
                 // En phase Defense, l'adversaire peut agir
                 // Dans les autres phases, seul le joueur actif peut agir
-                return phase != GamePhase.END_TURN;
+                return _currentPhase != GamePhase.END_TURN;
             }
 
             /// <summary>
             /// Retourne la phase suivante dans le cycle.
             /// </summary>
-            private GamePhase GetNextPhase(GamePhase current)
+            private static GamePhase GetNextPhase(GamePhase current)
             {
-                return current switch
-                {
-                    GamePhase.PLACEMENT => GamePhase.ATTACK,
-                    GamePhase.ATTACK => GamePhase.DEFENSE,
-                    GamePhase.DEFENSE => GamePhase.END_TURN,
-                    GamePhase.END_TURN => GamePhase.PLACEMENT,
-                    _ => GamePhase.PLACEMENT
-                };
+                switch(current) {
+                    case GamePhase.PLACEMENT:
+                        return GamePhase.ATTACK;
+                    case GamePhase.ATTACK:
+                        return GamePhase.DEFENSE;
+                    case GamePhase.DEFENSE:
+                        return GamePhase.END_TURN;
+                    case GamePhase.END_TURN:
+                        return GamePhase.PLACEMENT;
+                    default:
+                        return GamePhase.PLACEMENT;
+                }
             }
 
             /// <summary>
@@ -514,7 +618,7 @@ namespace VortexTCG.Game.Object
             /// <param name="phase">Phase à vérifier</param>
             /// <param name="reason">Raison du skip si applicable</param>
             /// <returns>True si la phase doit être skippée</returns>
-            private bool ShouldAutoSkip(GamePhase phase, out string? reason)
+            private bool ShouldAutoSkip(GamePhase phase, out string? reason, bool isPlayer1)
             {
                 reason = null;
 
@@ -528,7 +632,7 @@ namespace VortexTCG.Game.Object
 
                     case GamePhase.ATTACK:
                         // Auto-skip si aucune carte sur le board ne peut attaquer
-                        if (!CanActivePlayerAttack())
+                        if (!CanActivePlayerAttack(isPlayer1))
                         {
                             reason = "Aucune carte ne peut attaquer";
                             return true;
@@ -538,7 +642,7 @@ namespace VortexTCG.Game.Object
                     case GamePhase.DEFENSE:
                         // Auto-skip si l'adversaire n'a pas de cartes pour défendre
                         // ou si le joueur actif n'a pas attaqué
-                        if (!CanOpponentDefend())
+                        if (!CanOpponentDefend(isPlayer1))
                         {
                             reason = "Aucune carte ne peut défendre";
                             return true;
@@ -557,18 +661,18 @@ namespace VortexTCG.Game.Object
             /// <summary>
             /// Vérifie si le joueur actif a des cartes pouvant attaquer.
             /// </summary>
-            private bool CanActivePlayerAttack()
+            private bool CanActivePlayerAttack(bool isPlayer1)
             {
-                Board activeBoard = _activePlayerId == _user_1 ? _board_user_1 : _board_user_2;
+                Board activeBoard = getPlayerBoard(isPlayer1);
                 return activeBoard.HasAttackableCards();
             }
 
             /// <summary>
             /// Vérifie si l'adversaire peut défendre.
             /// </summary>
-            private bool CanOpponentDefend()
+            private bool CanOpponentDefend(bool isPlayer1)
             {
-                Board opponentBoard = _activePlayerId == _user_1 ? _board_user_2 : _board_user_1;
+                Board opponentBoard = getPlayerBoard(isPlayer1);
                 return opponentBoard.HasDefendableCards();
             }
 
