@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using VortexTCG.DataAccess;
 using VortexTCG.Common.Services;
 using VortexTCG.Common.DTO;
 using VortexTCG.Faction.Services;
@@ -12,15 +11,11 @@ namespace VortexTCG.Faction.Controllers
     [Route("api/faction")]
     public class FactionController : VortexBaseController
     {
-        private readonly VortexDbContext _db;
-        private readonly IConfiguration _configuration;
         private readonly FactionService _faction_service;
 
-        public FactionController(VortexDbContext db, IConfiguration configuration)
+        public FactionController(FactionService factionService)
         {
-            _db = db;
-            _configuration = configuration;
-            _faction_service = new FactionService(_db, _configuration);
+            _faction_service = factionService;
         }
 
         // ================= Get all factions =================

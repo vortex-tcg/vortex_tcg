@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using VortexTCG.Faction.Controllers;
+using VortexTCG.Faction.Providers;
+using VortexTCG.Faction.Services;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.Services;
@@ -36,8 +37,9 @@ namespace Tests
         public async Task getAllFactionsReturnsFactions()
         {
             VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
-            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
-            FactionController controller = new FactionController(db, config);
+            FactionProvider provider = new FactionProvider(db);
+            FactionService service = new FactionService(provider);
+            FactionController controller = new FactionController(service);
 
             await createFaction(db);
 
@@ -57,8 +59,9 @@ namespace Tests
         public async Task getFactionWithCardsById()
         {
             VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
-            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
-            FactionController controller = new FactionController(db, config);
+            FactionProvider provider = new FactionProvider(db);
+            FactionService service = new FactionService(provider);
+            FactionController controller = new FactionController(service);
 
             var factionId = await createFaction(db);
 
