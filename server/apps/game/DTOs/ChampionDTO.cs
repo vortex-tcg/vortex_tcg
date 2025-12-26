@@ -10,4 +10,10 @@ namespace VortexTCG.Game.DTO {
         public int SecondaryCurrency { get; set; }
     }
 
+    public class BattleChampionDto {
+        public int Hp { get; set; }
+        public int SecondaryCurrency { get; set; }
+        public int Gold { get; set; }
+    }
+
 }

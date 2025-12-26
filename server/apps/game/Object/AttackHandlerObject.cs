@@ -3,21 +3,17 @@ using VortexTCG.Game.DTO;
 
 namespace VortexTCG.Game.Object {
 
+    public class DefenseCard {
+        public Card card { get; set; }
+        public int oppositeCardId { get; set; }
+    }
+
     public class AttackHandler {
 
         #region Variables de class
         
-            private List<Card> _attackCards;
-            private List<DefenseCard> _defenseCards;
-
-        #endregion
-
-        #region Init Defense class
-
-            public class DefenseCard {
-                public Card card { get; set; }
-                public int oppositeCardId { get; set; }
-            }
+            private List<Card> _attackCards = new List<Card>();
+            private List<DefenseCard> _defenseCards = new List<DefenseCard>();
 
         #endregion
 
@@ -56,11 +52,23 @@ namespace VortexTCG.Game.Object {
             }
 
             public void AddDefense(Card playedCard, Card opponentCard) {
+                int oppositeId = opponentCard.GetGameCardId();
+                _defenseCards.RemoveAll(defenseCard => defenseCard.oppositeCardId == oppositeId);
                 _defenseCards.Add(new DefenseCard{
                     card = playedCard,
-                    oppositeCardId = opponentCard.GetGameCardId()
+                    oppositeCardId = oppositeId
                 });
             }
+
+        #endregion
+
+        #region getter
+
+            public List<Card> GetAttacker() => _attackCards;
+
+            public List<DefenseCard> GetDefender() => _defenseCards;
+
+            public DefenseCard GetSpecificDefender(int opponentCardId) => _defenseCards.Single(defender => defender.oppositeCardId == opponentCardId);
 
         #endregion
 

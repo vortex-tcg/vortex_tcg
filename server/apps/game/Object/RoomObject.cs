@@ -292,12 +292,8 @@ namespace VortexTCG.Game.Object
                 Champion activeChamp = getPlayerChamp(isPlayer1);
 
                 if (location < 0 || location > 5) return null;
-                else if (!activeBoard.IsAvailable(location)){
-                    return null;
-                }
-                else if (!activeChamp.TryPaiedCard(card.GetCost())) {
-                    return null;
-                }
+                else if (!activeBoard.IsAvailable(location)) return null;
+                else if (!activeChamp.TryPaiedCard(card.GetCost())) return null;
 
                 activeHand.DeleteFromId(card.GetGameCardId());
                 card.AddState(CardState.ENGAGE);
@@ -392,6 +388,98 @@ namespace VortexTCG.Game.Object
                     if (attackCardState != CardSlotState.ATTACK_ENGAGE) return null;
                     return EngageDefenseCard(playerBoard, opponentBoard, pos, opponentPos, isPlayer1);
                 }
+            }
+
+        #endregion
+
+        #region Resolution de bataille
+            
+            private void HandleCardDeath(bool isPlayer1, Card card) {
+                Board board = isPlayer1 ? _board_user_1 : _board_user_2;
+                Graveyard graveyard = isPlayer1 ? _graveyard_user_1 : _graveyard_user_2;
+
+                board.clearSpot(card.GetGameCardId());
+                graveyard.AddCard(card);
+            }
+
+            private BattleDataDto HandleAgainstCardBattle(bool isDefenderPlayer, Card attacker, DefenseCard defender, Champion attackerChamp, Champion defenderChamp)
+            {
+                int attackerDamageDeal = defender.card.ApplyDamage(attacker);
+                int defenderDamageDeal = attacker.ApplyDamage(defender.card);
+                bool isDefenderDead = defender.card.IsDead();
+                bool isAttackerDead = attacker.IsDead();
+
+                if (isAttackerDead) {
+                    HandleCardDeath(!isDefenderPlayer, attacker);
+                }
+                if (isDefenderDead) {
+                    HandleCardDeath(isDefenderPlayer, defender.card);
+                }
+                return new BattleDataDto{
+                    isAgainstChamp = false,
+                    againstCard = new BattleAgainstCardDataDto {
+                        isAttackerDead = isAttackerDead,
+                        isDefenderDead = isDefenderDead,
+                        attackerDamageDeal = attackerDamageDeal,
+                        defenderDamageDeal = defenderDamageDeal,
+                        attackerCard = attacker.FormatGameCardDto(),
+                        attackerChamp = attackerChamp.FormatBattleChampionDto(),
+                        defenderCard = defender.card.FormatGameCardDto(),
+                        defenderChamp = defenderChamp.FormatBattleChampionDto()
+                    },
+                    againstChamp = null
+                };
+            }
+
+            private BattleDataDto HandleAgainstChampBattle(Card attacker, Champion attackerChamp, Champion defenderChamp)
+            {
+                int damageDeal = defenderChamp.ApplyDamage(attacker);
+                bool isChampDead = defenderChamp.IsDead();
+                return new BattleDataDto{
+                    isAgainstChamp = true,
+                    againstChamp = new BattlaAgainstChampDataDto {
+                        isChampDead = isChampDead,
+                        isCardDead = false,
+                        attackerDamageDeal = damageDeal,
+                        championDamageDeal = 0,
+                        attackerCard = attacker.FormatGameCardDto(),
+                        attackerChamp = attackerChamp.FormatBattleChampionDto(),
+                        defenderChamp = defenderChamp.FormatBattleChampionDto()
+                    },
+                    againstCard = null
+                };
+            }
+
+            /// <summary>
+            /// Résout le combat entre les deux joueurs.
+            /// </summary>
+            private void ResolveBattle()
+            {
+                bool isDefenderPlayer = checkIfPlayer1(_activePlayerId);
+                List<Card> attackers = _attackHandler.GetAttacker();
+                List<DefenseCard> defenders = _attackHandler.GetDefender();
+
+                Champion defenderChamp = getPlayerChamp(isDefenderPlayer);
+                Champion attackerChamp = getPlayerChamp(!isDefenderPlayer);
+
+                List<BattleDataDto> battleEvent = new List<BattleDataDto>();
+
+                foreach(Card attacker in attackers) {
+                    if (defenders.Count(defender => defender.oppositeCardId == attacker.GetGameCardId()) == 1) {
+                        DefenseCard defender = _attackHandler.GetSpecificDefender(attacker.GetGameCardId());
+
+                        battleEvent.Add(HandleAgainstCardBattle(isDefenderPlayer, attacker, defender, attackerChamp, defenderChamp));
+                    } else {
+                        battleEvent.Add(HandleAgainstChampBattle(attacker, attackerChamp, defenderChamp));
+                    }
+                }
+                _event.sendBattleResolveData(new BattleResponseDto{
+                    data = new BattlesDataDto{
+                        battles = battleEvent
+                    },
+                    Player1Id = _user_1,
+                    Player2Id = _user_2
+                });
             }
 
         #endregion
@@ -524,11 +612,11 @@ namespace VortexTCG.Game.Object
 
        private void HandleChangePhaseEvent(bool isPlayer1)
         {
-            Champion activeChamp = getPlayerChamp(isPlayer1);
-            Board activeBoard = getPlayerBoard(isPlayer1);
-
             switch(_currentPhase) {
                 case GamePhase.PLACEMENT:
+                    Champion activeChamp = getPlayerChamp(isPlayer1);
+                    Board activeBoard = getPlayerBoard(isPlayer1);
+
                     DrawCards(_activePlayerId, 1);
                     _attackHandler.ResetAttackHandler();
                     if (activeChamp.GetBaseGold() < 10) {
@@ -549,13 +637,6 @@ namespace VortexTCG.Game.Object
                     ResolveBattle();
                     break;
             }
-        }
-        /// <summary>
-        /// Résout le combat entre les deux joueurs.
-        /// </summary>
-        private static void ResolveBattle()
-        {    
-            Console.WriteLine("Résolution du combat en cours...");
         }
 
         /// <summary>
