@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using VortexTCG.Scripts.DTOs;
 
-namespace CollectionDTOs
+namespace VortexTCG.Scripts.DTOs
 {
     [Serializable]
     public class CollectionDto

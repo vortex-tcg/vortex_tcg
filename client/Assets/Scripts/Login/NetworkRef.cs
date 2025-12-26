@@ -15,6 +15,8 @@ public class NetworkRef : ScriptableObject
     {
         roomKeyOrCode = keyOrCode;
         playerPosition = pos;
+        Debug.Log($"[NetworkRef] SetMatch asset={name} key={keyOrCode} pos={pos}");
+
     }
 
     public void ResetMatch()
