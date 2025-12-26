@@ -34,7 +34,7 @@ namespace VortexTCG.Game.Object
 
         private readonly List<string> _class;
 
-        private List<CardState> _state;
+        private readonly HashSet<CardState> _state;
 
         public Card(CardDTO card, int id)
         {
@@ -58,7 +58,7 @@ namespace VortexTCG.Game.Object
 
             _effects = new List<Effect>();
             
-            _state = new List<CardState>();
+            _state = new HashSet<CardState>();
         }
 
         public int GetGameCardId() => _game_card_id;
@@ -75,28 +75,47 @@ namespace VortexTCG.Game.Object
         #region Gestion des états
 
             public void AddState(CardState newState) {
-                bool isNewUniqueState = true;
-                foreach(CardState state in _state) {
-                    if (state == newState) {
-                        isNewUniqueState = false;
-                    }
-                }
-                if (isNewUniqueState) {
+                if(!HasState(newState)) 
                     _state.Add(newState);
-                }
             }
 
-            public bool HasState(CardState searchState) {
-                foreach(CardState state in _state) {
-                    if (searchState == state) {
-                        return true;
-                    }
-                }
-                return false;
-            }
+            public bool HasState(CardState searchState) 
+            => _state.Contains(searchState);
+
+            public bool HasOneState(List<CardState> searchStates)
+            => searchStates.Count > 0 && searchStates.Any(searchState => HasState(searchState));
+
+            public bool HasStates(List<CardState> searchStates)
+            => searchStates.Count > 0 && searchStates.All(searchState => HasState(searchState));
 
             public void RemoveState(CardState removeState)
             => _state.Remove(removeState);
+
+            public void RemoveStates(HashSet<CardState> removeStates) {
+                foreach(CardState state in removeStates) {
+                    _state.Remove(state);
+                }
+            }
+
+            public CardSlotState checkCanDefend() {
+                if (HasState(CardState.DEFENSE_ENGAGE)) {
+                    return CardSlotState.DEFENSE_ENGAGE;
+                } else if (HasOneState([CardState.ATTACK_ENGAGE, CardState.ENGAGE])) {
+                    return CardSlotState.ENGAGE;
+                } else {
+                    return CardSlotState.CAN_DEFEND;
+                }
+            }
+
+            public CardSlotState checkCanAttack() {
+                if (HasState(CardState.ATTACK_ENGAGE)) {
+                    return CardSlotState.ATTACK_ENGAGE;
+                } else if (HasOneState([CardState.DEFENSE_ENGAGE, CardState.ENGAGE])) {
+                    return CardSlotState.ENGAGE;
+                } else {
+                    return CardSlotState.CAN_ATTACK;
+                }
+            }
 
         #endregion
 
