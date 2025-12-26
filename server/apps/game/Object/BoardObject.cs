@@ -95,6 +95,15 @@ namespace VortexTCG.Game.Object
             }
         }
 
+        public void clearSpot(int cardId) {
+            if (_location_1.GetGameCardId() == cardId) _location_1 = null;
+            else if (_location_2.GetGameCardId() == cardId) _location_2 = null;
+            else if (_location_3.GetGameCardId() == cardId) _location_3 = null;
+            else if (_location_4.GetGameCardId() == cardId) _location_4 = null;
+            else if (_location_5.GetGameCardId() == cardId) _location_5 = null;
+            else if (_location_6.GetGameCardId() == cardId) _location_6 = null;
+        }
+
         public void PosCard(Card card, int location) {
             switch(location) {
                 case 0:
@@ -203,11 +212,8 @@ namespace VortexTCG.Game.Object
         public void ResetBoardEngageState() {
             List<Card> cards = GetListBoardCards();
 
-            foreach (Card card in cards) {
-                if (card != null){
-
-                    card.RemoveStates([CardState.ENGAGE, CardState.ATTACK_ENGAGE, CardState.DEFENSE_ENGAGE]);
-                }
+            foreach (Card card in cards.Where(c => c != null)) {
+                card.RemoveStates([CardState.ENGAGE, CardState.ATTACK_ENGAGE, CardState.DEFENSE_ENGAGE]);
             }
         }
 
