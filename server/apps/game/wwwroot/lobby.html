@@ -63,9 +63,9 @@
     <input id="msg" placeholder="Message" />
     <button id="send">Envoyer</button>
     <br/>
-    <label>Id Carte: <input id="CardPlayedId" type="number" value="1" min="1" max="2" style="width:50px"/></label>
-    <label>Position Carte: <input id="CardPlayedPodition" type="number" value="1" min="1" style="width:50px"/></label>
-    <button id="PlayCard">Jouer Carte</button>
+    <label><span id="FirstArgumentLabel"></span><input id="FirstArgumentValue" type="number" value="1" min="1" style="width:50px"/></label>
+    <label><span id="SecondArgumentLabel"></span><input id="SecondArgumentValue" type="number" value="1" min="1" style="width:50px"/></label>
+    <button id="SendActionButton">Jouer Carte</button>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8/dist/browser/signalr.min.js"></script>
 <script>
@@ -93,9 +93,12 @@
     const deckInput = document.getElementById('deckId');
     const msgInput  = document.getElementById('msg');
     const btnSend   = document.getElementById('send');
-    const btnPlayCard   = document.getElementById('PlayCard');
-    const CardPlayIdInput = document.getElementById('CardPlayedId');
-    const CardPlayedPositionInput = document.getElementById('CardPlayedPodition');
+
+    const btnSendAction   = document.getElementById('SendActionButton');
+    const FirstArgumentValue = document.getElementById('FirstArgumentValue');
+    const FirstArgumentLabel = document.getElementById("FirstArgumentLabel");
+    const SecondArgumentValue = document.getElementById('SecondArgumentValue');
+    const SecondArgumentLabel = document.getElementById("SecondArgumentLabel");
 
     // Éléments de phase
     const btnStartGame = document.getElementById('startGame');
@@ -107,11 +110,10 @@
 
     // Map des phases pour l'affichage
     const phaseNames = {
-        0: 'Draw (Pioche)',
-        1: 'Placement',
-        2: 'Attack (Attaque)',
-        3: 'Defense (Défense)',
-        4: 'EndTurn (Fin de tour)'
+        0: 'Placement',
+        1: 'Attack (Attaque)',
+        2: 'Defense (Défense)',
+        3: 'EndTurn (Fin de tour)'
     };
 
     let connection, currentKey = null, mode = null; // mode: 'queue' | 'code'
@@ -185,6 +187,7 @@
                     msg += ` (Auto: ${result.autoChangeReason})`;
                 }
                 append(msg);
+                append(`Change phase result: ${JSON.stringify(result)}`);
             });
 
             connection.on("AutoDraw", (result) => {
@@ -221,6 +224,7 @@
             });
 
             connection.on("CardsDrawn", (result) => {
+                activePlayerId = result.playerId;
                 append(`J'ai pioché: ${JSON.stringify(result)}`);
             });
 
@@ -232,8 +236,20 @@
                 append(`Carte joué: ${JSON.stringify(result)}`);
             })
 
+            connection.on("HandleAttackEngage", (result) => {
+                append(`Nouvelle attaque: ${JSON.stringify(result)}`);
+            })
+
+            connection.on("HandleDefenseEngage", (result) => {
+                append(`Nouvelle défense: ${JSON.stringify(result)}`);
+            })
+
             connection.on("OpponentPlayCardResult", (result) => {
                 append(`L'adversiare à joué une carte: ${JSON.stringify(result)}`);
+            })
+
+            connection.on("BattleResolution", (result) => {
+                append(`Résumer des batailles: ${JSON.stringify(result)}`);
             })
 
             await connection.start();
@@ -244,6 +260,29 @@
             console.error(e);
         }
     };
+
+    const playCard = async () => {
+        if (!currentKey) return;
+        const position = parseInt(SecondArgumentValue.value) || 0;
+        const id = parseInt(FirstArgumentValue.value) || 0;
+        await connection.invoke("PlayCard", id, position);
+        append(`Demande de jouer une carte: carte ${id} a la position ${position}`);
+    };
+
+    const attackCard = async () => {
+        if (!currentKey) return;
+        const cardId = parseInt(FirstArgumentValue.value);
+        await connection.invoke("HandleAttackPos", cardId);
+        append(`Demande de changer la position d'attaque de la carte ${cardId}`);
+    }
+
+    const defendCard = async () => {
+        if (!currentKey) return;
+        const cardId = parseInt(FirstArgumentValue.value);
+        const opponentCardId = parseInt(SecondArgumentValue.value);
+        await connection.invoke("HandleDefensePos", cardId, opponentCardId);
+    }
+
     btnQueue.onclick = async () => {
         mode = 'queue';
         const deckId = (deckInput.value || "").trim();
@@ -289,14 +328,6 @@
         msgInput.value = "";
     };
 
-    btnPlayCard.onclick = async () => {
-        if (!currentKey) return;
-        const position = parseInt(CardPlayedPositionInput.value) || 0;
-        const id = parseInt(CardPlayIdInput.value) || 1;
-        await connection.invoke("PlayCard", id, position);
-        append(`Demande de jouer une carte: carte ${id} a la position ${position}`);
-    };
-
     btnStartGame.onclick = async () => {
         if (!currentKey) return alert("Pas dans une salle.");
         await connection.invoke("StartGame");
@@ -316,21 +347,81 @@
         // Déterminer le joueur actif par position (tour impair = joueur 1, tour pair = joueur 2)
         const activePosition = (result.turnNumber % 2 === 1) ? 1 : 2;
         
-        let isMyTurn = false;
+        let isMyTurn = result.activePlayerId === activePlayerId;
         let whoCanAct = "";
         
-        if (result.currentPhase === 3) { // Defense
-            // En défense, c'est l'adversaire du joueur actif qui joue
-            const defenderPosition = (activePosition === 1) ? 2 : 1;
-            isMyTurn = (myPosition === defenderPosition);
-            whoCanAct = isMyTurn ? "🟢 C'EST TON TOUR (Défense)" : "🔴 L'adversaire défend";
-        } else if (result.currentPhase === 4) { // EndTurn
-            isMyTurn = false;
-            whoCanAct = "⏳ Fin de tour...";
-        } else {
-            // Draw, Placement, Attack - c'est le joueur actif qui joue
-            isMyTurn = (myPosition === activePosition);
-            whoCanAct = isMyTurn ? "🟢 C'EST TON TOUR" : "🔴 C'est le tour de l'adversaire";
+        switch(result.currentPhase) {
+            case 0:
+                whoCanAct = isMyTurn ? "🟢 C'EST TON TOUR (Placement)" : "🔴 C'est le tour de l'adversaire";
+                
+                if (isMyTurn) {
+                    FirstArgumentLabel.textContent = "Id carte joué";
+                    SecondArgumentLabel.textContent = "Position de la carte joué";
+
+                    FirstArgumentLabel.style = "display:block;"
+                    SecondArgumentLabel.style = "display: block;"
+
+                    FirstArgumentValue.value = 0;
+                    SecondArgumentValue.value = 0;
+
+                    btnSendAction.onclick = playCard;
+                } else {
+                    FirstArgumentLabel.style = "display:none;";
+                    SecondArgumentLabel.style = "display: none;";
+                    
+                    btnSendAction.onclick = null;
+                }
+                break;
+            case 1:
+                whoCanAct = isMyTurn ? "🟢 C'EST TON TOUR (Attaque)" : "🔴 C'est le tour de l'adversaire";
+
+                if (isMyTurn) {
+                    FirstArgumentLabel.textContent = "Id card attack";
+
+                    FirstArgumentLabel.style = "display: block;"
+                    SecondArgumentLabel.style = "display: none;"
+
+                    
+                    FirstArgumentValue.value = 0;
+                    SecondArgumentValue.value = 0;
+
+                    btnSendAction.onclick = attackCard;
+                } else {
+                    FirstArgumentLabel.style = "display:none;";
+                    SecondArgumentLabel.style = "display: none;";
+                    
+                    btnSendAction.onclick = null;
+                }
+                break;
+            case 2:
+                whoCanAct = isMyTurn ? "🟢 C'EST TON TOUR (Défense)" : "🔴 L'adversaire défend";
+
+                if (isMyTurn) {
+                    FirstArgumentLabel.textContent = "Id card defend";
+                    SecondArgumentLabel.textContent = "Id card attack";
+
+                    FirstArgumentLabel.style = "display: block;"
+                    SecondArgumentLabel.style = "display: block;"
+
+                    
+                    FirstArgumentValue.value = 0;
+                    SecondArgumentValue.value = 0;
+
+                    btnSendAction.onclick = defendCard;
+                } else {
+                    FirstArgumentLabel.style = "display:none;";
+                    SecondArgumentLabel.style = "display: none;";
+                    
+                    btnSendAction.onclick = null;
+                }
+                break;
+            case 3:
+                whoCanAct = "⏳ Fin de tour...";
+                FirstArgumentLabel.style = "display:none;";
+                SecondArgumentLabel.style = "display: none;";
+                
+                btnSendAction.onclick = null;
+                break;
         }
         
         activePlayerSpan.textContent = whoCanAct;

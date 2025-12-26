@@ -41,12 +41,15 @@ public class RoomService: IRoomActionEventListener
 {
     #region Structures internes
 
+    private const string ErrorToken = "Error";
+
     /// <summary>
     /// Représente un salon de jeu avec ses métadonnées.
     /// Contient à la fois les informations de connexion (Members) et l'état de jeu (GameRoom).
     /// </summary>
     private class Room
     {
+
         public Room(IRoomActionEventListener listener) {
             GameRoom = new VortexTCG.Game.Object.Room(listener);
         }
@@ -94,6 +97,26 @@ public class RoomService: IRoomActionEventListener
     {
         _hubContext = hubContext;
     }
+    #endregion
+
+    #region Méthodes utiles
+
+    private async Task<Room>? tryGetRoom(Guid userId) {
+        if (!_userToRoom.TryGetValue(userId, out string? code)) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "User not connected to room");
+            return null;
+        }
+        if (!_rooms.TryGetValue(code, out Room? room)) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Room not instantiate");
+            return null;
+        }
+        if (room.GameRoom == null || !room.IsGameInitialized) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Room not started");
+            return null;
+        }
+        return room;
+    }
+
     #endregion
 
     #region Gestion des pseudos
@@ -337,8 +360,8 @@ public class RoomService: IRoomActionEventListener
     /// </remarks>
     public async Task<bool> SetPlayerDeck(Guid userId, Guid deckId)
     {
-        string? code = GetRoomOf(userId);
-        if (code is null || !_rooms.TryGetValue(code, out Room? room)) return false;
+        if (!_userToRoom.TryGetValue(userId, out string? code)) return false;
+        if (!_rooms.TryGetValue(code, out Room? room)) return false;   
 
         bool needsInitialization = false;
         Guid? user1Id = null, user2Id = null, deck1Id = null, deck2Id = null;
@@ -375,15 +398,14 @@ public class RoomService: IRoomActionEventListener
 
                 // Créer l'instance RoomObject (vide pour l'instant)
                 room.GameRoom = new VortexTCG.Game.Object.Room(this);
-              
-                string capturedCode = code; 
                 room.GameRoom.OnTimeUp += async () => 
                 {
                     var result = room.GameRoom.ForceChangePhase();
                     
                     if (result != null) 
                     {
-                       await _hubContext.Clients.Group(capturedCode).SendAsync("PhaseChanged", result);
+                       await _hubContext.Clients.User(user1Id.ToString()).SendAsync("PhaseChanged", result);
+                       await _hubContext.Clients.User(user2Id.ToString()).SendAsync("PhaseChanged", result);
                     }
                 };
             }
@@ -553,6 +575,15 @@ public class RoomService: IRoomActionEventListener
 
     #endregion
 
+    #region Resolution de bataille
+
+        public async void sendBattleResolveData(BattleResponseDto data) {
+            await _hubContext.Clients.User(data.Player1Id.ToString()).SendAsync("BattleResolution", data.data);
+            await _hubContext.Clients.User(data.Player2Id.ToString()).SendAsync("BattleResolution", data.data);
+        }
+
+    #endregion
+
     #region Gestion de pioche
 
     public async void sendDrawCardsData(DrawCardsResultDTO data) {
@@ -562,12 +593,57 @@ public class RoomService: IRoomActionEventListener
 
     #endregion
 
+    #region Gestion Attaque
+
+    public async Task EngageAttackCard(Guid userId, int cardId) {
+        Room room = await tryGetRoom(userId);
+        if (room == null) return;
+
+        AttackResponseDto result = null;
+
+        lock (room)
+        {
+            result = room.GameRoom.HandleAttackEvent(userId, cardId);
+        }
+
+        if (result == null) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Can't pos this card here !");
+        } else {
+            await _hubContext.Clients.User(result.PlayerId.ToString()).SendAsync("HandleAttackEngage", result.AttackCardsId);
+            await _hubContext.Clients.User(result.OpponentId.ToString()).SendAsync("HandleAttackEngage", result.AttackCardsId);
+        }
+    }
+
+    #endregion
+
+    #region Gestion Defense
+
+    public async Task EngageDefenseCard(Guid userId, int cardId, int opponentCardId) {
+        Room room = await tryGetRoom(userId);
+        if (room == null) return;
+
+        DefenseResponseDto result = null;
+
+        lock (room)
+        {
+            result = room.GameRoom.HandleDefenseEvent(userId, cardId, opponentCardId);
+        }
+
+        if (result == null) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Can't pos this card here !");
+        } else {
+            await _hubContext.Clients.User(result.PlayerId.ToString()).SendAsync("HandleDefenseEngage", result.data);
+            await _hubContext.Clients.User(result.OpponentId.ToString()).SendAsync("HandleDefenseEngage", result.data);
+        }
+    }
+
+    #endregion
+
     #region Jouer une carte
 
-    public async Task<PlayCardResponseDto> PlayCard(Guid userId, int cardId, int location) {
-        if (!_userToRoom.TryGetValue(userId, out string? code)) return null;
-        if (!_rooms.TryGetValue(code, out Room? room)) return null;
-        if (room.GameRoom == null || !room.IsGameInitialized) return null;
+    public async Task PlayCard(Guid userId, int cardId, int location) {
+        Room room = await tryGetRoom(userId);
+        if (room == null) return;
 
         PlayCardResponseDto result = null;
 
@@ -575,7 +651,13 @@ public class RoomService: IRoomActionEventListener
         {
             result = room.GameRoom.PlayCard(userId, cardId, location);
         }
-        return result;
+
+        if (result == null) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Can't play the card!");
+            return;
+        }
+        await _hubContext.Clients.User(userId.ToString()).SendAsync("PlayCardResult", result.PlayerResult);
+        await _hubContext.Clients.User(result.OpponentResult.PlayerId.ToString()).SendAsync("OpponentPlayCardResult", result.OpponentResult);
     }
 
     #endregion
