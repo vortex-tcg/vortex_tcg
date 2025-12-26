@@ -53,9 +53,9 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         shell: powershell
         run: |
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"vortex-tcg_vortex_tcg_AZtcdGF7TY20pLe9RloU" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" /d:sonar.projectName="Vortex TCG" /d:sonar.projectVersion="1.0" /d:sonar.verbose=true
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"vortex-tcg_vortex_tcg_AZtcdGF7TY20pLe9RloU" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" /d:sonar.projectName="Vortex TCG" /d:sonar.projectVersion="1.0" /d:sonar.cs.opencover.reportsPaths="**/TestResults/coverage.opencover.xml"
           dotnet build VortexTCG.sln --configuration Release
-          dotnet test VortexTCG.sln --no-build --configuration Release /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./TestResults/coverage.opencover.xml
+          dotnet test VortexTCG.sln --configuration Release --no-restore /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./TestResults/
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
   deploy:
