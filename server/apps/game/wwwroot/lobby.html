@@ -248,6 +248,10 @@
                 append(`L'adversiare à joué une carte: ${JSON.stringify(result)}`);
             })
 
+            connection.on("BattleResolution", (result) => {
+                append(`Résumer des batailles: ${JSON.stringify(result)}`);
+            })
+
             await connection.start();
             await connection.invoke("SetName", nameInput.value || "Joueur");
             status.textContent = "Connecté au hub.";

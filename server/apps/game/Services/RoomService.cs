@@ -575,6 +575,15 @@ public class RoomService: IRoomActionEventListener
 
     #endregion
 
+    #region Resolution de bataille
+
+        public async void sendBattleResolveData(BattleResponseDto data) {
+            await _hubContext.Clients.User(data.Player1Id.ToString()).SendAsync("BattleResolution", data.data);
+            await _hubContext.Clients.User(data.Player2Id.ToString()).SendAsync("BattleResolution", data.data);
+        }
+
+    #endregion
+
     #region Gestion de pioche
 
     public async void sendDrawCardsData(DrawCardsResultDTO data) {
