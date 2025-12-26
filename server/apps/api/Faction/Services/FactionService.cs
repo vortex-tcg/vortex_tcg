@@ -23,12 +23,12 @@ namespace VortexTCG.Faction.Services {
             _configuration = configuration;
             _provider = new FactionProvider(_db);
         }
-        public async Task<ResultDTO<List<FactionDTO>>> GetAllFactions()
+        public async Task<ResultDTO<List<FactionDto>>> GetAllFactions()
         {
             try
             {
                 var factions = await _provider.GetAllFactions();
-                return new ResultDTO<List<FactionDTO>>
+                return new ResultDTO<List<FactionDto>>
                 {
                     statusCode = 200,
                     success = true,
@@ -38,24 +38,24 @@ namespace VortexTCG.Faction.Services {
             }
             catch (Exception ex)
             {
-                return new ResultDTO<List<FactionDTO>>
+                return new ResultDTO<List<FactionDto>>
                 {
                     statusCode = 500,
                     success = false,
                     message = $"Error retrieving factions: {ex.Message}",
-                    data = new List<FactionDTO>()
+                    data = new List<FactionDto>()
                 };
             }
         }
 
-        public async Task<ResultDTO<FactionDTO>> GetFactionById(Guid id)
+        public async Task<ResultDTO<FactionDto>> GetFactionById(Guid id)
         {
             try
             {
                 var faction = await _provider.GetFactionById(id);
                 if (faction == null)
                 {
-                    return new ResultDTO<FactionDTO>
+                    return new ResultDTO<FactionDto>
                     {
                         statusCode = 404,
                         success = false,
@@ -64,7 +64,7 @@ namespace VortexTCG.Faction.Services {
                     };
                 }
 
-                return new ResultDTO<FactionDTO>
+                return new ResultDTO<FactionDto>
                 {
                     statusCode = 200,
                     success = true,
@@ -74,7 +74,7 @@ namespace VortexTCG.Faction.Services {
             }
             catch (Exception ex)
             {
-                return new ResultDTO<FactionDTO>
+                return new ResultDTO<FactionDto>
                 {
                     statusCode = 500,
                     success = false,
@@ -84,14 +84,14 @@ namespace VortexTCG.Faction.Services {
             }
         }
 
-        public async Task<ResultDTO<FactionWithCardsDTO>> GetFactionWithCardsById(Guid id)
+        public async Task<ResultDTO<FactionWithCardsDto>> GetFactionWithCardsById(Guid id)
         {
             try
             {
                 var faction = await _provider.GetFactionWithCardsById(id);
                 if (faction == null)
                 {
-                    return new ResultDTO<FactionWithCardsDTO>
+                    return new ResultDTO<FactionWithCardsDto>
                     {
                         statusCode = 404,
                         success = false,
@@ -100,7 +100,7 @@ namespace VortexTCG.Faction.Services {
                     };
                 }
 
-                return new ResultDTO<FactionWithCardsDTO>
+                return new ResultDTO<FactionWithCardsDto>
                 {
                     statusCode = 200,
                     success = true,
@@ -110,7 +110,7 @@ namespace VortexTCG.Faction.Services {
             }
             catch (Exception ex)
             {
-                return new ResultDTO<FactionWithCardsDTO>
+                return new ResultDTO<FactionWithCardsDto>
                 {
                     statusCode = 500,
                     success = false,
@@ -120,14 +120,14 @@ namespace VortexTCG.Faction.Services {
             }
         }
 
-        public async Task<ResultDTO<FactionWithChampionDTO>> GetFactionWithChampionById(Guid id)
+        public async Task<ResultDTO<FactionWithChampionDto>> GetFactionWithChampionById(Guid id)
         {
             try
             {
                 var faction = await _provider.GetFactionWithChampionById(id);
                 if (faction == null)
                 {
-                    return new ResultDTO<FactionWithChampionDTO>
+                    return new ResultDTO<FactionWithChampionDto>
                     {
                         statusCode = 404,
                         success = false,
@@ -136,7 +136,7 @@ namespace VortexTCG.Faction.Services {
                     };
                 }
 
-                return new ResultDTO<FactionWithChampionDTO>
+                return new ResultDTO<FactionWithChampionDto>
                 {
                     statusCode = 200,
                     success = true,
@@ -146,7 +146,7 @@ namespace VortexTCG.Faction.Services {
             }
             catch (Exception ex)
             {
-                return new ResultDTO<FactionWithChampionDTO>
+                return new ResultDTO<FactionWithChampionDto>
                 {
                     statusCode = 500,
                     success = false,
@@ -156,13 +156,13 @@ namespace VortexTCG.Faction.Services {
             }
         }
 
-        public async Task<ResultDTO<FactionDTO>> CreateFaction(CreateFactionDTO createDto)
+        public async Task<ResultDTO<FactionDto>> CreateFaction(CreateFactionDto createDto)
         {
             try
             {
                 if (await _provider.LabelExists(createDto.Label))
                 {
-                    return new ResultDTO<FactionDTO>
+                    return new ResultDTO<FactionDto>
                     {
                         statusCode = 409,
                         success = false,
@@ -176,7 +176,7 @@ namespace VortexTCG.Faction.Services {
                 
                 if (!success)
                 {
-                    return new ResultDTO<FactionDTO>
+                    return new ResultDTO<FactionDto>
                     {
                         statusCode = 400, // Bad Request pour les IDs invalides
                         success = false,
@@ -185,7 +185,7 @@ namespace VortexTCG.Faction.Services {
                     };
                 }
 
-                return new ResultDTO<FactionDTO>
+                return new ResultDTO<FactionDto>
                 {
                     statusCode = 201,
                     success = true,
@@ -195,7 +195,7 @@ namespace VortexTCG.Faction.Services {
             }
             catch (Exception ex)
             {
-                return new ResultDTO<FactionDTO>
+                return new ResultDTO<FactionDto>
                 {
                     statusCode = 500,
                     success = false,
@@ -205,13 +205,13 @@ namespace VortexTCG.Faction.Services {
             }
         }
 
-        public async Task<ResultDTO<FactionDTO>> UpdateFaction(Guid id, UpdateFactionDTO updateDto)
+        public async Task<ResultDTO<FactionDto>> UpdateFaction(Guid id, UpdateFactionDto updateDto)
         {
             try
             {
                 if (!await _provider.FactionExists(id))
                 {
-                    return new ResultDTO<FactionDTO>
+                    return new ResultDTO<FactionDto>
                     {
                         statusCode = 404,
                         success = false,
@@ -222,7 +222,7 @@ namespace VortexTCG.Faction.Services {
 
                 if (!string.IsNullOrEmpty(updateDto.Label) && await _provider.LabelExists(updateDto.Label, id))
                 {
-                    return new ResultDTO<FactionDTO>
+                    return new ResultDTO<FactionDto>
                     {
                         statusCode = 409,
                         success = false,
@@ -236,7 +236,7 @@ namespace VortexTCG.Faction.Services {
                 
                 if (!success)
                 {
-                    return new ResultDTO<FactionDTO>
+                    return new ResultDTO<FactionDto>
                     {
                         statusCode = 400, // Bad Request pour les IDs invalides
                         success = false,
@@ -245,7 +245,7 @@ namespace VortexTCG.Faction.Services {
                     };
                 }
 
-                return new ResultDTO<FactionDTO>
+                return new ResultDTO<FactionDto>
                 {
                     statusCode = 200,
                     success = true,
@@ -255,7 +255,7 @@ namespace VortexTCG.Faction.Services {
             }
             catch (Exception ex)
             {
-                return new ResultDTO<FactionDTO>
+                return new ResultDTO<FactionDto>
                 {
                     statusCode = 500,
                     success = false,

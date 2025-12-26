@@ -43,7 +43,7 @@ namespace Tests
 
             var result = await controller.GetAllFactions();
             ObjectResult okResult = Assert.IsType<ObjectResult>(result);
-            ResultDTO<List<FactionDTO>> payload = Assert.IsType<ResultDTO<List<FactionDTO>>>(okResult.Value);
+            ResultDTO<List<FactionDto>> payload = Assert.IsType<ResultDTO<List<FactionDto>>>(okResult.Value);
             Assert.Equal(200, okResult.StatusCode);
             Assert.NotNull(payload);
             Assert.True(payload.success);
@@ -64,7 +64,7 @@ namespace Tests
 
             var result = await controller.GetFactionWithCardsById(factionId);
             ObjectResult okResult = Assert.IsType<ObjectResult>(result);
-            ResultDTO<FactionWithCardsDTO> payload = Assert.IsType<ResultDTO<FactionWithCardsDTO>>(okResult.Value);
+            ResultDTO<FactionWithCardsDto> payload = Assert.IsType<ResultDTO<FactionWithCardsDto>>(okResult.Value);
             Assert.Equal(200, okResult.StatusCode);
             Assert.NotNull(payload);
             Assert.True(payload.success);

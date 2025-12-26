@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
-using api.Card.DTOs;
-using api.Card.Services;
+using VortexTCG.Api.Card.DTOs;
+using VortexTCG.Api.Card.Services;
 using VortexTCG.Common.Services;
 using VortexTCG.Common.DTO;
 
-namespace api.Card.Controllers
+namespace VortexTCG.Api.Card.Controllers
 {
     [ApiController]
     [Route("api/card")]
@@ -14,12 +14,19 @@ namespace api.Card.Controllers
         private readonly CardService _service;
         public CardController(CardService service) => _service = service;
 
+		[HttpGet]
+
+		public async Task<IActionResult> GetAll() 
+        => toActionResult<CardDto[]>(await _service.GetAllAsync());
+
         [HttpPost]
 
-        public async Task<IActionResult> create([FromBody] CardCreateDTO dto, CancellationToken ct)
-        {
-            return toActionResult(await _service.createAsync(dto, ct));   
-        }
+        public async Task<IActionResult> Create([FromBody] CardCreateDto dto)
+        => toActionResult(await _service.CreateAsync(dto));
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(Guid id)
+        => toActionResult(await _service.GetByIdAsync(id));
     }
 }
 

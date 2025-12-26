@@ -22,11 +22,11 @@ namespace api.Effect.Controller
             toActionResult(await _service.getAsync(id, ct));
 
         [HttpPost]
-        public async Task<IActionResult> create([FromBody] EffectTypeCreateDTO dto, CancellationToken ct) =>
+        public async Task<IActionResult> create([FromBody] EffectTypeCreateDto dto, CancellationToken ct) =>
             toActionResult(await _service.createAsync(dto, ct));
 
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> update(Guid id, [FromBody] EffectTypeUpdateDTO dto, CancellationToken ct) =>
+        public async Task<IActionResult> update(Guid id, [FromBody] EffectTypeUpdateDto dto, CancellationToken ct) =>
             toActionResult(await _service.updateAsync(id, dto, ct));
 
         [HttpDelete("{id:guid}")]

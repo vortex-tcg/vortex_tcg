@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace api.Card.DTOs
+namespace VortexTCG.Api.Card.DTOs
 {
     // DTO de ce qui est retournée
-    public class CardDTO
+    public class CardDto
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = "";
@@ -12,7 +12,7 @@ namespace api.Card.DTOs
         public int Attack  { get; set; } = 0;
     }
 
-    public class CardCreateDTO
+    public class CardCreateDto
     {
         [Required, MinLength(1)]
         public string Name { get; set; } = default!;
