@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using VortexTCG.Scripts.DTOs;
@@ -12,7 +13,6 @@ namespace VortexTCG.Scripts.MatchScene
         [SerializeField] private OpponentHandManager opponentHandManager;
 
         private SignalRClient client;
-
         private bool _gameStarted;
 
         private readonly List<DrawResultForPlayerDto> _bufferedDraws = new();
@@ -35,11 +35,17 @@ namespace VortexTCG.Scripts.MatchScene
             client.OnPhaseChanged += HandlePhaseChanged;
             client.OnCardsDrawn += HandleCardsDrawn;
             client.OnOpponentCardsDrawn += HandleOpponentCardsDrawn;
+            client.OnPlayCardResult += HandlePlayCardResult;
+            client.OnOpponentPlayCardResult += HandleOpponentPlayCardResult;
+            client.OnStatus += HandleStatus;
+
+            if (PhaseManager.Instance != null)
+                PhaseManager.Instance.OnRequestChangePhase += HandleRequestChangePhase;
 
             StartCoroutine(BindPhaseManagerWhenReady());
         }
 
-        private System.Collections.IEnumerator BindPhaseManagerWhenReady()
+        private IEnumerator BindPhaseManagerWhenReady()
         {
             while (PhaseManager.Instance == null)
                 yield return null;
@@ -57,37 +63,46 @@ namespace VortexTCG.Scripts.MatchScene
                 client.OnPhaseChanged -= HandlePhaseChanged;
                 client.OnCardsDrawn -= HandleCardsDrawn;
                 client.OnOpponentCardsDrawn -= HandleOpponentCardsDrawn;
+
+                client.OnPlayCardResult -= HandlePlayCardResult;
+                client.OnOpponentPlayCardResult -= HandleOpponentPlayCardResult;
+
+                client.OnStatus -= HandleStatus;
             }
 
             if (PhaseManager.Instance != null)
                 PhaseManager.Instance.OnRequestChangePhase -= HandleRequestChangePhase;
         }
 
+        private void HandleStatus(string msg)
+        {
+            if (string.IsNullOrWhiteSpace(msg)) return;
+            if (handManager == null || !handManager.HasPendingPlay) return;
+            if (msg.Contains("Can't play", StringComparison.OrdinalIgnoreCase) ||
+                msg.Contains("play the card", StringComparison.OrdinalIgnoreCase))
+            {
+                handManager.CancelPendingPlay("hub error: " + msg);
+            }
+        }
+
         private void HandleGameStarted(PhaseChangeResultDTO r)
         {
             Debug.Log($"[MatchController] GameStarted phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct}");
-
             _gameStarted = true;
-
-            // reset UI local, puis on applique ce que le serveur envoie
             handManager?.SetHand(new List<DrawnCardDto>());
             graveyardManager?.ResetGraveyard();
             opponentHandManager?.ResetHand();
-
             PhaseManager.Instance?.ApplyServerPhase(r.CurrentPhase);
-
-            // rejouer les pioches arrivées trop tôt
+            OpponentBoardManager.Instance?.ResetBoard();
             foreach (var d in _bufferedDraws) ApplyDraw(d);
             _bufferedDraws.Clear();
-
-            foreach (var d in _bufferedOpponentDraws) ApplyOpponentDraw(d);
-            _bufferedOpponentDraws.Clear();
+            foreach (var od in _bufferedOpponentDraws) ApplyOpponentDraw(od);
+            _bufferedOpponentDraws.Clear(); 
         }
 
         private void HandlePhaseChanged(PhaseChangeResultDTO r)
         {
             Debug.Log($"[MatchController] PhaseChanged phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct} auto={r.AutoChanged}");
-
             PhaseManager.Instance?.ApplyServerPhase(r.CurrentPhase);
 
             if (r.AutoChanged && !string.IsNullOrWhiteSpace(r.AutoChangeReason))
@@ -101,8 +116,6 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 if (client != null && client.IsConnected)
                     await client.ChangePhase();
-                else
-                    Debug.LogWarning("[MatchController] client not connected -> ChangePhase ignored");
             }
             catch (Exception ex)
             {
@@ -117,7 +130,6 @@ namespace VortexTCG.Scripts.MatchScene
                 _bufferedDraws.Add(result);
                 return;
             }
-
             ApplyDraw(result);
         }
 
@@ -139,7 +151,6 @@ namespace VortexTCG.Scripts.MatchScene
                 _bufferedOpponentDraws.Add(result);
                 return;
             }
-
             ApplyOpponentDraw(result);
         }
 
@@ -153,6 +164,28 @@ namespace VortexTCG.Scripts.MatchScene
 
             if (added > 0)
                 opponentHandManager?.AddFaceDownCards(added);
+        }
+        private void HandlePlayCardResult(PlayCardPlayerResultDto r)
+        {
+            if (r == null) return;
+
+            Debug.Log($"[MatchController] PlayCardResult canPlayed={r.canPlayed} loc={r.location} gameCardId={r.PlayedCard?.GameCardId}");
+
+            if (r.PlayedCard == null) return;
+            handManager?.ConfirmPlayFromServer(r.PlayedCard.GameCardId, r.location, r.canPlayed);
+        }
+
+        private void HandleOpponentPlayCardResult(PlayCardOpponentResultDto r)
+        {
+            if (r == null) return;
+
+            Debug.Log($"[MatchController] OpponentPlayCardResult loc={r.location} gameCardId={r.PlayedCard?.GameCardId}");
+
+            opponentHandManager?.RemoveOneCardFromHand();
+
+            if (OpponentBoardManager.Instance != null)
+                OpponentBoardManager.Instance.PlaceOpponentCard(r.location, r.PlayedCard);
+            
         }
     }
 }

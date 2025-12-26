@@ -53,8 +53,6 @@ private void OnEnable()
     {
         phaseButton.clicked -= RequestNextPhase;
         phaseButton.clicked += RequestNextPhase;
-
-        // Debug hard : callback UI Toolkit (ultra fiable)
         phaseButton.RegisterCallback<ClickEvent>(_ => Debug.Log("[PhaseManager] ClickEvent reçu sur EndPhaseButton"));
     }
             if (uiDoc == null)
