@@ -1,15 +1,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 using VortexTCG.Scripts.DTOs;
+using System;
 namespace VortexTCG.Scripts.MatchScene
 {
     public class AttackManager : MonoBehaviour
     {
         public static AttackManager Instance { get; private set; }
 
-        [Header("Player 1 Cards on Board")] [SerializeField]
-        private List<CardSlot> P1BoardSlots;
+        [Header("Player 1 Cards on Board")]
+        [SerializeField] private List<CardSlot> P1BoardSlots;
 
+        private readonly Dictionary<int, Card> boardCardsById = new();
         private readonly List<Card> selectedCards = new List<Card>();
 
         private void Awake()
@@ -23,13 +25,11 @@ namespace VortexTCG.Scripts.MatchScene
             PhaseManager.Instance.OnEnterDefense += OnEnterDefensePhase;
             PhaseManager.Instance.OnEnterStandBy += OnEndDefensePhase;
 
+            if (SignalRClient.Instance != null)
+                SignalRClient.Instance.OnAttackEngage += ApplyAttackStateFromServer;
+
             foreach (CardSlot slot in P1BoardSlots)
-            {
-                if (slot.CurrentCard != null)
-                {
-                    RegisterCard(slot.CurrentCard);
-                }
-            }
+                if (slot.CurrentCard != null) RegisterCard(slot.CurrentCard);
         }
 
         private void OnDestroy()
@@ -40,26 +40,29 @@ namespace VortexTCG.Scripts.MatchScene
                 PhaseManager.Instance.OnEnterDefense -= OnEnterDefensePhase;
                 PhaseManager.Instance.OnEnterStandBy -= OnEndDefensePhase;
             }
+
+            if (SignalRClient.Instance != null)
+                SignalRClient.Instance.OnAttackEngage -= ApplyAttackStateFromServer;
         }
 
-        private void OnEnterAttackPhase()
-        {
-            ClearSelections();
-        }
-
-        private void OnEnterDefensePhase()
-        {
-        }
-
-        private void OnEndDefensePhase()
-        {
-            ClearSelections();
-        }
+        private void OnEnterAttackPhase() => ClearSelections();
+        private void OnEnterDefensePhase() { }
+        private void OnEndDefensePhase() => ClearSelections();
 
         public void RegisterCard(Card card)
         {
             if (card == null) return;
 
+            // ✅ SAFE PARSE
+            if (!int.TryParse(card.cardId, out int id))
+            {
+                Debug.LogError($"[AttackManager] RegisterCard: cardId invalide '{card.cardId}'");
+                return;
+            }
+
+            boardCardsById[id] = card;
+
+            // collider (ok)
             Collider col = card.GetComponent<Collider>();
             if (col == null)
             {
@@ -69,9 +72,7 @@ namespace VortexTCG.Scripts.MatchScene
         }
 
         public bool IsP1BoardSlot(CardSlot slot)
-        {
-            return slot != null && P1BoardSlots != null && P1BoardSlots.Contains(slot);
-        }
+            => slot != null && P1BoardSlots != null && P1BoardSlots.Contains(slot);
 
         public bool IsCardOnP1Board(Card card)
         {
@@ -80,14 +81,62 @@ namespace VortexTCG.Scripts.MatchScene
             return IsP1BoardSlot(slot);
         }
 
-        public void HandleCardClicked(Card card)
+        public async void HandleCardClicked(Card card)
         {
-            if (card == null) return;
-            if (PhaseManager.Instance == null) return;
-            if (PhaseManager.Instance.CurrentPhase != GamePhase.ATTACK) return;
-            if (!IsCardOnP1Board(card)) return;
+            if (card == null)
+            {
+                Debug.LogWarning("[AttackManager] HandleCardClicked: card is NULL");
+                return;
+            }
 
-            ToggleCard(card);
+            if (PhaseManager.Instance == null)
+            {
+                Debug.LogWarning("[AttackManager] HandleCardClicked: PhaseManager.Instance is NULL");
+                return;
+            }
+
+            Debug.Log($"[AttackManager] Click card name='{card.name}' cardId='{card.cardId}' " +
+                      $"phase={PhaseManager.Instance.CurrentPhase} onP1Board={IsCardOnP1Board(card)}");
+
+            if (PhaseManager.Instance.CurrentPhase != GamePhase.ATTACK)
+            {
+                Debug.LogWarning("[AttackManager] Not in ATTACK phase -> ignore click");
+                return;
+            }
+
+            if (!IsCardOnP1Board(card))
+            {
+                Debug.LogWarning("[AttackManager] Card is NOT on P1 board -> ignore click");
+                return;
+            }
+
+            string idStr = card.cardId;
+
+            if (!int.TryParse(idStr, out int cardIdInt))
+            {
+                Debug.LogError($"[AttackManager] card.cardId not int! value='{idStr}'");
+                return;
+            }
+
+            var client = SignalRClient.Instance;
+            if (client == null)
+            {
+                Debug.LogError("[AttackManager] SignalRClient.Instance is NULL");
+                return;
+            }
+
+            Debug.Log($"[AttackManager] -> calling Hub HandleAttackPos(cardId={cardIdInt}) " +
+                      $"(from string='{idStr}', type={cardIdInt.GetType().Name})");
+
+            try
+            {
+                await client.HandleAttackPos(cardIdInt);
+                Debug.Log($"[AttackManager] Hub call HandleAttackPos DONE cardId={cardIdInt}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[AttackManager] Hub call HandleAttackPos FAILED cardId={cardIdInt} ex={ex}");
+            }
         }
 
         private void ToggleCard(Card card)
@@ -129,8 +178,22 @@ namespace VortexTCG.Scripts.MatchScene
                 card.SetSelected(false);
                 card.ClearAttackOrder();
             }
-
             selectedCards.Clear();
+        }
+
+        private void ApplyAttackStateFromServer(AttackResponseDto dto)
+        {
+            ClearSelections();
+            for (int i = 0; i < dto.AttackCardsId.Count; i++)
+            {
+                int cardId = dto.AttackCardsId[i];
+                if (!boardCardsById.TryGetValue(cardId, out Card card) || card == null)
+                    continue;
+
+                selectedCards.Add(card);
+                card.SetSelected(true);
+                card.ShowAttackOrder(i + 1);
+            }
         }
     }
 }
