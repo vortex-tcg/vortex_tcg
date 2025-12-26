@@ -245,19 +245,7 @@ public class GameHub : Hub
     // - par code (rooms privées) -> broadcast au group
     // - par roomId (matchmaking GUID) -> envoi direct à l'adversaire
     public async Task PlayCard(int cardId, int location)
-    {
-        // Mode salon privé (code)
-        Guid userId = GetAuthenticatedUserId();
-        PlayCardResponseDto? result = await _rooms.PlayCard(userId, cardId, location);
-
-        if (result == null) {
-            await Clients.Caller.SendAsync("Error", "Can't play the card!");
-            return;
-        }
-
-        await Clients.Caller.SendAsync("PlayCardResult", result.PlayerResult);
-        await Clients.User(result.OpponentResult.PlayerId.ToString()).SendAsync("OpponentPlayCardResult", result.OpponentResult);
-    }
+    => await _rooms.PlayCard(GetAuthenticatedUserId(), cardId, location);
 
 
     // --- GESTION DES PHASES DE JEU ---
@@ -307,4 +295,14 @@ public class GameHub : Hub
 
         await Clients.Group(code).SendAsync("PhaseChanged", result);
     }
+
+    #region Handle Attack and defense calls
+
+    public async Task HandleAttackPos(int cardId)
+    => await _rooms.EngageAttackCard(GetAuthenticatedUserId(), cardId);
+
+    public async Task HandleDefensePos(int cardId, int opponentCardId)
+    => await _rooms.EngageDefenseCard(GetAuthenticatedUserId(), cardId, opponentCardId);
+
+    #endregion
 }
