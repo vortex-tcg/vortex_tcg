@@ -1,6 +1,6 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using UnityEngine;
 using VortexTCG.Scripts.DTOs;
 
@@ -10,118 +10,182 @@ namespace VortexTCG.Scripts.MatchScene
     {
         [SerializeField] private HandManager handManager;
         [SerializeField] private GraveyardManager graveyardManager;
-        [SerializeField] private NetworkRef networkRef;
-        [SerializeField] private int initialHandSize = 5;
+        [SerializeField] private OpponentHandManager opponentHandManager;
 
         private SignalRClient client;
+        private bool _gameStarted;
 
-        public enum HandUpdateMode { Replace, Append }
-        private readonly Queue<HandUpdateMode> _pendingHandModes = new();
-
-        private bool initialDrawRequested;
-        private bool _startStandbyBonusDone;
+        private readonly List<DrawResultForPlayerDto> _bufferedDraws = new();
+        private readonly List<DrawResultForOpponentDto> _bufferedOpponentDraws = new();
 
         private void OnEnable()
         {
             client = SignalRClient.Instance;
             if (client == null)
             {
-                Debug.LogError("[MatchController3D] SignalRClient.Instance NULL");
+                Debug.LogError("[MatchController] SignalRClient.Instance NULL");
                 return;
             }
 
             if (handManager == null) handManager = HandManager.Instance;
             if (graveyardManager == null) graveyardManager = GraveyardManager.Instance;
+            if (opponentHandManager == null) opponentHandManager = OpponentHandManager.Instance;
 
+            client.OnGameStarted += HandleGameStarted;
+            client.OnPhaseChanged += HandlePhaseChanged;
             client.OnCardsDrawn += HandleCardsDrawn;
+            client.OnOpponentCardsDrawn += HandleOpponentCardsDrawn;
+            client.OnPlayCardResult += HandlePlayCardResult;
+            client.OnOpponentPlayCardResult += HandleOpponentPlayCardResult;
+            client.OnStatus += HandleStatus;
 
             if (PhaseManager.Instance != null)
-                PhaseManager.Instance.OnEnterStandBy += HandleEnterStandByDraw;
+                PhaseManager.Instance.OnRequestChangePhase += HandleRequestChangePhase;
 
-            RequestInitialHand();
+            StartCoroutine(BindPhaseManagerWhenReady());
+        }
+
+        private IEnumerator BindPhaseManagerWhenReady()
+        {
+            while (PhaseManager.Instance == null)
+                yield return null;
+
+            Debug.Log("[MatchController] Bind OnRequestChangePhase");
+            PhaseManager.Instance.OnRequestChangePhase -= HandleRequestChangePhase;
+            PhaseManager.Instance.OnRequestChangePhase += HandleRequestChangePhase;
         }
 
         private void OnDisable()
         {
-            if (client != null) client.OnCardsDrawn -= HandleCardsDrawn;
+            if (client != null)
+            {
+                client.OnGameStarted -= HandleGameStarted;
+                client.OnPhaseChanged -= HandlePhaseChanged;
+                client.OnCardsDrawn -= HandleCardsDrawn;
+                client.OnOpponentCardsDrawn -= HandleOpponentCardsDrawn;
+
+                client.OnPlayCardResult -= HandlePlayCardResult;
+                client.OnOpponentPlayCardResult -= HandleOpponentPlayCardResult;
+
+                client.OnStatus -= HandleStatus;
+            }
+
             if (PhaseManager.Instance != null)
-                PhaseManager.Instance.OnEnterStandBy -= HandleEnterStandByDraw;
+                PhaseManager.Instance.OnRequestChangePhase -= HandleRequestChangePhase;
         }
 
-        private async void HandleEnterStandByDraw()
+        private void HandleStatus(string msg)
         {
+            if (string.IsNullOrWhiteSpace(msg)) return;
+            if (handManager == null || !handManager.HasPendingPlay) return;
+            if (msg.Contains("Can't play", StringComparison.OrdinalIgnoreCase) ||
+                msg.Contains("play the card", StringComparison.OrdinalIgnoreCase))
+            {
+                handManager.CancelPendingPlay("hub error: " + msg);
+            }
+        }
+
+        private void HandleGameStarted(PhaseChangeResultDTO r)
+        {
+            Debug.Log($"[MatchController] GameStarted phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct}");
+            _gameStarted = true;
+            handManager?.SetHand(new List<DrawnCardDto>());
+            graveyardManager?.ResetGraveyard();
+            opponentHandManager?.ResetHand();
+            PhaseManager.Instance?.ApplyServerPhase(r.CurrentPhase);
+            OpponentBoardManager.Instance?.ResetBoard();
+            foreach (var d in _bufferedDraws) ApplyDraw(d);
+            _bufferedDraws.Clear();
+            foreach (var od in _bufferedOpponentDraws) ApplyOpponentDraw(od);
+            _bufferedOpponentDraws.Clear(); 
+        }
+
+        private void HandlePhaseChanged(PhaseChangeResultDTO r)
+        {
+            Debug.Log($"[MatchController] PhaseChanged phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct} auto={r.AutoChanged}");
+            PhaseManager.Instance?.ApplyServerPhase(r.CurrentPhase);
+
+            if (r.AutoChanged && !string.IsNullOrWhiteSpace(r.AutoChangeReason))
+                Debug.Log("[MatchController] AutoChangeReason: " + r.AutoChangeReason);
+        }
+
+        private async void HandleRequestChangePhase()
+        {
+            Debug.Log("[MatchController] HandleRequestChangePhase() -> calling hub ChangePhase");
             try
             {
-                await RequestDraw(1, HandUpdateMode.Append);
+                if (client != null && client.IsConnected)
+                    await client.ChangePhase();
             }
             catch (Exception ex)
             {
-                Debug.LogError("[MatchController3D] StandBy draw failed: " + ex);
-            }
-        }
-
-        private async Task RequestDraw(int amount, HandUpdateMode mode)
-        {
-            if (client == null || !client.IsConnected) return;
-            if (networkRef == null || networkRef.Client == null) return;
-
-            int pos = networkRef.PlayerPosition;
-            if (pos != 1 && pos != 2)
-            {
-                Debug.LogError($"[MatchController3D] PlayerPosition invalide: {pos}");
-                return;
-            }
-
-            _pendingHandModes.Enqueue(mode);
-            await networkRef.Client.DrawCards(pos, amount);
-        }
-
-        private async void RequestInitialHand()
-        {
-            if (initialDrawRequested) return;
-            initialDrawRequested = true;
-
-            try
-            {
-                await RequestDraw(initialHandSize, HandUpdateMode.Replace);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError("[MatchController3D] RequestInitialHand exception: " + ex);
-                initialDrawRequested = false;
+                Debug.LogError("[MatchController] ChangePhase failed: " + ex);
             }
         }
 
         private void HandleCardsDrawn(DrawResultForPlayerDto result)
         {
-            int handAdded = result?.DrawnCards?.Count ?? 0;
-            int burned = result?.SentToGraveyard?.Count ?? 0;
-            Debug.Log($"[MatchController3D] CardsDrawn received. hand+={handAdded} burned={burned}");
+            if (!_gameStarted)
+            {
+                _bufferedDraws.Add(result);
+                return;
+            }
+            ApplyDraw(result);
+        }
 
-            if (handManager == null) return;
+        private void ApplyDraw(DrawResultForPlayerDto result)
+        {
+            if (result == null) return;
 
-            HandUpdateMode mode = _pendingHandModes.Count > 0
-                ? _pendingHandModes.Dequeue()
-                : HandUpdateMode.Append;
-
-            if (mode == HandUpdateMode.Replace)
-                graveyardManager?.ResetGraveyard();
-            if (burned > 0)
+            if (result.SentToGraveyard != null && result.SentToGraveyard.Count > 0)
                 graveyardManager?.AddCards(result.SentToGraveyard);
-            if (result?.DrawnCards != null)
+
+            if (result.DrawnCards != null && result.DrawnCards.Count > 0)
+                handManager?.AddCards(result.DrawnCards);
+        }
+
+        private void HandleOpponentCardsDrawn(DrawResultForOpponentDto result)
+        {
+            if (!_gameStarted)
             {
-                if (mode == HandUpdateMode.Replace) handManager.SetHand(result.DrawnCards);
-                else handManager.AddCards(result.DrawnCards);
+                _bufferedOpponentDraws.Add(result);
+                return;
             }
-    
-            if (!_startStandbyBonusDone
-                && mode == HandUpdateMode.Replace
-                && PhaseManager.Instance != null
-                && PhaseManager.Instance.CurrentPhase == GamePhase.StandBy)
-            {
-                _startStandbyBonusDone = true;
-                _ = RequestDraw(1, HandUpdateMode.Append);
-            }
+            ApplyOpponentDraw(result);
+        }
+
+        private void ApplyOpponentDraw(DrawResultForOpponentDto result)
+        {
+            int added = result?.CardsDrawnCount ?? 0;
+            int burned = result?.CardsBurnedCount ?? 0;
+            int fatigue = result?.FatigueCount ?? 0;
+
+            Debug.Log($"[MatchController] Opponent drew +{added} (burn {burned}, fatigue {fatigue})");
+
+            if (added > 0)
+                opponentHandManager?.AddFaceDownCards(added);
+        }
+        private void HandlePlayCardResult(PlayCardPlayerResultDto r)
+        {
+            if (r == null) return;
+
+            Debug.Log($"[MatchController] PlayCardResult canPlayed={r.canPlayed} loc={r.location} gameCardId={r.PlayedCard?.GameCardId}");
+
+            if (r.PlayedCard == null) return;
+            handManager?.ConfirmPlayFromServer(r.PlayedCard.GameCardId, r.location, r.canPlayed);
+        }
+
+        private void HandleOpponentPlayCardResult(PlayCardOpponentResultDto r)
+        {
+            if (r == null) return;
+
+            Debug.Log($"[MatchController] OpponentPlayCardResult loc={r.location} gameCardId={r.PlayedCard?.GameCardId}");
+
+            opponentHandManager?.RemoveOneCardFromHand();
+
+            if (OpponentBoardManager.Instance != null)
+                OpponentBoardManager.Instance.PlaceOpponentCard(r.location, r.PlayedCard);
+            
         }
     }
 }

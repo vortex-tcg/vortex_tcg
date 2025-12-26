@@ -1,4 +1,7 @@
+using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using VortexTCG.Scripts.DTOs;
 
@@ -7,6 +10,8 @@ namespace VortexTCG.Scripts.MatchScene
     public class HandManager : MonoBehaviour
     {
         public static HandManager Instance { get; private set; }
+        public Card CardPrefab => cardPrefab;
+        public Transform HandRoot => handRoot;
 
         [Header("Hand Spawn")]
         [SerializeField] private Card cardPrefab;
@@ -16,6 +21,13 @@ namespace VortexTCG.Scripts.MatchScene
         [HideInInspector] public Card SelectedCard;
 
         private readonly List<Card> handCards = new();
+        private bool _playRequestInFlight;
+        private Card _pendingCard;
+        private CardSlot _pendingSlot;
+
+        private CancellationTokenSource _pendingTimeoutCts;
+
+        public bool HasPendingPlay => _playRequestInFlight;
 
         private void Awake()
         {
@@ -26,7 +38,6 @@ namespace VortexTCG.Scripts.MatchScene
             }
             Instance = this;
         }
-            
 
         public void SetHand(List<DrawnCardDto> drawnCards)
         {
@@ -47,15 +58,15 @@ namespace VortexTCG.Scripts.MatchScene
             foreach (var dto in drawnCards)
             {
                 Card card = Instantiate(cardPrefab, handRoot);
-                
-                string id = dto.GameCardId.ToString();
-                string name = dto.Name;
-                int hp = dto.Hp;
-                int atk = dto.Attack;
-                int cost = dto.Cost;
-                string desc = dto.Description;
-                string img = "";
-                card.ApplyDTO(id, name, hp, atk, cost, desc, img);
+                card.ApplyDTO(
+                    dto.GameCardId.ToString(),
+                    dto.Name,
+                    dto.Hp,
+                    dto.Attack,
+                    dto.Cost,
+                    dto.Description,
+                    ""
+                );
 
                 EnsureCollider(card);
                 handCards.Add(card);
@@ -66,7 +77,7 @@ namespace VortexTCG.Scripts.MatchScene
 
         public void SelectCard(Card card)
         {
-            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.Attack)
+            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.ATTACK)
                 return;
 
             if (SelectedCard != null)
@@ -86,22 +97,140 @@ namespace VortexTCG.Scripts.MatchScene
                 SelectedCard = null;
             }
         }
-
-        public void PlaceSelectedCardOnSlot(CardSlot slot)
+        public async Task RequestPlaySelectedCard(CardSlot slot)
         {
-            if (SelectedCard == null) return;
+            if (_playRequestInFlight)
+            {
+                Debug.Log("[HandManager] RequestPlaySelectedCard STOP: already in flight");
+                return;
+            }
 
-            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase != GamePhase.StandBy)
+            if (SelectedCard == null) return;
+            if (slot == null) return;
+
+            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase != GamePhase.PLACEMENT)
                 return;
 
             if (!slot.CanAccept(SelectedCard)) return;
 
-            slot.PlaceCard(SelectedCard);
+            if (!int.TryParse(SelectedCard.cardId, out int gameCardId))
+            {
+                Debug.LogError("[HandManager] SelectedCard.cardId pas un int: " + SelectedCard.cardId);
+                return;
+            }
 
-            handCards.Remove(SelectedCard);
-            SelectedCard = null;
+            var client = SignalRClient.Instance;
+            if (client == null || !client.IsConnected)
+            {
+                Debug.LogWarning("[HandManager] SignalRClient pas connecté.");
+                return;
+            }
 
-            LayoutHand();
+            _playRequestInFlight = true;
+            _pendingCard = SelectedCard;
+            _pendingSlot = slot;
+
+            Debug.Log($"[HandManager] RequestPlaySelectedCard -> PlayCard(gameCardId={gameCardId}, loc={slot.slotIndex})");
+            StartPendingTimeout(2500);
+
+            try
+            {
+                await client.PlayCard(gameCardId, slot.slotIndex);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError("[HandManager] PlayCard invoke failed: " + ex);
+                CancelPendingPlay("Invoke exception");
+            }
+        }
+
+        private void StartPendingTimeout(int ms)
+        {
+            try { _pendingTimeoutCts?.Cancel(); } catch { }
+            _pendingTimeoutCts = new CancellationTokenSource();
+            var token = _pendingTimeoutCts.Token;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(ms, token);
+                    if (token.IsCancellationRequested) return;
+                    if (_playRequestInFlight)
+                    {
+                        Debug.LogWarning("[HandManager] Pending play timeout -> unlock");
+                        CancelPendingPlay("timeout");
+                    }
+                    
+                }
+                catch { /* ignore */ }
+            });
+        } public void ConfirmPlayFromServer(int gameCardId, int location, bool canPlayed)
+        {
+            try { _pendingTimeoutCts?.Cancel(); } catch { }
+
+            _playRequestInFlight = false;
+
+            if (!canPlayed)
+            {
+                Debug.LogWarning("[HandManager] Serveur a refusé la pose (PlayCardResult canPlayed=false).");
+                _pendingCard = null;
+                _pendingSlot = null;
+                return;
+            }
+            Card cardToPlace = null;
+
+            if (_pendingCard != null && int.TryParse(_pendingCard.cardId, out int pendingId) && pendingId == gameCardId)
+                cardToPlace = _pendingCard;
+            else
+                cardToPlace = FindCardInHand(gameCardId);
+
+            if (cardToPlace == null)
+            {
+                Debug.LogWarning($"[HandManager] Carte {gameCardId} introuvable dans la main (déjà déplacée ?)");
+                _pendingCard = null;
+                _pendingSlot = null;
+                return;
+            }
+            CardSlot slot = _pendingSlot;
+
+            if (slot == null || slot.slotIndex != location)
+            {
+                Debug.LogWarning("[HandManager] Pending slot null ou location mismatch (prévois un mapping global si besoin).");
+            }
+
+            if (slot != null)
+            {
+                slot.PlaceCard(cardToPlace);
+                handCards.Remove(cardToPlace);
+                if (SelectedCard == cardToPlace) DeselectCurrentCard();
+                LayoutHand();
+            }
+
+            _pendingCard = null;
+            _pendingSlot = null;
+        }
+        public void CancelPendingPlay(string reason)
+        {
+            try { _pendingTimeoutCts?.Cancel(); } catch { }
+
+            if (_playRequestInFlight)
+                Debug.LogWarning("[HandManager] CancelPendingPlay -> " + reason);
+
+            _playRequestInFlight = false;
+            _pendingCard = null;
+            _pendingSlot = null;
+        }
+
+        private Card FindCardInHand(int gameCardId)
+        {
+            foreach (var c in handCards)
+            {
+                if (c == null) continue;
+                if (int.TryParse(c.cardId, out int id) && id == gameCardId)
+                    return c;
+            }
+            return null;
         }
 
         private void ClearHand()
@@ -112,6 +241,8 @@ namespace VortexTCG.Scripts.MatchScene
                 if (c != null) Destroy(c.gameObject);
 
             handCards.Clear();
+
+            CancelPendingPlay("clear hand");
         }
 
         private void LayoutHand()
@@ -123,7 +254,6 @@ namespace VortexTCG.Scripts.MatchScene
 
                 c.transform.localPosition = new Vector3(i * cardSpacing, 0f, 0f);
                 c.transform.localRotation = Quaternion.identity;
-                c.transform.localScale = Vector3.one;
             }
         }
 

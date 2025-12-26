@@ -29,14 +29,19 @@ public class SignalRClient : MonoBehaviour
     private string _accessToken;
     private string _currentKeyOrCode;
     private string _mode;
+	private bool _startGameRequested;
 
     public event Action<string> OnStatus;
     public event Action<string> OnLog;
     public event Action<string> OnMatched;
     public event Action OnOpponentLeft;
-
+	public event Action<PhaseChangeResultDTO> OnGameStarted;
+	public event Action<PhaseChangeResultDTO> OnPhaseChanged;
+	
     public event Action<DrawResultForPlayerDto> OnCardsDrawn;
     public event Action<DrawResultForOpponentDto> OnOpponentCardsDrawn;
+    public event Action<PlayCardPlayerResultDto> OnPlayCardResult;
+    public event Action<PlayCardOpponentResultDto> OnOpponentPlayCardResult;
 
     private readonly ConcurrentQueue<Action> _main = new();
     private void Enqueue(Action a) => _main.Enqueue(a);
@@ -101,10 +106,38 @@ public class SignalRClient : MonoBehaviour
 		 networkRef?.SetMatch(key, pos); 
 		 OnMatched?.Invoke(key);
     	 OnLog?.Invoke($"Match trouvé ! Salle: {key} (pos={pos})");
+ 		if (pos == 1 && !_startGameRequested)
+    	{
+        	_startGameRequested = true;
+        	_ = SafeInvoke("StartGame");
+        	OnLog?.Invoke("[SignalR] pos=1 -> StartGame()");
+    	}
 		 }));
 
+         _conn.On<PlayCardPlayerResultDto>("PlayCardResult", dto => Enqueue(() =>
+         {
+             Debug.Log("[SignalRClient] PlayCardResult reçu");
+             OnPlayCardResult?.Invoke(dto);
+         }));
 
 
+         _conn.On<PlayCardOpponentResultDto>("OpponentPlayCardResult", dto => Enqueue(() =>
+         {
+             Debug.Log("[SignalRClient] OpponentPlayCardResult reçu");
+             OnOpponentPlayCardResult?.Invoke(dto);
+         }));
+    
+		_conn.On<PhaseChangeResultDTO>("GameStarted", r => Enqueue(() =>
+		{
+    		OnGameStarted?.Invoke(r);
+   			OnLog?.Invoke($"GameStarted: phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct}");
+		}));
+
+		_conn.On<PhaseChangeResultDTO>("PhaseChanged", r => Enqueue(() =>
+		{
+    		OnPhaseChanged?.Invoke(r);
+    		OnLog?.Invoke($"PhaseChanged: phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct} auto={r.AutoChanged}");
+		}));
         _conn.On<string, string, string>("ReceiveRoomMessage", (key, from, text) =>
             Enqueue(() => OnLog?.Invoke($"{from}: {text}")));
 
@@ -126,6 +159,7 @@ public class SignalRClient : MonoBehaviour
         {
             OnOpponentLeft?.Invoke();
 			networkRef?.ResetMatch();
+			_startGameRequested = false;
             OnLog?.Invoke("L'adversaire a quitté.");
         }));
 
@@ -174,7 +208,7 @@ public class SignalRClient : MonoBehaviour
                 if (!string.IsNullOrEmpty(_accessToken))
                     options.AccessTokenProvider = () => Task.FromResult(_accessToken);
 
-#if UNITY_EDITOR
+		#if UNITY_EDITOR
                 options.HttpMessageHandlerFactory = (handler) =>
                 {
                     if (handler is HttpClientHandler h)
@@ -184,7 +218,7 @@ public class SignalRClient : MonoBehaviour
 
                 if (forceLongPollingInEditor)
                     options.Transports = HttpTransportType.LongPolling;
-#endif
+		#endif
             })
             .WithAutomaticReconnect();
 
@@ -245,6 +279,8 @@ public class SignalRClient : MonoBehaviour
         await SafeSend("LeaveQueue");
         _currentKeyOrCode = null;
         OnLog?.Invoke("Quitte la file/room (matchmaking).");
+		_startGameRequested = false;
+
     }
 
     public async Task CreateRoom(Guid deckId, string preferredCode = null)
@@ -267,6 +303,8 @@ public class SignalRClient : MonoBehaviour
 		networkRef?.ResetMatch();
         _currentKeyOrCode = null;
         OnLog?.Invoke("Quitte la room (code).");
+		_startGameRequested = false;
+
     }
 
     public async Task SendMessageToPeer(string text)
@@ -281,12 +319,24 @@ public class SignalRClient : MonoBehaviour
         OnLog?.Invoke($"Moi: {text}");
     }
 
-    public async Task PlayCard(int cardId)
+    public async Task PlayCard(int cardId, int location)
     {
-        if (string.IsNullOrWhiteSpace(_currentKeyOrCode)) return;
-        await SafeSend("PlayCard", _currentKeyOrCode, cardId);
-        OnLog?.Invoke($"(Action) PlayCard {cardId}");
+        RequireConnectedOrThrow();
+        Debug.Log($"[SignalRClient] -> PlayCard(cardId={cardId}, location={location})");
+        await SafeInvoke("PlayCard", cardId, location);
     }
+
+	public async Task StartGame()
+	{
+    	RequireConnectedOrThrow();
+    	await SafeInvoke("StartGame");
+	}
+
+	public async Task ChangePhase()
+	{
+    	RequireConnectedOrThrow();
+    	await SafeInvoke("ChangePhase");
+	}
 
     public async Task DrawCards(int playerPosition, int amount)
     {
