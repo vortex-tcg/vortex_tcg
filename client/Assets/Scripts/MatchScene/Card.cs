@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using VortexTCG.Scripts.DTOs;
 
 namespace VortexTCG.Scripts.MatchScene
 {
@@ -11,6 +12,9 @@ namespace VortexTCG.Scripts.MatchScene
         public int hp;
         public int attack;
         public int cost;
+        public Transform VisualRoot;
+        public Transform UIRoot;
+
         [TextArea(3, 6)] public string description;
         public string imageUrl;
 
@@ -19,7 +23,9 @@ namespace VortexTCG.Scripts.MatchScene
         public TMP_Text atkText;
         public TMP_Text hpText;
         public TMP_Text descriptionText;
-
+        
+        [SerializeField] private bool faceDown;
+        public bool IsFaceDown => faceDown;
         [Header("Attack Phase")] public TMP_Text attackOrderText;
 
         [Header("Selection")] [SerializeField] private GameObject AttackOutline;
@@ -32,8 +38,6 @@ namespace VortexTCG.Scripts.MatchScene
         void Awake()
         {
             selectionBaseScale = transform.localScale;
-            MockData();
-            RefreshUI();
 
             if (AttackOrder != null && attackOrderText == null)
             {
@@ -55,18 +59,19 @@ namespace VortexTCG.Scripts.MatchScene
 
         void OnMouseDown()
         {
+            if (faceDown) return;
             if (AttackOutline != null && AttackOutline.activeSelf)
             {
                 if (PhaseManager.Instance == null ||
-                    (PhaseManager.Instance.CurrentPhase != GamePhase.Attack &&
-                     PhaseManager.Instance.CurrentPhase != GamePhase.Defense))
+                    (PhaseManager.Instance.CurrentPhase != GamePhase.ATTACK &&
+                     PhaseManager.Instance.CurrentPhase != GamePhase.DEFENSE))
                 {
                     return;
                 }
             }
 
             CardSlot slot = GetComponentInParent<CardSlot>();
-            if (slot != null && PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.Attack)
+            if (slot != null && PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.ATTACK)
             {
                 if (AttackManager.Instance != null && AttackManager.Instance.IsP1BoardSlot(slot))
                 {
@@ -75,7 +80,7 @@ namespace VortexTCG.Scripts.MatchScene
                 }
             }
 
-            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.Defense)
+            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.DEFENSE)
             {
                 if (DefenseManager.Instance != null)
                 {
@@ -145,6 +150,8 @@ namespace VortexTCG.Scripts.MatchScene
 
         public void RefreshUI()
         {
+            Debug.Log($"[Card] RefreshUI nameText={(nameText!=null)} costText={(costText!=null)} atkText={(atkText!=null)} hpText={(hpText!=null)} descText={(descriptionText!=null)}");
+
             if (nameText != null) nameText.text = cardName;
             if (costText != null) costText.text = cost.ToString();
             if (atkText != null) atkText.text = attack > 0 ? attack.ToString() : "-";
@@ -218,7 +225,7 @@ namespace VortexTCG.Scripts.MatchScene
                 transform.localScale = selectionBaseScale * selectedScaleMultiplier;
 
                 bool canShowAttackVisuals = false;
-                if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.Attack)
+                if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.ATTACK)
                 {
                     CardSlot slot = GetComponentInParent<CardSlot>();
                     if (slot != null && AttackManager.Instance != null && AttackManager.Instance.IsP1BoardSlot(slot))
@@ -271,5 +278,15 @@ namespace VortexTCG.Scripts.MatchScene
         {
             return AttackOutline != null && AttackOutline.activeSelf;
         }
+   
+
+        public void SetFaceDown(bool value)
+        {
+            faceDown = value;
+            transform.localRotation = value ? Quaternion.Euler(0f, 180f, 0f) : Quaternion.identity;
+            var col = GetComponent<Collider>();
+            if (col != null) col.enabled = !value;
+        }
+
     }
 }

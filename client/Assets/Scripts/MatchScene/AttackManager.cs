@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-
+using VortexTCG.Scripts.DTOs;
 namespace VortexTCG.Scripts.MatchScene
 {
     public class AttackManager : MonoBehaviour
@@ -84,7 +84,7 @@ namespace VortexTCG.Scripts.MatchScene
         {
             if (card == null) return;
             if (PhaseManager.Instance == null) return;
-            if (PhaseManager.Instance.CurrentPhase != GamePhase.Attack) return;
+            if (PhaseManager.Instance.CurrentPhase != GamePhase.ATTACK) return;
             if (!IsCardOnP1Board(card)) return;
 
             ToggleCard(card);
