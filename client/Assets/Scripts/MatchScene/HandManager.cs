@@ -1,57 +1,140 @@
+using System.Collections.Generic;
 using UnityEngine;
+using VortexTCG.Scripts.DTOs;
 
-public class HandManager : MonoBehaviour
+namespace VortexTCG.Scripts.MatchScene
 {
-    public static HandManager Instance;
-
-    [HideInInspector]
-    public Card SelectedCard;
-
-    void Awake()
+    public class HandManager : MonoBehaviour
     {
-        if (Instance != null && Instance != this)
+        public static HandManager Instance { get; private set; }
+
+        [Header("Hand Spawn")]
+        [SerializeField] private Card cardPrefab;
+        [SerializeField] private Transform handRoot;
+        [SerializeField] private float cardSpacing = 1.2f;
+
+        [HideInInspector] public Card SelectedCard;
+
+        private readonly List<Card> handCards = new();
+
+        private void Awake()
         {
-            Destroy(gameObject);
-            return;
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
         }
-        Instance = this;
-    }
+            
 
-    public void SelectCard(Card card)
-    {
-        if (PhaseManager.Instance.CurrentPhase == GamePhase.Attack)
+        public void SetHand(List<DrawnCardDto> drawnCards)
         {
-            return;
+            ClearHand();
+            AddCards(drawnCards);
         }
 
-        if (SelectedCard != null)
-            SelectedCard.SetSelected(false);
-
-        SelectedCard = card;
-        SelectedCard.SetSelected(true);
-    }
-
-    public void DeselectCurrentCard()
-    {
-        if (SelectedCard != null)
+        public void AddCards(List<DrawnCardDto> drawnCards)
         {
-            SelectedCard.SetSelected(false);
+            if (drawnCards == null || drawnCards.Count == 0) return;
+
+            if (cardPrefab == null || handRoot == null)
+            {
+                Debug.LogError("[HandManager] cardPrefab ou handRoot non assigné.");
+                return;
+            }
+
+            foreach (var dto in drawnCards)
+            {
+                Card card = Instantiate(cardPrefab, handRoot);
+                
+                string id = dto.GameCardId.ToString();
+                string name = dto.Name;
+                int hp = dto.Hp;
+                int atk = dto.Attack;
+                int cost = dto.Cost;
+                string desc = dto.Description;
+                string img = "";
+                card.ApplyDTO(id, name, hp, atk, cost, desc, img);
+
+                EnsureCollider(card);
+                handCards.Add(card);
+            }
+
+            LayoutHand();
+        }
+
+        public void SelectCard(Card card)
+        {
+            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.Attack)
+                return;
+
+            if (SelectedCard != null)
+                SelectedCard.SetSelected(false);
+
+            SelectedCard = card;
+
+            if (SelectedCard != null)
+                SelectedCard.SetSelected(true);
+        }
+
+        public void DeselectCurrentCard()
+        {
+            if (SelectedCard != null)
+            {
+                SelectedCard.SetSelected(false);
+                SelectedCard = null;
+            }
+        }
+
+        public void PlaceSelectedCardOnSlot(CardSlot slot)
+        {
+            if (SelectedCard == null) return;
+
+            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase != GamePhase.StandBy)
+                return;
+
+            if (!slot.CanAccept(SelectedCard)) return;
+
+            slot.PlaceCard(SelectedCard);
+
+            handCards.Remove(SelectedCard);
             SelectedCard = null;
+
+            LayoutHand();
         }
-    }
 
-    public void PlaceSelectedCardOnSlot(CardSlot slot)
-    {
-        if (SelectedCard == null) return;
-
-        if (PhaseManager.Instance.CurrentPhase != GamePhase.StandBy)
+        private void ClearHand()
         {
-            return;
+            DeselectCurrentCard();
+
+            foreach (var c in handCards)
+                if (c != null) Destroy(c.gameObject);
+
+            handCards.Clear();
         }
 
-        if (!slot.CanAccept(SelectedCard)) return;
+        private void LayoutHand()
+        {
+            for (int i = 0; i < handCards.Count; i++)
+            {
+                var c = handCards[i];
+                if (c == null) continue;
 
-        slot.PlaceCard(SelectedCard);
-        SelectedCard = null;
+                c.transform.localPosition = new Vector3(i * cardSpacing, 0f, 0f);
+                c.transform.localRotation = Quaternion.identity;
+                c.transform.localScale = Vector3.one;
+            }
+        }
+
+        private static void EnsureCollider(Card card)
+        {
+            if (card == null) return;
+            if (card.GetComponent<Collider>() == null)
+            {
+                var bc = card.gameObject.AddComponent<BoxCollider>();
+                bc.size = Vector3.one;
+            }
+        }
     }
 }

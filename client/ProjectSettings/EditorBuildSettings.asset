@@ -35,5 +35,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scene/MatchScene.unity
     guid: a4607343399a9754783016c20ea51dd1
+  - enabled: 1
+    path: Assets/Scene/3DMatchScene.unity
+    guid: e2cb119f11b3f6141a3f0d41d96b8b94
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

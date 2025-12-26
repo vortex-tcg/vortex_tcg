@@ -1,46 +1,40 @@
 using System;
-using UnityEngine;
-using DrawDTOs;
 using System.Collections.Generic;
-using System.Threading.Tasks;      
+using System.Threading.Tasks;
+using UnityEngine;
+using VortexTCG.Scripts.DTOs;
+
 namespace VortexTCG.Scripts.MatchScene
 {
     public class MatchController : MonoBehaviour
     {
         [SerializeField] private HandManager handManager;
         [SerializeField] private GraveyardManager graveyardManager;
-        [SerializeField] private int initialHandSize = 5;
         [SerializeField] private NetworkRef networkRef;
+        [SerializeField] private int initialHandSize = 5;
+
         private SignalRClient client;
 
-        public enum HandUpdateMode
-        {
-            Replace,
-            Append
-        }
-
-        private bool _startStandbyBonusDone;
-
+        public enum HandUpdateMode { Replace, Append }
         private readonly Queue<HandUpdateMode> _pendingHandModes = new();
 
         private bool initialDrawRequested;
+        private bool _startStandbyBonusDone;
 
         private void OnEnable()
         {
-            Debug.Log("[MatchController] OnEnable");
-
             client = SignalRClient.Instance;
             if (client == null)
             {
-                Debug.LogError("[MatchController] SignalRClient.Instance NULL");
+                Debug.LogError("[MatchController3D] SignalRClient.Instance NULL");
                 return;
             }
 
-            Debug.Log(
-                $"[MatchController] client.IsConnected={client.IsConnected} keyOrCode={client.CurrentKeyOrCode} mode={client.Mode}");
+            if (handManager == null) handManager = HandManager.Instance;
+            if (graveyardManager == null) graveyardManager = GraveyardManager.Instance;
 
             client.OnCardsDrawn += HandleCardsDrawn;
-            client.OnLog += HandleNetLog;
+
             if (PhaseManager.Instance != null)
                 PhaseManager.Instance.OnEnterStandBy += HandleEnterStandByDraw;
 
@@ -49,16 +43,9 @@ namespace VortexTCG.Scripts.MatchScene
 
         private void OnDisable()
         {
-            Debug.Log("[MatchController] OnDisable");
-            if (client != null)
-            {
-                client.OnCardsDrawn -= HandleCardsDrawn;
-                client.OnLog -= HandleNetLog;
-            }
-
+            if (client != null) client.OnCardsDrawn -= HandleCardsDrawn;
             if (PhaseManager.Instance != null)
                 PhaseManager.Instance.OnEnterStandBy -= HandleEnterStandByDraw;
-
         }
 
         private async void HandleEnterStandByDraw()
@@ -66,33 +53,26 @@ namespace VortexTCG.Scripts.MatchScene
             try
             {
                 await RequestDraw(1, HandUpdateMode.Append);
-                Debug.Log("[MatchController] Enter StandBy -> drew 1 card");
             }
             catch (Exception ex)
             {
-                Debug.LogError("[MatchController] StandBy draw failed: " + ex);
+                Debug.LogError("[MatchController3D] StandBy draw failed: " + ex);
             }
-        }
-
-        private void HandleNetLog(string s)
-        {
-            Debug.Log("[SignalR] " + s);
         }
 
         private async Task RequestDraw(int amount, HandUpdateMode mode)
         {
-            if (!client.IsConnected) return;
+            if (client == null || !client.IsConnected) return;
+            if (networkRef == null || networkRef.Client == null) return;
 
             int pos = networkRef.PlayerPosition;
             if (pos != 1 && pos != 2)
             {
-                Debug.LogError($"[MatchController] PlayerPosition invalide: {pos}");
+                Debug.LogError($"[MatchController3D] PlayerPosition invalide: {pos}");
                 return;
             }
 
             _pendingHandModes.Enqueue(mode);
-
-            Debug.Log($"[MatchController] -> DrawCards(amount={amount}, mode={mode})");
             await networkRef.Client.DrawCards(pos, amount);
         }
 
@@ -107,32 +87,33 @@ namespace VortexTCG.Scripts.MatchScene
             }
             catch (Exception ex)
             {
-                Debug.LogError("[MatchController] RequestInitialHand exception: " + ex);
+                Debug.LogError("[MatchController3D] RequestInitialHand exception: " + ex);
                 initialDrawRequested = false;
             }
         }
 
-
         private void HandleCardsDrawn(DrawResultForPlayerDto result)
         {
-            int count = result?.DrawnCards?.Count ?? -1;
-            Debug.Log($"[MatchController] CardsDrawn received. count={count}");
+            int handAdded = result?.DrawnCards?.Count ?? 0;
+            int burned = result?.SentToGraveyard?.Count ?? 0;
+            Debug.Log($"[MatchController3D] CardsDrawn received. hand+={handAdded} burned={burned}");
 
             if (handManager == null) return;
 
-            if (result?.SentToGraveyard != null && result.SentToGraveyard.Count > 0)
-                graveyardManager?.AddCards(result.SentToGraveyard);
             HandUpdateMode mode = _pendingHandModes.Count > 0
                 ? _pendingHandModes.Dequeue()
                 : HandUpdateMode.Append;
+
+            if (mode == HandUpdateMode.Replace)
+                graveyardManager?.ResetGraveyard();
+            if (burned > 0)
+                graveyardManager?.AddCards(result.SentToGraveyard);
             if (result?.DrawnCards != null)
             {
-                if (mode == HandUpdateMode.Replace)
-                    handManager.SetHand(result.DrawnCards);
-                else
-                    handManager.AddCards(result.DrawnCards);
+                if (mode == HandUpdateMode.Replace) handManager.SetHand(result.DrawnCards);
+                else handManager.AddCards(result.DrawnCards);
             }
-
+    
             if (!_startStandbyBonusDone
                 && mode == HandUpdateMode.Replace
                 && PhaseManager.Instance != null
@@ -140,7 +121,6 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 _startStandbyBonusDone = true;
                 _ = RequestDraw(1, HandUpdateMode.Append);
-                Debug.Log("[MatchController] Start StandBy bonus draw +1");
             }
         }
     }

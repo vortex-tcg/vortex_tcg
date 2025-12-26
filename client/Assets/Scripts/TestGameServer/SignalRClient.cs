@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using UnityEngine;
-using DrawDTOs;
+using VortexTCG.Scripts.DTOs;
 using System.Text.Json;
 
 [DefaultExecutionOrder(-1000)]
@@ -96,6 +96,8 @@ public class SignalRClient : MonoBehaviour
 		 int pos = 0;
     	 if (payload.TryGetProperty("position", out JsonElement posEl) && posEl.TryGetInt32(out int p))
         	pos = p;
+         Debug.Log($"[SignalRClient] Matched key={key} pos={pos} networkRefNull={(networkRef == null)}");
+    
 		 networkRef?.SetMatch(key, pos); 
 		 OnMatched?.Invoke(key);
     	 OnLog?.Invoke($"Match trouvé ! Salle: {key} (pos={pos})");
