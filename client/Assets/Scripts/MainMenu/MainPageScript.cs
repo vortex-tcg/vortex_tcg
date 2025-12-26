@@ -1,99 +1,176 @@
 using System;
 using System.Threading.Tasks;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+using UnityEngine.UIElements;
 
 public class MainPageMenu : MonoBehaviour
 {
-    [Header("UI")]
-    public Button playWithFriendsButton;
-    public TMP_Text statusText; 
+    [Header("UI Toolkit (UXML names)")]
+    [Tooltip("UIDocument qui contient MainPageHUDVisualTree. Si null, GetComponent<UIDocument>().")]
+    [SerializeField] private UIDocument uiDocument;
+        [SerializeField] private string searchOpponentButtonName = "PlayButton";
+    [SerializeField] private string inviteFriendButtonName = "PlayWithFriendsButton";
+
+    [SerializeField] private string statusTextName = "StatusText";        
+    [SerializeField] private string searchingPanelName = "SearchingPanel"; 
+
     [SerializeField] private NetworkRef networkRef;
+    [SerializeField] private string deckId = "d3b07384-d9a1-4d3b-92d8-4f5c6e7a8b9c";
+
     [Header("Options")]
     [Tooltip("Si aucune connexion n’existe, le menu la crée & s’identifie ici.")]
     public bool connectHereIfNeeded = true;
+
     public bool verboseLogs = true;
+
+    [Header("Navigation")]
+    [SerializeField] private string matchSceneName = "3DMatchScene";
+    private Button searchOpponentButton;
+    private Button inviteFriendButton;
+    private Label statusText;                 
+    private VisualElement searchingPanel;   
 
     private SignalRClient client;
 
     private void OnEnable()
     {
-          var client = networkRef ? networkRef.Client : SignalRClient.Instance;
+        if (uiDocument == null) uiDocument = GetComponent<UIDocument>();
+        if (uiDocument == null)
+        {
+            Debug.LogError("[MainPageMenu] UIDocument manquant sur ce GameObject (ou non assigné).");
+            return;
+        }
 
-        if (playWithFriendsButton)
-            playWithFriendsButton.onClick.AddListener(OnClickSearchOpponent);
+        VisualElement root = uiDocument.rootVisualElement;
+        searchOpponentButton = root.Q<Button>(searchOpponentButtonName);
+        inviteFriendButton = root.Q<Button>(inviteFriendButtonName);
+        statusText = root.Q<Label>(statusTextName);
+        searchingPanel = root.Q<VisualElement>(searchingPanelName);
+
+        if (searchOpponentButton != null)
+            searchOpponentButton.clicked += OnClickSearchOpponent;
+        else
+            Debug.LogWarning($"[MainPageMenu] Bouton '{searchOpponentButtonName}' introuvable dans l'UXML.");
+
+        if (inviteFriendButton != null)
+            inviteFriendButton.clicked += OnClickInviteFriend;
+        else
+            Debug.LogWarning($"[MainPageMenu] Bouton '{inviteFriendButtonName}' introuvable dans l'UXML.");
+
+        SetVisible(searchingPanel, false);
+
+        // --- Réseau (ton code d'avant, inchangé dans l'esprit) ---
+        client = (networkRef != null && networkRef.Client != null)
+            ? networkRef.Client
+            : SignalRClient.Instance;
 
         if (client != null)
         {
             Subscribe(client);
-            SetStatus(client.IsConnected ? "Connecté, prêt." : "Connexion en cours…");
+            if (client.IsConnected)
+            {
+                SetStatus("Connecté, prêt.");
+            }
+            else
+            {
+                SetStatus("Connexion en cours…");
+                if (connectHereIfNeeded)
+                {
+                    Task<bool> _ = ConnectIfNeeded();
+                }
+            }
         }
         else
         {
             SetStatus("Non connecté.");
-            if (connectHereIfNeeded) _ = ConnectIfNeeded();
+            if (connectHereIfNeeded)
+            {
+                Task<bool> _ = ConnectIfNeeded();
+            }
         }
     }
 
     private void OnDisable()
     {
-        if (playWithFriendsButton)
-            playWithFriendsButton.onClick.RemoveListener(OnClickSearchOpponent);
-        if (client != null) Unsubscribe(client);
+        if (searchOpponentButton != null)
+            searchOpponentButton.clicked -= OnClickSearchOpponent;
+
+        if (inviteFriendButton != null)
+            inviteFriendButton.clicked -= OnClickInviteFriend;
+
+        if (client != null)
+            Unsubscribe(client);
     }
 
     private void Subscribe(SignalRClient c)
     {
-        c.OnStatus       += HandleStatus;
-        c.OnMatched      += HandleMatched;
+        c.OnStatus += HandleStatus;
+        c.OnMatched += HandleMatched;
         c.OnOpponentLeft += HandleOpponentLeft;
-        c.OnLog          += HandleLog;
+        c.OnLog += HandleLog;
     }
+
     private void Unsubscribe(SignalRClient c)
     {
-        c.OnStatus       -= HandleStatus;
-        c.OnMatched      -= HandleMatched;
+        c.OnStatus -= HandleStatus;
+        c.OnMatched -= HandleMatched;
         c.OnOpponentLeft -= HandleOpponentLeft;
-        c.OnLog          -= HandleLog;
+        c.OnLog -= HandleLog;
     }
 
-    // ---------- Connexion (si besoin) ----------
     private async Task<bool> ConnectIfNeeded()
     {
-        // 1) Instance
         client = SignalRClient.Instance;
-        if (client == null)
+        if (client != null && networkRef != null)
         {
-            if (!connectHereIfNeeded) { SetStatus("Réseau non prêt. Retour via Login."); return false; }
-            Log("[MainPage] Création d’un SignalRClient (menu).");
-            var go = new GameObject("NetworkRoot");
-            client = go.AddComponent<SignalRClient>(); // DontDestroyOnLoad dans Awake()
-            Subscribe(client);
+            networkRef.Bind(client);
+            client.BindNetworkRef(networkRef);
         }
 
-        // 2) Hub URL depuis la config
-        var cfg = ConfigLoader.Load();
-        var hubUrl = ConfigLoader.BuildGameHubUrl(cfg);
+        if (client == null)
+        {
+            if (!connectHereIfNeeded)
+            {
+                SetStatus("Réseau non prêt. Retour via Login.");
+                return false;
+            }
+
+            Log("[MainPage] Création d’un SignalRClient (menu).");
+            GameObject go = new GameObject("NetworkRoot");
+            client = go.AddComponent<SignalRClient>();
+            Subscribe(client);
+
+            if (networkRef != null)
+            {
+                networkRef.Bind(client);
+                client.BindNetworkRef(networkRef);
+            }
+            else
+            {
+                Debug.LogWarning("[MainPage] networkRef est null, Bind non effectué.");
+            }
+        }
+
+        AppConfig cfg = ConfigLoader.Load();
+        string hubUrl = ConfigLoader.BuildGameHubUrl(cfg);
         if (!string.IsNullOrWhiteSpace(hubUrl))
             client.hubUrl = hubUrl;
 
-        // 3) JWT si dispo
         if (Jwt.I != null && Jwt.I.IsJwtPresent())
             client.SetAuthToken(Jwt.I.Token);
 
-        // 4) Déjà connecté ?
-        if (client.IsConnected) return true;
+        if (client.IsConnected)
+            return true;
 
-        // 5) Connect + identify
         string displayName = "UnityPlayer";
-        if (Jwt.I != null && Jwt.I.TryGetClaim("email", out var email) && !string.IsNullOrEmpty(email))
+        string email;
+        if (Jwt.I != null && Jwt.I.TryGetClaim("email", out email) && !string.IsNullOrEmpty(email))
             displayName = email.Split('@')[0];
 
         SetStatus("Connexion au serveur…");
         await client.ConnectAndIdentify(displayName);
 
-        // 6) Attendre un court instant l’état connecté
         bool ok = await WaitUntilConnected(client, 6f);
         SetStatus(ok ? "Connecté, prêt." : "Pas connecté.");
         return ok;
@@ -107,54 +184,99 @@ public class MainPageMenu : MonoBehaviour
         return c.IsConnected;
     }
 
-    // ---------- Clic matchmaking ----------
     private async void OnClickSearchOpponent()
     {
-        playWithFriendsButton.interactable = false;
+        SetButtonsEnabled(false);
+
         try
         {
-            if (!await ConnectIfNeeded())
+            bool connected = await ConnectIfNeeded();
+            if (!connected)
             {
                 SetStatus("Connexion impossible.");
                 return;
             }
 
             SetStatus("Recherche d’un adversaire…");
-            await client.JoinQueue(); // SafeSend côté client → aucun arg fantôme
+            SetVisible(searchingPanel, true);
+
+            if (!Guid.TryParse(deckId, out Guid deckGuid))
+            {
+                SetStatus("Deck ID invalide.");
+                SetVisible(searchingPanel, false);
+                return;
+            }
+
+            await client.JoinQueue(deckGuid);
             Log("[MainPage] JoinQueue envoyé.");
         }
         catch (Exception ex)
         {
             Debug.LogException(ex);
             SetStatus("Erreur matchmaking.");
+            SetVisible(searchingPanel, false);
         }
         finally
         {
-            playWithFriendsButton.interactable = true;
+            SetButtonsEnabled(true);
         }
     }
 
-    // ---------- Events du client ----------
-    private void HandleStatus(string s) => SetStatus(s);
-    private void HandleLog(string s)    { Log("[SignalR] " + s); }
+    private void OnClickInviteFriend()
+    {
+        Log("[MainPage] Inviter un ami (non implémenté pour l’instant).");
+    }
+
+    private void HandleStatus(string s)
+    {
+        SetStatus(s);
+    }
+
+    private void HandleLog(string s)
+    {
+        Log("[SignalR] " + s);
+    }
 
     private void HandleMatched(string roomKey)
     {
-        SetStatus("Adversaire trouvé !");
-        // TODO: charger la scène de jeu ici si besoin
-        // SceneManager.LoadScene("BoardScene");
+        Log("[MAIN] HandleMatched reçu, salle: " + roomKey);
+        SetVisible(searchingPanel, false);
+        SceneManager.LoadScene(matchSceneName);
     }
 
     private void HandleOpponentLeft()
     {
+        SetVisible(searchingPanel, false);
         SetStatus("L’adversaire a quitté.");
     }
 
-    // ---------- UI utils ----------
     private void SetStatus(string msg)
     {
-        if (statusText) statusText.text = msg;
+        // UI Toolkit: Label.text
+        if (statusText != null)
+            statusText.text = msg;
+
         Log("[STATUS] " + msg);
     }
-    private void Log(string m) { if (verboseLogs) Debug.Log(m); }
+
+    private void Log(string m)
+    {
+        if (verboseLogs)
+            Debug.Log(m);
+    }
+
+    // ---- Helpers UI Toolkit ----
+
+    private void SetButtonsEnabled(bool enabled)
+    {
+        // UI Toolkit: SetEnabled au lieu de interactable
+        searchOpponentButton?.SetEnabled(enabled);
+        inviteFriendButton?.SetEnabled(enabled);
+    }
+
+    private static void SetVisible(VisualElement ve, bool visible)
+    {
+        if (ve == null) return;
+        ve.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+    }
 }

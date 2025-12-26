@@ -1,283 +1,270 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.UIElements;
-using System.Linq;
+using VortexTCG.Scripts.DTOs;
 
-public class HandManager : MonoBehaviour
+namespace VortexTCG.Scripts.MatchScene
 {
-    [Header("UI Toolkit References")]
-    [SerializeField] private VisualTreeAsset SmallCard;
-    [SerializeField] private VisualTreeAsset CardPreview;
-    [SerializeField] private VisualTreeAsset EmptyCardPreview;
-
-    private VisualElement handZone;
-    private VisualElement previewZone;
-    private VisualElement boardZone;
-    private VisualElement enemyBoardZone;
-
-    private List<VisualElement> boardSlots = new List<VisualElement>();
-    private List<VisualElement> enemySlots = new List<VisualElement>();
-    private List<CardDTO> playerHand = new List<CardDTO>();
-
-    private VisualElement draggedElement;
-    private CardDTO draggedCard;
-    private bool isDragging;
-    private Vector2 dragOffset;
-
-    private VisualElement originalParent;
-    private int originalIndex;
-
-    private DefenseManager defenseManager;
-
-    private bool CanDrag => PhaseManager.Instance != null &&
-                            (PhaseManager.Instance.CurrentPhase == GamePhase.StandBy ||
-                             PhaseManager.Instance.CurrentPhase == GamePhase.Defense);
-
-    private void OnEnable()
+    public class HandManager : MonoBehaviour
     {
-        UIDocument uiDoc = GetComponent<UIDocument>();
-        if (uiDoc == null) return;
+        public static HandManager Instance { get; private set; }
+        public Card CardPrefab => cardPrefab;
+        public Transform HandRoot => handRoot;
 
-        VisualElement root = uiDoc.rootVisualElement;
-        if (root == null) return;
+        [Header("Hand Spawn")]
+        [SerializeField] private Card cardPrefab;
+        [SerializeField] private Transform handRoot;
+        [SerializeField] private float cardSpacing = 1.2f;
 
-        handZone = root.Q<VisualElement>("P1CardsFrame");
-        previewZone = root.Q<VisualElement>("CardPreview");
-        boardZone = root.Q<VisualElement>("P1BoardCards");
-        enemyBoardZone = root.Q<VisualElement>("P2BoardCards");
+        [HideInInspector] public Card SelectedCard;
 
-        if (boardZone != null)
-            boardSlots = boardZone.Query<VisualElement>(className: "P1Slot").ToList();
+        private readonly List<Card> handCards = new();
+        private bool _playRequestInFlight;
+        private Card _pendingCard;
+        private CardSlot _pendingSlot;
 
-        if (enemyBoardZone != null)
-            enemySlots = enemyBoardZone.Query<VisualElement>(className: "P2Slot").ToList();
+        private CancellationTokenSource _pendingTimeoutCts;
 
-        root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
-        root.RegisterCallback<PointerUpEvent>(OnPointerUp);
+        public bool HasPendingPlay => _playRequestInFlight;
 
-        defenseManager = FindObjectOfType<DefenseManager>();
-
-        if (handZone == null || previewZone == null || SmallCard == null || CardPreview == null)
-            return;
-
-        playerHand = MockFetchPlayerHand();
-        GenerateHand(playerHand);
-    }
-
-    private void GenerateHand(List<CardDTO> cards)
-    {
-        handZone.Clear();
-
-        foreach (CardDTO card in cards)
+        private void Awake()
         {
-            VisualElement cardElement = SmallCard.Instantiate();
-            if (cardElement == null) continue;
-
-            cardElement.userData = false;
-
-            SetLabel(cardElement, "Name", card.Name);
-            SetLabel(cardElement, "Cost", card.Cost.ToString());
-
-            cardElement.RegisterCallback<MouseEnterEvent>(_ => ShowPreview(card));
-
-            cardElement.RegisterCallback<PointerDownEvent>(e =>
+            if (Instance != null && Instance != this)
             {
-                if (CanDrag)
-                    StartDrag(cardElement, card, e);
-                e.StopPropagation();
-            });
-
-            cardElement.RegisterCallback<MouseLeaveEvent>(_ => ClearPreview());
-
-            handZone.Add(cardElement);
-        }
-    }
-
-    private void ShowPreview(CardDTO card)
-    {
-        previewZone.Clear();
-        VisualElement previewCard = CardPreview.Instantiate();
-
-        SetLabel(previewCard, "Name", card.Name);
-        SetLabel(previewCard, "Cost", card.Cost.ToString());
-        SetLabel(previewCard, "ATKPoints", card.Attack > 0 ? card.Attack.ToString() : "-");
-        SetLabel(previewCard, "DEFPoints", card.Hp > 0 ? card.Hp.ToString() : "-");
-        SetLabel(previewCard, "LoreDesc", card.Description);
-
-        previewZone.Add(previewCard);
-        previewZone.style.display = DisplayStyle.Flex;
-    }
-
-    private void ClearPreview()
-    {
-        previewZone.Clear();
-        if (EmptyCardPreview != null)
-        {
-            VisualElement emptyPreview = EmptyCardPreview.Instantiate();
-            previewZone.Add(emptyPreview);
-        }
-        previewZone.style.display = DisplayStyle.Flex;
-    }
-
-    private void SetLabel(VisualElement parent, string name, string value)
-    {
-        Label label = parent.Q<Label>(name);
-        if (label != null)
-            label.text = value;
-    }
-
-    private void StartDrag(VisualElement cardElement, CardDTO card, PointerDownEvent e)
-    {
-        draggedElement = cardElement;
-        draggedCard = card;
-        isDragging = true;
-
-        originalParent = cardElement.parent;
-        originalIndex = originalParent.IndexOf(cardElement);
-
-        Vector2 mousePos = e.position;
-        Vector2 elementWorldPos = cardElement.worldBound.position;
-        dragOffset = mousePos - elementWorldPos;
-
-        draggedElement.style.position = Position.Absolute;
-        draggedElement.BringToFront();
-
-        Vector2 parentWorldPos = draggedElement.parent.worldBound.position;
-        Vector2 local = mousePos - parentWorldPos - dragOffset;
-
-        draggedElement.style.left = local.x;
-        draggedElement.style.top = local.y;
-    }
-
-    private void OnPointerMove(PointerMoveEvent e)
-    {
-        if (!isDragging || draggedElement == null) return;
-
-        Vector2 mousePos = e.position;
-        Vector2 parentWorldPos = draggedElement.parent.worldBound.position;
-        Vector2 local = mousePos - parentWorldPos - dragOffset;
-
-        draggedElement.style.left = local.x;
-        draggedElement.style.top = local.y;
-    }
-
-    private void OnPointerUp(PointerUpEvent e)
-    {
-        if (!isDragging || draggedElement == null) return;
-
-        isDragging = false;
-        Vector2 mousePos = e.position;
-
-        if (PhaseManager.Instance.CurrentPhase == GamePhase.StandBy)
-        {
-            if (TryDropOnBoard(mousePos, boardSlots))
-            {
-                ClearDrag();
+                Destroy(gameObject);
                 return;
             }
+            Instance = this;
         }
-        else if (PhaseManager.Instance.CurrentPhase == GamePhase.Defense)
-        {
-            VisualElement enemySlot = enemySlots.FirstOrDefault(slot =>
-                slot.childCount > 0 && slot.worldBound.Contains(mousePos));
 
-            if (enemySlot != null)
+        public void SetHand(List<DrawnCardDto> drawnCards)
+        {
+            ClearHand();
+            AddCards(drawnCards);
+        }
+
+        public void AddCards(List<DrawnCardDto> drawnCards)
+        {
+            if (drawnCards == null || drawnCards.Count == 0) return;
+
+            if (cardPrefab == null || handRoot == null)
             {
-                VisualElement enemyCard = enemySlot.Q<VisualElement>(className: "small-card");
-                if (enemyCard != null && defenseManager != null)
+                Debug.LogError("[HandManager] cardPrefab ou handRoot non assigné.");
+                return;
+            }
+
+            foreach (var dto in drawnCards)
+            {
+                Card card = Instantiate(cardPrefab, handRoot);
+                card.ApplyDTO(
+                    dto.GameCardId.ToString(),
+                    dto.Name,
+                    dto.Hp,
+                    dto.Attack,
+                    dto.Cost,
+                    dto.Description,
+                    ""
+                );
+
+                EnsureCollider(card);
+                handCards.Add(card);
+            }
+
+            LayoutHand();
+        }
+
+        public void SelectCard(Card card)
+        {
+            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.ATTACK)
+                return;
+
+            if (SelectedCard != null)
+                SelectedCard.SetSelected(false);
+
+            SelectedCard = card;
+
+            if (SelectedCard != null)
+                SelectedCard.SetSelected(true);
+        }
+
+        public void DeselectCurrentCard()
+        {
+            if (SelectedCard != null)
+            {
+                SelectedCard.SetSelected(false);
+                SelectedCard = null;
+            }
+        }
+        public async Task RequestPlaySelectedCard(CardSlot slot)
+        {
+            if (_playRequestInFlight)
+            {
+                Debug.Log("[HandManager] RequestPlaySelectedCard STOP: already in flight");
+                return;
+            }
+
+            if (SelectedCard == null) return;
+            if (slot == null) return;
+
+            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase != GamePhase.PLACEMENT)
+                return;
+
+            if (!slot.CanAccept(SelectedCard)) return;
+
+            if (!int.TryParse(SelectedCard.cardId, out int gameCardId))
+            {
+                Debug.LogError("[HandManager] SelectedCard.cardId pas un int: " + SelectedCard.cardId);
+                return;
+            }
+
+            var client = SignalRClient.Instance;
+            if (client == null || !client.IsConnected)
+            {
+                Debug.LogWarning("[HandManager] SignalRClient pas connecté.");
+                return;
+            }
+
+            _playRequestInFlight = true;
+            _pendingCard = SelectedCard;
+            _pendingSlot = slot;
+
+            Debug.Log($"[HandManager] RequestPlaySelectedCard -> PlayCard(gameCardId={gameCardId}, loc={slot.slotIndex})");
+            StartPendingTimeout(2500);
+
+            try
+            {
+                await client.PlayCard(gameCardId, slot.slotIndex);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError("[HandManager] PlayCard invoke failed: " + ex);
+                CancelPendingPlay("Invoke exception");
+            }
+        }
+
+        private void StartPendingTimeout(int ms)
+        {
+            try { _pendingTimeoutCts?.Cancel(); } catch { }
+            _pendingTimeoutCts = new CancellationTokenSource();
+            var token = _pendingTimeoutCts.Token;
+
+            _ = Task.Run(async () =>
+            {
+                try
                 {
-                    defenseManager.TryAssignDefense(draggedElement, enemyCard);
+                    await Task.Delay(ms, token);
+                    if (token.IsCancellationRequested) return;
+                    if (_playRequestInFlight)
+                    {
+                        Debug.LogWarning("[HandManager] Pending play timeout -> unlock");
+                        CancelPendingPlay("timeout");
+                    }
+                    
                 }
+                catch { /* ignore */ }
+            });
+        } public void ConfirmPlayFromServer(int gameCardId, int location, bool canPlayed)
+        {
+            try { _pendingTimeoutCts?.Cancel(); } catch { }
 
-                ResetCardPosition(draggedElement);
-                ClearDrag();
+            _playRequestInFlight = false;
+
+            if (!canPlayed)
+            {
+                Debug.LogWarning("[HandManager] Serveur a refusé la pose (PlayCardResult canPlayed=false).");
+                _pendingCard = null;
+                _pendingSlot = null;
                 return;
+            }
+            Card cardToPlace = null;
+
+            if (_pendingCard != null && int.TryParse(_pendingCard.cardId, out int pendingId) && pendingId == gameCardId)
+                cardToPlace = _pendingCard;
+            else
+                cardToPlace = FindCardInHand(gameCardId);
+
+            if (cardToPlace == null)
+            {
+                Debug.LogWarning($"[HandManager] Carte {gameCardId} introuvable dans la main (déjà déplacée ?)");
+                _pendingCard = null;
+                _pendingSlot = null;
+                return;
+            }
+            CardSlot slot = _pendingSlot;
+
+            if (slot == null || slot.slotIndex != location)
+            {
+                Debug.LogWarning("[HandManager] Pending slot null ou location mismatch (prévois un mapping global si besoin).");
+            }
+
+            if (slot != null)
+            {
+                slot.PlaceCard(cardToPlace);
+                handCards.Remove(cardToPlace);
+                if (SelectedCard == cardToPlace) DeselectCurrentCard();
+                LayoutHand();
+            }
+
+            _pendingCard = null;
+            _pendingSlot = null;
+        }
+        public void CancelPendingPlay(string reason)
+        {
+            try { _pendingTimeoutCts?.Cancel(); } catch { }
+
+            if (_playRequestInFlight)
+                Debug.LogWarning("[HandManager] CancelPendingPlay -> " + reason);
+
+            _playRequestInFlight = false;
+            _pendingCard = null;
+            _pendingSlot = null;
+        }
+
+        private Card FindCardInHand(int gameCardId)
+        {
+            foreach (var c in handCards)
+            {
+                if (c == null) continue;
+                if (int.TryParse(c.cardId, out int id) && id == gameCardId)
+                    return c;
+            }
+            return null;
+        }
+
+        private void ClearHand()
+        {
+            DeselectCurrentCard();
+
+            foreach (var c in handCards)
+                if (c != null) Destroy(c.gameObject);
+
+            handCards.Clear();
+
+            CancelPendingPlay("clear hand");
+        }
+
+        private void LayoutHand()
+        {
+            for (int i = 0; i < handCards.Count; i++)
+            {
+                var c = handCards[i];
+                if (c == null) continue;
+
+                c.transform.localPosition = new Vector3(i * cardSpacing, 0f, 0f);
+                c.transform.localRotation = Quaternion.identity;
             }
         }
 
-        ResetCardPosition(draggedElement);
-        ClearDrag();
-    }
-
-    private void ResetCardPosition(VisualElement cardElement)
-    {
-        if (originalParent != null)
+        private static void EnsureCollider(Card card)
         {
-            cardElement.RemoveFromHierarchy();
-            originalParent.Insert(originalIndex, cardElement);
+            if (card == null) return;
+            if (card.GetComponent<Collider>() == null)
+            {
+                var bc = card.gameObject.AddComponent<BoxCollider>();
+                bc.size = Vector3.one;
+            }
         }
-
-        cardElement.style.position = Position.Relative;
-        cardElement.style.left = StyleKeyword.Null;
-        cardElement.style.top = StyleKeyword.Null;
     }
-
-    private bool TryDropOnBoard(Vector2 mousePos, List<VisualElement> slots, bool requireCardInSlot = false)
-    {
-        foreach (VisualElement slot in slots)
-        {
-            if (slot == null) continue;
-            if (!slot.worldBound.Contains(mousePos)) continue;
-
-            if (!requireCardInSlot && slot.childCount > 0) return false;
-            if (requireCardInSlot && slot.childCount == 0) continue;
-
-            draggedElement.RemoveFromHierarchy();
-            slot.Add(draggedElement);
-
-            draggedElement.style.position = Position.Relative;
-            draggedElement.style.left = StyleKeyword.Null;
-            draggedElement.style.top = StyleKeyword.Null;
-
-            draggedElement.userData = true;
-            draggedElement.AddToClassList("on-board");
-
-            AttackManager attackManager = FindObjectOfType<AttackManager>();
-            if (attackManager != null)
-                attackManager.RegisterCard(draggedElement);
-
-            return true;
-        }
-
-        return false;
-    }
-
-
-    private void ClearDrag()
-    {
-        draggedElement = null;
-        draggedCard = null;
-    }
-
-    private List<CardDTO> MockFetchPlayerHand()
-    {
-        return new List<CardDTO>
-        {
-            new CardDTO{ Id = Guid.NewGuid(), Name = "Pyromancien", Hp = 3, Attack = 2, Cost = 1, Description = "Inflige 1 dmg.", CardType = CardType.Creature },
-            new CardDTO{ Id = Guid.NewGuid(), Name = "Garde", Hp = 6, Attack = 1, Cost = 2, Description = "Provocation.", CardType = CardType.Creature },
-            new CardDTO{ Id = Guid.NewGuid(), Name = "Boule de feu", Hp = 0, Attack = 0, Cost = 3, Description = "Inflige 4 dmg.", CardType = CardType.Spell },
-            new CardDTO{ Id = Guid.NewGuid(), Name = "Archère", Hp = 2, Attack = 3, Cost = 2, Description = "Bonus si PV < 10.", CardType = CardType.Creature },
-            new CardDTO{ Id = Guid.NewGuid(), Name = "Soin mineur", Hp = 0, Attack = 0, Cost = 1, Description = "Restaure 3 PV.", CardType = CardType.Spell }
-        };
-    }
-}
-
-[Serializable]
-public class CardDTO
-{
-    public Guid Id;
-    public string Name;
-    public int Hp;
-    public int Attack;
-    public int Cost;
-    public string Description;
-    public CardType CardType;
-}
-
-public enum CardType
-{
-    Creature,
-    Spell,
-    Artifact
 }

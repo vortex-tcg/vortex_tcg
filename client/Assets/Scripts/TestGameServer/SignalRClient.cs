@@ -2,9 +2,11 @@ using System;
 using System.Collections.Concurrent;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.AspNetCore.Http.Connections; 
 using UnityEngine;
+using VortexTCG.Scripts.DTOs;
+using System.Text.Json;
 
 [DefaultExecutionOrder(-1000)]
 public class SignalRClient : MonoBehaviour
@@ -14,6 +16,8 @@ public class SignalRClient : MonoBehaviour
     [Header("Hub URL (ASP.NET)")]
     [Tooltip("Sera remplacé par la valeur de application-properties.json au démarrage.")]
     public string hubUrl = "https://localhost:5003/hubs/game";
+	[SerializeField] private NetworkRef networkRef;
+	public void BindNetworkRef(NetworkRef nr) => networkRef = nr;
 
     [Header("Options")]
     public bool autoConnectOnStart = false;
@@ -23,16 +27,25 @@ public class SignalRClient : MonoBehaviour
 
     private HubConnection _conn;
     private string _accessToken;
-    private string _currentKeyOrCode;  
-    private string _mode;              
+    private string _currentKeyOrCode;
+    private string _mode;
+	private bool _startGameRequested;
+
     public event Action<string> OnStatus;
     public event Action<string> OnLog;
     public event Action<string> OnMatched;
     public event Action OnOpponentLeft;
+	public event Action<PhaseChangeResultDTO> OnGameStarted;
+	public event Action<PhaseChangeResultDTO> OnPhaseChanged;
+	
+    public event Action<DrawResultForPlayerDto> OnCardsDrawn;
+    public event Action<DrawResultForOpponentDto> OnOpponentCardsDrawn;
+    public event Action<PlayCardPlayerResultDto> OnPlayCardResult;
+    public event Action<PlayCardOpponentResultDto> OnOpponentPlayCardResult;
 
     private readonly ConcurrentQueue<Action> _main = new();
     private void Enqueue(Action a) => _main.Enqueue(a);
-    private void Update() { while (_main.TryDequeue(out var a)) a(); }
+    private void Update() { while (_main.TryDequeue(out Action a)) a(); }
 
     private void Awake()
     {
@@ -42,8 +55,8 @@ public class SignalRClient : MonoBehaviour
 
         try
         {
-            var cfg = ConfigLoader.Load();
-            var url = ConfigLoader.BuildGameHubUrl(cfg);
+            AppConfig cfg = ConfigLoader.Load();
+            string url = ConfigLoader.BuildGameHubUrl(cfg);
             if (!string.IsNullOrWhiteSpace(url)) hubUrl = url;
             Debug.Log("[SignalR] hubUrl from config = " + hubUrl);
         }
@@ -65,6 +78,7 @@ public class SignalRClient : MonoBehaviour
     }
 
     public void SetAuthToken(string token) => _accessToken = token;
+
     public async Task ConnectAndIdentify(string playerName)
     {
         await EnsureConnected(playerName);
@@ -74,24 +88,56 @@ public class SignalRClient : MonoBehaviour
     public async Task EnsureConnected(string playerName)
     {
         if (_conn != null && _conn.State == HubConnectionState.Connected) return;
-
         _conn = BuildConnection();
-
         _conn.On<string>("Connected", id => Enqueue(() =>
         {
             OnStatus?.Invoke($"Connecté: {id}");
             OnLog?.Invoke("Connecté au hub.");
         }));
-
         _conn.On("Waiting", () => Enqueue(() => OnStatus?.Invoke("En attente d'un adversaire...")));
+       _conn.On<string, JsonElement>("Matched", (key, payload) => Enqueue(() =>
+	   {
+    	 _currentKeyOrCode = key;
+		 int pos = 0;
+    	 if (payload.TryGetProperty("position", out JsonElement posEl) && posEl.TryGetInt32(out int p))
+        	pos = p;
+         Debug.Log($"[SignalRClient] Matched key={key} pos={pos} networkRefNull={(networkRef == null)}");
+    
+		 networkRef?.SetMatch(key, pos); 
+		 OnMatched?.Invoke(key);
+    	 OnLog?.Invoke($"Match trouvé ! Salle: {key} (pos={pos})");
+ 		if (pos == 1 && !_startGameRequested)
+    	{
+        	_startGameRequested = true;
+        	_ = SafeInvoke("StartGame");
+        	OnLog?.Invoke("[SignalR] pos=1 -> StartGame()");
+    	}
+		 }));
 
-        _conn.On<string, object>("Matched", (key, payloadObj) => Enqueue(() =>
-        {
-            _currentKeyOrCode = key;
-            OnMatched?.Invoke(key);
-            OnLog?.Invoke($"Match trouvé ! Salle: {key}");
-        }));
+         _conn.On<PlayCardPlayerResultDto>("PlayCardResult", dto => Enqueue(() =>
+         {
+             Debug.Log("[SignalRClient] PlayCardResult reçu");
+             OnPlayCardResult?.Invoke(dto);
+         }));
 
+
+         _conn.On<PlayCardOpponentResultDto>("OpponentPlayCardResult", dto => Enqueue(() =>
+         {
+             Debug.Log("[SignalRClient] OpponentPlayCardResult reçu");
+             OnOpponentPlayCardResult?.Invoke(dto);
+         }));
+    
+		_conn.On<PhaseChangeResultDTO>("GameStarted", r => Enqueue(() =>
+		{
+    		OnGameStarted?.Invoke(r);
+   			OnLog?.Invoke($"GameStarted: phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct}");
+		}));
+
+		_conn.On<PhaseChangeResultDTO>("PhaseChanged", r => Enqueue(() =>
+		{
+    		OnPhaseChanged?.Invoke(r);
+    		OnLog?.Invoke($"PhaseChanged: phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct} auto={r.AutoChanged}");
+		}));
         _conn.On<string, string, string>("ReceiveRoomMessage", (key, from, text) =>
             Enqueue(() => OnLog?.Invoke($"{from}: {text}")));
 
@@ -112,8 +158,29 @@ public class SignalRClient : MonoBehaviour
         _conn.On<string>("OpponentLeft", _ => Enqueue(() =>
         {
             OnOpponentLeft?.Invoke();
-            OnLog?.Invoke(" L'adversaire a quitté.");
+			networkRef?.ResetMatch();
+			_startGameRequested = false;
+            OnLog?.Invoke("L'adversaire a quitté.");
         }));
+
+        _conn.On<DrawResultForPlayerDto>("CardsDrawn", r => Enqueue(() =>
+        {
+            Debug.Log($"[SignalRClient]  CardsDrawn reçu. cards={r?.DrawnCards?.Count ?? -1}");
+    		Debug.Log("[RAW CardsDrawn] " + r.ToString());
+
+            OnCardsDrawn?.Invoke(r);
+        }));
+
+        _conn.On<DrawResultForOpponentDto>("OpponentCardsDrawn", r => Enqueue(() =>
+        {
+            OnOpponentCardsDrawn?.Invoke(r);
+            OnLog?.Invoke($"OpponentCardsDrawn reçu: {r?.CardsDrawnCount ?? 0} cartes");
+        }));
+		_conn.On<string>("Error", msg => Enqueue(() =>
+		{
+  			  Debug.LogError("[Hub Error] " + msg);
+  			  OnStatus?.Invoke(msg);
+		}));
 
         try
         {
@@ -135,13 +202,13 @@ public class SignalRClient : MonoBehaviour
     {
         Debug.Log("[SignalR] BuildConnection hubUrl=" + hubUrl);
 
-        var builder = new HubConnectionBuilder()
+        IHubConnectionBuilder builder = new HubConnectionBuilder()
             .WithUrl(hubUrl, options =>
             {
                 if (!string.IsNullOrEmpty(_accessToken))
                     options.AccessTokenProvider = () => Task.FromResult(_accessToken);
 
-#if UNITY_EDITOR
+		#if UNITY_EDITOR
                 options.HttpMessageHandlerFactory = (handler) =>
                 {
                     if (handler is HttpClientHandler h)
@@ -151,7 +218,7 @@ public class SignalRClient : MonoBehaviour
 
                 if (forceLongPollingInEditor)
                     options.Transports = HttpTransportType.LongPolling;
-#endif
+		#endif
             })
             .WithAutomaticReconnect();
 
@@ -172,8 +239,8 @@ public class SignalRClient : MonoBehaviour
             return;
         }
 
-        var a = (args != null && args.Length > 0) ? args : Array.Empty<object>();
-        try { await _conn.SendAsync(method, a); }
+        object[] a = (args != null && args.Length > 0) ? args : Array.Empty<object>();
+        try { await _conn.SendCoreAsync(method, a); }
         catch (Exception ex)
         {
             Debug.LogException(ex);
@@ -188,70 +255,98 @@ public class SignalRClient : MonoBehaviour
             OnStatus?.Invoke("Pas connecté au hub.");
             return;
         }
-        var a = (args != null && args.Length > 0) ? args : Array.Empty<object>();
-        try { await _conn.InvokeAsync(method, a); }
+
+        object[] a = (args != null && args.Length > 0) ? args : Array.Empty<object>();
+        try { await _conn.InvokeCoreAsync(method, a); }
         catch (Exception ex)
         {
             Debug.LogException(ex);
             OnStatus?.Invoke($"Invoke {method} a échoué.");
         }
     }
-
-    public async Task JoinQueue()
+    public async Task JoinQueue(Guid deckId)
     {
         RequireConnectedOrThrow();
         _mode = "queue";
-        await _conn.SendAsync("JoinQueue"); 
+        Debug.Log($"[SignalRClient] -> JoinQueue({deckId})");
+        await SafeInvoke("JoinQueue", deckId);
     }
 
     public async Task LeaveQueue()
     {
         if (_conn == null) return;
+		networkRef?.ResetMatch();
         await SafeSend("LeaveQueue");
         _currentKeyOrCode = null;
         OnLog?.Invoke("Quitte la file/room (matchmaking).");
+		_startGameRequested = false;
+
     }
 
-    public async Task CreateRoom(string preferredCode = null)
+    public async Task CreateRoom(Guid deckId, string preferredCode = null)
     {
         RequireConnectedOrThrow();
         _mode = "code";
-        await SafeSend("CreateRoom", string.IsNullOrWhiteSpace(preferredCode) ? null : preferredCode);
+        await SafeInvoke("CreateRoom", deckId, string.IsNullOrWhiteSpace(preferredCode) ? null : preferredCode);
     }
-
-    public async Task JoinRoom(string code)
+    public async Task JoinRoom(Guid deckId, string code)
     {
         RequireConnectedOrThrow();
         _mode = "code";
-        await SafeSend("JoinRoom", code?.Trim());
+        await SafeInvoke("JoinRoom", deckId, code?.Trim());
     }
 
     public async Task LeaveRoomByCode()
     {
         if (_conn == null) return;
         await SafeSend("LeaveRoomByCode");
+		networkRef?.ResetMatch();
         _currentKeyOrCode = null;
         OnLog?.Invoke("Quitte la room (code).");
+		_startGameRequested = false;
+
     }
 
     public async Task SendMessageToPeer(string text)
     {
         if (string.IsNullOrWhiteSpace(_currentKeyOrCode)) return;
+
         if (_mode == "code")
             await SafeSend("SendRoomMessageByCode", _currentKeyOrCode, text);
         else
             await SafeSend("SendRoomMessage", _currentKeyOrCode, text);
+
         OnLog?.Invoke($"Moi: {text}");
     }
 
-    public async Task PlayCard(int cardId)
+    public async Task PlayCard(int cardId, int location)
     {
-        if (string.IsNullOrWhiteSpace(_currentKeyOrCode)) return;
-        await SafeSend("PlayCard", _currentKeyOrCode, cardId);
-        OnLog?.Invoke($"(Action) PlayCard {cardId}");
+        RequireConnectedOrThrow();
+        Debug.Log($"[SignalRClient] -> PlayCard(cardId={cardId}, location={location})");
+        await SafeInvoke("PlayCard", cardId, location);
+    }
+
+	public async Task StartGame()
+	{
+    	RequireConnectedOrThrow();
+    	await SafeInvoke("StartGame");
+	}
+
+	public async Task ChangePhase()
+	{
+    	RequireConnectedOrThrow();
+    	await SafeInvoke("ChangePhase");
+	}
+
+    public async Task DrawCards(int playerPosition, int amount)
+    {
+        RequireConnectedOrThrow();
+
+        Debug.Log($"[SignalRClient] -> Invoke DrawCards(pos={playerPosition}, amount={amount})");
+        await SafeInvoke("DrawCards", playerPosition, amount);
     }
 
     public bool IsConnected => _conn != null && _conn.State == HubConnectionState.Connected;
     public string CurrentKeyOrCode => _currentKeyOrCode;
-    public string Mode => _mode; 
+    public string Mode => _mode;
 }

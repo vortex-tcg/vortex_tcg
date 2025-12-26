@@ -1,143 +1,130 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
-using System.Linq;
+using VortexTCG.Scripts.DTOs;
 
-public class DefenseManager : MonoBehaviour
+namespace VortexTCG.Scripts.MatchScene
 {
-    [SerializeField] private UIDocument boardDocument;
-    private VisualElement p1BoardRoot;
-    private readonly List<VisualElement> selectedCards = new List<VisualElement>();
-    private readonly Dictionary<VisualElement, VisualElement> defenseAssignments = new Dictionary<VisualElement, VisualElement>();
 
-    private void Start()
+    public class DefenseManager : MonoBehaviour
     {
-        if (boardDocument == null)
-            boardDocument = GetComponent<UIDocument>();
+        public static DefenseManager Instance { get; private set; }
 
-        VisualElement root = boardDocument.rootVisualElement;
-        p1BoardRoot = root.Q<VisualElement>("P1BoardCards");
+        [Header("Board Slots")] [SerializeField]
+        private List<CardSlot> P1BoardSlots = new List<CardSlot>();
 
-        RegisterAllExistingCards();
+        [SerializeField] private List<CardSlot> P2BoardSlots = new List<CardSlot>();
 
-        PhaseManager.Instance.OnEnterDefense += OnEnterDefensePhase;
-        PhaseManager.Instance.OnEnterStandBy += OnEndDefensePhase;
-    }
+        private Card currentDefender;
 
-    private void OnDestroy()
-    {
-        if (PhaseManager.Instance != null)
+        private readonly Dictionary<Card, Card>
+            defenseAssignments = new Dictionary<Card, Card>();
+
+        private void Awake()
         {
-            PhaseManager.Instance.OnEnterDefense -= OnEnterDefensePhase;
-            PhaseManager.Instance.OnEnterStandBy -= OnEndDefensePhase;
+            Instance = this;
         }
-    }
 
-    private void OnEnterDefensePhase()
-    {
-        ClearSelections();
-    }
-
-    private void OnEndDefensePhase()
-    {
-        ClearSelections();
-    }
-
-    private void RegisterAllExistingCards()
-    {
-        List<VisualElement> allSlots = p1BoardRoot.Query<VisualElement>(className: "P1Slot").ToList();
-        foreach (VisualElement slot in allSlots)
+        private void Start()
         {
-            slot.RegisterCallback<ClickEvent>(_ =>
+            if (PhaseManager.Instance != null)
             {
-                if (PhaseManager.Instance.CurrentPhase != GamePhase.Defense)
-                    return;
-
-                VisualElement card = slot.Q<VisualElement>(className: "small-card");
-                if (card != null)
-                    ToggleCard(card);
-            });
+                PhaseManager.Instance.OnEnterDefense += OnEnterDefense;
+                PhaseManager.Instance.OnEnterStandBy += OnExitDefense;
+                PhaseManager.Instance.OnEnterAttack += OnExitDefense;
+            }
         }
-    }
 
-    public void TryAssignDefense(VisualElement defenderCard, VisualElement targetCard)
-    {
-        if (PhaseManager.Instance.CurrentPhase != GamePhase.Defense)
-            return;
-
-        if (defenderCard == null || targetCard == null) return;
-        if (defenderCard.parent == null || !defenderCard.parent.ClassListContains("P1Slot"))
-            return;
-
-        if (!targetCard.ClassListContains("engaged"))
-            return;
-
-        VisualElement existingDefender = defenseAssignments.FirstOrDefault(kvp => kvp.Value == targetCard).Key;
-        if (existingDefender != null)
-            return;
-
-        ClearDefense(defenderCard);
-
-        defenderCard.AddToClassList("defense");
-        defenseAssignments[defenderCard] = targetCard;
-
-        if (!selectedCards.Contains(defenderCard))
-            selectedCards.Add(defenderCard);
-    }
-
-    private void ToggleCard(VisualElement card)
-    {
-        if (card == null) return;
-
-        if (selectedCards.Contains(card))
-            DeselectCard(card);
-        else
-            SelectCard(card);
-    }
-
-    private void SelectCard(VisualElement card)
-    {
-        if (card == null) return;
-
-        selectedCards.Add(card);
-        if (!card.ClassListContains("defense"))
-            card.AddToClassList("defense");
-    }
-
-    private void DeselectCard(VisualElement card)
-    {
-        if (card == null) return;
-
-        selectedCards.Remove(card);
-        if (card.ClassListContains("defense"))
-            card.RemoveFromClassList("defense");
-    }
-
-    private void ClearDefense(VisualElement defenderCard)
-    {
-        if (defenderCard == null) return;
-
-        if (defenseAssignments.ContainsKey(defenderCard))
-            defenseAssignments.Remove(defenderCard);
-
-        if (defenderCard.ClassListContains("defense"))
-            defenderCard.RemoveFromClassList("defense");
-
-        selectedCards.Remove(defenderCard);
-    }
-
-    private void ClearSelections()
-    {
-        List<VisualElement> cardsCopy = new List<VisualElement>(selectedCards);
-        foreach (VisualElement card in cardsCopy)
+        private void OnDestroy()
         {
-            if (card == null) continue;
-
-            if (card.ClassListContains("defense"))
-                card.RemoveFromClassList("defense");
+            if (PhaseManager.Instance != null)
+            {
+                PhaseManager.Instance.OnEnterDefense -= OnEnterDefense;
+                PhaseManager.Instance.OnEnterStandBy -= OnExitDefense;
+                PhaseManager.Instance.OnEnterAttack -= OnExitDefense;
+            }
         }
 
-        selectedCards.Clear();
-        defenseAssignments.Clear();
+        private void OnEnterDefense()
+        {
+            ClearAllDefense();
+        }
+
+        private void OnExitDefense()
+        {
+            ClearAllDefense();
+        }
+
+        public bool IsP1BoardSlot(CardSlot slot)
+        {
+            return slot != null && P1BoardSlots.Contains(slot);
+        }
+
+        public bool IsP2BoardSlot(CardSlot slot)
+        {
+            return slot != null && P2BoardSlots.Contains(slot);
+        }
+
+        public void HandleCardClicked(Card card)
+        {
+            if (card == null) return;
+            if (PhaseManager.Instance == null || PhaseManager.Instance.CurrentPhase != GamePhase.DEFENSE) return;
+
+            CardSlot slot = card.GetComponentInParent<CardSlot>();
+            if (slot == null) return;
+
+            if (IsP1BoardSlot(slot))
+            {
+                SelectDefender(card);
+            }
+            else if (IsP2BoardSlot(slot))
+            {
+                TryAssignDefense(card);
+            }
+        }
+
+        private void SelectDefender(Card defender)
+        {
+            if (currentDefender == defender) return;
+
+            currentDefender = defender;
+            currentDefender.SetDefenseSelected(true);
+        }
+
+        private void TryAssignDefense(Card targetAttacker)
+        {
+            if (currentDefender == null) return;
+
+            if (!targetAttacker.IsAttackingOutlineActive()) return;
+
+            if (defenseAssignments.ContainsKey(currentDefender))
+            {
+                defenseAssignments.Remove(currentDefender);
+            }
+
+            defenseAssignments[currentDefender] = targetAttacker;
+        }
+
+        private void ClearAllDefense()
+        {
+            if (currentDefender != null)
+            {
+                currentDefender.SetDefenseSelected(false);
+                currentDefender = null;
+            }
+
+            foreach (KeyValuePair<Card, Card> kvp in defenseAssignments)
+            {
+                if (kvp.Key != null)
+                    kvp.Key.SetDefenseSelected(false);
+            }
+
+            defenseAssignments.Clear();
+        }
+
+        private string CardLabel(Card c)
+        {
+            if (c == null) return "null";
+            return string.IsNullOrEmpty(c.cardId) ? c.cardName : $"{c.cardName} ({c.cardId})";
+        }
     }
 }
