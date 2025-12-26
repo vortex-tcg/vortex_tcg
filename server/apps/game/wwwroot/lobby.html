@@ -47,13 +47,25 @@
 
 <div id="room" style="display:none;">
     <h2 id="roomTitle"></h2>
+    <div id="phaseInfo" style="background:#f0f0f0;padding:10px;margin:10px 0;border-radius:8px;">
+        <strong>État de la partie:</strong>
+        <span id="gameState">Non démarrée</span>
+        <br/>
+        <strong>Tour:</strong> <span id="turnNumber">-</span>
+        <strong>Phase:</strong> <span id="currentPhase">-</span>
+        <strong>Joueur actif:</strong> <span id="activePlayer">-</span>
+    </div>
+    <div>
+        <button id="startGame">Démarrer la partie</button>
+        <button id="changePhase">Changer de phase</button>
+    </div>
     <div id="log"></div>
     <input id="msg" placeholder="Message" />
     <button id="send">Envoyer</button>
     <br/>
-    <label>Position joueur: <input id="drawPosition" type="number" value="1" min="1" max="2" style="width:50px"/></label>
-    <label>Nombre: <input id="drawAmount" type="number" value="1" min="1" style="width:50px"/></label>
-    <button id="drawCard">Piocher</button>
+    <label><span id="FirstArgumentLabel"></span><input id="FirstArgumentValue" type="number" value="1" min="1" style="width:50px"/></label>
+    <label><span id="SecondArgumentLabel"></span><input id="SecondArgumentValue" type="number" value="1" min="1" style="width:50px"/></label>
+    <button id="SendActionButton">Jouer Carte</button>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8/dist/browser/signalr.min.js"></script>
 <script>
@@ -81,11 +93,33 @@
     const deckInput = document.getElementById('deckId');
     const msgInput  = document.getElementById('msg');
     const btnSend   = document.getElementById('send');
-    const btnDraw   = document.getElementById('drawCard');
-    const drawPositionInput = document.getElementById('drawPosition');
-    const drawAmountInput = document.getElementById('drawAmount');
+
+    const btnSendAction   = document.getElementById('SendActionButton');
+    const FirstArgumentValue = document.getElementById('FirstArgumentValue');
+    const FirstArgumentLabel = document.getElementById("FirstArgumentLabel");
+    const SecondArgumentValue = document.getElementById('SecondArgumentValue');
+    const SecondArgumentLabel = document.getElementById("SecondArgumentLabel");
+
+    // Éléments de phase
+    const btnStartGame = document.getElementById('startGame');
+    const btnChangePhase = document.getElementById('changePhase');
+    const gameStateSpan = document.getElementById('gameState');
+    const turnNumberSpan = document.getElementById('turnNumber');
+    const currentPhaseSpan = document.getElementById('currentPhase');
+    const activePlayerSpan = document.getElementById('activePlayer');
+
+    // Map des phases pour l'affichage
+    const phaseNames = {
+        0: 'Placement',
+        1: 'Attack (Attaque)',
+        2: 'Defense (Défense)',
+        3: 'EndTurn (Fin de tour)'
+    };
 
     let connection, currentKey = null, mode = null; // mode: 'queue' | 'code'
+    let myPosition = null; // Position du joueur (1 ou 2)
+    let myUserId = null; // Notre userId (GUID)
+    let activePlayerId = null; // userId du joueur actif
 
     let jwtToken = "";
 
@@ -132,11 +166,36 @@
 
             connection.on("Matched", (key, payload) => {
                 currentKey = key;
+                myPosition = payload.position;
                 roomTitle.textContent = `Salle ${key} (Position: ${payload.position})`;
                 roomDiv.style.display = 'block';
                 append(`Match vs ${payload.opponent}. Tu es le joueur ${payload.position}.`);
                 // Pré-remplir la position pour DrawCards
                 document.getElementById('drawPosition').value = payload.position;
+            });
+
+            connection.on("GameStarted", (result) => {
+                gameStateSpan.textContent = "En cours";
+                updatePhaseDisplay(result);
+                append(`🎮 Partie démarrée ! Tour ${result.turnNumber}, Phase: ${phaseNames[result.currentPhase]}`);
+            });
+
+            connection.on("PhaseChanged", (result) => {
+                updatePhaseDisplay(result);
+                let msg = `⏩ Phase changée: Tour ${result.turnNumber}, Phase: ${phaseNames[result.currentPhase]}`;
+                if (result.autoChanged) {
+                    msg += ` (Auto: ${result.autoChangeReason})`;
+                }
+                append(msg);
+                append(`Change phase result: ${JSON.stringify(result)}`);
+            });
+
+            connection.on("AutoDraw", (result) => {
+                append(`🃏 Pioche automatique: ${JSON.stringify(result)}`);
+            });
+
+            connection.on("Error", (message) => {
+                append(`❌ Erreur: ${message}`);
             });
 
             connection.on("RoomCreated", code => {
@@ -165,12 +224,33 @@
             });
 
             connection.on("CardsDrawn", (result) => {
+                activePlayerId = result.playerId;
                 append(`J'ai pioché: ${JSON.stringify(result)}`);
             });
 
             connection.on("OpponentCardsDrawn", (result) => {
                 append(`L'adversaire a pioché: ${JSON.stringify(result)}`);
             });
+
+            connection.on("PlayCardResult", (result) => {
+                append(`Carte joué: ${JSON.stringify(result)}`);
+            })
+
+            connection.on("HandleAttackEngage", (result) => {
+                append(`Nouvelle attaque: ${JSON.stringify(result)}`);
+            })
+
+            connection.on("HandleDefenseEngage", (result) => {
+                append(`Nouvelle défense: ${JSON.stringify(result)}`);
+            })
+
+            connection.on("OpponentPlayCardResult", (result) => {
+                append(`L'adversiare à joué une carte: ${JSON.stringify(result)}`);
+            })
+
+            connection.on("BattleResolution", (result) => {
+                append(`Résumer des batailles: ${JSON.stringify(result)}`);
+            })
 
             await connection.start();
             await connection.invoke("SetName", nameInput.value || "Joueur");
@@ -180,6 +260,29 @@
             console.error(e);
         }
     };
+
+    const playCard = async () => {
+        if (!currentKey) return;
+        const position = parseInt(SecondArgumentValue.value) || 0;
+        const id = parseInt(FirstArgumentValue.value) || 0;
+        await connection.invoke("PlayCard", id, position);
+        append(`Demande de jouer une carte: carte ${id} a la position ${position}`);
+    };
+
+    const attackCard = async () => {
+        if (!currentKey) return;
+        const cardId = parseInt(FirstArgumentValue.value);
+        await connection.invoke("HandleAttackPos", cardId);
+        append(`Demande de changer la position d'attaque de la carte ${cardId}`);
+    }
+
+    const defendCard = async () => {
+        if (!currentKey) return;
+        const cardId = parseInt(FirstArgumentValue.value);
+        const opponentCardId = parseInt(SecondArgumentValue.value);
+        await connection.invoke("HandleDefensePos", cardId, opponentCardId);
+    }
+
     btnQueue.onclick = async () => {
         mode = 'queue';
         const deckId = (deckInput.value || "").trim();
@@ -225,13 +328,110 @@
         msgInput.value = "";
     };
 
-    btnDraw.onclick = async () => {
-        if (!currentKey) return;
-        const position = parseInt(drawPositionInput.value) || 1;
-        const amount = parseInt(drawAmountInput.value) || 1;
-        await connection.invoke("DrawCards", position, amount);
-        append(`Demande de pioche: joueur ${position}, ${amount} carte(s)`);
+    btnStartGame.onclick = async () => {
+        if (!currentKey) return alert("Pas dans une salle.");
+        await connection.invoke("StartGame");
+        append("Demande de démarrage de la partie...");
     };
+
+    btnChangePhase.onclick = async () => {
+        if (!currentKey) return alert("Pas dans une salle.");
+        await connection.invoke("ChangePhase");
+        append("Demande de changement de phase...");
+    };
+
+    function updatePhaseDisplay(result) {
+        turnNumberSpan.textContent = result.turnNumber;
+        currentPhaseSpan.textContent = phaseNames[result.currentPhase] || result.currentPhase;
+        
+        // Déterminer le joueur actif par position (tour impair = joueur 1, tour pair = joueur 2)
+        const activePosition = (result.turnNumber % 2 === 1) ? 1 : 2;
+        
+        let isMyTurn = result.activePlayerId === activePlayerId;
+        let whoCanAct = "";
+        
+        switch(result.currentPhase) {
+            case 0:
+                whoCanAct = isMyTurn ? "🟢 C'EST TON TOUR (Placement)" : "🔴 C'est le tour de l'adversaire";
+                
+                if (isMyTurn) {
+                    FirstArgumentLabel.textContent = "Id carte joué";
+                    SecondArgumentLabel.textContent = "Position de la carte joué";
+
+                    FirstArgumentLabel.style = "display:block;"
+                    SecondArgumentLabel.style = "display: block;"
+
+                    FirstArgumentValue.value = 0;
+                    SecondArgumentValue.value = 0;
+
+                    btnSendAction.onclick = playCard;
+                } else {
+                    FirstArgumentLabel.style = "display:none;";
+                    SecondArgumentLabel.style = "display: none;";
+                    
+                    btnSendAction.onclick = null;
+                }
+                break;
+            case 1:
+                whoCanAct = isMyTurn ? "🟢 C'EST TON TOUR (Attaque)" : "🔴 C'est le tour de l'adversaire";
+
+                if (isMyTurn) {
+                    FirstArgumentLabel.textContent = "Id card attack";
+
+                    FirstArgumentLabel.style = "display: block;"
+                    SecondArgumentLabel.style = "display: none;"
+
+                    
+                    FirstArgumentValue.value = 0;
+                    SecondArgumentValue.value = 0;
+
+                    btnSendAction.onclick = attackCard;
+                } else {
+                    FirstArgumentLabel.style = "display:none;";
+                    SecondArgumentLabel.style = "display: none;";
+                    
+                    btnSendAction.onclick = null;
+                }
+                break;
+            case 2:
+                whoCanAct = isMyTurn ? "🟢 C'EST TON TOUR (Défense)" : "🔴 L'adversaire défend";
+
+                if (isMyTurn) {
+                    FirstArgumentLabel.textContent = "Id card defend";
+                    SecondArgumentLabel.textContent = "Id card attack";
+
+                    FirstArgumentLabel.style = "display: block;"
+                    SecondArgumentLabel.style = "display: block;"
+
+                    
+                    FirstArgumentValue.value = 0;
+                    SecondArgumentValue.value = 0;
+
+                    btnSendAction.onclick = defendCard;
+                } else {
+                    FirstArgumentLabel.style = "display:none;";
+                    SecondArgumentLabel.style = "display: none;";
+                    
+                    btnSendAction.onclick = null;
+                }
+                break;
+            case 3:
+                whoCanAct = "⏳ Fin de tour...";
+                FirstArgumentLabel.style = "display:none;";
+                SecondArgumentLabel.style = "display: none;";
+                
+                btnSendAction.onclick = null;
+                break;
+        }
+        
+        activePlayerSpan.textContent = whoCanAct;
+        
+        // Changer la couleur de fond selon si c'est notre tour
+        const phaseInfo = document.getElementById('phaseInfo');
+        if (phaseInfo) {
+            phaseInfo.style.background = isMyTurn ? '#d4edda' : '#f8d7da';
+        }
+    }
 </script>
 </body>
 </html>
