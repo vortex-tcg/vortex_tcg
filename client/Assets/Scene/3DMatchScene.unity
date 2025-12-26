@@ -241,6 +241,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slotIndex: 2
+  isOpponentSlot: 0
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &41569725
@@ -365,6 +366,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slotIndex: 0
+  isOpponentSlot: 1
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &135012866
@@ -460,6 +462,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 195556722}
+  - component: {fileID: 195556723}
   m_Layer: 0
   m_Name: P2CardSlots
   m_TagString: Untagged
@@ -488,6 +491,26 @@ Transform:
   - {fileID: 1473649188}
   m_Father: {fileID: 210017374}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &195556723
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 195556721}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0af9c0508015ba24498a562177974bc7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enemySlots:
+  - {fileID: 1533037578}
+  - {fileID: 1409120809}
+  - {fileID: 874342795}
+  - {fileID: 41569730}
+  - {fileID: 1478103548}
+  - {fileID: 1473649192}
+  cardPrefab: {fileID: 1737039046195383164, guid: 1827e53d8835b62479162113f94e0daf, type: 3}
 --- !u!1 &210017370
 GameObject:
   m_ObjectHideFlags: 0
@@ -925,6 +948,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slotIndex: 1
+  isOpponentSlot: 0
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &776513355
@@ -1127,6 +1151,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slotIndex: 0
+  isOpponentSlot: 1
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &895805911
@@ -1251,6 +1276,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slotIndex: 3
+  isOpponentSlot: 0
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &967252606
@@ -1551,6 +1577,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slotIndex: 0
+  isOpponentSlot: 1
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &1420422362
@@ -1675,6 +1702,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slotIndex: 5
+  isOpponentSlot: 0
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &1454243776
@@ -1847,6 +1875,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slotIndex: 0
+  isOpponentSlot: 1
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &1478103543
@@ -1971,6 +2000,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slotIndex: 0
+  isOpponentSlot: 1
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &1497234817
@@ -2220,6 +2250,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slotIndex: 0
+  isOpponentSlot: 1
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &1616338356
@@ -2465,6 +2496,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slotIndex: 4
+  isOpponentSlot: 0
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!1 &1833318994
@@ -2653,6 +2685,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slotIndex: 0
+  isOpponentSlot: 0
   CurrentCard: {fileID: 0}
   targetHeight: 1
 --- !u!33 &5498880637139304567

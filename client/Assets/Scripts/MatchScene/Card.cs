@@ -12,6 +12,9 @@ namespace VortexTCG.Scripts.MatchScene
         public int hp;
         public int attack;
         public int cost;
+        public Transform VisualRoot;
+        public Transform UIRoot;
+
         [TextArea(3, 6)] public string description;
         public string imageUrl;
 
@@ -20,6 +23,7 @@ namespace VortexTCG.Scripts.MatchScene
         public TMP_Text atkText;
         public TMP_Text hpText;
         public TMP_Text descriptionText;
+        
         [SerializeField] private bool faceDown;
         public bool IsFaceDown => faceDown;
         [Header("Attack Phase")] public TMP_Text attackOrderText;
@@ -146,6 +150,8 @@ namespace VortexTCG.Scripts.MatchScene
 
         public void RefreshUI()
         {
+            Debug.Log($"[Card] RefreshUI nameText={(nameText!=null)} costText={(costText!=null)} atkText={(atkText!=null)} hpText={(hpText!=null)} descText={(descriptionText!=null)}");
+
             if (nameText != null) nameText.text = cardName;
             if (costText != null) costText.text = cost.ToString();
             if (atkText != null) atkText.text = attack > 0 ? attack.ToString() : "-";

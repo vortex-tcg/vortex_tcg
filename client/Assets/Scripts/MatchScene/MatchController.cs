@@ -1,4 +1,3 @@
-// MatchController.cs
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -90,18 +89,15 @@ namespace VortexTCG.Scripts.MatchScene
         {
             Debug.Log($"[MatchController] GameStarted phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct}");
             _gameStarted = true;
-
             handManager?.SetHand(new List<DrawnCardDto>());
             graveyardManager?.ResetGraveyard();
             opponentHandManager?.ResetHand();
-
             PhaseManager.Instance?.ApplyServerPhase(r.CurrentPhase);
-
+            OpponentBoardManager.Instance?.ResetBoard();
             foreach (var d in _bufferedDraws) ApplyDraw(d);
             _bufferedDraws.Clear();
-
             foreach (var od in _bufferedOpponentDraws) ApplyOpponentDraw(od);
-            _bufferedOpponentDraws.Clear();
+            _bufferedOpponentDraws.Clear(); 
         }
 
         private void HandlePhaseChanged(PhaseChangeResultDTO r)
@@ -187,7 +183,9 @@ namespace VortexTCG.Scripts.MatchScene
 
             opponentHandManager?.RemoveOneCardFromHand();
 
-            // TODO instancier la carte sur board adverse
+            if (OpponentBoardManager.Instance != null)
+                OpponentBoardManager.Instance.PlaceOpponentCard(r.location, r.PlayedCard);
+            
         }
     }
 }
