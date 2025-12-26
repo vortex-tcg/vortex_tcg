@@ -23,8 +23,21 @@ public class LoginScript : MonoBehaviour
     private bool passwordVisible = false;
     private bool isSubmitting = false;
 
+    // callbacks UI Toolkit (pour pouvoir unregister proprement)
+    private EventCallback<ChangeEvent<string>> emailChangedCb;
+    private EventCallback<ChangeEvent<string>> passwordChangedCb;
+
     private void OnEnable()
     {
+        if (uiDocument == null)
+            uiDocument = GetComponent<UIDocument>();
+
+        if (uiDocument == null)
+        {
+            Debug.LogError("[LoginScript] UIDocument manquant.");
+            return;
+        }
+
         var root = uiDocument.rootVisualElement;
 
         emailField = root.Q<TextField>("UsernameField");
@@ -36,11 +49,12 @@ public class LoginScript : MonoBehaviour
         if (passwordField != null)
             passwordField.isPasswordField = true;
 
-        if (emailField != null)
-            emailField.RegisterValueChangedCallback(evt => UpdateLoginButtonState());
+        // prépare callbacks (une seule fois)
+        emailChangedCb ??= _ => OnEmailValueChanged();
+        passwordChangedCb ??= _ => UpdateLoginButtonState();
 
-        if (passwordField != null)
-            passwordField.RegisterValueChangedCallback(evt => UpdateLoginButtonState());
+        if (emailField != null) emailField.RegisterValueChangedCallback(emailChangedCb);
+        if (passwordField != null) passwordField.RegisterValueChangedCallback(passwordChangedCb);
 
         if (loginButton != null)
             loginButton.clicked += OnLoginClicked;
@@ -54,22 +68,49 @@ public class LoginScript : MonoBehaviour
 
     private void OnDisable()
     {
-        UpdateLoginButtonState();
+        // IMPORTANT : on retire les callbacks (sinon doublons à chaque enable)
+        if (emailField != null && emailChangedCb != null)
+            emailField.UnregisterValueChangedCallback(emailChangedCb);
 
-        if (emailField != null)
-            emailField.onValueChanged.AddListener(_ => UpdateLoginButtonState());
-
-        if (passwordField != null)
-            passwordField.onValueChanged.AddListener(_ => UpdateLoginButtonState());
+        if (passwordField != null && passwordChangedCb != null)
+            passwordField.UnregisterValueChangedCallback(passwordChangedCb);
 
         if (loginButton != null)
-            loginButton.onClick.AddListener(() => StartCoroutine(Login()));
+            loginButton.clicked -= OnLoginClicked;
+
+        if (togglePasswordButton != null)
+            togglePasswordButton.clicked -= TogglePasswordVisibility;
+    }
+
+    private void OnLoginClicked()
+    {
+        if (isSubmitting) return;
+        StartCoroutine(Login());
     }
 
     private void TogglePasswordVisibility()
     {
-        string pattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
-        return Regex.IsMatch(email ?? string.Empty, pattern);
+        passwordVisible = !passwordVisible;
+
+        if (passwordField != null)
+            passwordField.isPasswordField = !passwordVisible;
+
+        // Optionnel : changer le texte du bouton si tu veux
+        if (togglePasswordButton != null)
+            togglePasswordButton.text = passwordVisible ? "Hide" : "Show";
+    }
+
+    private void OnEmailValueChanged()
+    {
+        // feedback direct sur l’email
+        if (emailErrorLabel != null)
+        {
+            bool ok = IsValidEmail(emailField != null ? emailField.value : string.Empty);
+            emailErrorLabel.text = ok ? string.Empty : "Adresse email invalide.";
+            emailErrorLabel.style.display = ok ? DisplayStyle.None : DisplayStyle.Flex;
+        }
+
+        UpdateLoginButtonState();
     }
 
     private void UpdateLoginButtonState()
@@ -83,11 +124,32 @@ public class LoginScript : MonoBehaviour
             return;
         }
 
-        bool ready =
-            IsValidEmail(emailField != null ? emailField.text : string.Empty) &&
-            !string.IsNullOrEmpty(passwordField != null ? passwordField.text : string.Empty);
+        string email = emailField != null ? emailField.value : string.Empty;
+        string password = passwordField != null ? passwordField.value : string.Empty;
 
-        loginButton.interactable = ready;
+        bool ready = IsValidEmail(email) && !string.IsNullOrWhiteSpace(password);
+        loginButton.SetEnabled(ready);
+    }
+
+    private static bool IsValidEmail(string email)
+    {
+        // simple et suffisant pour UI validation
+        string pattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+        return Regex.IsMatch(email ?? string.Empty, pattern);
+    }
+
+    private void HideError()
+    {
+        if (emailErrorLabel == null) return;
+        emailErrorLabel.text = string.Empty;
+        emailErrorLabel.style.display = DisplayStyle.None;
+    }
+
+    private void ShowError(string message)
+    {
+        if (emailErrorLabel == null) return;
+        emailErrorLabel.text = message ?? "Erreur inconnue.";
+        emailErrorLabel.style.display = DisplayStyle.Flex;
     }
 
     private IEnumerator Login()
@@ -108,16 +170,16 @@ public class LoginScript : MonoBehaviour
             yield break;
         }
 
-        string email = emailField != null ? emailField.text : string.Empty;
+        string email = emailField != null ? emailField.value : string.Empty;
         if (!IsValidEmail(email))
         {
-            ShowError("Adresse email invalide");
+            ShowError("Adresse email invalide.");
             isSubmitting = false;
             UpdateLoginButtonState();
             yield break;
         }
 
-        string password = passwordField != null ? passwordField.text : string.Empty;
+        string password = passwordField != null ? passwordField.value : string.Empty;
 
         string url = baseUrl.EndsWith("/api", StringComparison.OrdinalIgnoreCase)
             ? baseUrl + "/auth/login"
@@ -125,7 +187,7 @@ public class LoginScript : MonoBehaviour
 
         string jsonBody = JsonUtility.ToJson(new LoginData(email, password));
 
-        UnityWebRequest request = new UnityWebRequest(url, "POST");
+        using UnityWebRequest request = new UnityWebRequest(url, "POST");
         byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
         request.downloadHandler = new DownloadHandlerBuffer();
@@ -201,116 +263,68 @@ public class LoginScript : MonoBehaviour
         }
     }
 
-    [Serializable]
-    private class TokenOnly { public string token; }
-
-    [Serializable]
-    private class AccessTokenOnly { public string accessToken; }
-
-    [Serializable]
-    private class LoginResponseWrapper
-    {
-        public LoginResponseData data;
-    }
-
-    [Serializable]
-    private class LoginResponseData
-    {
-        public string token;
-    }
-
-    [Serializable]
-    private class TokenRoot
-    {
-        public string token;
-    }
-
-    [Serializable]
-    private class AccessTokenRoot
-    {
-        public string accessToken;
-    }
+    [Serializable] private class LoginResponseWrapper { public LoginResponseData data; }
+    [Serializable] private class LoginResponseData { public string token; }
+    [Serializable] private class TokenRoot { public string token; }
+    [Serializable] private class AccessTokenRoot { public string accessToken; }
 
     private string ExtractTokenFromResponse(string json)
     {
         if (string.IsNullOrEmpty(json))
             return null;
+
         try
         {
-            LoginResponseWrapper wrapper = JsonUtility.FromJson<LoginResponseWrapper>(json);
+            var wrapper = JsonUtility.FromJson<LoginResponseWrapper>(json);
             if (wrapper != null && wrapper.data != null && !string.IsNullOrEmpty(wrapper.data.token))
             {
                 Debug.Log("[Login] Token trouvé dans data.token");
                 return wrapper.data.token;
             }
         }
-        catch
-        {
-        }
+        catch { }
+
         try
         {
-            TokenRoot root = JsonUtility.FromJson<TokenRoot>(json);
+            var root = JsonUtility.FromJson<TokenRoot>(json);
             if (root != null && !string.IsNullOrEmpty(root.token))
             {
                 Debug.Log("[Login] Token trouvé dans token (racine)");
                 return root.token;
             }
         }
-        catch
-        {
-        }
+        catch { }
 
         try
         {
-            AccessTokenRoot acc = JsonUtility.FromJson<AccessTokenRoot>(json);
+            var acc = JsonUtility.FromJson<AccessTokenRoot>(json);
             if (acc != null && !string.IsNullOrEmpty(acc.accessToken))
             {
                 Debug.Log("[Login] Token trouvé dans accessToken (racine)");
                 return acc.accessToken;
             }
         }
-        catch
-        {
-        }
+        catch { }
+
         try
         {
-            Match match = Regex.Match(
-                json,
-                "\"token\"\\s*:\\s*\"([^\"]+)\"",
-                RegexOptions.IgnoreCase
-            );
+            Match match = Regex.Match(json, "\"token\"\\s*:\\s*\"([^\"]+)\"", RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 Debug.Log("[Login] Token trouvé via regex \"token\"");
                 return match.Groups[1].Value;
             }
         }
-        catch
-        {
-        }
+        catch { }
 
         Debug.LogWarning("[Login] Impossible d'extraire un token de la réponse JSON.");
         return null;
     }
 
-    private string ExtractRawString(string json, string key)
-    {
-        string pattern = "\"" + key + "\"";
-        int i = json.IndexOf(pattern, StringComparison.Ordinal);
-        if (i < 0) return null;
-        int start = json.IndexOf(':', i);
-        if (start < 0) return null;
-        int firstQuote = json.IndexOf('"', start + 1);
-        if (firstQuote < 0) return null;
-        int secondQuote = json.IndexOf('"', firstQuote + 1);
-        if (secondQuote < 0) return null;
-        return json.Substring(firstQuote, secondQuote - firstQuote + 1);
-    }
-
     private string BuildMockJwt(string email, int lifetimeSeconds)
     {
         string header = "{\"alg\":\"none\",\"typ\":\"JWT\"}";
-        long exp = (long)(DateTimeOffset.UtcNow.ToUnixTimeSeconds() + lifetimeSeconds);
+        long exp = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + lifetimeSeconds;
         string payload = "{\"sub\":\"" + email + "\",\"email\":\"" + email + "\",\"exp\":" + exp + "}";
 
         return Base64UrlEncode(Encoding.UTF8.GetBytes(header)) + "." +
@@ -323,13 +337,5 @@ public class LoginScript : MonoBehaviour
             .TrimEnd('=')
             .Replace('+', '-')
             .Replace('/', '_');
-    }
-
-    public void OnEmailChanged(string input)
-    {
-        if (emailErrorText != null)
-            emailErrorText.text = IsValidEmail(input) ? string.Empty : "Adresse email invalide.";
-
-        UpdateLoginButtonState();
     }
 }

@@ -1,57 +1,91 @@
 using UnityEngine;
 
-public class CardSlot : MonoBehaviour
+namespace VortexTCG.Scripts.MatchScene
 {
-    public Card CurrentCard;
-    public float targetHeight = 1f; // hauteur souhaitée de la carte dans ce slot (unités monde)
-
-    public bool CanAccept(Card card)
+    public class CardSlot : MonoBehaviour
     {
-        return CurrentCard == null;
-    }
+        [Header("Index board 0..4")]
+        public int slotIndex = 0;
 
-    void OnMouseDown()
-    {
-        if (HandManager.Instance.SelectedCard != null && CanAccept(HandManager.Instance.SelectedCard))
+        [Header("Slot options")]
+        public bool isOpponentSlot = false; 
+        public Card CurrentCard;
+        public float targetHeight = 1.0f;
+
+        public bool CanAccept(Card card) => CurrentCard == null;
+
+        private void OnMouseDown()
         {
-            HandManager.Instance.PlaceSelectedCardOnSlot(this);
+            if (isOpponentSlot) return;
+
+            Debug.Log(
+                $"[CardSlot] CLICK slotIndex={slotIndex} " +
+                $"phase={PhaseManager.Instance?.CurrentPhase} " +
+                $"selected={(HandManager.Instance?.SelectedCard != null)} " +
+                $"canAccept={(HandManager.Instance?.SelectedCard != null ? CanAccept(HandManager.Instance.SelectedCard) : false)}"
+            );
+
+            if (HandManager.Instance == null) return;
+            if (HandManager.Instance.SelectedCard == null) return;
+            if (!CanAccept(HandManager.Instance.SelectedCard)) return;
+            _ = HandManager.Instance.RequestPlaySelectedCard(this);
         }
-    }
-
-    public void PlaceCard(Card card)
-    {
-        CurrentCard = card;
-
-        card.transform.SetParent(transform, false);
-        card.transform.localRotation = Quaternion.identity;
-        card.transform.localScale = Vector3.one;
-
-        Renderer[] renderers = card.GetComponentsInChildren<Renderer>();
-        float worldHeight = 1f;
-        if (renderers != null && renderers.Length > 0)
+        public void PlaceCard(Card card)
         {
+            if (card == null) return;
+
+            CurrentCard = card;
+            Transform t = card.
+            Vector3 baseScale = t.localScale; 
+            t.SetParent(
+            t.localPosition = Vector3.zero;
+            t.localRotation = Quaternion.identity;
+            t.localScale    = baseScale; 
+            var renderers = card.GetComponentsInChildren<Renderer>(true);
+            float refSize = 1f; 
+            if (renderers != null && renderers.Length > 0)
+            {
+                Bounds b = renderers[0].bounds;
+                for (int i = 1; i < renderers.Length; i++)
+                    b.Encapsulate(renderers[i].bounds);
+                float sizeY  = b.size.y;
+                float sizeXZ = Mathf.Max(b.size.x, b.size.z);
+                refSize = (sizeY > 0.0005f) ? sizeY : sizeXZ;
+                if (refSize <= 0.0005f) refSize = 1f;
+            }
+            float scaleFactor = (targetHeight > 0f) ? (targetHeight / refSize) : 1f;
+            scaleFactor = Mathf.Clamp(scaleFactor, 0.01f, 10f);
+            t.localScale = baseScale * scaleFactor;
+            float parentScaleY = 
+            if (Mathf.Abs(parentScaleY) < 0.0001f) parentScaleY = 1f;
+            float localY = (targetHeight * 0.5f) / parentScaleY;
+            t.localPosition = new Vector3(0f, localY, 0f);
+            if (AttackManager.Instance != null && AttackManager.Instance.IsP1BoardSlot(this))
+                AttackManager.Instance.RegisterCard(card); 
+        }
+
+        
+        private void FitTextInCard(float targetHeight)
+        {
+            if (GetComponentInParent<CardSlot>() != null) return;
+
+            var renderers = GetComponentsInChildren<Renderer>();
+            if (renderers == null || renderers.Length == 0) return;
+
             Bounds b = renderers[0].bounds;
             for (int i = 1; i < renderers.Length; i++)
                 b.Encapsulate(renderers[i].bounds);
-            worldHeight = b.size.y;
-        }
 
-        if (worldHeight > 0f && targetHeight > 0f)
-        {
+            float worldHeight = b.size.y;
+            if (worldHeight <= 0f || targetHeight <= 0f) return;
+            Vector3 baseScale = transform.localScale;
             float scale = targetHeight / worldHeight;
-            card.transform.localScale = Vector3.one * scale;
-            worldHeight = targetHeight;
-        }
+            transform.localScale = baseScale * scale;
+            float parentScaleY = transform.parent != null ? transform.parent.lossyScale.y : 1f;
+            float localY = (parentScaleY > 0f ? (targetHeight * 0.5f) / parentScaleY : targetHeight * 0.5f);
 
-        float parentScaleY = transform.lossyScale.y;
-        float localY = parentScaleY > 0f ? (worldHeight * 0.5f) / parentScaleY : worldHeight * 0.5f;
-        card.transform.localPosition = new Vector3(0f, localY, 0f);
-
-        HandManager.Instance.DeselectCurrentCard();
-
-        if (AttackManager.Instance != null && AttackManager.Instance.IsP1BoardSlot(this))
-        {
-            AttackManager.Instance.RegisterCard(card);
+            Vector3 p = transform.localPosition;
+            transform.localPosition = new Vector3(p.x, localY, p.z);
         }
     }
 }
