@@ -1,154 +1,136 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
-using System.Linq;
-
-public class AttackManager : MonoBehaviour
+using VortexTCG.Scripts.DTOs;
+namespace VortexTCG.Scripts.MatchScene
 {
-    [Header("UI Toolkit")]
-    [SerializeField] private UIDocument boardDocument;
-
-    private VisualElement p1BoardRoot;
-    private readonly List<VisualElement> selectedCards = new List<VisualElement>();
-
-    private void Start()
+    public class AttackManager : MonoBehaviour
     {
-        if (boardDocument == null)
-            boardDocument = GetComponent<UIDocument>();
+        public static AttackManager Instance { get; private set; }
 
-        VisualElement root = boardDocument.rootVisualElement;
-        p1BoardRoot = root.Q<VisualElement>("P1BoardCards");
+        [Header("Player 1 Cards on Board")] [SerializeField]
+        private List<CardSlot> P1BoardSlots;
 
-        RegisterAllExistingCards();
+        private readonly List<Card> selectedCards = new List<Card>();
 
-        PhaseManager.Instance.OnEnterAttack += OnEnterAttackPhase;
-        PhaseManager.Instance.OnEnterStandBy += OnEndDefensePhase;
-
-        Debug.Log("AttackManager subscribed to phase events");
-    }
-
-    private void OnDestroy()
-    {
-        if (PhaseManager.Instance != null)
+        private void Awake()
         {
-            PhaseManager.Instance.OnEnterAttack -= OnEnterAttackPhase;
-            PhaseManager.Instance.OnEnterStandBy -= OnEndDefensePhase;
+            Instance = this;
         }
-    }
 
-    private void OnEnterAttackPhase()
-    {
-        ClearSelections();
-    }
-
-    private void OnEndDefensePhase()
-    {
-        ClearSelections();
-    }
-
-    private void RegisterAllExistingCards()
-    {
-        List<VisualElement> allSlots = p1BoardRoot.Query<VisualElement>(className: "P1Slot").ToList();
-        foreach (VisualElement slot in allSlots)
+        private void Start()
         {
-            slot.RegisterCallback<ClickEvent>(ClickEvent =>
+            PhaseManager.Instance.OnEnterAttack += OnEnterAttackPhase;
+            PhaseManager.Instance.OnEnterDefense += OnEnterDefensePhase;
+            PhaseManager.Instance.OnEnterStandBy += OnEndDefensePhase;
+
+            foreach (CardSlot slot in P1BoardSlots)
             {
-                VisualElement card = slot.Q<VisualElement>(className: "small-card");
-                if (card != null)
-                    ToggleCard(card);
-            });
+                if (slot.CurrentCard != null)
+                {
+                    RegisterCard(slot.CurrentCard);
+                }
+            }
         }
-    }
 
-    public void RegisterCard(VisualElement card)
-    {
-        if (!card.ClassListContains("small-card"))
-            return;
-        if (card.userData is bool alreadyRegistered && alreadyRegistered)
-            return;
-
-        card.userData = true;
-
-        card.RegisterCallback<ClickEvent>(ClickEvent =>
+        private void OnDestroy()
         {
-            if (PhaseManager.Instance.CurrentPhase != GamePhase.Attack)
-                return;
+            if (PhaseManager.Instance != null)
+            {
+                PhaseManager.Instance.OnEnterAttack -= OnEnterAttackPhase;
+                PhaseManager.Instance.OnEnterDefense -= OnEnterDefensePhase;
+                PhaseManager.Instance.OnEnterStandBy -= OnEndDefensePhase;
+            }
+        }
 
-            if (card.parent == null || card.parent != p1BoardRoot && !p1BoardRoot.Contains(card))
-                return;
+        private void OnEnterAttackPhase()
+        {
+            ClearSelections();
+        }
+
+        private void OnEnterDefensePhase()
+        {
+        }
+
+        private void OnEndDefensePhase()
+        {
+            ClearSelections();
+        }
+
+        public void RegisterCard(Card card)
+        {
+            if (card == null) return;
+
+            Collider col = card.GetComponent<Collider>();
+            if (col == null)
+            {
+                BoxCollider bc = card.gameObject.AddComponent<BoxCollider>();
+                bc.size = Vector3.one;
+            }
+        }
+
+        public bool IsP1BoardSlot(CardSlot slot)
+        {
+            return slot != null && P1BoardSlots != null && P1BoardSlots.Contains(slot);
+        }
+
+        public bool IsCardOnP1Board(Card card)
+        {
+            if (card == null) return false;
+            CardSlot slot = card.GetComponentInParent<CardSlot>();
+            return IsP1BoardSlot(slot);
+        }
+
+        public void HandleCardClicked(Card card)
+        {
+            if (card == null) return;
+            if (PhaseManager.Instance == null) return;
+            if (PhaseManager.Instance.CurrentPhase != GamePhase.ATTACK) return;
+            if (!IsCardOnP1Board(card)) return;
 
             ToggleCard(card);
-        });
-    }
-
-    private void ToggleCard(VisualElement card)
-    {
-        if (card == null || card.parent == null || card.parent.childCount == 0)
-            return;
-
-        if (selectedCards.Contains(card))
-            DeselectCard(card);
-        else
-            SelectCard(card);
-
-        UpdateAttackOrderLabels();
-    }
-
-    private void SelectCard(VisualElement card)
-    {
-        selectedCards.Add(card);
-        if (!card.ClassListContains("engaged"))
-            card.AddToClassList("engaged");
-
-        Label orderLabel = card.Q<Label>("AttackOrder");
-        if (orderLabel != null)
-            orderLabel.style.display = DisplayStyle.Flex;
-    }
-
-    private void DeselectCard(VisualElement card)
-    {
-        selectedCards.Remove(card);
-        if (card.ClassListContains("engaged"))
-            card.RemoveFromClassList("engaged");
-
-        Label orderLabel = card.Q<Label>("AttackOrder");
-        if (orderLabel != null)
-        {
-            orderLabel.text = "";
-            orderLabel.style.display = DisplayStyle.None;
         }
-    }
 
-    private void UpdateAttackOrderLabels()
-    {
-        for (int i = 0; i < selectedCards.Count; i++)
+        private void ToggleCard(Card card)
         {
-            VisualElement card = selectedCards[i];
-            Label orderLabel = card.Q<Label>("AttackOrder");
-            if (orderLabel != null)
-            {
-                orderLabel.text = (i + 1).ToString();
-                orderLabel.style.display = DisplayStyle.Flex;
-            }
+            if (selectedCards.Contains(card))
+                DeselectCard(card);
+            else
+                SelectCard(card);
+
+            UpdateAttackOrderLabels();
         }
-    }
 
-    private void ClearSelections()
-    {
-        foreach (VisualElement card in selectedCards)
+        private void SelectCard(Card card)
         {
-            if (card.ClassListContains("engaged"))
-                card.RemoveFromClassList("engaged");
+            selectedCards.Add(card);
+            card.SetSelected(true);
+        }
 
-            Label orderLabel = card.Q<Label>("AttackOrder");
-            if (orderLabel != null)
+        private void DeselectCard(Card card)
+        {
+            selectedCards.Remove(card);
+            card.SetSelected(false);
+            card.ClearAttackOrder();
+        }
+
+        private void UpdateAttackOrderLabels()
+        {
+            for (int i = 0; i < selectedCards.Count; i++)
             {
-                orderLabel.text = "";
-                orderLabel.style.display = DisplayStyle.None;
+                Card card = selectedCards[i];
+                card.ShowAttackOrder(i + 1);
             }
         }
 
-        selectedCards.Clear();
-    }
+        private void ClearSelections()
+        {
+            foreach (Card card in selectedCards)
+            {
+                card.SetSelected(false);
+                card.ClearAttackOrder();
+            }
 
+            selectedCards.Clear();
+        }
+    }
 }
