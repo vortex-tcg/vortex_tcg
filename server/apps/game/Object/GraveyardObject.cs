@@ -13,8 +13,8 @@ namespace VortexTCG.Game.Object
         public void AddCards(IEnumerable<Card> cards)
         {
             if (cards == null) return;
-            foreach (var c in cards)
-                if (c != null) _cards.Add(c);
+            foreach (var c in cards.Where(card => card != null))
+                _cards.Add(c);
         }
 
         public int GetCount() => _cards.Count;
