@@ -42,7 +42,8 @@ public class SignalRClient : MonoBehaviour
     public event Action<DrawResultForOpponentDto> OnOpponentCardsDrawn;
     public event Action<PlayCardPlayerResultDto> OnPlayCardResult;
     public event Action<PlayCardOpponentResultDto> OnOpponentPlayCardResult;
-
+    public event Action<AttackResponseDto>? OnAttackEngage;
+    public event Action<DefenseResponseDto>? OnDefenseEngage;
     private readonly ConcurrentQueue<Action> _main = new();
     private void Enqueue(Action a) => _main.Enqueue(a);
     private void Update() { while (_main.TryDequeue(out Action a)) a(); }
@@ -181,6 +182,17 @@ public class SignalRClient : MonoBehaviour
   			  Debug.LogError("[Hub Error] " + msg);
   			  OnStatus?.Invoke(msg);
 		}));
+        _conn.On<AttackResponseDto>("HandleAttackEngage", dto =>
+        {
+            Debug.Log("[SignalRClient] HandleAttackEngage reçu");
+            OnAttackEngage?.Invoke(dto);
+        });
+
+        _conn.On<DefenseResponseDto>("HandleDefenseEngage", dto =>
+        {
+            Debug.Log("[SignalRClient] HandleDefenseEngage reçu");
+            OnDefenseEngage?.Invoke(dto);
+        });
 
         try
         {
@@ -344,6 +356,17 @@ public class SignalRClient : MonoBehaviour
 
         Debug.Log($"[SignalRClient] -> Invoke DrawCards(pos={playerPosition}, amount={amount})");
         await SafeInvoke("DrawCards", playerPosition, amount);
+    }
+    public async Task HandleAttackPos(int cardId)
+    {
+        if (_conn == null) return;
+        await _conn.InvokeAsync("HandleAttackPos", cardId);
+    }
+
+    public async Task HandleDefensePos(int cardId, int opponentCardId)
+    {
+        if (_conn == null) return;
+        await _conn.InvokeAsync("HandleDefensePos", cardId, opponentCardId);
     }
 
     public bool IsConnected => _conn != null && _conn.State == HubConnectionState.Connected;
