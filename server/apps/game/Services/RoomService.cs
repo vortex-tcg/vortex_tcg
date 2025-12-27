@@ -609,8 +609,11 @@ public class RoomService: IRoomActionEventListener
         if (result == null) {
             await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Can't pos this card here !");
         } else {
-            await _hubContext.Clients.User(result.PlayerId.ToString()).SendAsync("HandleAttackEngage", result.AttackCardsId);
-            await _hubContext.Clients.User(result.OpponentId.ToString()).SendAsync("HandleAttackEngage", result.AttackCardsId);
+            await _hubContext.Clients.User(result.PlayerId.ToString())
+                .SendAsync("HandleAttackEngage", result.AttackCardsId);
+            await _hubContext.Clients.User(result.OpponentId.ToString())
+                .SendAsync("HandleOpponentAttackEngage", result.AttackCardsId);
+
         }
     }
 
@@ -632,8 +635,11 @@ public class RoomService: IRoomActionEventListener
         if (result == null) {
             await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Can't pos this card here !");
         } else {
-            await _hubContext.Clients.User(result.PlayerId.ToString()).SendAsync("HandleDefenseEngage", result.data);
-            await _hubContext.Clients.User(result.OpponentId.ToString()).SendAsync("HandleDefenseEngage", result.data);
+            await _hubContext.Clients.User(result.PlayerId.ToString())
+                .SendAsync("HandleDefenseEngage", result.data);
+
+            await _hubContext.Clients.User(result.OpponentId.ToString())
+                .SendAsync("HandleOpponentDefenseEngage", result.data);
         }
     }
 
