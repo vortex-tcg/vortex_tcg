@@ -38,6 +38,12 @@ namespace VortexTCG.Scripts.MatchScene
             client.OnPlayCardResult += HandlePlayCardResult;
             client.OnOpponentPlayCardResult += HandleOpponentPlayCardResult;
             client.OnStatus += HandleStatus;
+            client.OnAttackEngage += HandleAttackEngage;
+            client.OnOpponentAttackEngage += HandleOpponentAttackEngage;
+
+            client.OnDefenseEngage += HandleDefenseEngage;
+            client.OnOpponentDefenseEngage += HandleOpponentDefenseEngage;
+
 
             if (PhaseManager.Instance != null)
                 PhaseManager.Instance.OnRequestChangePhase += HandleRequestChangePhase;
@@ -64,9 +70,11 @@ namespace VortexTCG.Scripts.MatchScene
                 client.OnCardsDrawn -= HandleCardsDrawn;
                 client.OnOpponentCardsDrawn -= HandleOpponentCardsDrawn;
 
+                client.OnAttackEngage -= HandleAttackEngage;
+                client.OnDefenseEngage -= HandleDefenseEngage;
+
                 client.OnPlayCardResult -= HandlePlayCardResult;
                 client.OnOpponentPlayCardResult -= HandleOpponentPlayCardResult;
-
                 client.OnStatus -= HandleStatus;
             }
 
@@ -192,5 +200,30 @@ namespace VortexTCG.Scripts.MatchScene
             if (OpponentBoardManager.Instance != null)
                 OpponentBoardManager.Instance.PlaceOpponentCard(r.location, r.PlayedCard);
         }
+
+        private void HandleAttackEngage(List<int> attackIds)
+        {
+            Debug.Log($"[MatchController] HandleAttackEngage ids={string.Join(",", attackIds)}");
+            AttackManager.Instance?.ApplyAttackStateFromServer(attackIds);
+        }
+
+        private void HandleOpponentAttackEngage(List<int> attackIds)
+        {
+            Debug.Log($"[MatchController] HandleOpponentAttackEngage ids={string.Join(",", attackIds)}");
+            OpponentBoardManager.Instance?.ApplyOpponentAttackState(attackIds);
+        }
+
+        private void HandleDefenseEngage(DefenseDataResponseDto data)
+        {
+            Debug.Log($"[MatchController] HandleDefenseEngage defenses={(data?.DefenseCards?.Count ?? 0)}");
+            DefenseManager.Instance?.ApplyDefenseStateFromServer(data);
+        }
+
+        private void HandleOpponentDefenseEngage(DefenseDataResponseDto data)
+        {
+            Debug.Log($"[MatchController] HandleOpponentDefenseEngage defenses={(data?.DefenseCards?.Count ?? 0)}");
+            OpponentBoardManager.Instance?.ApplyOpponentDefenseState(data);
+        }
+
     }
 }
