@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using VortexTCG.Scripts.DTOs;
 using System;
+
 namespace VortexTCG.Scripts.MatchScene
 {
     public class AttackManager : MonoBehaviour
@@ -12,7 +13,7 @@ namespace VortexTCG.Scripts.MatchScene
         [SerializeField] private List<CardSlot> P1BoardSlots;
 
         private readonly Dictionary<int, Card> boardCardsById = new();
-        private readonly List<Card> selectedCards = new List<Card>();
+        private readonly List<Card> selectedCards = new();
 
         private void Awake()
         {
@@ -53,7 +54,6 @@ namespace VortexTCG.Scripts.MatchScene
         {
             if (card == null) return;
 
-            // ✅ SAFE PARSE
             if (!int.TryParse(card.cardId, out int id))
             {
                 Debug.LogError($"[AttackManager] RegisterCard: cardId invalide '{card.cardId}'");
@@ -62,7 +62,6 @@ namespace VortexTCG.Scripts.MatchScene
 
             boardCardsById[id] = card;
 
-            // collider (ok)
             Collider col = card.GetComponent<Collider>();
             if (col == null)
             {
@@ -118,7 +117,7 @@ namespace VortexTCG.Scripts.MatchScene
                 return;
             }
 
-            var client = SignalRClient.Instance;
+            SignalRClient client = SignalRClient.Instance;
             if (client == null)
             {
                 Debug.LogError("[AttackManager] SignalRClient.Instance is NULL");
@@ -128,6 +127,8 @@ namespace VortexTCG.Scripts.MatchScene
             Debug.Log($"[AttackManager] -> calling Hub HandleAttackPos(cardId={cardIdInt}) " +
                       $"(from string='{idStr}', type={cardIdInt.GetType().Name})");
 
+            ToggleCard(card);
+
             try
             {
                 await client.HandleAttackPos(cardIdInt);
@@ -135,6 +136,7 @@ namespace VortexTCG.Scripts.MatchScene
             }
             catch (Exception ex)
             {
+                ToggleCard(card);
                 Debug.LogError($"[AttackManager] Hub call HandleAttackPos FAILED cardId={cardIdInt} ex={ex}");
             }
         }

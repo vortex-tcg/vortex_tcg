@@ -31,7 +31,7 @@ namespace VortexTCG.Scripts.MatchScene
 
                 for (int i = 0; i < enemySlots.Length; i++)
                 {
-                    var s = enemySlots[i];
+                    CardSlot s = enemySlots[i];
                     if (s == null)
                     {
                         Debug.LogWarning($"[OpponentBoardManager] enemySlots[{i}] = NULL");
@@ -51,7 +51,7 @@ namespace VortexTCG.Scripts.MatchScene
 
         public void PlaceOpponentCard(int location, GameCardDto playedCard)
         {
-            Debug.Log($"[OpponentBoardManager] PlaceOpponentCard(location={location}, playedCard={(playedCard != null ? playedCard.GameCardId.ToString() : "NULL")})"); 
+            Debug.Log($"[OpponentBoardManager] PlaceOpponentCard(location={location}, playedCard={(playedCard != null ? playedCard.GameCardId.ToString() : "NULL")})");
             if (enemySlots == null || enemySlots.Length == 0)
             {
                 Debug.LogError("[OpponentBoardManager] enemySlots NULL/empty");
@@ -108,7 +108,7 @@ namespace VortexTCG.Scripts.MatchScene
             );
 
             // Rendu / bounds debug
-            var rends = c.GetComponentsInChildren<Renderer>(true);
+            Renderer[] rends = c.GetComponentsInChildren<Renderer>(true);
             Debug.Log($"[OpponentBoardManager] Renderers count={rends.Length}");
             if (rends.Length > 0)
             {
@@ -134,6 +134,7 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 Debug.LogWarning("[OpponentBoardManager] playedCard est NULL -> pas de ApplyDTO");
             }
+
             LogBoardState("BEFORE PlaceCard");
             Debug.Log($"[OpponentBoardManager] About to slot.PlaceCard(cardId='{c.cardId}', slot='{slot.name}')");
 
@@ -144,6 +145,7 @@ namespace VortexTCG.Scripts.MatchScene
                 $"cardParent='{(c.transform.parent != null ? c.transform.parent.name : "none")}' " +
                 $"cardPosL={c.transform.localPosition} cardRotL={c.transform.localRotation.eulerAngles} cardScaleL={c.transform.localScale}"
             );
+
             if (Camera.main != null)
             {
                 Vector3 vp = Camera.main.WorldToViewportPoint(c.transform.position);
@@ -164,7 +166,7 @@ namespace VortexTCG.Scripts.MatchScene
 
             if (enemySlots == null) return;
 
-            foreach (var s in enemySlots)
+            foreach (CardSlot s in enemySlots)
             {
                 if (s == null) continue;
 
@@ -188,12 +190,12 @@ namespace VortexTCG.Scripts.MatchScene
                 return;
             }
 
-            var sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             sb.AppendLine($"[OpponentBoardManager] BoardState {label}: enemySlots.Length={enemySlots.Length}");
 
             for (int i = 0; i < enemySlots.Length; i++)
             {
-                var s = enemySlots[i];
+                CardSlot s = enemySlots[i];
                 if (s == null)
                 {
                     sb.AppendLine($"  [{i}] NULL");
@@ -210,7 +212,7 @@ namespace VortexTCG.Scripts.MatchScene
         private static string GetPath(Transform t)
         {
             if (t == null) return "null";
-            var sb = new StringBuilder(t.name);
+            StringBuilder sb = new StringBuilder(t.name);
             while (t.parent != null)
             {
                 t = t.parent;

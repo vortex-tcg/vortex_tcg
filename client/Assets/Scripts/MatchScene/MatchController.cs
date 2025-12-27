@@ -15,8 +15,8 @@ namespace VortexTCG.Scripts.MatchScene
         private SignalRClient client;
         private bool _gameStarted;
 
-        private readonly List<DrawResultForPlayerDto> _bufferedDraws = new();
-        private readonly List<DrawResultForOpponentDto> _bufferedOpponentDraws = new();
+        private readonly List<DrawResultForPlayerDto> _bufferedDraws = new List<DrawResultForPlayerDto>();
+        private readonly List<DrawResultForOpponentDto> _bufferedOpponentDraws = new List<DrawResultForOpponentDto>();
 
         private void OnEnable()
         {
@@ -78,6 +78,7 @@ namespace VortexTCG.Scripts.MatchScene
         {
             if (string.IsNullOrWhiteSpace(msg)) return;
             if (handManager == null || !handManager.HasPendingPlay) return;
+
             if (msg.Contains("Can't play", StringComparison.OrdinalIgnoreCase) ||
                 msg.Contains("play the card", StringComparison.OrdinalIgnoreCase))
             {
@@ -89,15 +90,19 @@ namespace VortexTCG.Scripts.MatchScene
         {
             Debug.Log($"[MatchController] GameStarted phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct}");
             _gameStarted = true;
+
             handManager?.SetHand(new List<DrawnCardDto>());
             graveyardManager?.ResetGraveyard();
             opponentHandManager?.ResetHand();
+
             PhaseManager.Instance?.ApplyServerPhase(r.CurrentPhase);
             OpponentBoardManager.Instance?.ResetBoard();
-            foreach (var d in _bufferedDraws) ApplyDraw(d);
+
+            foreach (DrawResultForPlayerDto d in _bufferedDraws) ApplyDraw(d);
             _bufferedDraws.Clear();
-            foreach (var od in _bufferedOpponentDraws) ApplyOpponentDraw(od);
-            _bufferedOpponentDraws.Clear(); 
+
+            foreach (DrawResultForOpponentDto od in _bufferedOpponentDraws) ApplyOpponentDraw(od);
+            _bufferedOpponentDraws.Clear();
         }
 
         private void HandlePhaseChanged(PhaseChangeResultDTO r)
@@ -165,6 +170,7 @@ namespace VortexTCG.Scripts.MatchScene
             if (added > 0)
                 opponentHandManager?.AddFaceDownCards(added);
         }
+
         private void HandlePlayCardResult(PlayCardPlayerResultDto r)
         {
             if (r == null) return;
@@ -185,7 +191,6 @@ namespace VortexTCG.Scripts.MatchScene
 
             if (OpponentBoardManager.Instance != null)
                 OpponentBoardManager.Instance.PlaceOpponentCard(r.location, r.PlayedCard);
-            
         }
     }
 }

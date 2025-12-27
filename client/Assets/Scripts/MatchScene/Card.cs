@@ -282,7 +282,7 @@ namespace VortexTCG.Scripts.MatchScene
         {
             faceDown = value;
             transform.localRotation = value ? Quaternion.Euler(0f, 180f, 0f) : Quaternion.identity;
-            var col = GetComponent<Collider>();
+            Collider col = GetComponent<Collider>();
             if (col != null) col.enabled = !value;
         }
 

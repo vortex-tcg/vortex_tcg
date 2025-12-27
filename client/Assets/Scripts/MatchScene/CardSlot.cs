@@ -43,7 +43,7 @@ namespace VortexTCG.Scripts.MatchScene
             t.localPosition = Vector3.zero;
             t.localRotation = Quaternion.identity;
             t.localScale    = baseScale;
-            var renderers = card.GetComponentsInChildren<Renderer>(true);
+            Renderer[] renderers = card.GetComponentsInChildren<Renderer>(true);
             float refSize = 1f;
 
             if (renderers != null && renderers.Length > 0)
