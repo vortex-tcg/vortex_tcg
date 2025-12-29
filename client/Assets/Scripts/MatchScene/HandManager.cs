@@ -55,7 +55,7 @@ namespace VortexTCG.Scripts.MatchScene
                 return;
             }
 
-            foreach (var dto in drawnCards)
+            foreach (DrawnCardDto dto in drawnCards)
             {
                 Card card = Instantiate(cardPrefab, handRoot);
                 card.ApplyDTO(
@@ -97,6 +97,7 @@ namespace VortexTCG.Scripts.MatchScene
                 SelectedCard = null;
             }
         }
+
         public async Task RequestPlaySelectedCard(CardSlot slot)
         {
             if (_playRequestInFlight)
@@ -119,7 +120,7 @@ namespace VortexTCG.Scripts.MatchScene
                 return;
             }
 
-            var client = SignalRClient.Instance;
+            SignalRClient client = SignalRClient.Instance;
             if (client == null || !client.IsConnected)
             {
                 Debug.LogWarning("[HandManager] SignalRClient pas connecté.");
@@ -147,8 +148,9 @@ namespace VortexTCG.Scripts.MatchScene
         private void StartPendingTimeout(int ms)
         {
             try { _pendingTimeoutCts?.Cancel(); } catch { }
+
             _pendingTimeoutCts = new CancellationTokenSource();
-            var token = _pendingTimeoutCts.Token;
+            CancellationToken token = _pendingTimeoutCts.Token;
 
             _ = Task.Run(async () =>
             {
@@ -156,16 +158,21 @@ namespace VortexTCG.Scripts.MatchScene
                 {
                     await Task.Delay(ms, token);
                     if (token.IsCancellationRequested) return;
+
                     if (_playRequestInFlight)
                     {
                         Debug.LogWarning("[HandManager] Pending play timeout -> unlock");
                         CancelPendingPlay("timeout");
                     }
-                    
                 }
-                catch { /* ignore */ }
+                catch
+                {
+                    /* ignore */
+                }
             });
-        } public void ConfirmPlayFromServer(int gameCardId, int location, bool canPlayed)
+        }
+
+        public void ConfirmPlayFromServer(int gameCardId, int location, bool canPlayed)
         {
             try { _pendingTimeoutCts?.Cancel(); } catch { }
 
@@ -178,6 +185,7 @@ namespace VortexTCG.Scripts.MatchScene
                 _pendingSlot = null;
                 return;
             }
+
             Card cardToPlace = null;
 
             if (_pendingCard != null && int.TryParse(_pendingCard.cardId, out int pendingId) && pendingId == gameCardId)
@@ -192,6 +200,7 @@ namespace VortexTCG.Scripts.MatchScene
                 _pendingSlot = null;
                 return;
             }
+
             CardSlot slot = _pendingSlot;
 
             if (slot == null || slot.slotIndex != location)
@@ -203,6 +212,7 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 slot.PlaceCard(cardToPlace);
                 handCards.Remove(cardToPlace);
+
                 if (SelectedCard == cardToPlace) DeselectCurrentCard();
                 LayoutHand();
             }
@@ -210,6 +220,7 @@ namespace VortexTCG.Scripts.MatchScene
             _pendingCard = null;
             _pendingSlot = null;
         }
+
         public void CancelPendingPlay(string reason)
         {
             try { _pendingTimeoutCts?.Cancel(); } catch { }
@@ -224,7 +235,7 @@ namespace VortexTCG.Scripts.MatchScene
 
         private Card FindCardInHand(int gameCardId)
         {
-            foreach (var c in handCards)
+            foreach (Card c in handCards)
             {
                 if (c == null) continue;
                 if (int.TryParse(c.cardId, out int id) && id == gameCardId)
@@ -237,7 +248,7 @@ namespace VortexTCG.Scripts.MatchScene
         {
             DeselectCurrentCard();
 
-            foreach (var c in handCards)
+            foreach (Card c in handCards)
                 if (c != null) Destroy(c.gameObject);
 
             handCards.Clear();
@@ -249,7 +260,7 @@ namespace VortexTCG.Scripts.MatchScene
         {
             for (int i = 0; i < handCards.Count; i++)
             {
-                var c = handCards[i];
+                Card c = handCards[i];
                 if (c == null) continue;
 
                 c.transform.localPosition = new Vector3(i * cardSpacing, 0f, 0f);
@@ -260,9 +271,10 @@ namespace VortexTCG.Scripts.MatchScene
         private static void EnsureCollider(Card card)
         {
             if (card == null) return;
+
             if (card.GetComponent<Collider>() == null)
             {
-                var bc = card.gameObject.AddComponent<BoxCollider>();
+                BoxCollider bc = card.gameObject.AddComponent<BoxCollider>();
                 bc.size = Vector3.one;
             }
         }

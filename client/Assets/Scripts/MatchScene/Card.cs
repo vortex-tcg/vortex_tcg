@@ -8,6 +8,7 @@ namespace VortexTCG.Scripts.MatchScene
     public class Card : MonoBehaviour
     {
         [Header("Data")] public string cardId;
+        
         public string cardName;
         public int hp;
         public int attack;
@@ -60,27 +61,23 @@ namespace VortexTCG.Scripts.MatchScene
         void OnMouseDown()
         {
             if (faceDown) return;
-            if (AttackOutline != null && AttackOutline.activeSelf)
-            {
-                if (PhaseManager.Instance == null ||
-                    (PhaseManager.Instance.CurrentPhase != GamePhase.ATTACK &&
-                     PhaseManager.Instance.CurrentPhase != GamePhase.DEFENSE))
-                {
-                    return;
-                }
-            }
+
+            if (PhaseManager.Instance == null) return;
 
             CardSlot slot = GetComponentInParent<CardSlot>();
-            if (slot != null && PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.ATTACK)
+            if (PhaseManager.Instance.CurrentPhase == GamePhase.ATTACK)
             {
-                if (AttackManager.Instance != null && AttackManager.Instance.IsP1BoardSlot(slot))
+                if (slot != null && !slot.isOpponentSlot)
                 {
-                    AttackManager.Instance.HandleCardClicked(this);
-                    return;
+                    if (AttackManager.Instance != null)
+                    {
+                        AttackManager.Instance.HandleCardClicked(this);
+                        return;
+                    }
                 }
             }
 
-            if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.DEFENSE)
+            if (PhaseManager.Instance.CurrentPhase == GamePhase.DEFENSE)
             {
                 if (DefenseManager.Instance != null)
                 {
@@ -88,9 +85,10 @@ namespace VortexTCG.Scripts.MatchScene
                     return;
                 }
             }
-
-            HandManager.Instance.SelectCard(this);
+            if (HandManager.Instance != null)
+                HandManager.Instance.SelectCard(this);
         }
+
 
 
         void MockData()
@@ -284,7 +282,7 @@ namespace VortexTCG.Scripts.MatchScene
         {
             faceDown = value;
             transform.localRotation = value ? Quaternion.Euler(0f, 180f, 0f) : Quaternion.identity;
-            var col = GetComponent<Collider>();
+            Collider col = GetComponent<Collider>();
             if (col != null) col.enabled = !value;
         }
 
