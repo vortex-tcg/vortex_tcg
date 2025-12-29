@@ -15,8 +15,8 @@ namespace VortexTCG.Scripts.MatchScene
         private SignalRClient client;
         private bool _gameStarted;
 
-        private readonly List<DrawResultForPlayerDto> _bufferedDraws = new();
-        private readonly List<DrawResultForOpponentDto> _bufferedOpponentDraws = new();
+        private readonly List<DrawResultForPlayerDto> _bufferedDraws = new List<DrawResultForPlayerDto>();
+        private readonly List<DrawResultForOpponentDto> _bufferedOpponentDraws = new List<DrawResultForOpponentDto>();
 
         private void OnEnable()
         {
@@ -38,6 +38,12 @@ namespace VortexTCG.Scripts.MatchScene
             client.OnPlayCardResult += HandlePlayCardResult;
             client.OnOpponentPlayCardResult += HandleOpponentPlayCardResult;
             client.OnStatus += HandleStatus;
+            client.OnAttackEngage += HandleAttackEngage;
+            client.OnOpponentAttackEngage += HandleOpponentAttackEngage;
+
+            client.OnDefenseEngage += HandleDefenseEngage;
+            client.OnOpponentDefenseEngage += HandleOpponentDefenseEngage;
+
 
             if (PhaseManager.Instance != null)
                 PhaseManager.Instance.OnRequestChangePhase += HandleRequestChangePhase;
@@ -64,9 +70,11 @@ namespace VortexTCG.Scripts.MatchScene
                 client.OnCardsDrawn -= HandleCardsDrawn;
                 client.OnOpponentCardsDrawn -= HandleOpponentCardsDrawn;
 
+                client.OnAttackEngage -= HandleAttackEngage;
+                client.OnDefenseEngage -= HandleDefenseEngage;
+
                 client.OnPlayCardResult -= HandlePlayCardResult;
                 client.OnOpponentPlayCardResult -= HandleOpponentPlayCardResult;
-
                 client.OnStatus -= HandleStatus;
             }
 
@@ -78,6 +86,7 @@ namespace VortexTCG.Scripts.MatchScene
         {
             if (string.IsNullOrWhiteSpace(msg)) return;
             if (handManager == null || !handManager.HasPendingPlay) return;
+
             if (msg.Contains("Can't play", StringComparison.OrdinalIgnoreCase) ||
                 msg.Contains("play the card", StringComparison.OrdinalIgnoreCase))
             {
@@ -89,15 +98,19 @@ namespace VortexTCG.Scripts.MatchScene
         {
             Debug.Log($"[MatchController] GameStarted phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct}");
             _gameStarted = true;
+
             handManager?.SetHand(new List<DrawnCardDto>());
             graveyardManager?.ResetGraveyard();
             opponentHandManager?.ResetHand();
+
             PhaseManager.Instance?.ApplyServerPhase(r.CurrentPhase);
             OpponentBoardManager.Instance?.ResetBoard();
-            foreach (var d in _bufferedDraws) ApplyDraw(d);
+
+            foreach (DrawResultForPlayerDto d in _bufferedDraws) ApplyDraw(d);
             _bufferedDraws.Clear();
-            foreach (var od in _bufferedOpponentDraws) ApplyOpponentDraw(od);
-            _bufferedOpponentDraws.Clear(); 
+
+            foreach (DrawResultForOpponentDto od in _bufferedOpponentDraws) ApplyOpponentDraw(od);
+            _bufferedOpponentDraws.Clear();
         }
 
         private void HandlePhaseChanged(PhaseChangeResultDTO r)
@@ -165,6 +178,7 @@ namespace VortexTCG.Scripts.MatchScene
             if (added > 0)
                 opponentHandManager?.AddFaceDownCards(added);
         }
+
         private void HandlePlayCardResult(PlayCardPlayerResultDto r)
         {
             if (r == null) return;
@@ -185,7 +199,31 @@ namespace VortexTCG.Scripts.MatchScene
 
             if (OpponentBoardManager.Instance != null)
                 OpponentBoardManager.Instance.PlaceOpponentCard(r.location, r.PlayedCard);
-            
         }
+
+        private void HandleAttackEngage(List<int> attackIds)
+        {
+            Debug.Log($"[MatchController] HandleAttackEngage ids={string.Join(",", attackIds)}");
+            AttackManager.Instance?.ApplyAttackStateFromServer(attackIds);
+        }
+
+        private void HandleOpponentAttackEngage(List<int> attackIds)
+        {
+            Debug.Log($"[MatchController] HandleOpponentAttackEngage ids={string.Join(",", attackIds)}");
+            OpponentBoardManager.Instance?.ApplyOpponentAttackState(attackIds);
+        }
+
+        private void HandleDefenseEngage(DefenseDataResponseDto data)
+        {
+            Debug.Log($"[MatchController] HandleDefenseEngage defenses={(data?.DefenseCards?.Count ?? 0)}");
+            DefenseManager.Instance?.ApplyDefenseStateFromServer(data);
+        }
+
+        private void HandleOpponentDefenseEngage(DefenseDataResponseDto data)
+        {
+            Debug.Log($"[MatchController] HandleOpponentDefenseEngage defenses={(data?.DefenseCards?.Count ?? 0)}");
+            OpponentBoardManager.Instance?.ApplyOpponentDefenseState(data);
+        }
+
     }
 }

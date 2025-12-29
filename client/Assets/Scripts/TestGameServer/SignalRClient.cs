@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.SignalR.Client;
 using UnityEngine;
 using VortexTCG.Scripts.DTOs;
 using System.Text.Json;
+using System.Collections.Generic;
+using System.Linq;
 
 [DefaultExecutionOrder(-1000)]
 public class SignalRClient : MonoBehaviour
@@ -42,6 +44,12 @@ public class SignalRClient : MonoBehaviour
     public event Action<DrawResultForOpponentDto> OnOpponentCardsDrawn;
     public event Action<PlayCardPlayerResultDto> OnPlayCardResult;
     public event Action<PlayCardOpponentResultDto> OnOpponentPlayCardResult;
+    public event Action<List<int>> OnAttackEngage;
+    public event Action<List<int>> OnOpponentAttackEngage;
+
+    public event Action<DefenseDataResponseDto> OnDefenseEngage;
+    public event Action<DefenseDataResponseDto> OnOpponentDefenseEngage;
+
 
     private readonly ConcurrentQueue<Action> _main = new();
     private void Enqueue(Action a) => _main.Enqueue(a);
@@ -181,6 +189,27 @@ public class SignalRClient : MonoBehaviour
   			  Debug.LogError("[Hub Error] " + msg);
   			  OnStatus?.Invoke(msg);
 		}));
+        _conn.On<List<int>>("HandleAttackEngage", ids =>
+        {
+            Debug.Log($"[SignalRClient] HandleAttackEngage ids=[{string.Join(",", ids)}]");
+            Enqueue(() => OnAttackEngage?.Invoke(ids));
+        });
+        _conn.On<List<int>>("HandleOpponentAttackEngage", ids =>
+        {
+            Debug.Log($"[SignalRClient] HandleOpponentAttackEngage ids=[{string.Join(",", ids)}]");
+            Enqueue(() => OnOpponentAttackEngage?.Invoke(ids));
+        });
+        _conn.On<DefenseDataResponseDto>("HandleDefenseEngage", dto =>
+        {
+            Debug.Log($"[SignalRClient] HandleDefenseEngage count={(dto?.DefenseCards?.Count ?? 0)}");
+            Enqueue(() => OnDefenseEngage?.Invoke(dto));
+        });
+        _conn.On<DefenseDataResponseDto>("HandleOpponentDefenseEngage", dto =>
+        {
+            Debug.Log($"[SignalRClient] HandleOpponentDefenseEngage count={(dto?.DefenseCards?.Count ?? 0)}");
+            Enqueue(() => OnOpponentDefenseEngage?.Invoke(dto));
+        });
+
 
         try
         {
@@ -344,6 +373,17 @@ public class SignalRClient : MonoBehaviour
 
         Debug.Log($"[SignalRClient] -> Invoke DrawCards(pos={playerPosition}, amount={amount})");
         await SafeInvoke("DrawCards", playerPosition, amount);
+    }
+    public async Task HandleAttackPos(int cardId)
+    {
+        if (_conn == null) return;
+        await _conn.InvokeAsync("HandleAttackPos", cardId);
+    }
+
+    public async Task HandleDefensePos(int cardId, int opponentCardId)
+    {
+        if (_conn == null) return;
+        await _conn.InvokeAsync("HandleDefensePos", cardId, opponentCardId);
     }
 
     public bool IsConnected => _conn != null && _conn.State == HubConnectionState.Connected;
