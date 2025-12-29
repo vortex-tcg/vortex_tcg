@@ -242,7 +242,7 @@ public class GameHub : Hub
     }
 
     // Événement "jeu": jouer une carte. On supporte les deux modes:
-    // - par code (rooms privées) -> broadcast au group
+    // - par code (rooms privées) -> broadcast au gro   up
     // - par roomId (matchmaking GUID) -> envoi direct à l'adversaire
     public async Task PlayCard(int cardId, int location)
     => await _rooms.PlayCard(GetAuthenticatedUserId(), cardId, location);
