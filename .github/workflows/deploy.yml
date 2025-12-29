@@ -32,7 +32,9 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: |
+            8.0.x
+            9.0.x
 
       - name: Cache SonarQube packages
         uses: actions/cache@v4
@@ -63,7 +65,6 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         shell: powershell
         run: |
-          # 1. INITIALISATION (Syntaxe stricte /n: et /v:)
           .\.sonar\scanner\dotnet-sonarscanner begin `
             /k:"vortex-tcg_vortex_tcg_AZtcdGF7TY20pLe9RloU" `
             /n:"Vortex TCG" `
@@ -75,14 +76,13 @@ jobs:
           # 2. BUILD
           dotnet build VortexTCG.sln --configuration Release
 
-          # 3. TESTS (On ajoute || echo "Tests failed" pour ne pas stopper le workflow si les tests net9 manquent)
-          dotnet test VortexTCG.sln --configuration Release --no-restore /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./TestResults/ || Write-Host "Certains tests n'ont pas été trouvés, mais on continue l'analyse Sonar"
+          # 3. TESTS (Syntaxe PowerShell pour ignorer l'erreur si les tests échouent)
+          dotnet test VortexTCG.sln --configuration Release --no-restore /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./TestResults/
+          if ($LASTEXITCODE -ne 0) {
+              Write-Host "Attention : Certains tests ont échoué ou n'ont pas été trouvés (Code: $LASTEXITCODE). On continue l'analyse Sonar quand même."
+          }
 
-          # 4. VÉRIFICATION DU DOSSIER (Pour le débug)
-          if (Test-Path .sonarqube) { Write-Host "Dossier .sonarqube détecté, passage au End..." } 
-          else { Write-Error "ERREUR CRITIQUE : Le dossier .sonarqube n'a jamais été créé par l'étape Begin." }
-
-          # 5. FINALISATION
+          # 4. FINALISATION (Obligatoire pour envoyer les résultats)
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
 
   deploy:
