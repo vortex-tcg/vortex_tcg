@@ -367,28 +367,80 @@ namespace VortexTCG.Game.Object
                 return _attackHandler.FormatDefenseResponseDto(getPlayerId(isPlayer1), getPlayerId(!isPlayer1));
             }
 
-            public DefenseResponseDto HandleDefenseEvent(Guid userId, int cardId, int opponentCardId) {
-                if (userId != _activePlayerId) return null;
+public DefenseResponseDto HandleDefenseEvent(Guid userId, int cardId, int opponentCardId)
+{
+    Console.WriteLine($"[HandleDefenseEvent] user={userId} cardId={cardId} opponentCardId={opponentCardId} " +
+                      $"active={_activePlayerId} phase={_currentPhase} turn={_turnNumber} started={_gameStarted}");
 
-                bool isPlayer1 = checkIfPlayer1(userId);
-                Board playerBoard = getPlayerBoard(isPlayer1);
+    if (!_gameStarted)
+    {
+        Console.WriteLine("[HandleDefenseEvent] REJECT: game not started");
+        return null;
+    }
 
-                if (!playerBoard.TryGetCardPos(cardId, out int pos)) return null;
-                CardSlotState defenseCardState = playerBoard.canDefendSpot(pos);
+    if (userId != _activePlayerId)
+    {
+        Console.WriteLine("[HandleDefenseEvent] REJECT: not active player");
+        return null;
+    }
 
-                if (opponentCardId < 0 && defenseCardState != CardSlotState.DEFENSE_ENGAGE) return null;
-                else if (opponentCardId >= 0 && defenseCardState != CardSlotState.CAN_DEFEND) return null;
+    if (_currentPhase != GamePhase.DEFENSE)
+    {
+        Console.WriteLine("[HandleDefenseEvent] REJECT: wrong phase (need DEFENSE)");
+        return null;
+    }
 
-                if (opponentCardId < 0) {
-                    return UnEngageDefenseCard(playerBoard, pos, isPlayer1);
-                } else {
-                    Board opponentBoard = getPlayerBoard(!isPlayer1);
-                    if (!opponentBoard.TryGetCardPos(opponentCardId, out int opponentPos)) return null;
-                    CardSlotState attackCardState = opponentBoard.canAttackSpot(opponentPos);
-                    if (attackCardState != CardSlotState.ATTACK_ENGAGE) return null;
-                    return EngageDefenseCard(playerBoard, opponentBoard, pos, opponentPos, isPlayer1);
-                }
-            }
+    bool isPlayer1 = checkIfPlayer1(userId);
+    Board playerBoard = getPlayerBoard(isPlayer1);
+
+    if (!playerBoard.TryGetCardPos(cardId, out int pos))
+    {
+        Console.WriteLine("[HandleDefenseEvent] REJECT: defense card not found on player's board");
+        return null;
+    }
+
+    CardSlotState defenseCardState = playerBoard.canDefendSpot(pos);
+    Console.WriteLine($"[HandleDefenseEvent] defenseCardPos={pos} canDefendSpot={defenseCardState}");
+
+    if (opponentCardId < 0 && defenseCardState != CardSlotState.DEFENSE_ENGAGE)
+    {
+        Console.WriteLine("[HandleDefenseEvent] REJECT: opponentCardId<0 but state != DEFENSE_ENGAGE");
+        return null;
+    }
+
+    if (opponentCardId >= 0 && defenseCardState != CardSlotState.CAN_DEFEND)
+    {
+        Console.WriteLine("[HandleDefenseEvent] REJECT: opponentCardId>=0 but state != CAN_DEFEND");
+        return null;
+    }
+
+    if (opponentCardId < 0)
+    {
+        Console.WriteLine("[HandleDefenseEvent] -> UnEngageDefenseCard");
+        return UnEngageDefenseCard(playerBoard, pos, isPlayer1);
+    }
+
+    Board opponentBoard = getPlayerBoard(!isPlayer1);
+
+    if (!opponentBoard.TryGetCardPos(opponentCardId, out int opponentPos))
+    {
+        Console.WriteLine("[HandleDefenseEvent] REJECT: opponentCardId not found on opponent board");
+        return null;
+    }
+
+    CardSlotState attackCardState = opponentBoard.canAttackSpot(opponentPos);
+    Console.WriteLine($"[HandleDefenseEvent] opponentPos={opponentPos} attackCardState={attackCardState}");
+
+    if (attackCardState != CardSlotState.ATTACK_ENGAGE)
+    {
+        Console.WriteLine("[HandleDefenseEvent] REJECT: opponent card is not ATTACK_ENGAGE");
+        return null;
+    }
+
+    Console.WriteLine("[HandleDefenseEvent] -> EngageDefenseCard");
+    return EngageDefenseCard(playerBoard, opponentBoard, pos, opponentPos, isPlayer1);
+}
+
 
         #endregion
 

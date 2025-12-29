@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.SignalR.Client;
 using UnityEngine;
 using VortexTCG.Scripts.DTOs;
 using System.Text.Json;
+using System.Collections.Generic;
+using System.Linq;
 
 [DefaultExecutionOrder(-1000)]
 public class SignalRClient : MonoBehaviour
@@ -42,8 +44,13 @@ public class SignalRClient : MonoBehaviour
     public event Action<DrawResultForOpponentDto> OnOpponentCardsDrawn;
     public event Action<PlayCardPlayerResultDto> OnPlayCardResult;
     public event Action<PlayCardOpponentResultDto> OnOpponentPlayCardResult;
-    public event Action<AttackResponseDto>? OnAttackEngage;
-    public event Action<DefenseResponseDto>? OnDefenseEngage;
+    public event Action<List<int>> OnAttackEngage;
+    public event Action<List<int>> OnOpponentAttackEngage;
+
+    public event Action<DefenseDataResponseDto> OnDefenseEngage;
+    public event Action<DefenseDataResponseDto> OnOpponentDefenseEngage;
+
+
     private readonly ConcurrentQueue<Action> _main = new();
     private void Enqueue(Action a) => _main.Enqueue(a);
     private void Update() { while (_main.TryDequeue(out Action a)) a(); }
@@ -182,17 +189,27 @@ public class SignalRClient : MonoBehaviour
   			  Debug.LogError("[Hub Error] " + msg);
   			  OnStatus?.Invoke(msg);
 		}));
-        _conn.On<AttackResponseDto>("HandleAttackEngage", dto =>
+        _conn.On<List<int>>("HandleAttackEngage", ids =>
         {
-            Debug.Log("[SignalRClient] HandleAttackEngage reçu");
-            OnAttackEngage?.Invoke(dto);
+            Debug.Log($"[SignalRClient] HandleAttackEngage ids=[{string.Join(",", ids)}]");
+            Enqueue(() => OnAttackEngage?.Invoke(ids));
+        });
+        _conn.On<List<int>>("HandleOpponentAttackEngage", ids =>
+        {
+            Debug.Log($"[SignalRClient] HandleOpponentAttackEngage ids=[{string.Join(",", ids)}]");
+            Enqueue(() => OnOpponentAttackEngage?.Invoke(ids));
+        });
+        _conn.On<DefenseDataResponseDto>("HandleDefenseEngage", dto =>
+        {
+            Debug.Log($"[SignalRClient] HandleDefenseEngage count={(dto?.DefenseCards?.Count ?? 0)}");
+            Enqueue(() => OnDefenseEngage?.Invoke(dto));
+        });
+        _conn.On<DefenseDataResponseDto>("HandleOpponentDefenseEngage", dto =>
+        {
+            Debug.Log($"[SignalRClient] HandleOpponentDefenseEngage count={(dto?.DefenseCards?.Count ?? 0)}");
+            Enqueue(() => OnOpponentDefenseEngage?.Invoke(dto));
         });
 
-        _conn.On<DefenseResponseDto>("HandleDefenseEngage", dto =>
-        {
-            Debug.Log("[SignalRClient] HandleDefenseEngage reçu");
-            OnDefenseEngage?.Invoke(dto);
-        });
 
         try
         {
