@@ -15,7 +15,7 @@ namespace VortexTCG.Scripts.MatchScene
         [Header("Face Down Rotation")]
         [SerializeField] private Vector3 faceDownEuler = new Vector3(0f, 180f, 0f);
 
-        private readonly List<Card> opponentHandCards = new();
+        private readonly List<Card> opponentHandCards = new List<Card>();
 
         private void Awake()
         {
@@ -25,8 +25,6 @@ namespace VortexTCG.Scripts.MatchScene
                 return;
             }
             Instance = this;
-
-            // Auto-bind pratique si tu ne peux pas sérialiser dans la scène
             if (handRoot == null) handRoot = transform;
             if (cardPrefab == null && HandManager.Instance != null)
                 cardPrefab = HandManager.Instance.CardPrefab;
@@ -34,8 +32,10 @@ namespace VortexTCG.Scripts.MatchScene
 
         public void ResetHand()
         {
-            foreach (var c in opponentHandCards)
+            foreach (Card c in opponentHandCards)
+            {
                 if (c != null) Destroy(c.gameObject);
+            }
             opponentHandCards.Clear();
         }
 
@@ -64,7 +64,7 @@ namespace VortexTCG.Scripts.MatchScene
         {
             if (opponentHandCards.Count == 0) return;
 
-            var last = opponentHandCards[opponentHandCards.Count - 1];
+            Card last = opponentHandCards[opponentHandCards.Count - 1];
             opponentHandCards.RemoveAt(opponentHandCards.Count - 1);
 
             if (last != null) Destroy(last.gameObject);
@@ -76,10 +76,8 @@ namespace VortexTCG.Scripts.MatchScene
         {
             for (int i = 0; i < opponentHandCards.Count; i++)
             {
-                var c = opponentHandCards[i];
+                Card c = opponentHandCards[i];
                 if (c == null) continue;
-
-                // spacing + rotation face down
                 c.transform.localPosition = new Vector3(i * cardSpacing, 0f, 0f);
                 c.transform.localRotation = Quaternion.Euler(faceDownEuler);
                 c.transform.localScale = Vector3.one;
