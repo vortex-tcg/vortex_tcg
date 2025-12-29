@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Build, Analyze and Deploy
 
 on:
   pull_request:
@@ -6,89 +6,144 @@ on:
       - closed
     branches:
       - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
-
-env:
-  EC2_HOST: ${{ secrets.EC2_HOST }}
-  EC2_USER: ${{ secrets.EC2_USER }}
-  EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
 
 permissions:
   contents: read
 
 jobs:
-  deploy:
-    name: Deploy
-    runs-on: ubuntu-latest
-    environment: production
-
+  sonarqube:
+    name: Build
+    runs-on: windows-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.0.3
+      - uses: actions/checkout@v4
         with:
-          host: ${{ env.EC2_HOST }}
-          username: ${{ env.EC2_USER }}
-          key: ${{ env.EC2_SSH_KEY }}
+          fetch-depth: 0
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: "zulu"
+      - name: Cache SonarQube packages
+        uses: actions/cache@v4
+        with:
+          path: ~\sonar\cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: Cache SonarQube scanner
+        id: cache-sonar-scanner
+        uses: actions/cache@v4
+        with:
+          path: .\.sonar\scanner
+          key: ${{ runner.os }}-sonar-scanner
+          restore-keys: ${{ runner.os }}-sonar-scanner
+      - name: Install SonarQube scanner
+        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        shell: powershell
+        run: |
+          New-Item -Path .\.sonar\scanner -ItemType Directory
+          dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
+      - name: Build and analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        shell: powershell
+        run: |
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"vortex-tcg_vortex_tcg_AZtcdGF7TY20pLe9RloU" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" /d:sonar.projectName="Vortex TCG" /d:sonar.projectVersion="1.0" /d:sonar.verbose=true
+          dotnet build VortexTCG.sln --configuration Release
+          dotnet test VortexTCG.sln --no-build --configuration Release /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./TestResults/coverage.opencover.xml
+          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
+  deploy:
+    name: Deploy to EC2
+    needs: sonarqube
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    environment: production
+    steps:
+      - name: Pull latest code on EC2
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Create network if it doesn't exist
-            echo "Creating Docker network..."
-            docker network create vortex-network 2>/dev/null || echo "Network already exists"
-
-            # Stop existing containers
-            echo "Stopping existing containers..."
-            docker stop vortex-api vortex-auth vortex-game vortex-migrations 2>/dev/null || true
-            docker rm vortex-api vortex-auth vortex-game vortex-migrations 2>/dev/null || true
-
-            # Pull latest images from Docker Hub
-            echo "Pulling latest images..."
-            docker pull vortextcg/vortex_repository:api-prod
-            docker pull vortextcg/vortex_repository:auth-prod
-            docker pull vortextcg/vortex_repository:game-prod
-            docker pull vortextcg/vortex_repository:migrations-prod
-
-            # Start new containers
-            echo "Starting new containers..."
-
-            # Start database migrations first
-            docker run -d \
-              --name vortex-migrations \
-              --network vortex-network \
-              --restart unless-stopped \
-              vortextcg/vortex_repository:migrations-prod
-
-            # Wait for migrations to complete
-            echo "Waiting for migrations to complete..."
-            sleep 30
-
-            # Start API services
-            docker run -d \
-              --name vortex-api \
-              --network vortex-network \
-              --restart unless-stopped \
-              -p 3000:3000 \
-              vortextcg/vortex_repository:api-prod
-              
-            docker run -d \
-              --name vortex-auth \
-              --network vortex-network \
-              --restart unless-stopped \
-              -p 3001:3000 \
-              vortextcg/vortex_repository:auth-prod
-              
-            docker run -d \
-              --name vortex-game \
-              --network vortex-network \
-              --restart unless-stopped \
-              -p 3002:3000 \
-              vortextcg/vortex_repository:game-prod
-
-            # Clean up old images
-            echo "Cleaning up old images..."
-            docker image prune -f
-
-            echo "Deployment completed!"
-            echo "Running containers:"
-            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            cd /var/www/vortex_tcg
+            git remote set-url origin git@github.com:vortex-tcg/vortex_tcg.git
+            git fetch --all
+            git checkout ${{ github.ref_name }}
+            git pull origin ${{ github.ref_name }}
+      - name: Pull new Docker images
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /var/www/vortex_tcg/server
+            docker compose down
+            docker system prune -a -f
+            docker pull vortextcg/vortex_repository:api
+            docker pull vortextcg/vortex_repository:game
+            docker pull vortextcg/vortex_repository:auth
+            docker pull vortextcg/vortex_repository:migrations
+            docker logout
+      - name: Create env file on server
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /var/www/vortex_tcg/server
+            cat > .env << EOF
+            AUTH_PORT=${{ secrets.AUTH_PORT }}
+            AUTH_INTERNAL_PORT=${{ secrets.AUTH_INTERNAL_PORT }}
+            GAME_PORT=${{ secrets.GAME_PORT }}
+            GAME_INTERNAL_PORT=${{ secrets.GAME_INTERNAL_PORT }}
+            API_PORT=${{ secrets.API_PORT }}
+            API_INTERNAL_PORT=${{ secrets.API_INTERNAL_PORT }}
+            ASP_NETCORE_ENVIRONMENT=${{ secrets.ASP_NETCORE_ENVIRONMENT }}
+            SONARQUBE_PORT=${{ secrets.SONARQUBE_PORT }}
+            DB_NAME=${{ secrets.DB_NAME }}
+            DB_USERNAME=${{ secrets.DB_USERNAME }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_PORT=${{ secrets.DB_PORT }}
+            CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}
+            EOF
+      - name: Start services
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /var/www/vortex_tcg/server
+            docker-compose -f docker-compose.prod.yaml up -d --remove-orphans
+      - name: Ensure SonarQube is running with persistence
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            if [ ! "$(docker ps -q -f name=sonarqube)" ]; then
+                docker rm -f sonarqube || true
+                docker run -d --name sonarqube \
+                  -p ${{ secrets.SONARQUBE_PORT }}:9000 \
+                  -e SONAR_WEB_CONTEXT=/sonarqube \
+                  -v /var/sonarqube/data:/opt/sonarqube/data \
+                  -v /var/sonarqube/logs:/opt/sonarqube/logs \
+                  -v /var/sonarqube/extensions:/opt/sonarqube/extensions \
+                  --restart always \
+                  sonarqube:lts
+            else
+                echo "SonarQube is already running, skipping."
+            fi

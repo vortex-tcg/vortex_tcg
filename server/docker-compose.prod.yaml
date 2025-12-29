@@ -5,10 +5,10 @@ services:
       dockerfile: ./apps/migrations/Dockerfile
     env_file:
       - .env
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: "no"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 5
 
   auth:
     build:
@@ -21,8 +21,6 @@ services:
     depends_on:
       migrations:
         condition: service_completed_successfully
-      db:
-        condition: service_healthy
 
   game:
     build:
@@ -35,8 +33,6 @@ services:
     depends_on:
       migrations:
         condition: service_completed_successfully
-      db:
-        condition: service_healthy
 
   api:
     build:
@@ -49,57 +45,3 @@ services:
     depends_on:
       migrations:
         condition: service_completed_successfully
-      db:
-        condition: service_healthy
-
-  db:
-    image: mariadb:latest
-    restart: always
-    env_file:
-      - .env
-    environment:
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MARIADB_USER: ${DB_USERNAME}
-      MARIADB_PASSWORD: ${DB_PASSWORD}
-      MARIADB_DATABASE: ${DB_NAME}
-    ports:
-      - "${DB_PORT}:3306"
-    volumes:
-      - mariadb_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - "${DB_ADMINER_PORT}:8080"
-    environment:
-      ADMINER_DEFAULT_SERVER: db
-
-  sonarqube:
-    image: sonarqube:latest
-    depends_on:
-      - db
-    env_file:
-      - .env
-    environment:
-      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
-      SONARQUBE_JDBC_USERNAME: ${DB_USERNAME}
-      SONARQUBE_JDBC_PASSWORD: ${DB_PASSWORD}
-      SONARQUBE_JDBC_URL: jdbc:mariadb://db:3306/${DB_NAME}
-    ports:
-      - "${SONARQUBE_PORT}:9000"
-    volumes:
-      - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_extensions:/opt/sonarqube/extensions
-      - sonarqube_logs:/opt/sonarqube/logs
-
-volumes:
-  sonarqube_data:
-  sonarqube_extensions:
-  sonarqube_logs:
-  mariadb_data:

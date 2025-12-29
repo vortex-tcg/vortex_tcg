@@ -14,10 +14,17 @@ data "aws_ami" "ubuntu" {
 
 // Create a resource EC2 of type linux ubuntu
 resource "aws_instance" "server" {
-  ami = data.aws_ami.ubuntu.id
-  instance_type = "t3.micro"
-  
+  ami               = data.aws_ami.ubuntu.id
+  instance_type     = "t3a.medium"
+  availability_zone = "eu-west-3a"
+
+  root_block_device {
+    volume_size = 30          
+    volume_type = "gp3"     
+    delete_on_termination = true
+  }
+
   tags = {
-    Name = "HelloWorld"
+    Name = "VortexProd"
   }
 }

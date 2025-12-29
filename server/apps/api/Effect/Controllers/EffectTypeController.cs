@@ -14,26 +14,26 @@ namespace api.Effect.Controller
         public EffectTypeController(EffectTypeService service) => _service = service;
 
         [HttpGet]
-        public async Task<IActionResult> List(CancellationToken ct) =>
-            ToActionResult(await _service.ListAsync(ct));
+        public async Task<IActionResult> list(CancellationToken ct) =>
+            toActionResult(await _service.listAsync(ct));
 
         [HttpGet("{id:guid}")]
-        public async Task<IActionResult> Get(Guid id, CancellationToken ct) =>
-            ToActionResult(await _service.GetAsync(id, ct));
+        public async Task<IActionResult> get(Guid id, CancellationToken ct) =>
+            toActionResult(await _service.getAsync(id, ct));
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] EffectTypeCreateDTO dto, CancellationToken ct) =>
-            ToActionResult(await _service.CreateAsync(dto, ct));
+        public async Task<IActionResult> create([FromBody] EffectTypeCreateDto dto, CancellationToken ct) =>
+            toActionResult(await _service.createAsync(dto, ct));
 
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] EffectTypeUpdateDTO dto, CancellationToken ct) =>
-            ToActionResult(await _service.UpdateAsync(id, dto, ct));
+        public async Task<IActionResult> update(Guid id, [FromBody] EffectTypeUpdateDto dto, CancellationToken ct) =>
+            toActionResult(await _service.updateAsync(id, dto, ct));
 
         [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> Delete(Guid id, CancellationToken ct) =>
-            ToActionResult(await _service.DeleteAsync(id, ct));
+        public async Task<IActionResult> delete(Guid id, CancellationToken ct) =>
+            toActionResult(await _service.deleteAsync(id, ct));
 
-        private IActionResult ToActionResult<T>(ResultDTO<T> result) =>
+        private IActionResult toActionResult<T>(ResultDTO<T> result) =>
             StatusCode(result.statusCode, result);
     }
 }
