@@ -65,8 +65,9 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         shell: powershell
         run: |
+          # 1. INITIALISATION (Clé projet mise à jour selon ton Sonar)
           .\.sonar\scanner\dotnet-sonarscanner begin `
-            /k:"vortex-tcg_vortex_tcg_AZtcdGF7TY20pLe9RloU" `
+            /k:"vortex-tcg_vortex_tcg_AZtcdGF7TY20pLe9RlcU" `
             /n:"Vortex TCG" `
             /v:"1.0" `
             /d:sonar.token="$env:SONAR_TOKEN" `
@@ -76,13 +77,11 @@ jobs:
           # 2. BUILD
           dotnet build VortexTCG.sln --configuration Release
 
-          # 3. TESTS (Syntaxe PowerShell pour ignorer l'erreur si les tests échouent)
+          # 3. TESTS
           dotnet test VortexTCG.sln --configuration Release --no-restore /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./TestResults/
-          if ($LASTEXITCODE -ne 0) {
-              Write-Host "Attention : Certains tests ont échoué ou n'ont pas été trouvés (Code: $LASTEXITCODE). On continue l'analyse Sonar quand même."
-          }
+          if ($LASTEXITCODE -ne 0) { Write-Host "Tests en échec, mais on continue." }
 
-          # 4. FINALISATION (Obligatoire pour envoyer les résultats)
+          # 4. FINALISATION
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
 
   deploy:
