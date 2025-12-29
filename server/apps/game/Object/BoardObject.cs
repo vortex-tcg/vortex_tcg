@@ -128,22 +128,28 @@ namespace VortexTCG.Game.Object
         }
 
         public bool TryGetCardPos(int cardId, out int pos) {
-            if (_location_1.GetGameCardId() == cardId) {
+            if (_location_1 != null &&
+                _location_1.GetGameCardId() == cardId) {
                 pos = 0;
                 return true;
-            } else if (_location_2.GetGameCardId() == cardId) {
+            } else if (_location_2 != null &&
+                       _location_2.GetGameCardId() == cardId) {
                 pos = 1;
                 return true;
-            } else if (_location_3.GetGameCardId() == cardId) {
+            } else if (_location_3 != null &&
+                       _location_3.GetGameCardId() == cardId) {
                 pos = 2;
                 return true;
-            } else if (_location_4.GetGameCardId() == cardId) {
+            } else if (_location_4 != null &&
+                       _location_4.GetGameCardId() == cardId) {
                 pos = 3;
                 return true;
-            } else if (_location_5.GetGameCardId() == cardId) {
+            } else if (_location_5 != null &&
+                       _location_5.GetGameCardId() == cardId) {
                 pos = 4;
                 return true;
-            } else if (_location_6.GetGameCardId() == cardId) {
+            } else if (_location_6 != null &&
+                       _location_6.GetGameCardId() == cardId) {
                 pos = 5;
                 return true;
             } else {
@@ -174,7 +180,7 @@ namespace VortexTCG.Game.Object
         public CardSlotState canAttackSpot(int spot) {
             switch(spot) {
                 case 0:
-                    return _location_1.checkCanAttack();
+                    return  _location_1.checkCanAttack();
                 case 1:
                     return _location_2.checkCanAttack();
                 case 2:
