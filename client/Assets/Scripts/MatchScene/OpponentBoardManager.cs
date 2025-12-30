@@ -262,5 +262,52 @@ namespace VortexTCG.Scripts.MatchScene
 
             Debug.Log(sb.ToString());
         }
+        public void UpdateOpponentCardSnapshot(GameCardDto dto)
+        {
+            if (dto == null) return;
+
+            int id = dto.GameCardId;
+            if (!opponentCardsById.TryGetValue(id, out Card card) || card == null)
+            {
+                Debug.LogWarning("[OpponentBoardManager] UpdateOpponentCardSnapshot: card not found id=" + id);
+                return;
+            }
+            card.ApplyDTO(
+                dto.GameCardId.ToString(),
+                dto.Name,
+                dto.Hp,
+                dto.Attack,
+                dto.Cost,
+                dto.Description,
+                ""
+            );
+            if (lastOpponentDefenseState != null)
+                ApplyOpponentDefenseState(lastOpponentDefenseState);
+            else if (lastOpponentAttackIds != null)
+                ApplyOpponentAttackState(lastOpponentAttackIds);
+        }
+
+        public void RemoveOpponentCard(int gameCardId)
+        {
+            if (!opponentCardsById.TryGetValue(gameCardId, out Card card) || card == null)
+            {
+                Debug.LogWarning("[OpponentBoardManager] RemoveOpponentCard: card not found id=" + gameCardId);
+                return;
+            }
+            CardSlot slot = card.GetComponentInParent<CardSlot>();
+            if (slot != null && slot.CurrentCard == card)
+                slot.CurrentCard = null;
+
+            opponentCardsById.Remove(gameCardId);
+            Destroy(card.gameObject);
+
+            Debug.Log("[OpponentBoardManager] RemoveOpponentCard destroyed id=" + gameCardId +
+                      " remaining=" + opponentCardsById.Count);
+        }
+        public void LogBoardStatePublic(string label)
+        {
+            LogBoardState(label);
+        }
+
     }
 }
