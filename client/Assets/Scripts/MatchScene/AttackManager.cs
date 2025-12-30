@@ -78,8 +78,6 @@ namespace VortexTCG.Scripts.MatchScene
             }
 
             boardCardsById[id] = card;
-
-            // garantir un collider pour le click
             Collider col = card.GetComponent<Collider>();
             if (col == null)
             {
@@ -141,8 +139,6 @@ namespace VortexTCG.Scripts.MatchScene
             }
 
             Debug.Log($"[AttackManager] -> calling Hub HandleAttackPos(cardId={cardIdInt})");
-
-            // optimiste: toggle local d'abord
             ToggleCard(card);
 
             try
@@ -191,7 +187,7 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
 
-        private void ClearSelections()
+        public void ClearSelections()
         {
             for (int i = 0; i < selectedCards.Count; i++)
             {
@@ -202,8 +198,6 @@ namespace VortexTCG.Scripts.MatchScene
             }
             selectedCards.Clear();
         }
-
-        // ✅ server -> "HandleAttackEngage" payload = List<int> AttackCardsId
         public void ApplyAttackStateFromServer(List<int> attackIds)
         {
             ClearSelections();
@@ -219,8 +213,6 @@ namespace VortexTCG.Scripts.MatchScene
             for (int i = 0; i < attackIds.Count; i++)
             {
                 int cardId = attackIds[i];
-
-                // si pas en cache: rescan slot (utile quand une carte vient d'être posée)
                 Card card = FindOrRegisterBoardCardById(cardId);
                 if (card == null) continue;
 
