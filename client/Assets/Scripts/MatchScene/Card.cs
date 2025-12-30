@@ -45,11 +45,25 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 Debug.LogWarning($"[Card] {gameObject.name} n'a PAS de Collider ! Ajout d'un BoxCollider.");
                 BoxCollider bc = gameObject.AddComponent<BoxCollider>();
-                bc.size = Vector3.one;
+                bc.size = new Vector3(2f, 3f, 0.1f);
             }
             else
             {
-                Debug.Log($"[Card] {gameObject.name} a un Collider: {col.GetType().Name}, enabled={col.enabled}");
+                Debug.Log($"[Card] {gameObject.name} a un Collider: {col.GetType().Name}, enabled={col.enabled}, isTrigger={col.isTrigger}");
+                if (col is BoxCollider box)
+                {
+                    Debug.Log($"[Card] BoxCollider size: {box.size}, center: {box.center}");
+                }
+            }
+
+            Camera cam = Camera.main;
+            if (cam != null)
+            {
+                Debug.Log($"[Card] Camera.main trouvée: {cam.name}, tag={cam.tag}");
+            }
+            else
+            {
+                Debug.LogError("[Card] Camera.main est NULL ! OnMouseDown ne fonctionnera pas.");
             }
 
             if (AttackOrder != null && attackOrderText == null)
