@@ -21,9 +21,7 @@ namespace VortexTCG.Scripts.DTOs
     public class UserCollectionDeckDto
     {
         public Guid DeckId { get; set; }
-
         public string DeckName { get; set; } = "";
-        
         public string ChampionImage { get; set; } = "";
     }
 
@@ -33,10 +31,11 @@ namespace VortexTCG.Scripts.DTOs
         public int Number { get; set; } = 0;
         public string Rarity { get; set; } = default!;
     }
+    
     [Serializable] 
     public class UserCollectionCardDto
     {
-        public CardDto Card { get; set; }
+        public CardDto Card { get; set; } = default!;
         public List<UserCollectionCardOwnDto> OwnData { get; set; } = new List<UserCollectionCardOwnDto>();
     }
 
@@ -45,7 +44,7 @@ namespace VortexTCG.Scripts.DTOs
     {
         public Guid FactionId { get; set; }
         public string FactionName { get; set; } = default!;
-        public string FactionImage { get; set; } = default!;
+        public string FactionImage { get; set; } = "";
     }
 
     [Serializable]
@@ -55,4 +54,14 @@ namespace VortexTCG.Scripts.DTOs
         public List<UserCollectionCardDto> Cards { get; set; } = new List<UserCollectionCardDto>();
         public List<UserCollectionFactionDto> Faction { get; set; } = new List<UserCollectionFactionDto>();
     }
+
+        [Serializable]
+    public class ResultDTO<T>
+    {
+        public bool success;
+        public int statusCode;
+        public string message;
+        public T data;
+    }
+
 }
