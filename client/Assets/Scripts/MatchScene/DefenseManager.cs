@@ -33,8 +33,6 @@ namespace VortexTCG.Scripts.MatchScene
             }
 
             RegisterExistingCardsFromSlots();
-
-            // IMPORTANT: OnDefenseEngage doit être Action<DefenseDataResponseDto>
             if (SignalRClient.Instance != null)
                 SignalRClient.Instance.OnDefenseEngage += ApplyDefenseStateFromServer;
         }
@@ -129,8 +127,6 @@ namespace VortexTCG.Scripts.MatchScene
 
             CardSlot slot = card.GetComponentInParent<CardSlot>();
             if (slot == null) return;
-
-            // Côté client: P1 = nos cartes (défenseurs), P2 = cartes ennemies (attaquants)
             if (IsP1BoardSlot(slot))
             {
                 SelectDefender(card);
@@ -159,8 +155,6 @@ namespace VortexTCG.Scripts.MatchScene
         {
             if (currentDefender == null) return;
             if (targetAttacker == null) return;
-
-            // Tu checks déjà un outline "attaquant" côté UI, on garde
             if (!targetAttacker.IsAttackingOutlineActive()) return;
 
             if (!int.TryParse(currentDefender.cardId, out int defenderId))
@@ -172,7 +166,6 @@ namespace VortexTCG.Scripts.MatchScene
             SignalRClient client = SignalRClient.Instance;
             if (client == null) return;
 
-            // update local state optimiste
             if (defenseAssignments.ContainsKey(currentDefender))
                 defenseAssignments.Remove(currentDefender);
 
@@ -180,12 +173,10 @@ namespace VortexTCG.Scripts.MatchScene
 
             try
             {
-                // Server: HandleDefensePos(defenderId, attackerId)
                 await client.HandleDefensePos(defenderId, attackerId);
             }
             catch (Exception)
             {
-                // rollback
                 if (defenseAssignments.ContainsKey(currentDefender) && defenseAssignments[currentDefender] == targetAttacker)
                     defenseAssignments.Remove(currentDefender);
             }
@@ -220,8 +211,6 @@ namespace VortexTCG.Scripts.MatchScene
         {
             if (boardCardsById.TryGetValue(id, out Card found) && found != null)
                 return found;
-
-            // rescan slots si pas en cache
             if (P1BoardSlots != null)
             {
                 for (int i = 0; i < P1BoardSlots.Count; i++)
@@ -257,7 +246,7 @@ namespace VortexTCG.Scripts.MatchScene
             return null;
         }
 
-        private void ClearAllDefense()
+        public void ClearAllDefense()
         {
             if (currentDefender != null)
             {
