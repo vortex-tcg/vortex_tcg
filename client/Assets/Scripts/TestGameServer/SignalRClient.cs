@@ -32,6 +32,7 @@ public class SignalRClient : MonoBehaviour
     private string _currentKeyOrCode;
     private string _mode;
 	private bool _startGameRequested;
+    public event Action<BattlesDataDto, bool> OnBattleResolution; 
 
     public event Action<string> OnStatus;
     public event Action<string> OnLog;
@@ -170,6 +171,18 @@ public class SignalRClient : MonoBehaviour
 			_startGameRequested = false;
             OnLog?.Invoke("L'adversaire a quitté.");
         }));
+        _conn.On<BattlesDataDto>("BattleResolution_Attacker", dto =>
+        {
+            Debug.Log($"[SignalRClient] BattleResolution_Attacker reçu battles={(dto?.battles?.Count ?? 0)}");
+            Enqueue(() => OnBattleResolution?.Invoke(dto, true)); 
+        });
+
+        _conn.On<BattlesDataDto>("BattleResolution_Defender", dto =>
+        {
+            Debug.Log($"[SignalRClient] BattleResolution_Defender reçu battles={(dto?.battles?.Count ?? 0)}");
+            Enqueue(() => OnBattleResolution?.Invoke(dto, false));
+        });
+    
 
         _conn.On<DrawResultForPlayerDto>("CardsDrawn", r => Enqueue(() =>
         {

@@ -257,7 +257,7 @@ namespace VortexTCG.Scripts.MatchScene
             return null;
         }
 
-        private void ClearAllDefense()
+        public void ClearAllDefense()
         {
             if (currentDefender != null)
             {
