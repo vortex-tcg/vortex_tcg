@@ -16,8 +16,6 @@ namespace VortexTCG.Scripts.MatchScene
         [SerializeField] private Card cardPrefab;
 
         private readonly Dictionary<int, Card> opponentCardsById = new Dictionary<int, Card>();
-
-        // On buffer le dernier état pour le rejouer quand une carte adverse arrive après coup
         private List<int> lastOpponentAttackIds;
         private DefenseDataResponseDto lastOpponentDefenseState;
 
@@ -105,8 +103,6 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 Debug.LogError("[OpponentBoardManager] cardId not int: '" + c.cardId + "'");
             }
-
-            // Rejouer le dernier état connu (utile si l’état arrive avant que la carte soit posée)
             if (lastOpponentDefenseState != null)
                 ApplyOpponentDefenseState(lastOpponentDefenseState);
             else if (lastOpponentAttackIds != null)
@@ -141,13 +137,10 @@ namespace VortexTCG.Scripts.MatchScene
             lastOpponentAttackIds = null;
             lastOpponentDefenseState = null;
         }
-
-        // ✅ NOUVEAU : appelé quand TU reçois "HandleOpponentAttackEngage" (List<int>)
         public void ApplyOpponentAttackState(List<int> attackIds)
         {
             lastOpponentAttackIds = attackIds;
-            lastOpponentDefenseState = null; // si on a un nouvel état d’attaque, on reset le defense buffer
-
+            lastOpponentDefenseState = null; 
             Debug.Log("[OpponentBoardManager] ApplyOpponentAttackState ids=" +
                       (attackIds == null ? "NULL" : string.Join(",", attackIds)));
 
@@ -177,9 +170,6 @@ namespace VortexTCG.Scripts.MatchScene
 
             Debug.Log("[OpponentBoardManager] ApplyOpponentAttackState done found=" + found + " missing=" + missing);
         }
-
-        // ✅ NOUVEAU : appelé quand TU reçois "HandleOpponentDefenseEngage" (DefenseDataResponseDto)
-        // Ici on met l’outline sur les cartes ATTAQUANTES (côté adversaire) pendant ta phase DEFENSE
         public void ApplyOpponentDefenseState(DefenseDataResponseDto data)
         {
             lastOpponentDefenseState = data;
