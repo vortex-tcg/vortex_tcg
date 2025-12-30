@@ -507,34 +507,62 @@ public DefenseResponseDto HandleDefenseEvent(Guid userId, int cardId, int oppone
             /// </summary>
             private void ResolveBattle()
             {
-                bool isDefenderPlayer = checkIfPlayer1(_activePlayerId);
-                List<Card> attackers = _attackHandler.GetAttacker();
-                List<DefenseCard> defenders = _attackHandler.GetDefender();
+                Guid defenderId = _activePlayerId;
+                Guid attackerId = GetOpponentId(defenderId);
 
-                Champion defenderChamp = getPlayerChamp(isDefenderPlayer);
-                Champion attackerChamp = getPlayerChamp(!isDefenderPlayer);
+                bool defenderIsPlayer1 = checkIfPlayer1(defenderId);
+
+                Console.WriteLine($"[ResolveBattle] turn={_turnNumber} phase={_currentPhase} " +
+                                  $"attackerId={attackerId} defenderId={defenderId} defenderIsP1={defenderIsPlayer1}");
+
+                List<Card> attackers = _attackHandler.GetAttacker() ?? new List<Card>();
+                List<DefenseCard> defenders = _attackHandler.GetDefender() ?? new List<DefenseCard>();
+
+                Console.WriteLine($"[ResolveBattle] attackers={attackers.Count} defenders={defenders.Count}");
+
+                Champion defenderChamp = getPlayerChamp(defenderIsPlayer1);
+                Champion attackerChamp = getPlayerChamp(!defenderIsPlayer1);
 
                 List<BattleDataDto> battleEvent = new List<BattleDataDto>();
 
-                foreach(Card attacker in attackers) {
-                    if (defenders.Count(defender => defender.oppositeCardId == attacker.GetGameCardId()) == 1) {
-                        DefenseCard defender = _attackHandler.GetSpecificDefender(attacker.GetGameCardId());
+                foreach (Card attacker in attackers)
+                {
+                    if (attacker == null) continue;
 
-                        battleEvent.Add(HandleAgainstCardBattle(isDefenderPlayer, attacker, defender, attackerChamp, defenderChamp));
-                    } else {
+                    int attackerCardId = attacker.GetGameCardId();
+                    int matchingDefenders = defenders.Count(d => d != null && d.oppositeCardId == attackerCardId);
+
+                    Console.WriteLine(
+                        $"[ResolveBattle] attackerCardId={attackerCardId} matchingDefenders={matchingDefenders}");
+
+                    if (matchingDefenders == 1)
+                    {
+                        DefenseCard defender = _attackHandler.GetSpecificDefender(attackerCardId);
+                        if (defender == null || defender.card == null)
+                        {
+                            Console.WriteLine("[ResolveBattle] WARN: defender mapping missing -> fallback vs champ");
+                            battleEvent.Add(HandleAgainstChampBattle(attacker, attackerChamp, defenderChamp));
+                        }
+                        else
+                        {
+                            battleEvent.Add(HandleAgainstCardBattle(defenderIsPlayer1, attacker, defender,
+                                attackerChamp, defenderChamp));
+                        }
+                    }
+                    else
+                    {
                         battleEvent.Add(HandleAgainstChampBattle(attacker, attackerChamp, defenderChamp));
                     }
                 }
-                _event.sendBattleResolveData(new BattleResponseDto{
-                    data = new BattlesDataDto{
-                        battles = battleEvent
-                    },
-                    Player1Id = _user_1,
-                    Player2Id = _user_2
-                });
+
+                BattlesDataDto payload = new BattlesDataDto { battles = battleEvent };
+
+                Console.WriteLine($"[ResolveBattle] sending battles={payload.battles.Count} " +
+                                  $"-> attacker={attackerId} defender={defenderId}");
+                _event.sendBattleResolveData(payload, attackerId, defenderId);
             }
 
-        #endregion
+            #endregion
 
         #region Gestion des phases et tours
 
