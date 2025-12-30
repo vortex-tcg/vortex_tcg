@@ -243,52 +243,5 @@ namespace VortexTCG.Scripts.MatchScene
 
             return null;
         }
-        public void ApplyAttackStateFromServer(List<int> attackIds)
-        {
-            ClearSelections();
-
-            if (attackIds == null)
-            {
-                Debug.Log("[AttackManager] HandleAttackEngage reçu: NULL");
-                return;
-            }
-
-            Debug.Log($"[AttackManager] HandleAttackEngage reçu: count={attackIds.Count}");
-
-            for (int i = 0; i < attackIds.Count; i++)
-            {
-                int cardId = attackIds[i];
-                Card card = FindOrRegisterBoardCardById(cardId);
-                if (card == null) continue;
-
-                selectedCards.Add(card);
-                card.SetSelected(true);
-                card.ShowAttackOrder(i + 1);
-            }
-        }
-
-        private Card FindOrRegisterBoardCardById(int id)
-        {
-            if (boardCardsById.TryGetValue(id, out Card found) && found != null)
-                return found;
-
-            if (P1BoardSlots != null)
-            {
-                for (int i = 0; i < P1BoardSlots.Count; i++)
-                {
-                    CardSlot slot = P1BoardSlots[i];
-                    if (slot == null) continue;
-                    if (slot.CurrentCard == null) continue;
-
-                    if (int.TryParse(slot.CurrentCard.cardId, out int cid) && cid == id)
-                    {
-                        RegisterCard(slot.CurrentCard);
-                        return slot.CurrentCard;
-                    }
-                }
-            }
-
-            return null;
-        }
     }
 }

@@ -17,6 +17,7 @@ namespace VortexTCG.Scripts.MatchScene
         [SerializeField] private Card cardPrefab;
         [SerializeField] private Transform handRoot;
         [SerializeField] private float cardSpacing = 1.2f;
+        private const int MaxHandSize = 5;
 
         [HideInInspector] public Card SelectedCard;
 
@@ -57,6 +58,8 @@ namespace VortexTCG.Scripts.MatchScene
 
             foreach (DrawnCardDto dto in drawnCards)
             {
+                if (handCards.Count >= MaxHandSize) break;
+
                 Card card = Instantiate(cardPrefab, handRoot);
                 card.ApplyDTO(
                     dto.GameCardId.ToString(),

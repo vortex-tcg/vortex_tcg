@@ -40,6 +40,18 @@ namespace VortexTCG.Scripts.MatchScene
         {
             selectionBaseScale = transform.localScale;
 
+            Collider col = GetComponent<Collider>();
+            if (col == null)
+            {
+                Debug.LogWarning($"[Card] {gameObject.name} n'a PAS de Collider ! Ajout d'un BoxCollider.");
+                BoxCollider bc = gameObject.AddComponent<BoxCollider>();
+                bc.size = Vector3.one;
+            }
+            else
+            {
+                Debug.Log($"[Card] {gameObject.name} a un Collider: {col.GetType().Name}, enabled={col.enabled}");
+            }
+
             if (AttackOrder != null && attackOrderText == null)
             {
                 attackOrderText = AttackOrder.GetComponentInChildren<TMP_Text>();
@@ -58,11 +70,38 @@ namespace VortexTCG.Scripts.MatchScene
                 AttackOrder.SetActive(false);
         }
 
-        void OnMouseDown()
+        void OnMouseEnter()
         {
             if (faceDown) return;
 
-            if (PhaseManager.Instance == null) return;
+            CardSlot slot = GetComponentInParent<CardSlot>();
+            if (slot != null && slot.isOpponentSlot) return;
+
+            if (CardPreviewManager.Instance != null)
+            {
+                CardPreviewManager.Instance.ShowCardPreview(this);
+            }
+        }
+
+        void OnMouseExit()
+        {
+            if (CardPreviewManager.Instance != null)
+            {
+                CardPreviewManager.Instance.HidePreview();
+            }
+        }
+
+        void OnMouseDown()
+        {
+            Debug.Log($"[Card] OnMouseDown sur {cardName}, faceDown={faceDown}");
+            
+            if (faceDown) return;
+
+            if (PhaseManager.Instance == null)
+            {
+                Debug.LogWarning("[Card] PhaseManager.Instance est null");
+                return;
+            }
 
             CardSlot slot = GetComponentInParent<CardSlot>();
             if (PhaseManager.Instance.CurrentPhase == GamePhase.ATTACK)
