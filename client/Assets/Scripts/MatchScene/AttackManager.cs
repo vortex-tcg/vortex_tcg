@@ -28,8 +28,6 @@ namespace VortexTCG.Scripts.MatchScene
                 PhaseManager.Instance.OnEnterDefense += OnEnterDefensePhase;
                 PhaseManager.Instance.OnEnterStandBy += OnEndDefensePhase;
             }
-
-            // IMPORTANT: event côté SignalRClient = Action<List<int>>
             if (SignalRClient.Instance != null)
                 SignalRClient.Instance.OnAttackEngage += ApplyAttackStateFromServer;
 
@@ -78,8 +76,6 @@ namespace VortexTCG.Scripts.MatchScene
             }
 
             boardCardsById[id] = card;
-
-            // garantir un collider pour le click
             Collider col = card.GetComponent<Collider>();
             if (col == null)
             {
@@ -141,8 +137,6 @@ namespace VortexTCG.Scripts.MatchScene
             }
 
             Debug.Log($"[AttackManager] -> calling Hub HandleAttackPos(cardId={cardIdInt})");
-
-            // optimiste: toggle local d'abord
             ToggleCard(card);
 
             try
@@ -191,7 +185,7 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
 
-        private void ClearSelections()
+        public void ClearSelections()
         {
             for (int i = 0; i < selectedCards.Count; i++)
             {
@@ -202,8 +196,6 @@ namespace VortexTCG.Scripts.MatchScene
             }
             selectedCards.Clear();
         }
-
-        // ✅ server -> "HandleAttackEngage" payload = List<int> AttackCardsId
         public void ApplyAttackStateFromServer(List<int> attackIds)
         {
             ClearSelections();
@@ -219,8 +211,53 @@ namespace VortexTCG.Scripts.MatchScene
             for (int i = 0; i < attackIds.Count; i++)
             {
                 int cardId = attackIds[i];
+                Card card = FindOrRegisterBoardCardById(cardId);
+                if (card == null) continue;
 
-                // si pas en cache: rescan slot (utile quand une carte vient d'être posée)
+                selectedCards.Add(card);
+                card.SetSelected(true);
+                card.ShowAttackOrder(i + 1);
+            }
+        }
+
+        private Card FindOrRegisterBoardCardById(int id)
+        {
+            if (boardCardsById.TryGetValue(id, out Card found) && found != null)
+                return found;
+
+            if (P1BoardSlots != null)
+            {
+                for (int i = 0; i < P1BoardSlots.Count; i++)
+                {
+                    CardSlot slot = P1BoardSlots[i];
+                    if (slot == null) continue;
+                    if (slot.CurrentCard == null) continue;
+
+                    if (int.TryParse(slot.CurrentCard.cardId, out int cid) && cid == id)
+                    {
+                        RegisterCard(slot.CurrentCard);
+                        return slot.CurrentCard;
+                    }
+                }
+            }
+
+            return null;
+        }
+        public void ApplyAttackStateFromServer(List<int> attackIds)
+        {
+            ClearSelections();
+
+            if (attackIds == null)
+            {
+                Debug.Log("[AttackManager] HandleAttackEngage reçu: NULL");
+                return;
+            }
+
+            Debug.Log($"[AttackManager] HandleAttackEngage reçu: count={attackIds.Count}");
+
+            for (int i = 0; i < attackIds.Count; i++)
+            {
+                int cardId = attackIds[i];
                 Card card = FindOrRegisterBoardCardById(cardId);
                 if (card == null) continue;
 
