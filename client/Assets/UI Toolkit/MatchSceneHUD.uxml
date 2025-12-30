@@ -1,9 +1,13 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:Template name="Card" src="project://database/Assets/Prefabs/Cards/UXML/Card.uxml?fileID=9197481963319205126&amp;guid=9ef0118a520caa84a9726503e938cae2&amp;type=3#Card" />
     <ui:VisualElement name="Container" style="flex-grow: 1; flex-direction: row;">
         <ui:VisualElement name="LeftSide" style="flex-grow: 1;">
             <ui:VisualElement name="P1Informations" style="flex-grow: 1; flex-direction: row; height: 150px; max-height: 150px; margin-top: 10px; margin-right: 10px; margin-bottom: 10px; margin-left: 10px;">
                 <ui:VisualElement name="P1ProfilePicture" style="flex-grow: 1; background-image: url(&quot;project://database/Assets/Images/Placeholders/348111.jpg?fileID=2800000&amp;guid=9ef3a0d6e7e952e429442e466cc3c78d&amp;type=3#348111&quot;); width: 150px; height: 150px; max-width: 150px; max-height: 150px; border-top-left-radius: 20px; border-top-right-radius: 20px; border-bottom-right-radius: 20px; border-bottom-left-radius: 20px; margin-right: 10px; margin-left: 10px; margin-top: 10px; margin-bottom: 10px;" />
                 <ui:Label text="P1Name" name="P1Name" style="font-size: 35px; -unity-font-definition: url(&quot;project://database/Assets/Fonts/Rubik/static/Rubik-ExtraBold.ttf?fileID=12800000&amp;guid=ac51c612e3b2ad24085ef29b43ee1c3a&amp;type=3#Rubik-ExtraBold&quot;); -unity-font-style: normal; margin-top: 10px;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="CardPreview" style="flex-grow: 1; justify-content: flex-end; align-items: flex-end; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px; flex-direction: row-reverse;">
+                <ui:Instance template="Card" />
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="RightSide" style="flex-grow: 1; flex-direction: column; justify-content: space-between;">
