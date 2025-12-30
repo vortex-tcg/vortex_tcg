@@ -275,10 +275,15 @@ namespace VortexTCG.Scripts.MatchScene
         {
             if (card == null) return;
 
-            if (card.GetComponent<Collider>() == null)
+            Collider col = card.GetComponent<Collider>();
+            if (col == null)
             {
-                BoxCollider bc = card.gameObject.AddComponent<BoxCollider>();
-                bc.size = Vector3.one;
+                col = card.gameObject.AddComponent<BoxCollider>();
+            }
+
+            if (col is BoxCollider bc)
+            {
+                bc.size = new Vector3(1f, 20f, 1f);
             }
         }
     }

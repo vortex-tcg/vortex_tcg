@@ -102,10 +102,16 @@ namespace VortexTCG.Scripts.MatchScene
         private static void EnsureCollider(GameObject cardObj)
         {
             if (cardObj == null) return;
-            if (cardObj.GetComponent<Collider>() == null)
+
+            Collider col = cardObj.GetComponent<Collider>();
+            if (col == null)
             {
-                BoxCollider bc = cardObj.AddComponent<BoxCollider>();
-                bc.size = Vector3.one;
+                col = cardObj.AddComponent<BoxCollider>();
+            }
+
+            if (col is BoxCollider bc)
+            {
+                bc.size = new Vector3(1f, 10f, 1f);
             }
         }
     }
