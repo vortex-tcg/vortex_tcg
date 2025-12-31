@@ -577,10 +577,22 @@ public class RoomService: IRoomActionEventListener
 
     #region Resolution de bataille
 
-        public async void sendBattleResolveData(BattleResponseDto data) {
-            await _hubContext.Clients.User(data.Player1Id.ToString()).SendAsync("BattleResolution", data.data);
-            await _hubContext.Clients.User(data.Player2Id.ToString()).SendAsync("BattleResolution", data.data);
+    public async void sendBattleResolveData(BattlesDataDto data, Guid attackerId, Guid defenderId)
+    {
+        try
+        {
+            await _hubContext.Clients.User(attackerId.ToString())
+                .SendAsync("BattleResolution_Attacker", data);
+
+            await _hubContext.Clients.User(defenderId.ToString())
+                .SendAsync("BattleResolution_Defender", data);
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine("[RoomService] sendBattleResolveData FAILED: " + ex);
+        }
+    }
+
 
     #endregion
 

@@ -1,0 +1,5 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="CardPreview" style="width: 350px; height: 516px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0; border-top-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; border-bottom-left-radius: 10px; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0); background-image: none; justify-content: flex-start;">
+        <ui:VisualElement name="Template" style="flex-grow: 1; background-image: url(&quot;project://database/Assets/Images/CardTemplate.png?fileID=2800000&amp;guid=c30dcfe043dc8b648898c11b67eef1f2&amp;type=3#CardTemplate&quot;); width: 350px; height: 516px; max-width: 350px; max-height: 516px; position: absolute;" />
+    </ui:VisualElement>
+</ui:UXML>
