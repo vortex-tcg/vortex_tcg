@@ -308,6 +308,7 @@ namespace VortexTCG.Scripts.MatchScene
 
         public void SetOpponentAttacking(bool active)
         {
+            EnsureAttackOutlineRef();
             if (AttackOutline == null) return;
 
             AttackOutline.SetActive(active);
@@ -319,10 +320,39 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
 
+        private void EnsureAttackOutlineRef()
+        {
+            if (AttackOutline != null) return;
+
+            foreach (Transform t in GetComponentsInChildren<Transform>(true))
+            {
+                if (t != null && t.name == "AttackOutline")
+                {
+                    AttackOutline = t.gameObject;
+                    break;
+                }
+            }
+        }
+
         public void SetDefenseSelected(bool active)
         {
+            EnsureDefenseOutlineRef();
             if (DefenseOutline != null)
                 DefenseOutline.SetActive(active);
+        }
+
+        private void EnsureDefenseOutlineRef()
+        {
+            if (DefenseOutline != null) return;
+
+            foreach (Transform t in GetComponentsInChildren<Transform>(true))
+            {
+                if (t != null && t.name == "DefenseOutline")
+                {
+                    DefenseOutline = t.gameObject;
+                    break;
+                }
+            }
         }
 
         public bool IsAttackingOutlineActive()

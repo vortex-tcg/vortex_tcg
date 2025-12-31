@@ -17,7 +17,7 @@ namespace VortexTCG.Scripts.MatchScene
         [SerializeField] private Card cardPrefab;
         [SerializeField] private Transform handRoot;
         [SerializeField] private float cardSpacing = 1.2f;
-        private const int MaxHandSize = 5;
+        private const int MaxHandSize = 7;
 
         [HideInInspector] public Card SelectedCard;
 
@@ -261,12 +261,24 @@ namespace VortexTCG.Scripts.MatchScene
 
         private void LayoutHand()
         {
+            if (handCards.Count == 0) return;
+
+            // Recenter hand container on X
+            if (handRoot != null)
+            {
+                Vector3 rp = handRoot.localPosition;
+                if (!Mathf.Approximately(rp.x, 0f))
+                    handRoot.localPosition = new Vector3(0f, rp.y, rp.z);
+            }
+
+            float startX = -((handCards.Count - 1) * cardSpacing) * 0.5f;
+
             for (int i = 0; i < handCards.Count; i++)
             {
                 Card c = handCards[i];
                 if (c == null) continue;
 
-                c.transform.localPosition = new Vector3(i * cardSpacing, 0f, 0f);
+                c.transform.localPosition = new Vector3(startX + i * cardSpacing, 0f, 0f);
                 c.transform.localRotation = Quaternion.identity;
             }
         }
