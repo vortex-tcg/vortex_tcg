@@ -15,7 +15,7 @@ namespace VortexTCG.Scripts.MatchScene
         [SerializeField] private float cardSpacing = 1.2f;
 
         private readonly List<GameObject> opponentHandCards = new List<GameObject>();
-        private const int MaxHandSize = 5;
+        private const int MaxHandSize = 7;
 
         private void Awake()
         {
@@ -59,19 +59,7 @@ namespace VortexTCG.Scripts.MatchScene
                 EnsureCollider(cardObj);
                 opponentHandCards.Add(cardObj);
             }
-
-            PadHandToMaxSize();
             LayoutHand();
-        }
-
-        private void PadHandToMaxSize()
-        {
-            while (opponentHandCards.Count < MaxHandSize)
-            {
-                GameObject cardObj = Instantiate(cardFaceDownPrefab, handRoot);
-                EnsureCollider(cardObj);
-                opponentHandCards.Add(cardObj);
-            }
         }
 
         public void RemoveOneCardFromHand()
@@ -88,13 +76,25 @@ namespace VortexTCG.Scripts.MatchScene
 
         private void LayoutHand()
         {
+            if (opponentHandCards.Count == 0) return;
+
+            // Recenter opponent hand container on X
+            if (handRoot != null)
+            {
+                Vector3 rp = handRoot.localPosition;
+                if (!Mathf.Approximately(rp.x, 0f))
+                    handRoot.localPosition = new Vector3(0f, rp.y, rp.z);
+            }
+
+            float startX = -((opponentHandCards.Count - 1) * cardSpacing) * 0.5f;
+
             for (int i = 0; i < opponentHandCards.Count; i++)
             {
                 GameObject obj = opponentHandCards[i];
                 if (obj == null) continue;
 
                 Transform t = obj.transform;
-                t.localPosition = new Vector3(i * cardSpacing, 0f, 0f);
+                t.localPosition = new Vector3(startX + i * cardSpacing, 0f, 0f);
                 t.localRotation = Quaternion.identity;
             }
         }
