@@ -6,6 +6,7 @@ public class AppConfig
 {
     public string apiBaseUrl;
     public string gameHubUrl;
+    public string baseUrl;
 }
 
 public static class ConfigLoader
@@ -37,6 +38,9 @@ public static class ConfigLoader
             return cfg.gameHubUrl;
 
         if (string.IsNullOrWhiteSpace(cfg.apiBaseUrl))
+            return null;
+
+        if (string.IsNullOrWhiteSpace(cfg.baseUrl))
             return null;
 
         string baseUrl = cfg.apiBaseUrl.TrimEnd('/');

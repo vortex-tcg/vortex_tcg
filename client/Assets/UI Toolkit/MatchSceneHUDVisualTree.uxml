@@ -1,6 +1,7 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <ui:Template name="EmptyCardPreview" src="project://database/Assets/PreFabs/Cards/EmptyCardPreview.uxml?fileID=9197481963319205126&amp;guid=e3e9516851c0fdc4a83abb4d8b0eb9c4&amp;type=3#EmptyCardPreview" />
-    <Style src="project://database/Assets/UI%20Toolkit/HUDStylesheet.uss?fileID=7433441132597879392&amp;guid=2177595ec7397e54f8540429d6376417&amp;type=3#HUDStylesheet" />
+    <ui:Template name="Golds" src="project://database/Assets/PreFabs/Golds.uxml?fileID=9197481963319205126&amp;guid=e7234147dc1e8fc4fbfa2ab08894b42a&amp;type=3#Golds" />
+    <Style src="project://database/Assets/UI%20Toolkit/MatchSceneHUDStylesheet.uss?fileID=7433441132597879392&amp;guid=2177595ec7397e54f8540429d6376417&amp;type=3#MatchSceneHUDStylesheet" />
     <ui:VisualElement name="Container" style="flex-grow: 1; flex-direction: row; justify-content: flex-start; align-content: flex-start; align-self: flex-start; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; width: 1920px; height: 1080px; padding-top: 20px; padding-right: 20px; padding-bottom: 20px; padding-left: 20px;">
         <ui:VisualElement name="MatchSide" style="flex-grow: 1; width: 80%; height: auto;" />
         <ui:VisualElement name="InformationSide" style="flex-grow: 1; width: 18.5%; justify-content: space-between; height: auto; align-items: stretch; flex-direction: column;">
