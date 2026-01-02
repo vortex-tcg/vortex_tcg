@@ -37,7 +37,7 @@ namespace game.Services;
 /// Thread-safe et conçu pour SignalR/WebSocket avec des connexions concurrentes.
 /// SUPPORTE LA RECONNEXION: Utilise userId au lieu de connectionId.
 /// </summary>
-public class RoomService: IRoomActionEventListener
+public class RoomService : IRoomActionEventListener
 {
     #region Structures internes
 
@@ -50,7 +50,8 @@ public class RoomService: IRoomActionEventListener
     private class Room
     {
 
-        public Room(IRoomActionEventListener listener) {
+        public Room(IRoomActionEventListener listener)
+        {
             GameRoom = new VortexTCG.Game.Object.Room(listener);
         }
 
@@ -101,16 +102,20 @@ public class RoomService: IRoomActionEventListener
 
     #region Méthodes utiles
 
-    private async Task<Room>? tryGetRoom(Guid userId) {
-        if (!_userToRoom.TryGetValue(userId, out string? code)) {
+    private async Task<Room>? tryGetRoom(Guid userId)
+    {
+        if (!_userToRoom.TryGetValue(userId, out string? code))
+        {
             await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "User not connected to room");
             return null;
         }
-        if (!_rooms.TryGetValue(code, out Room? room)) {
+        if (!_rooms.TryGetValue(code, out Room? room))
+        {
             await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Room not instantiate");
             return null;
         }
-        if (room.GameRoom == null || !room.IsGameInitialized) {
+        if (room.GameRoom == null || !room.IsGameInitialized)
+        {
             await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Room not started");
             return null;
         }
@@ -300,9 +305,9 @@ public class RoomService: IRoomActionEventListener
             lock (room)
             {
                 room.Members.Remove(userId);
-                if (room.Members.Count == 0 && room.GameRoom != null) 
+                if (room.Members.Count == 0 && room.GameRoom != null)
                 {
-                    room.GameRoom.StopTimer(); 
+                    room.GameRoom.StopTimer();
                 }
                 opponentId = room.Members.FirstOrDefault();
                 roomEmpty = room.Members.Count == 0;
@@ -361,7 +366,7 @@ public class RoomService: IRoomActionEventListener
     public async Task<bool> SetPlayerDeck(Guid userId, Guid deckId)
     {
         if (!_userToRoom.TryGetValue(userId, out string? code)) return false;
-        if (!_rooms.TryGetValue(code, out Room? room)) return false;   
+        if (!_rooms.TryGetValue(code, out Room? room)) return false;
 
         bool needsInitialization = false;
         Guid? user1Id = null, user2Id = null, deck1Id = null, deck2Id = null;
@@ -398,14 +403,14 @@ public class RoomService: IRoomActionEventListener
 
                 // Créer l'instance RoomObject (vide pour l'instant)
                 room.GameRoom = new VortexTCG.Game.Object.Room(this);
-                room.GameRoom.OnTimeUp += async () => 
+                room.GameRoom.OnTimeUp += async () =>
                 {
                     var result = room.GameRoom.ForceChangePhase();
-                    
-                    if (result != null) 
+
+                    if (result != null)
                     {
-                       await _hubContext.Clients.User(user1Id.ToString()).SendAsync("PhaseChanged", result);
-                       await _hubContext.Clients.User(user2Id.ToString()).SendAsync("PhaseChanged", result);
+                        await _hubContext.Clients.User(user1Id.ToString()).SendAsync("PhaseChanged", result);
+                        await _hubContext.Clients.User(user2Id.ToString()).SendAsync("PhaseChanged", result);
                     }
                 };
             }
@@ -528,14 +533,31 @@ public class RoomService: IRoomActionEventListener
     /// </summary>
     /// <param name="userId">ID du joueur qui demande le démarrage</param>
     /// <returns>Résultat du démarrage ou null si non autorisé</returns>
-    public VortexTCG.Game.DTO.PhaseChangeResultDTO? StartGame(Guid userId)
+    public async Task<VortexTCG.Game.DTO.PhaseChangeResultDTO?> StartGame(Guid userId)
     {
-        if (!_userToRoom.TryGetValue(userId, out string? code)) return null;
-        if (!_rooms.TryGetValue(code, out Room? room)) return null;
+        if (!_userToRoom.TryGetValue(userId, out string? code))
+        {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "User not connected to any room");
+            return null;
+        }
+        if (!_rooms.TryGetValue(code, out Room? room))
+        {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Room not found");
+            return null;
+        }
 
         lock (room)
         {
-            if (room.GameRoom == null || !room.IsGameInitialized) return null;
+            if (room.GameRoom == null)
+            {
+                _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Game room not created");
+                return null;
+            }
+            if (!room.IsGameInitialized)
+            {
+                _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Game not initialized - waiting for both players to set their decks");
+                return null;
+            }
             return room.GameRoom.StartGame();
         }
     }
@@ -547,20 +569,26 @@ public class RoomService: IRoomActionEventListener
     /// <returns>Résultat du changement ou null si non autorisé</returns>
     public async Task<VortexTCG.Game.DTO.PhaseChangeResultDTO>? ChangePhase(Guid userId)
     {
-        if (!_userToRoom.TryGetValue(userId, out string? code)) {
-            await _hubContext.Clients.User(userId.ToString()).SendAsync("Error", "Code not found !");
+        if (!_userToRoom.TryGetValue(userId, out string? code))
+        {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "User not connected to any room");
             return null;
-        };
-        if (!_rooms.TryGetValue(code, out Room? room)) {
-            await _hubContext.Clients.User(userId.ToString()).SendAsync("Error", "Room not found");
+        }
+        ;
+        if (!_rooms.TryGetValue(code, out Room? room))
+        {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Room not found");
             return null;
         }
 
-        if (room.GameRoom == null) {
-            await _hubContext.Clients.User(userId.ToString()).SendAsync("Error", "Room not initialized !");
+        if (room.GameRoom == null)
+        {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Game room not created");
             return null;
-        } else if (!room.IsGameInitialized) {
-            await _hubContext.Clients.User(userId.ToString()).SendAsync("Error", "Room variable is false !");
+        }
+        else if (!room.IsGameInitialized)
+        {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Game not initialized - waiting for both players to set their decks");
             return null;
         }
 
@@ -568,8 +596,14 @@ public class RoomService: IRoomActionEventListener
 
         lock (room)
         {
-            result =  room.GameRoom.ChangePhase(userId);
+            result = room.GameRoom.ChangePhase(userId);
         }
+
+        if (result == null)
+        {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Cannot change phase - not your turn or game not started");
+        }
+
         return result;
     }
 
@@ -595,7 +629,8 @@ public class RoomService: IRoomActionEventListener
 
     #region Gestion Attaque
 
-    public async Task EngageAttackCard(Guid userId, int cardId) {
+    public async Task EngageAttackCard(Guid userId, int cardId)
+    {
         Room room = await tryGetRoom(userId);
         if (room == null) return;
 
@@ -606,9 +641,13 @@ public class RoomService: IRoomActionEventListener
             result = room.GameRoom.HandleAttackEvent(userId, cardId);
         }
 
-        if (result == null) {
-            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Can't pos this card here !");
-        } else {
+        if (result == null)
+        {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken,
+                "Cannot engage attack - check: is it your turn? Are you in ATTACK phase? Is the card on your board and able to attack?");
+        }
+        else
+        {
             await _hubContext.Clients.User(result.PlayerId.ToString())
                 .SendAsync("HandleAttackEngage", result.AttackCardsId);
             await _hubContext.Clients.User(result.OpponentId.ToString())
@@ -621,7 +660,8 @@ public class RoomService: IRoomActionEventListener
 
     #region Gestion Defense
 
-    public async Task EngageDefenseCard(Guid userId, int cardId, int opponentCardId) {
+    public async Task EngageDefenseCard(Guid userId, int cardId, int opponentCardId)
+    {
         Room room = await tryGetRoom(userId);
         if (room == null) return;
 
@@ -632,9 +672,13 @@ public class RoomService: IRoomActionEventListener
             result = room.GameRoom.HandleDefenseEvent(userId, cardId, opponentCardId);
         }
 
-        if (result == null) {
-            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Can't pos this card here !");
-        } else {
+        if (result == null)
+        {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken,
+                "Cannot engage defense - check: is it your turn (DEFENSE phase)? Is your card able to defend? Is the opponent card in ATTACK_ENGAGE state?");
+        }
+        else
+        {
             await _hubContext.Clients.User(result.PlayerId.ToString())
                 .SendAsync("HandleDefenseEngage", result.data);
 
@@ -647,7 +691,8 @@ public class RoomService: IRoomActionEventListener
 
     #region Jouer une carte
 
-    public async Task PlayCard(Guid userId, int cardId, int location) {
+    public async Task PlayCard(Guid userId, int cardId, int location)
+    {
         Room room = await tryGetRoom(userId);
         if (room == null) return;
 
@@ -658,8 +703,10 @@ public class RoomService: IRoomActionEventListener
             result = room.GameRoom.PlayCard(userId, cardId, location);
         }
 
-        if (result == null) {
-            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Can't play the card!");
+        if (result == null)
+        {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken,
+                "Cannot play card - check: is it your turn? Are you in PLACEMENT phase? Do you have enough gold? Is the location valid (0-5) and available?");
             return;
         }
         await _hubContext.Clients.User(userId.ToString()).SendAsync("PlayCardResult", result.PlayerResult);

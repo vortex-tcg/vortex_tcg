@@ -257,11 +257,10 @@ public class GameHub : Hub
     public async Task StartGame()
     {
         Guid userId = GetAuthenticatedUserId();
-        PhaseChangeResultDTO? result = _rooms.StartGame(userId);
+        PhaseChangeResultDTO? result = await _rooms.StartGame(userId);
 
         if (result == null)
         {
-            await Clients.Caller.SendAsync("Error", "Unable to start game (Not in room, already started, or not player 1)");
             return;
         }
 
@@ -283,7 +282,6 @@ public class GameHub : Hub
 
         if (result == null)
         {
-            await Clients.Caller.SendAsync("Error", "Unable to change phase (Not in room, game not started, or not your turn)");
             return;
         }
 
