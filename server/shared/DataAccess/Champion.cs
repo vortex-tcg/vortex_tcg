@@ -17,10 +17,10 @@ namespace VortexTCG.DataAccess.Models
 
         public string Picture { get; set; } = default!;
 
-        public Guid FactionId { get; set; } = default!;
+        public Guid FactionId { get; set; } = Guid.Empty;
         public Faction Faction { get; set; } = default!;
 
-        public Guid EffectId { get; set; } = default!;
+        public Guid EffectId { get; set; } = Guid.Empty;
         public Effect Effect { get; set; } = default!;
 
         public ICollection<CollectionChampion> Collections { get; set; } = default!;

@@ -13,16 +13,16 @@ namespace VortexTCG.DataAccess.Models
 
         public string Parameter { get; set; } = default!;
 
-        public Guid EffectTypeId { get; set; } = default!;
+        public Guid EffectTypeId { get; set; } = Guid.Empty;
         public EffectType EffectType { get; set; } = default!;
 
-        public Guid EffectDescriptionId { get; set; } = default!;
+        public Guid EffectDescriptionId { get; set; } = Guid.Empty;
         public EffectDescription EffectDescription { get; set; } = default!;
 
-        public Guid StartConditionId { get; set; } = default!;
+        public Guid StartConditionId { get; set; } = Guid.Empty;
         public Condition StartCondition { get; set; } = default!;
 
-        public Guid EndConditionId { get; set; } = default!;
+        public Guid EndConditionId { get; set; } = Guid.Empty;
         public Condition EndCondition { get; set; } = default!;
         
         public Champion Champion { get; set; } = default!;
@@ -35,10 +35,10 @@ namespace VortexTCG.DataAccess.Models
         [Key]
         public Guid Id { get; set; }
 
-        public Guid EffectId { get; set; } = default!;
+        public Guid EffectId { get; set; } = Guid.Empty;
         public Effect Effect { get; set; } = default!;
 
-        public Guid CardId { get; set; } = default!;
+        public Guid CardId { get; set; } = Guid.Empty;
         public Card Card { get; set; } = default!;
 
     }
