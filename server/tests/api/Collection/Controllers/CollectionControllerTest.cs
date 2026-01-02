@@ -70,9 +70,9 @@ namespace Tests.Collection
             ObjectResult result = Assert.IsType<ObjectResult>(getCollectionResult);
             ResultDTO<UserCollectionDto> data = Assert.IsType<ResultDTO<UserCollectionDto>>(result.Value);
             Assert.True(data.success);
-            Assert.Equal(data.data.Decks.Count, 2);
-            Assert.Equal(data.data.Faction.Count, 2);
-            Assert.Equal(data.data.Cards.Count, 120);
+            Assert.Equal(2, data.data.Decks.Count);
+            Assert.Equal(2, data.data.Faction.Count);
+            Assert.Equal(120, data.data.Cards.Count);
         }
 
         [Fact]
