@@ -1,10 +1,12 @@
 using UnityEngine;
+using System;
 
 [System.Serializable]
 public class AppConfig
 {
     public string apiBaseUrl;
     public string gameHubUrl;
+    public string baseUrl;
 }
 
 public static class ConfigLoader
@@ -13,7 +15,8 @@ public static class ConfigLoader
 
     public static AppConfig Load()
     {
-        if (config != null) return config;
+        if (config != null)
+            return config;
 
         TextAsset configText = Resources.Load<TextAsset>("application-properties");
         if (configText == null)
@@ -21,20 +24,28 @@ public static class ConfigLoader
             Debug.LogError("Failed to load configuration file: application-properties");
             return null;
         }
+
         config = JsonUtility.FromJson<AppConfig>(configText.text);
-    
         return config;
     }
+
     public static string BuildGameHubUrl(AppConfig cfg)
     {
-        if (cfg == null) return null;
-        if (!string.IsNullOrWhiteSpace(cfg.gameHubUrl)) return cfg.gameHubUrl;
+        if (cfg == null)
+            return null;
 
-        if (string.IsNullOrWhiteSpace(cfg.apiBaseUrl)) return null;
+        if (!string.IsNullOrWhiteSpace(cfg.gameHubUrl))
+            return cfg.gameHubUrl;
 
-        var baseUrl = cfg.apiBaseUrl.TrimEnd('/');
-        if (baseUrl.EndsWith("/api", System.StringComparison.OrdinalIgnoreCase))
-            baseUrl = baseUrl[..^4];
+        if (string.IsNullOrWhiteSpace(cfg.apiBaseUrl))
+            return null;
+
+        if (string.IsNullOrWhiteSpace(cfg.baseUrl))
+            return null;
+
+        string baseUrl = cfg.apiBaseUrl.TrimEnd('/');
+        if (baseUrl.EndsWith("/api", StringComparison.OrdinalIgnoreCase))
+            baseUrl = baseUrl.Substring(0, baseUrl.Length - 4);
 
         return baseUrl.TrimEnd('/') + "/hubs/game";
     }

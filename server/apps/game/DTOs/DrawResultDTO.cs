@@ -21,7 +21,9 @@ namespace VortexTCG.Game.DTO
     /// </summary>
     public class DrawResultForPlayerDTO
     {
+        public Guid PlayerId { get; set; }
         public List<DrawnCardDTO> DrawnCards { get; set; } = new List<DrawnCardDTO>();
+        public List<DrawnCardDTO> SentToGraveyard { get; set; } = new(); 
         public int FatigueCount { get; set; }
         public int BaseFatigue { get; set; }
     }
@@ -33,6 +35,7 @@ namespace VortexTCG.Game.DTO
     {
         public Guid PlayerId { get; set; }
         public int CardsDrawnCount { get; set; }
+        public int CardsBurnedCount { get; set; }  
         public int FatigueCount { get; set; }
         public int BaseFatigue { get; set; }
     }

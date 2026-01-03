@@ -25,6 +25,10 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using VortexTCG.Game.Object;
+using VortexTCG.Game.DTO;
+using VortexTCG.Game.Interface;
+using Microsoft.AspNetCore.SignalR;
+using game.Hubs;
 
 namespace game.Services;
 
@@ -33,9 +37,11 @@ namespace game.Services;
 /// Thread-safe et conçu pour SignalR/WebSocket avec des connexions concurrentes.
 /// SUPPORTE LA RECONNEXION: Utilise userId au lieu de connectionId.
 /// </summary>
-public class RoomService
+public class RoomService: IRoomActionEventListener
 {
     #region Structures internes
+
+    private const string ErrorToken = "Error";
 
     /// <summary>
     /// Représente un salon de jeu avec ses métadonnées.
@@ -43,6 +49,11 @@ public class RoomService
     /// </summary>
     private class Room
     {
+
+        public Room(IRoomActionEventListener listener) {
+            GameRoom = new VortexTCG.Game.Object.Room(listener);
+        }
+
         /// <summary>Ensemble des UserId des joueurs dans le salon (max 2) - RÉSISTE aux reconnexions</summary>
         public HashSet<Guid> Members { get; } = new();
 
@@ -80,6 +91,31 @@ public class RoomService
 
     /// <summary>Générateur de nombres aléatoires cryptographiquement sécurisé</summary>
     private readonly RandomNumberGenerator _rng = RandomNumberGenerator.Create();
+    private readonly IHubContext<GameHub> _hubContext;
+
+    public RoomService(IHubContext<GameHub> hubContext)
+    {
+        _hubContext = hubContext;
+    }
+    #endregion
+
+    #region Méthodes utiles
+
+    private async Task<Room>? tryGetRoom(Guid userId) {
+        if (!_userToRoom.TryGetValue(userId, out string? code)) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "User not connected to room");
+            return null;
+        }
+        if (!_rooms.TryGetValue(code, out Room? room)) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Room not instantiate");
+            return null;
+        }
+        if (room.GameRoom == null || !room.IsGameInitialized) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Room not started");
+            return null;
+        }
+        return room;
+    }
 
     #endregion
 
@@ -102,7 +138,7 @@ public class RoomService
     /// <param name="userId">ID utilisateur du joueur</param>
     /// <returns>Pseudo du joueur ou pseudo par défaut</returns>
     public string GetName(Guid userId)
-        => _names.TryGetValue(userId, out var n) ? n : $"Player-{userId.ToString()[..8]}";
+        => _names.TryGetValue(userId, out string? n) ? n : $"Player-{userId.ToString()[..8]}";
 
     #endregion
 
@@ -137,7 +173,7 @@ public class RoomService
         {
             code = preferred.Trim().ToUpperInvariant();
             // TryAdd est atomique: retourne false si le code existe déjà
-            if (!_rooms.TryAdd(code, new Room())) return false;
+            if (!_rooms.TryAdd(code, new Room(this))) return false;
         }
         // Cas 2: Génération automatique d'un code unique
         else
@@ -146,12 +182,12 @@ public class RoomService
             while (true)
             {
                 code = GenerateCode(6); // ex: "F9K7ZQ"
-                if (_rooms.TryAdd(code, new Room())) break;
+                if (_rooms.TryAdd(code, new Room(this))) break;
             }
         }
 
         // Ajout du créateur au salon (lock pour éviter les races sur Members)
-        var room = _rooms[code];
+        Room room = _rooms[code];
         lock (room)
         {
             room.Members.Add(userId);
@@ -190,7 +226,7 @@ public class RoomService
         if (_userToRoom.ContainsKey(userId)) return false;
 
         // Vérifier l'existence du salon
-        if (!_rooms.TryGetValue(code, out var room)) return false;
+        if (!_rooms.TryGetValue(code, out Room? room)) return false;
 
         lock (room)
         {
@@ -217,7 +253,7 @@ public class RoomService
     /// <param name="userId">ID utilisateur du joueur</param>
     /// <returns>Code du salon ou null si le joueur n'est dans aucun salon</returns>
     public string? GetRoomOf(Guid userId)
-        => _userToRoom.TryGetValue(userId, out var c) ? c : null;
+        => _userToRoom.TryGetValue(userId, out string? c) ? c : null;
 
     /// <summary>
     /// Récupère le UserId de l'adversaire d'un joueur.
@@ -226,9 +262,9 @@ public class RoomService
     /// <returns>UserId de l'adversaire ou null si pas d'adversaire/salon</returns>
     public Guid? GetOpponentOf(Guid userId)
     {
-        var code = GetRoomOf(userId);
+        string? code = GetRoomOf(userId);
         if (code is null) return null;
-        if (!_rooms.TryGetValue(code, out var room)) return null;
+        if (!_rooms.TryGetValue(code, out Room? room)) return null;
 
         lock (room)
             return room.Members.FirstOrDefault(id => id != userId);
@@ -255,15 +291,19 @@ public class RoomService
         roomEmpty = false;
 
         // Retirer le mapping userId -> room
-        if (!_userToRoom.TryRemove(userId, out var c)) return;
+        if (!_userToRoom.TryRemove(userId, out string? c)) return;
         code = c;
 
         // Retirer le joueur du salon et vérifier si vide
-        if (_rooms.TryGetValue(c, out var room))
+        if (_rooms.TryGetValue(c, out Room? room))
         {
             lock (room)
             {
                 room.Members.Remove(userId);
+                if (room.Members.Count == 0 && room.GameRoom != null) 
+                {
+                    room.GameRoom.StopTimer(); 
+                }
                 opponentId = room.Members.FirstOrDefault();
                 roomEmpty = room.Members.Count == 0;
 
@@ -284,9 +324,9 @@ public class RoomService
     /// <returns>Code généré (ex: "F9K7ZQ")</returns>
     private string GenerateCode(int len)
     {
-        var bytes = new byte[len];
+        byte[] bytes = new byte[len];
         _rng.GetBytes(bytes); // RNG cryptographique
-        var chars = new char[len];
+        char[] chars = new char[len];
         for (int i = 0; i < len; i++)
             chars[i] = Alphabet[bytes[i] % Alphabet.Length];
         return new(chars);
@@ -320,8 +360,8 @@ public class RoomService
     /// </remarks>
     public async Task<bool> SetPlayerDeck(Guid userId, Guid deckId)
     {
-        var code = GetRoomOf(userId);
-        if (code is null || !_rooms.TryGetValue(code, out var room)) return false;
+        if (!_userToRoom.TryGetValue(userId, out string? code)) return false;
+        if (!_rooms.TryGetValue(code, out Room? room)) return false;   
 
         bool needsInitialization = false;
         Guid? user1Id = null, user2Id = null, deck1Id = null, deck2Id = null;
@@ -329,7 +369,7 @@ public class RoomService
         // PHASE 1: Enregistrer les informations du joueur (lock court)
         lock (room)
         {
-            var members = room.Members.ToList();
+            List<Guid> members = room.Members.ToList();
             if (!members.Contains(userId)) return false;
 
             // Déterminer si c'est le joueur 1 (créateur) ou 2 (rejoint)
@@ -345,29 +385,29 @@ public class RoomService
 
             // Vérifier si on peut initialiser la partie
             // Les userId sont déjà dans Members, on a juste besoin des decks
-            if (members.Count == 1 && room.User1DeckId.HasValue && !room.IsGameInitialized)
-            {
-                // Préparer l'initialisation: copier les valeurs nécessaires
-                needsInitialization = true;
-                user1Id = members[0]; // Créateur
-                deck1Id = room.User1DeckId.Value;
-
-                // Créer l'instance RoomObject (vide pour l'instant)
-                room.GameRoom = new VortexTCG.Game.Object.Room();
-            }
-            else if (members.Count == 2 &&
+            if (members.Count == 2 &&
                 room.User1DeckId.HasValue && room.User2DeckId.HasValue &&
                 !room.IsGameInitialized)
             {
                 // Préparer l'initialisation: copier les valeurs nécessaires
                 needsInitialization = true;
-                user1Id = members[0]; // Créateur
-                user2Id = members[1]; // Rejoint
+                user1Id = members[0];
+                user2Id = members[1];
                 deck1Id = room.User1DeckId.Value;
                 deck2Id = room.User2DeckId.Value;
 
                 // Créer l'instance RoomObject (vide pour l'instant)
-                room.GameRoom = new VortexTCG.Game.Object.Room();
+                room.GameRoom = new VortexTCG.Game.Object.Room(this);
+                room.GameRoom.OnTimeUp += async () => 
+                {
+                    var result = room.GameRoom.ForceChangePhase();
+                    
+                    if (result != null) 
+                    {
+                       await _hubContext.Clients.User(user1Id.ToString()).SendAsync("PhaseChanged", result);
+                       await _hubContext.Clients.User(user2Id.ToString()).SendAsync("PhaseChanged", result);
+                    }
+                };
             }
         }
 
@@ -404,7 +444,7 @@ public class RoomService
     public VortexTCG.Game.Object.Room? GetGameRoom(string code)
     {
         code = code.Trim().ToUpperInvariant();
-        return _rooms.TryGetValue(code, out var room) ? room.GameRoom : null;
+        return _rooms.TryGetValue(code, out Room? room) ? room.GameRoom : null;
     }
 
     /// <summary>
@@ -415,7 +455,7 @@ public class RoomService
     /// <returns>RoomObject ou null</returns>
     public VortexTCG.Game.Object.Room? GetGameRoomByUserId(Guid userId)
     {
-        var code = GetRoomOf(userId);
+        string? code = GetRoomOf(userId);
         return code is not null ? GetGameRoom(code) : null;
     }
 
@@ -427,7 +467,7 @@ public class RoomService
     public bool IsGameReady(string code)
     {
         code = code.Trim().ToUpperInvariant();
-        return _rooms.TryGetValue(code, out var room) && room.IsGameInitialized;
+        return _rooms.TryGetValue(code, out Room? room) && room.IsGameInitialized;
     }
 
     /// <summary>
@@ -446,12 +486,12 @@ public class RoomService
     public (Guid? user1Id, Guid? user2Id, Guid? deck1Id, Guid? deck2Id) GetRoomPlayers(string code)
     {
         code = code.Trim().ToUpperInvariant();
-        if (!_rooms.TryGetValue(code, out var room))
+        if (!_rooms.TryGetValue(code, out Room? room))
             return (null, null, null, null);
 
         lock (room)
         {
-            var members = room.Members.ToList();
+            List<Guid> members = room.Members.ToList();
             if (members.Count == 0) return (null, null, null, null);
 
             Guid? user1 = members.Count > 0 ? members[0] : null;
@@ -462,21 +502,180 @@ public class RoomService
     }
 
     /// <summary>
-    /// Fait piocher des cartes à un joueur de manière thread-safe.
+    /// Récupère la position (1 ou 2) d'un joueur dans un salon.
     /// </summary>
-    /// <param name="userId">ID du joueur</param>
-    /// <param name="amount">Nombre de cartes</param>
-    /// <returns>Résultat de la pioche ou null si erreur</returns>
-    public VortexTCG.Game.DTO.DrawCardsResultDTO? DrawCards(Guid userId, int amount)
+    /// <param name="userId">ID utilisateur du joueur</param>
+    /// <returns>1 si créateur, 2 si rejoint, null si pas dans un salon</returns>
+    public int? GetPlayerPosition(Guid userId)
     {
         if (!_userToRoom.TryGetValue(userId, out string? code)) return null;
         if (!_rooms.TryGetValue(code, out Room? room)) return null;
 
         lock (room)
         {
-            if (room.GameRoom == null) return null;
-            return room.GameRoom.DrawCards(userId, amount);
+            List<Guid> members = room.Members.ToList();
+            int index = members.IndexOf(userId);
+            return index >= 0 ? index + 1 : null;
         }
+    }
+
+    #endregion
+
+    #region Gestion des phases de jeu
+
+    /// <summary>
+    /// Démarre une partie. Seul le joueur 1 (créateur) peut démarrer.
+    /// </summary>
+    /// <param name="userId">ID du joueur qui demande le démarrage</param>
+    /// <returns>Résultat du démarrage ou null si non autorisé</returns>
+    public VortexTCG.Game.DTO.PhaseChangeResultDTO? StartGame(Guid userId)
+    {
+        if (!_userToRoom.TryGetValue(userId, out string? code)) return null;
+        if (!_rooms.TryGetValue(code, out Room? room)) return null;
+
+        lock (room)
+        {
+            if (room.GameRoom == null || !room.IsGameInitialized) return null;
+            return room.GameRoom.StartGame();
+        }
+    }
+
+    /// <summary>
+    /// Change de phase pour un joueur.
+    /// </summary>
+    /// <param name="userId">ID du joueur qui demande le changement</param>
+    /// <returns>Résultat du changement ou null si non autorisé</returns>
+    public async Task<VortexTCG.Game.DTO.PhaseChangeResultDTO>? ChangePhase(Guid userId)
+    {
+        if (!_userToRoom.TryGetValue(userId, out string? code)) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync("Error", "Code not found !");
+            return null;
+        };
+        if (!_rooms.TryGetValue(code, out Room? room)) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync("Error", "Room not found");
+            return null;
+        }
+
+        if (room.GameRoom == null) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync("Error", "Room not initialized !");
+            return null;
+        } else if (!room.IsGameInitialized) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync("Error", "Room variable is false !");
+            return null;
+        }
+
+        VortexTCG.Game.DTO.PhaseChangeResultDTO result = null;
+
+        lock (room)
+        {
+            result =  room.GameRoom.ChangePhase(userId);
+        }
+        return result;
+    }
+
+    #endregion
+
+    #region Resolution de bataille
+
+    public async void sendBattleResolveData(BattlesDataDto data, Guid attackerId, Guid defenderId)
+    {
+        try
+        {
+            await _hubContext.Clients.User(attackerId.ToString())
+                .SendAsync("BattleResolution_Attacker", data);
+
+            await _hubContext.Clients.User(defenderId.ToString())
+                .SendAsync("BattleResolution_Defender", data);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("[RoomService] sendBattleResolveData FAILED: " + ex);
+        }
+    }
+
+
+    #endregion
+
+    #region Gestion de pioche
+
+    public async void sendDrawCardsData(DrawCardsResultDTO data) {
+        await _hubContext.Clients.User(data.PlayerResult.PlayerId.ToString()).SendAsync("CardsDrawn", data.PlayerResult);
+        await _hubContext.Clients.User(data.OpponentResult.PlayerId.ToString()).SendAsync("OpponentCardsDrawn", data.OpponentResult);
+    }
+
+    #endregion
+
+    #region Gestion Attaque
+
+    public async Task EngageAttackCard(Guid userId, int cardId) {
+        Room room = await tryGetRoom(userId);
+        if (room == null) return;
+
+        AttackResponseDto result = null;
+
+        lock (room)
+        {
+            result = room.GameRoom.HandleAttackEvent(userId, cardId);
+        }
+
+        if (result == null) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Can't pos this card here !");
+        } else {
+            await _hubContext.Clients.User(result.PlayerId.ToString())
+                .SendAsync("HandleAttackEngage", result.AttackCardsId);
+            await _hubContext.Clients.User(result.OpponentId.ToString())
+                .SendAsync("HandleOpponentAttackEngage", result.AttackCardsId);
+
+        }
+    }
+
+    #endregion
+
+    #region Gestion Defense
+
+    public async Task EngageDefenseCard(Guid userId, int cardId, int opponentCardId) {
+        Room room = await tryGetRoom(userId);
+        if (room == null) return;
+
+        DefenseResponseDto result = null;
+
+        lock (room)
+        {
+            result = room.GameRoom.HandleDefenseEvent(userId, cardId, opponentCardId);
+        }
+
+        if (result == null) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Can't pos this card here !");
+        } else {
+            await _hubContext.Clients.User(result.PlayerId.ToString())
+                .SendAsync("HandleDefenseEngage", result.data);
+
+            await _hubContext.Clients.User(result.OpponentId.ToString())
+                .SendAsync("HandleOpponentDefenseEngage", result.data);
+        }
+    }
+
+    #endregion
+
+    #region Jouer une carte
+
+    public async Task PlayCard(Guid userId, int cardId, int location) {
+        Room room = await tryGetRoom(userId);
+        if (room == null) return;
+
+        PlayCardResponseDto result = null;
+
+        lock (room)
+        {
+            result = room.GameRoom.PlayCard(userId, cardId, location);
+        }
+
+        if (result == null) {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync(ErrorToken, "Can't play the card!");
+            return;
+        }
+        await _hubContext.Clients.User(userId.ToString()).SendAsync("PlayCardResult", result.PlayerResult);
+        await _hubContext.Clients.User(result.OpponentResult.PlayerId.ToString()).SendAsync("OpponentPlayCardResult", result.OpponentResult);
     }
 
     #endregion

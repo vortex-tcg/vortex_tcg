@@ -83,7 +83,7 @@ namespace VortexTCG.Auth.Services {
                 };
             }
 
-            LoginUserDTO user = await _provider.getFirstUserByEmail(data.email);
+            LoginUserDTO? user = await _provider.getFirstUserByEmail(data.email);
 
             if (user == null)
             {

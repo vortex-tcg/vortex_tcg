@@ -2,11 +2,14 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 public class GameUIController : MonoBehaviour
 {
     [Header("Refs")]
     public SignalRClient client;
+    private static readonly Guid DeckGuid =
+        Guid.Parse("d3b07384-d9a1-4d3b-92d8-4f5c6e7a8b9c");
 
     [Header("UI Inputs")]
     public TMP_InputField playerNameInput;
@@ -78,21 +81,24 @@ public class GameUIController : MonoBehaviour
 
     private async void OnClickMatchmaking()
     {
-        await client.JoinQueue();
+        await client.JoinQueue(DeckGuid);
     }
 
     private async void OnClickCreateRoom()
     {
-        var preferred = roomCodeInput?.text;
-        await client.CreateRoom(preferred);
+        string preferred = roomCodeInput?.text;
+        await client.CreateRoom(DeckGuid, preferred);
     }
+
 
     private async void OnClickJoinRoom()
     {
-        var code = roomCodeInput?.text;
+        string code = roomCodeInput?.text;
         if (string.IsNullOrWhiteSpace(code)) { AppendLog("Entre un code."); return; }
-        await client.JoinRoom(code);
+
+        await client.JoinRoom(DeckGuid, code);
     }
+
 
     private async void OnClickLeaveQueue()
     {
@@ -106,7 +112,7 @@ public class GameUIController : MonoBehaviour
 
     private async void OnClickSend()
     {
-        var txt = messageInput?.text;
+        string txt = messageInput?.text;
         if (string.IsNullOrWhiteSpace(txt)) return;
         await client.SendMessageToPeer(txt);
         if (messageInput) messageInput.text = "";
