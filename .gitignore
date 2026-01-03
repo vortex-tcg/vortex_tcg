@@ -50,7 +50,7 @@
 # Visual Studio / Rider
 .vscode/
 .idea/
-*.sln
+*/.sln
 *.user
 *.unityproj
 *.pidb
@@ -154,3 +154,6 @@ desktop.ini
 com.*
 upm-xr*
 .scannerwork/
+
+# Ignore test file for back game
+/server/apps/game/wwwroot/lobby.html

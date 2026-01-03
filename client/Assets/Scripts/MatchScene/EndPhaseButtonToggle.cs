@@ -1,44 +1,53 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using VortexTCG.Scripts.DTOs;
 
 public class EndPhaseButtonHandler : MonoBehaviour
 {
     private Button endPhaseButton;
-    private bool isPhase = true;
 
-    void OnEnable()
+    private void OnEnable()
     {
-        var root = GetComponent<UIDocument>().rootVisualElement;
+        UIDocument doc = GetComponent<UIDocument>();
+        if (doc == null) return;
+
+        VisualElement root = doc.rootVisualElement;
         endPhaseButton = root.Q<Button>("EndPhaseButton");
 
-        if (endPhaseButton != null)
-        {
-            endPhaseButton.text = "END PHASE";
-            endPhaseButton.clicked += OnEndPhaseButtonClicked;
-        }
-        else
-        {
+        if (endPhaseButton == null)
             Debug.LogWarning("Bouton EndPhaseButton introuvable dans le UXML !");
-        }
-    }
-
-    void OnDisable()
-    {
-        if (endPhaseButton != null)
-            endPhaseButton.clicked -= OnEndPhaseButtonClicked;
-    }
-
-    private void OnEndPhaseButtonClicked()
-    {
-        if (isPhase)
-        {
-            endPhaseButton.text = "END TURN";
-        }
         else
-        {
-            endPhaseButton.text = "END PHASE";
-        }
+            RefreshLabel();
 
-        isPhase = !isPhase;
+        VortexTCG.Scripts.MatchScene.PhaseManager pm = VortexTCG.Scripts.MatchScene.PhaseManager.Instance;
+        if (pm != null)
+        {
+            pm.OnEnterPlacement += RefreshLabel;
+            pm.OnEnterAttack += RefreshLabel;
+            pm.OnEnterDefense += RefreshLabel;
+            pm.OnEnterEndTurn += RefreshLabel;
+        }
+    }
+
+    private void OnDisable()
+    {
+        VortexTCG.Scripts.MatchScene.PhaseManager pm = VortexTCG.Scripts.MatchScene.PhaseManager.Instance;
+        if (pm != null)
+        {
+            pm.OnEnterPlacement -= RefreshLabel;
+            pm.OnEnterAttack -= RefreshLabel;
+            pm.OnEnterDefense -= RefreshLabel;
+            pm.OnEnterEndTurn -= RefreshLabel;
+        }
+    }
+
+    private void RefreshLabel()
+    {
+        if (endPhaseButton == null) return;
+
+        VortexTCG.Scripts.MatchScene.PhaseManager pm = VortexTCG.Scripts.MatchScene.PhaseManager.Instance;
+        if (pm == null) return;
+
+        endPhaseButton.text = (pm.CurrentPhase == GamePhase.END_TURN) ? "END TURN" : "END PHASE";
     }
 }

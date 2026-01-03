@@ -1,0 +1,99 @@
+:root {
+}
+
+.small-card {
+    border-width: 1px;
+    border-radius: 5px;
+    border-color: black;
+    height: 100px;
+    width: 80px;
+    padding: 3px;
+}
+
+.button {
+    font-size: 10px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    -unity-font-style: bold;
+    -unity-text-align: upper-center;
+    -unity-font-definition: url("project://database/Assets/Fonts/Rubik/static/Rubik-Regular.ttf?fileID=12800000&guid=184e8b0f4c9ba8e4586adc3dea683c32&type=3#Rubik-Regular");
+}
+
+.button.active {
+    font-size: 10px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    -unity-font-style: bold;
+    -unity-text-align: upper-center;
+    -unity-font-definition: url("project://database/Assets/Fonts/Rubik/static/Rubik-SemiBold.ttf?fileID=12800000&guid=5ad93642aed24734095b5155f2a2e16b&type=3#Rubik-SemiBold");
+}
+
+.bordered {
+    max-width: none;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-left-color: rgb(0, 0, 0);
+    border-right-color: rgb(0, 0, 0);
+    border-top-color: rgb(0, 0, 0);
+    border-bottom-color: rgb(0, 0, 0);
+    margin-right: 5px;
+    max-height: none;
+    height: 90px;
+}
+
+.card-preview {
+    display: none;
+}
+
+.engaged {
+    border-width: 2px;
+    border-color: rgb(255, 20, 20);
+}
+
+.defense {
+    border-width: 2px;
+    border-color: rgba(12, 170, 226, 0.8);
+}
+
+.defense-line {
+}
+
+.attack-order {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 50px;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.36);
+    padding: 4px 6px;
+    border-radius: 50%;
+    bottom: 0;
+    left: 0;
+    justify-content: center;
+    border-top-left-radius: 0%;
+    border-top-right-radius: 0%;
+    border-bottom-right-radius: 0%;
+    border-bottom-left-radius: 0%;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/BPimperial.otf?fileID=12800000&guid=c42f4da103c4b0848b0eec438ab88f19&type=3#BPimperial");
+    -unity-text-align: middle-center;
+    display: none;
+}
+
+.P1Slot {
+}
+
+.P2Slot {
+}
+
+.small-card {
+}

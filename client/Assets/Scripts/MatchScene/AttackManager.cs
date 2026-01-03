@@ -1,154 +1,294 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
-using System.Linq;
+using VortexTCG.Scripts.DTOs;
 
-public class AttackManager : MonoBehaviour
+namespace VortexTCG.Scripts.MatchScene
 {
-    [Header("UI Toolkit")]
-    [SerializeField] private UIDocument boardDocument;
-
-    private VisualElement p1BoardRoot;
-    private readonly List<VisualElement> selectedCards = new List<VisualElement>();
-
-    private void Start()
+    public class AttackManager : MonoBehaviour
     {
-        if (boardDocument == null)
-            boardDocument = GetComponent<UIDocument>();
+        public static AttackManager Instance { get; private set; }
 
-        VisualElement root = boardDocument.rootVisualElement;
-        p1BoardRoot = root.Q<VisualElement>("P1BoardCards");
+        [Header("Player 1 Cards on Board")]
+        [SerializeField] private List<CardSlot> P1BoardSlots = new List<CardSlot>();
 
-        RegisterAllExistingCards();
+        private readonly Dictionary<int, Card> boardCardsById = new Dictionary<int, Card>();
+        private readonly List<Card> selectedCards = new List<Card>();
 
-        PhaseManager.Instance.OnEnterAttack += OnEnterAttackPhase;
-        PhaseManager.Instance.OnEnterStandBy += OnEndDefensePhase;
-
-        Debug.Log("AttackManager subscribed to phase events");
-    }
-
-    private void OnDestroy()
-    {
-        if (PhaseManager.Instance != null)
+        private void Awake()
         {
-            PhaseManager.Instance.OnEnterAttack -= OnEnterAttackPhase;
-            PhaseManager.Instance.OnEnterStandBy -= OnEndDefensePhase;
+            Instance = this;
         }
-    }
 
-    private void OnEnterAttackPhase()
-    {
-        ClearSelections();
-    }
-
-    private void OnEndDefensePhase()
-    {
-        ClearSelections();
-    }
-
-    private void RegisterAllExistingCards()
-    {
-        List<VisualElement> allSlots = p1BoardRoot.Query<VisualElement>(className: "P1Slot").ToList();
-        foreach (VisualElement slot in allSlots)
+        private void Start()
         {
-            slot.RegisterCallback<ClickEvent>(ClickEvent =>
+            if (PhaseManager.Instance != null)
             {
-                VisualElement card = slot.Q<VisualElement>(className: "small-card");
-                if (card != null)
-                    ToggleCard(card);
-            });
+                PhaseManager.Instance.OnEnterAttack += OnEnterAttackPhase;
+                PhaseManager.Instance.OnEnterDefense += OnEnterDefensePhase;
+                PhaseManager.Instance.OnEnterStandBy += OnEndDefensePhase;
+            }
+            if (SignalRClient.Instance != null)
+                SignalRClient.Instance.OnAttackEngage += ApplyAttackStateFromServer;
+
+            RegisterExistingCardsFromSlots();
         }
-    }
 
-    public void RegisterCard(VisualElement card)
-    {
-        if (!card.ClassListContains("small-card"))
-            return;
-        if (card.userData is bool alreadyRegistered && alreadyRegistered)
-            return;
-
-        card.userData = true;
-
-        card.RegisterCallback<ClickEvent>(ClickEvent =>
+        private void OnDestroy()
         {
-            if (PhaseManager.Instance.CurrentPhase != GamePhase.Attack)
-                return;
+            if (PhaseManager.Instance != null)
+            {
+                PhaseManager.Instance.OnEnterAttack -= OnEnterAttackPhase;
+                PhaseManager.Instance.OnEnterDefense -= OnEnterDefensePhase;
+                PhaseManager.Instance.OnEnterStandBy -= OnEndDefensePhase;
+            }
 
-            if (card.parent == null || card.parent != p1BoardRoot && !p1BoardRoot.Contains(card))
-                return;
+            if (SignalRClient.Instance != null)
+                SignalRClient.Instance.OnAttackEngage -= ApplyAttackStateFromServer;
+        }
 
+        private void RegisterExistingCardsFromSlots()
+        {
+            if (P1BoardSlots == null) return;
+
+            for (int i = 0; i < P1BoardSlots.Count; i++)
+            {
+                CardSlot slot = P1BoardSlots[i];
+                if (slot == null) continue;
+                if (slot.CurrentCard == null) continue;
+
+                RegisterCard(slot.CurrentCard);
+            }
+        }
+
+        private void OnEnterAttackPhase() => ClearSelections();
+        private void OnEnterDefensePhase() { /* optionnel */ }
+        private void OnEndDefensePhase() => ClearSelections();
+
+        public void RegisterCard(Card card)
+        {
+            if (card == null) return;
+
+            if (!int.TryParse(card.cardId, out int id))
+            {
+                Debug.LogError($"[AttackManager] RegisterCard: cardId invalide '{card.cardId}'");
+                return;
+            }
+
+            boardCardsById[id] = card;
+            Collider col = card.GetComponent<Collider>();
+            if (col == null)
+            {
+                BoxCollider bc = card.gameObject.AddComponent<BoxCollider>();
+                bc.size = Vector3.one;
+            }
+        }
+
+        public bool IsP1BoardSlot(CardSlot slot)
+            => slot != null && P1BoardSlots != null && P1BoardSlots.Contains(slot);
+
+        public bool IsCardOnP1Board(Card card)
+        {
+            if (card == null) return false;
+            CardSlot slot = card.GetComponentInParent<CardSlot>();
+            return IsP1BoardSlot(slot);
+        }
+
+        public async void HandleCardClicked(Card card)
+        {
+            if (card == null)
+            {
+                Debug.LogWarning("[AttackManager] HandleCardClicked: card is NULL");
+                return;
+            }
+
+            if (PhaseManager.Instance == null)
+            {
+                Debug.LogWarning("[AttackManager] HandleCardClicked: PhaseManager.Instance is NULL");
+                return;
+            }
+
+            Debug.Log($"[AttackManager] Click card name='{card.name}' cardId='{card.cardId}' " +
+                      $"phase={PhaseManager.Instance.CurrentPhase} onP1Board={IsCardOnP1Board(card)}");
+
+            if (PhaseManager.Instance.CurrentPhase != GamePhase.ATTACK)
+            {
+                Debug.LogWarning("[AttackManager] Not in ATTACK phase -> ignore click");
+                return;
+            }
+
+            if (!IsCardOnP1Board(card))
+            {
+                Debug.LogWarning("[AttackManager] Card is NOT on P1 board -> ignore click");
+                return;
+            }
+
+            if (!int.TryParse(card.cardId, out int cardIdInt))
+            {
+                Debug.LogError($"[AttackManager] card.cardId not int! value='{card.cardId}'");
+                return;
+            }
+
+            SignalRClient client = SignalRClient.Instance;
+            if (client == null)
+            {
+                Debug.LogError("[AttackManager] SignalRClient.Instance is NULL");
+                return;
+            }
+
+            Debug.Log($"[AttackManager] -> calling Hub HandleAttackPos(cardId={cardIdInt})");
             ToggleCard(card);
-        });
-    }
 
-    private void ToggleCard(VisualElement card)
-    {
-        if (card == null || card.parent == null || card.parent.childCount == 0)
-            return;
-
-        if (selectedCards.Contains(card))
-            DeselectCard(card);
-        else
-            SelectCard(card);
-
-        UpdateAttackOrderLabels();
-    }
-
-    private void SelectCard(VisualElement card)
-    {
-        selectedCards.Add(card);
-        if (!card.ClassListContains("engaged"))
-            card.AddToClassList("engaged");
-
-        Label orderLabel = card.Q<Label>("AttackOrder");
-        if (orderLabel != null)
-            orderLabel.style.display = DisplayStyle.Flex;
-    }
-
-    private void DeselectCard(VisualElement card)
-    {
-        selectedCards.Remove(card);
-        if (card.ClassListContains("engaged"))
-            card.RemoveFromClassList("engaged");
-
-        Label orderLabel = card.Q<Label>("AttackOrder");
-        if (orderLabel != null)
-        {
-            orderLabel.text = "";
-            orderLabel.style.display = DisplayStyle.None;
-        }
-    }
-
-    private void UpdateAttackOrderLabels()
-    {
-        for (int i = 0; i < selectedCards.Count; i++)
-        {
-            VisualElement card = selectedCards[i];
-            Label orderLabel = card.Q<Label>("AttackOrder");
-            if (orderLabel != null)
+            try
             {
-                orderLabel.text = (i + 1).ToString();
-                orderLabel.style.display = DisplayStyle.Flex;
+                await client.HandleAttackPos(cardIdInt);
+                Debug.Log($"[AttackManager] Hub call HandleAttackPos DONE cardId={cardIdInt}");
             }
-        }
-    }
-
-    private void ClearSelections()
-    {
-        foreach (VisualElement card in selectedCards)
-        {
-            if (card.ClassListContains("engaged"))
-                card.RemoveFromClassList("engaged");
-
-            Label orderLabel = card.Q<Label>("AttackOrder");
-            if (orderLabel != null)
+            catch (Exception ex)
             {
-                orderLabel.text = "";
-                orderLabel.style.display = DisplayStyle.None;
+                // rollback
+                ToggleCard(card);
+                Debug.LogError($"[AttackManager] Hub call HandleAttackPos FAILED cardId={cardIdInt} ex={ex}");
             }
         }
 
-        selectedCards.Clear();
-    }
+        private void ToggleCard(Card card)
+        {
+            if (selectedCards.Contains(card))
+                DeselectCard(card);
+            else
+                SelectCard(card);
 
+            UpdateAttackOrderLabels();
+        }
+
+        private void SelectCard(Card card)
+        {
+            selectedCards.Add(card);
+            card.SetSelected(true);
+        }
+
+        private void DeselectCard(Card card)
+        {
+            selectedCards.Remove(card);
+            card.SetSelected(false);
+            card.ClearAttackOrder();
+        }
+
+        private void UpdateAttackOrderLabels()
+        {
+            for (int i = 0; i < selectedCards.Count; i++)
+            {
+                Card c = selectedCards[i];
+                if (c == null) continue;
+                c.ShowAttackOrder(i + 1);
+            }
+        }
+
+        public void ClearSelections()
+        {
+            for (int i = 0; i < selectedCards.Count; i++)
+            {
+                Card c = selectedCards[i];
+                if (c == null) continue;
+                c.SetSelected(false);
+                c.ClearAttackOrder();
+            }
+            selectedCards.Clear();
+        }
+        public void ApplyAttackStateFromServer(List<int> attackIds)
+        {
+            ClearSelections();
+
+            if (attackIds == null)
+            {
+                Debug.Log("[AttackManager] HandleAttackEngage reçu: NULL");
+                return;
+            }
+
+            Debug.Log($"[AttackManager] HandleAttackEngage reçu: count={attackIds.Count}");
+
+            for (int i = 0; i < attackIds.Count; i++)
+            {
+                int cardId = attackIds[i];
+                Card card = FindOrRegisterBoardCardById(cardId);
+                if (card == null) continue;
+
+                selectedCards.Add(card);
+                card.SetSelected(true);
+                card.ShowAttackOrder(i + 1);
+            }
+        }
+
+        private Card FindOrRegisterBoardCardById(int id)
+        {
+            if (boardCardsById.TryGetValue(id, out Card found) && found != null)
+                return found;
+
+            if (P1BoardSlots != null)
+            {
+                for (int i = 0; i < P1BoardSlots.Count; i++)
+                {
+                    CardSlot slot = P1BoardSlots[i];
+                    if (slot == null) continue;
+                    if (slot.CurrentCard == null) continue;
+
+                    if (int.TryParse(slot.CurrentCard.cardId, out int cid) && cid == id)
+                    {
+                        RegisterCard(slot.CurrentCard);
+                        return slot.CurrentCard;
+                    }
+                }
+            }
+
+            return null;
+        }
+        public void ApplyAttackStateFromServer(List<int> attackIds)
+        {
+            ClearSelections();
+
+            if (attackIds == null)
+            {
+                Debug.Log("[AttackManager] HandleAttackEngage reçu: NULL");
+                return;
+            }
+
+            Debug.Log($"[AttackManager] HandleAttackEngage reçu: count={attackIds.Count}");
+
+            for (int i = 0; i < attackIds.Count; i++)
+            {
+                int cardId = attackIds[i];
+                Card card = FindOrRegisterBoardCardById(cardId);
+                if (card == null) continue;
+
+                selectedCards.Add(card);
+                card.SetSelected(true);
+                card.ShowAttackOrder(i + 1);
+            }
+        }
+
+        private Card FindOrRegisterBoardCardById(int id)
+        {
+            if (boardCardsById.TryGetValue(id, out Card found) && found != null)
+                return found;
+
+            if (P1BoardSlots != null)
+            {
+                for (int i = 0; i < P1BoardSlots.Count; i++)
+                {
+                    CardSlot slot = P1BoardSlots[i];
+                    if (slot == null) continue;
+                    if (slot.CurrentCard == null) continue;
+
+                    if (int.TryParse(slot.CurrentCard.cardId, out int cid) && cid == id)
+                    {
+                        RegisterCard(slot.CurrentCard);
+                        return slot.CurrentCard;
+                    }
+                }
+            }
+
+            return null;
+        }
+    }
 }
