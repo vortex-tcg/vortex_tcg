@@ -149,7 +149,7 @@ jobs:
           port: 22
           script: |
             cd /var/www/vortex_tcg/server
-            docker-compose -f docker-compose.prod.yaml up -d --remove-orphans
+            docker compose -f docker-compose.prod.yaml up -d --remove-orphans
       - name: Ensure SonarQube is running with persistence
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
