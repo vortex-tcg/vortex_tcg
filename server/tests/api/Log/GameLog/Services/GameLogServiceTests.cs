@@ -7,7 +7,7 @@ using VortexTCG.DataAccess;
 using GameLogModel = VortexTCG.DataAccess.Models.Gamelog;
 using Xunit;
 
-namespace Tests.Logs.GameLog.Services
+namespace VortexTCG.Tests.Api.Log.GameLog.Services
 {
     public class GameLogServiceTests
     {

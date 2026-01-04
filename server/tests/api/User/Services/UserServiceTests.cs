@@ -8,7 +8,7 @@ using VortexTCG.DataAccess.Models;
 using UserModel = VortexTCG.DataAccess.Models.User;
 using Xunit;
 
-namespace Tests.User.Services
+namespace VortexTCG.Tests.Api.User.Services
 {
     public class UserServiceTests
     {

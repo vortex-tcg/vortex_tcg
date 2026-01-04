@@ -11,7 +11,7 @@ using VortexTCG.DataAccess;
 using VortexTCG.Common.DTO;
 using Microsoft.EntityFrameworkCore;
 
-namespace Tests.Collection
+namespace VortexTCG.Tests.Api.Collection.Controllers
 {
     public class CollectionControllerTest
     {

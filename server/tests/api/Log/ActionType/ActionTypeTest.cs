@@ -13,7 +13,7 @@ using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.DTO;
 using Microsoft.EntityFrameworkCore;
 
-namespace Tests.Logs.ActionType
+namespace VortexTCG.Tests.Api.Log.ActionType
 {
     public class ActionTypeTest
     {

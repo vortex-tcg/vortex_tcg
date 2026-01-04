@@ -9,7 +9,7 @@ using ActionTypeModel = VortexTCG.DataAccess.Models.ActionType;
 using GamelogModel = VortexTCG.DataAccess.Models.Gamelog;
 using Xunit;
 
-namespace Tests.Logs.ActionType.Services
+namespace VortexTCG.Tests.Api.Log.ActionType.Services
 {
     public class ActionTypeServiceTests
     {

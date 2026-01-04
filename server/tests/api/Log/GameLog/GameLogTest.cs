@@ -12,7 +12,7 @@ using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.DTO;
 using Microsoft.EntityFrameworkCore;
 
-namespace Tests.Logs.GameLog
+namespace VortexTCG.Tests.Api.Log.GameLog
 {
 	public class GameLogTest
 	{

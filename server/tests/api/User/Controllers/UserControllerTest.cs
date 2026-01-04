@@ -14,7 +14,7 @@ using UserModel = VortexTCG.DataAccess.Models.User;
 using VortexTCG.Common.DTO;
 using Microsoft.EntityFrameworkCore;
 
-namespace Tests.User
+namespace VortexTCG.Tests.Api.User.Controllers
 {
 	public class UserControllerTest
 	{

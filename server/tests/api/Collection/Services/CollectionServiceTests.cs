@@ -7,7 +7,7 @@ using VortexTCG.DataAccess;
 using CollectionModel = VortexTCG.DataAccess.Models.Collection;
 using Xunit;
 
-namespace Tests.Collection.Services
+namespace VortexTCG.Tests.Api.Collection.Services
 {
     public class CollectionServiceTests
     {

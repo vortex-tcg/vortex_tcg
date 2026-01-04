@@ -11,7 +11,7 @@ using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using Xunit;
 
-namespace Tests
+namespace VortexTCG.Tests.Api.Effect.Controllers
 {
     public class EffectTypeControllerTests
     {

@@ -7,7 +7,7 @@ using VortexTCG.DataAccess;
 using RankModel = VortexTCG.DataAccess.Models.Rank;
 using Xunit;
 
-namespace Tests.Rank.Services
+namespace VortexTCG.Tests.Api.Rank.Services
 {
     public class RankServiceTests
     {

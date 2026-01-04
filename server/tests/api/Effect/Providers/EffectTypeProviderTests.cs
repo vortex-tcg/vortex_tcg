@@ -6,7 +6,7 @@ using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.Services;
 using Xunit;
 
-namespace Tests
+namespace VortexTCG.Tests.Api.Effect.Providers
 {
     public class EffectTypeProviderTests
     {

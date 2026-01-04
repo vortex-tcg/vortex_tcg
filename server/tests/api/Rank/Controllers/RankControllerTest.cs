@@ -11,7 +11,7 @@ using VortexTCG.DataAccess;
 using VortexTCG.Common.DTO;
 using Microsoft.EntityFrameworkCore;
 
-namespace Tests.Rank
+namespace VortexTCG.Tests.Api.Rank.Controllers
 {
     public class RankControllerTest
     {

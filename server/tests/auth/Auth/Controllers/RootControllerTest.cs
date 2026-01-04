@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using VortexTCG.Auth.Controllers;
 using Xunit;
 
-namespace Tests
+namespace VortexTCG.Tests.Auth.Controllers
 {
     public class RootControllerTest
     {
