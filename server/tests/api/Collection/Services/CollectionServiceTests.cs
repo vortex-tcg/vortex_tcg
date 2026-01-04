@@ -13,7 +13,7 @@ namespace Tests.Collection.Services
     {
         private static VortexDbContext CreateDb()
         {
-            var options = new DbContextOptionsBuilder<VortexDbContext>()
+            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString())
                 .Options;
             return new VortexDbContext(options);
@@ -21,16 +21,16 @@ namespace Tests.Collection.Services
 
         private static CollectionService CreateService(VortexDbContext db)
         {
-            var provider = new CollectionProvider(db);
+            CollectionProvider provider = new CollectionProvider(db);
             return new CollectionService(provider);
         }
 
         [Fact]
         public async Task Create_Returns400_WhenUserIdMissing()
         {
-            using var db = CreateDb();
-            var service = CreateService(db);
-            var input = new CollectionCreateDto { UserId = Guid.Empty };
+            using VortexDbContext db = CreateDb();
+            CollectionService service = CreateService(db);
+            CollectionCreateDto input = new CollectionCreateDto { UserId = Guid.Empty };
 
             ResultDTO<CollectionDto> result = await service.CreateAsync(input);
 
@@ -41,11 +41,11 @@ namespace Tests.Collection.Services
         [Fact]
         public async Task Create_Succeeds()
         {
-            using var db = CreateDb();
-            var service = CreateService(db);
-            var input = new CollectionCreateDto { UserId = Guid.NewGuid() };
+            using VortexDbContext db = CreateDb();
+            CollectionService service = CreateService(db);
+            CollectionCreateDto input = new CollectionCreateDto { UserId = Guid.NewGuid() };
 
-            var result = await service.CreateAsync(input);
+            ResultDTO<CollectionDto> result = await service.CreateAsync(input);
 
             Assert.True(result.success);
             Assert.Equal(201, result.statusCode);
@@ -55,10 +55,10 @@ namespace Tests.Collection.Services
         [Fact]
         public async Task GetById_ReturnsNull_WhenMissing()
         {
-            using var db = CreateDb();
-            var service = CreateService(db);
+            using VortexDbContext db = CreateDb();
+            CollectionService service = CreateService(db);
 
-            var result = await service.GetByIdAsync(Guid.NewGuid());
+            ResultDTO<CollectionDto> result = await service.GetByIdAsync(Guid.NewGuid());
 
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
@@ -67,13 +67,13 @@ namespace Tests.Collection.Services
         [Fact]
         public async Task GetById_ReturnsData()
         {
-            using var db = CreateDb();
-            var entity = new CollectionModel { Id = Guid.NewGuid() };
+            using VortexDbContext db = CreateDb();
+            CollectionModel entity = new CollectionModel { Id = Guid.NewGuid() };
             db.Collections.Add(entity);
             await db.SaveChangesAsync();
-            var service = CreateService(db);
+            CollectionService service = CreateService(db);
 
-            var dto = await service.GetByIdAsync(entity.Id);
+            ResultDTO<CollectionDto> dto = await service.GetByIdAsync(entity.Id);
 
             Assert.True(dto.success);
             Assert.Equal(entity.Id, dto.data!.Id);
@@ -82,11 +82,11 @@ namespace Tests.Collection.Services
         [Fact]
         public async Task Update_Returns404_WhenMissing()
         {
-            using var db = CreateDb();
-            var service = CreateService(db);
-            var input = new CollectionCreateDto { UserId = Guid.NewGuid() };
+            using VortexDbContext db = CreateDb();
+            CollectionService service = CreateService(db);
+            CollectionCreateDto input = new CollectionCreateDto { UserId = Guid.NewGuid() };
 
-            var result = await service.UpdateAsync(Guid.NewGuid(), input);
+            ResultDTO<CollectionDto> result = await service.UpdateAsync(Guid.NewGuid(), input);
 
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
@@ -95,14 +95,14 @@ namespace Tests.Collection.Services
         [Fact]
         public async Task Update_Succeeds()
         {
-            using var db = CreateDb();
-            var entity = new CollectionModel { Id = Guid.NewGuid() };
+            using VortexDbContext db = CreateDb();
+            CollectionModel entity = new CollectionModel { Id = Guid.NewGuid() };
             db.Collections.Add(entity);
             await db.SaveChangesAsync();
-            var service = CreateService(db);
-            var input = new CollectionCreateDto { UserId = Guid.NewGuid() };
+            CollectionService service = CreateService(db);
+            CollectionCreateDto input = new CollectionCreateDto { UserId = Guid.NewGuid() };
 
-            var result = await service.UpdateAsync(entity.Id, input);
+            ResultDTO<CollectionDto> result = await service.UpdateAsync(entity.Id, input);
 
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
@@ -112,10 +112,10 @@ namespace Tests.Collection.Services
         [Fact]
         public async Task Delete_Returns404_WhenMissing()
         {
-            using var db = CreateDb();
-            var service = CreateService(db);
+            using VortexDbContext db = CreateDb();
+            CollectionService service = CreateService(db);
 
-            var result = await service.DeleteAsync(Guid.NewGuid());
+            ResultDTO<bool> result = await service.DeleteAsync(Guid.NewGuid());
 
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);

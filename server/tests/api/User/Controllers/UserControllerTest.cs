@@ -51,8 +51,8 @@ namespace Tests.User
 				RankId = null
 			};
 			IActionResult result = await controller.Add(dto);
-			var created = Assert.IsType<ObjectResult>(result);
-			var payload = Assert.IsType<ResultDTO<UserDTO>>(created.Value);
+			ObjectResult created = Assert.IsType<ObjectResult>(result);
+			ResultDTO<UserDTO> payload = Assert.IsType<ResultDTO<UserDTO>>(created.Value);
 			Assert.True(payload.success);
 			Assert.Equal(201, payload.statusCode);
 			Assert.Equal("johndoe", payload.data.Username);
@@ -77,8 +77,8 @@ namespace Tests.User
 			};
 			await controller.Add(dto);
 			IActionResult result = await controller.Add(dto);
-			var conflict = Assert.IsType<ObjectResult>(result);
-			var payload = Assert.IsType<ResultDTO<UserDTO>>(conflict.Value);
+			ObjectResult conflict = Assert.IsType<ObjectResult>(result);
+			ResultDTO<UserDTO> payload = Assert.IsType<ResultDTO<UserDTO>>(conflict.Value);
 			Assert.False(payload.success);
 			Assert.Equal(409, payload.statusCode);
 		}
@@ -101,11 +101,11 @@ namespace Tests.User
 				RankId = null
 			};
 			IActionResult createResult = await controller.Add(dto);
-			var created = Assert.IsType<ObjectResult>(createResult);
-			var payloadCreate = Assert.IsType<ResultDTO<UserDTO>>(created.Value);
+			ObjectResult created = Assert.IsType<ObjectResult>(createResult);
+			ResultDTO<UserDTO> payloadCreate = Assert.IsType<ResultDTO<UserDTO>>(created.Value);
 			IActionResult getResult = await controller.GetById(payloadCreate.data.Id);
-			var ok = Assert.IsType<ObjectResult>(getResult);
-			var payload = Assert.IsType<ResultDTO<UserDTO>>(ok.Value);
+			ObjectResult ok = Assert.IsType<ObjectResult>(getResult);
+			ResultDTO<UserDTO> payload = Assert.IsType<ResultDTO<UserDTO>>(ok.Value);
 			Assert.Equal("Alice", payload.data.FirstName);
 			Assert.Equal("alicew", payload.data.Username);
 		}
@@ -128,8 +128,8 @@ namespace Tests.User
 				RankId = null
 			};
 			IActionResult createResult = await controller.Add(dto);
-			var created = Assert.IsType<ObjectResult>(createResult);
-			var payloadCreate = Assert.IsType<ResultDTO<UserDTO>>(created.Value);
+			ObjectResult created = Assert.IsType<ObjectResult>(createResult);
+			ResultDTO<UserDTO> payloadCreate = Assert.IsType<ResultDTO<UserDTO>>(created.Value);
 			UserCreateDTO updateDto = new UserCreateDTO {
 				FirstName = "Robert",
 				LastName = "Builder",
@@ -143,8 +143,8 @@ namespace Tests.User
 				RankId = null
 			};
 			IActionResult updateResult = await controller.Update(payloadCreate.data.Id, updateDto);
-			var ok = Assert.IsType<ObjectResult>(updateResult);
-			var payload = Assert.IsType<ResultDTO<UserDTO>>(ok.Value);
+			ObjectResult ok = Assert.IsType<ObjectResult>(updateResult);
+			ResultDTO<UserDTO> payload = Assert.IsType<ResultDTO<UserDTO>>(ok.Value);
 			Assert.True(payload.success);
 			Assert.Equal("Robert", payload.data.FirstName);
 			Assert.Equal("robertbuilder", payload.data.Username);
@@ -168,11 +168,11 @@ namespace Tests.User
 				RankId = null
 			};
 			IActionResult createResult = await controller.Add(dto);
-			var created = Assert.IsType<ObjectResult>(createResult);
-			var payloadCreate = Assert.IsType<ResultDTO<UserDTO>>(created.Value);
+			ObjectResult created = Assert.IsType<ObjectResult>(createResult);
+			ResultDTO<UserDTO> payloadCreate = Assert.IsType<ResultDTO<UserDTO>>(created.Value);
 			IActionResult deleteResult = await controller.Delete(payloadCreate.data.Id);
-			var deleted = Assert.IsType<ObjectResult>(deleteResult);
-			var payload = Assert.IsType<ResultDTO<object>>(deleted.Value);
+			ObjectResult deleted = Assert.IsType<ObjectResult>(deleteResult);
+			ResultDTO<object> payload = Assert.IsType<ResultDTO<object>>(deleted.Value);
 			Assert.False(payload.success == false && payload.statusCode == 404);
 			IActionResult getResult = await controller.GetById(payloadCreate.data.Id);
 			if (getResult is NotFoundResult)
@@ -181,8 +181,8 @@ namespace Tests.User
 			}
 			else
 			{
-				var ok = Assert.IsType<ObjectResult>(getResult);
-				var payloadGet = Assert.IsType<ResultDTO<UserDTO>>(ok.Value);
+				ObjectResult ok = Assert.IsType<ObjectResult>(getResult);
+				ResultDTO<UserDTO> payloadGet = Assert.IsType<ResultDTO<UserDTO>>(ok.Value);
 				Assert.True(payloadGet == null || payloadGet.data == null);
 			}
 		}

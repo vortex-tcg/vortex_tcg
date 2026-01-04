@@ -8,10 +8,10 @@ namespace VortexTCG.Tests.Api.Champion.DTOs
         [Fact]
         public void DeckChampionDto_CanSetAndGetAllProperties()
         {
-            var championId = Guid.NewGuid();
-            var factionId = Guid.NewGuid();
+            Guid championId = Guid.NewGuid();
+            Guid factionId = Guid.NewGuid();
             
-            var dto = new DeckChampionDto
+            DeckChampionDto dto = new DeckChampionDto
             {
                 ChampionID = championId,
                 Name = "Dragon",
@@ -32,14 +32,14 @@ namespace VortexTCG.Tests.Api.Champion.DTOs
         [Fact]
         public void DeckChampionDto_MultipleInstances_AreIndependent()
         {
-            var champ1 = new DeckChampionDto
+            DeckChampionDto champ1 = new DeckChampionDto
             {
                 ChampionID = Guid.NewGuid(),
                 Name = "Champion1",
                 HP = 100
             };
 
-            var champ2 = new DeckChampionDto
+            DeckChampionDto champ2 = new DeckChampionDto
             {
                 ChampionID = Guid.NewGuid(),
                 Name = "Champion2",

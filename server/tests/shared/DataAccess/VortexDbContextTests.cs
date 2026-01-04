@@ -1,5 +1,6 @@
 using System;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using Xunit;
@@ -37,7 +38,7 @@ namespace VortexTCG.Tests.DataAccess
             db.Users.Add(user);
             db.SaveChanges();
 
-            var entry = db.Entry(user);
+            EntityEntry<User> entry = db.Entry(user);
             Assert.NotNull(entry.Property("CreatedAt").CurrentValue);
             Assert.Equal("System", entry.Property("CreatedBy").CurrentValue);
         }
@@ -66,7 +67,7 @@ namespace VortexTCG.Tests.DataAccess
             user.Username = "newbob";
             db.SaveChanges();
 
-            var entry = db.Entry(user);
+            EntityEntry<User> entry = db.Entry(user);
             Assert.NotNull(entry.Property("UpdatedAt").CurrentValue);
             Assert.Equal("System", entry.Property("UpdatedBy").CurrentValue);
         }

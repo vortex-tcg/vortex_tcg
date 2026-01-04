@@ -15,7 +15,7 @@ namespace VortexTCG.Tests.Api.Faction.Providers
     {
         private static VortexDbContext CreateDb()
         {
-            var options = new DbContextOptionsBuilder<VortexDbContext>()
+            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString())
                 .Options;
             return new VortexDbContext(options);
@@ -50,10 +50,10 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         [Fact]
         public async Task ValidateCardIds_EmptyList_IsValid()
         {
-            using var db = CreateDb();
-            var provider = new FactionProvider(db);
+            using VortexDbContext db = CreateDb();
+            FactionProvider provider = new FactionProvider(db);
 
-            var (isValid, invalid) = await provider.ValidateCardIds(new List<Guid>());
+            (bool isValid, List<Guid> invalid) = await provider.ValidateCardIds(new List<Guid>());
 
             Assert.True(isValid);
             Assert.Empty(invalid);
@@ -62,11 +62,11 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         [Fact]
         public async Task ValidateCardIds_InvalidIds_ReturnsFalse()
         {
-            using var db = CreateDb();
-            var provider = new FactionProvider(db);
-            var missingId = Guid.NewGuid();
+            using VortexDbContext db = CreateDb();
+            FactionProvider provider = new FactionProvider(db);
+            Guid missingId = Guid.NewGuid();
 
-            var (isValid, invalid) = await provider.ValidateCardIds(new List<Guid> { missingId });
+            (bool isValid, List<Guid> invalid) = await provider.ValidateCardIds(new List<Guid> { missingId });
 
             Assert.False(isValid);
             Assert.Contains(missingId, invalid);
@@ -75,13 +75,13 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         [Fact]
         public async Task ValidateCardIds_ValidIds_ReturnsTrue()
         {
-            using var db = CreateDb();
-            var card = CreateCard();
+            using VortexDbContext db = CreateDb();
+            CardModel card = CreateCard();
             db.Cards.Add(card);
             await db.SaveChangesAsync();
-            var provider = new FactionProvider(db);
+            FactionProvider provider = new FactionProvider(db);
 
-            var (isValid, invalid) = await provider.ValidateCardIds(new List<Guid> { card.Id });
+            (bool isValid, List<Guid> invalid) = await provider.ValidateCardIds(new List<Guid> { card.Id });
 
             Assert.True(isValid);
             Assert.Empty(invalid);
@@ -90,10 +90,10 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         [Fact]
         public async Task ValidateChampionId_Empty_ReturnsTrue()
         {
-            using var db = CreateDb();
-            var provider = new FactionProvider(db);
+            using VortexDbContext db = CreateDb();
+            FactionProvider provider = new FactionProvider(db);
 
-            var result = await provider.ValidateChampionId(Guid.Empty);
+            bool result = await provider.ValidateChampionId(Guid.Empty);
 
             Assert.True(result);
         }
@@ -101,10 +101,10 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         [Fact]
         public async Task ValidateChampionId_NotFound_ReturnsFalse()
         {
-            using var db = CreateDb();
-            var provider = new FactionProvider(db);
+            using VortexDbContext db = CreateDb();
+            FactionProvider provider = new FactionProvider(db);
 
-            var result = await provider.ValidateChampionId(Guid.NewGuid());
+            bool result = await provider.ValidateChampionId(Guid.NewGuid());
 
             Assert.False(result);
         }
@@ -112,10 +112,10 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         [Fact]
         public async Task CreateFaction_InvalidCardIds_ReturnsError()
         {
-            using var db = CreateDb();
-            var provider = new FactionProvider(db);
-            var missingId = Guid.NewGuid();
-            var dto = new CreateFactionDto
+            using VortexDbContext db = CreateDb();
+            FactionProvider provider = new FactionProvider(db);
+            Guid missingId = Guid.NewGuid();
+            CreateFactionDto dto = new CreateFactionDto
             {
                 Label = "New Faction",
                 Currency = "Gold",
@@ -123,7 +123,7 @@ namespace VortexTCG.Tests.Api.Faction.Providers
                 CardIds = new List<Guid> { missingId }
             };
 
-            var (success, result, error) = await provider.CreateFaction(dto);
+            (bool success, FactionDto? result, string error) = await provider.CreateFaction(dto);
 
             Assert.False(success);
             Assert.Null(result);
@@ -133,12 +133,12 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         [Fact]
         public async Task CreateFaction_WithCards_PersistsFactionAndLinks()
         {
-            using var db = CreateDb();
-            var card = CreateCard();
+            using VortexDbContext db = CreateDb();
+            CardModel card = CreateCard();
             db.Cards.Add(card);
             await db.SaveChangesAsync();
-            var provider = new FactionProvider(db);
-            var dto = new CreateFactionDto
+            FactionProvider provider = new FactionProvider(db);
+            CreateFactionDto dto = new CreateFactionDto
             {
                 Label = "New Faction",
                 Currency = "Gold",
@@ -146,7 +146,7 @@ namespace VortexTCG.Tests.Api.Faction.Providers
                 CardIds = new List<Guid> { card.Id }
             };
 
-            var (success, result, error) = await provider.CreateFaction(dto);
+            (bool success, FactionDto? result, string error) = await provider.CreateFaction(dto);
 
             Assert.True(success);
             Assert.NotNull(result);
@@ -159,17 +159,17 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         [Fact]
         public async Task UpdateFaction_InvalidCardIds_ReturnsError()
         {
-            using var db = CreateDb();
-            var faction = CreateFaction();
+            using VortexDbContext db = CreateDb();
+            FactionModel faction = CreateFaction();
             db.Factions.Add(faction);
             await db.SaveChangesAsync();
-            var provider = new FactionProvider(db);
-            var update = new UpdateFactionDto
+            FactionProvider provider = new FactionProvider(db);
+            UpdateFactionDto update = new UpdateFactionDto
             {
                 CardIds = new List<Guid> { Guid.NewGuid() }
             };
 
-            var (success, result, error) = await provider.UpdateFaction(faction.Id, update);
+            (bool success, FactionDto? result, string error) = await provider.UpdateFaction(faction.Id, update);
 
             Assert.False(success);
             Assert.Null(result);
@@ -179,10 +179,10 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         [Fact]
         public async Task UpdateFaction_UpdatesFieldsAndCards()
         {
-            using var db = CreateDb();
-            var faction = CreateFaction();
-            var oldCard = CreateCard();
-            var newCard = CreateCard();
+            using VortexDbContext db = CreateDb();
+            FactionModel faction = CreateFaction();
+            CardModel oldCard = CreateCard();
+            CardModel newCard = CreateCard();
             db.Factions.Add(faction);
             db.Cards.AddRange(oldCard, newCard);
             db.FactionCards.Add(new FactionCardModel
@@ -194,8 +194,8 @@ namespace VortexTCG.Tests.Api.Faction.Providers
                 CreatedBy = "test"
             });
             await db.SaveChangesAsync();
-            var provider = new FactionProvider(db);
-            var update = new UpdateFactionDto
+            FactionProvider provider = new FactionProvider(db);
+            UpdateFactionDto update = new UpdateFactionDto
             {
                 Label = "Updated",
                 Currency = "Silver",
@@ -203,7 +203,7 @@ namespace VortexTCG.Tests.Api.Faction.Providers
                 CardIds = new List<Guid> { newCard.Id }
             };
 
-            var (success, result, error) = await provider.UpdateFaction(faction.Id, update);
+            (bool success, FactionDto? result, string error) = await provider.UpdateFaction(faction.Id, update);
 
             Assert.True(success);
             Assert.NotNull(result);
@@ -218,10 +218,10 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         [Fact]
         public async Task DeleteFaction_NotFound_ReturnsFalse()
         {
-            using var db = CreateDb();
-            var provider = new FactionProvider(db);
+            using VortexDbContext db = CreateDb();
+            FactionProvider provider = new FactionProvider(db);
 
-            var result = await provider.DeleteFaction(Guid.NewGuid());
+            bool result = await provider.DeleteFaction(Guid.NewGuid());
 
             Assert.False(result);
         }
@@ -229,13 +229,13 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         [Fact]
         public async Task DeleteFaction_RemovesFaction()
         {
-            using var db = CreateDb();
-            var faction = CreateFaction();
+            using VortexDbContext db = CreateDb();
+            FactionModel faction = CreateFaction();
             db.Factions.Add(faction);
             await db.SaveChangesAsync();
-            var provider = new FactionProvider(db);
+            FactionProvider provider = new FactionProvider(db);
 
-            var result = await provider.DeleteFaction(faction.Id);
+            bool result = await provider.DeleteFaction(faction.Id);
 
             Assert.True(result);
             Assert.Empty(db.Factions);
@@ -244,11 +244,11 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         [Fact]
         public async Task FactionExists_ReturnsExpectedValue()
         {
-            using var db = CreateDb();
-            var faction = CreateFaction();
+            using VortexDbContext db = CreateDb();
+            FactionModel faction = CreateFaction();
             db.Factions.Add(faction);
             await db.SaveChangesAsync();
-            var provider = new FactionProvider(db);
+            FactionProvider provider = new FactionProvider(db);
 
             Assert.True(await provider.FactionExists(faction.Id));
             Assert.False(await provider.FactionExists(Guid.NewGuid()));
@@ -257,11 +257,11 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         [Fact]
         public async Task LabelExists_HonorsExclusion()
         {
-            using var db = CreateDb();
-            var faction = CreateFaction();
+            using VortexDbContext db = CreateDb();
+            FactionModel faction = CreateFaction();
             db.Factions.Add(faction);
             await db.SaveChangesAsync();
-            var provider = new FactionProvider(db);
+            FactionProvider provider = new FactionProvider(db);
 
             Assert.True(await provider.LabelExists(faction.Label));
             Assert.False(await provider.LabelExists(faction.Label, faction.Id));

@@ -17,7 +17,7 @@ namespace VortexTCG.Tests.Api.Effect
         [Fact]
         public void EffectDescriptionDto_PropertiesSetAndGet()
         {
-            var dto = new api.Effect.DTOs.EffectDescriptionDto
+            api.Effect.DTOs.EffectDescriptionDto dto = new api.Effect.DTOs.EffectDescriptionDto
             {
                 Id = System.Guid.NewGuid(),
                 Label = "Test",
@@ -35,7 +35,7 @@ namespace VortexTCG.Tests.Api.Effect
         [Fact]
         public void EffectTypeDto_PropertiesSetAndGet()
         {
-            var dto = new api.Effect.DTOs.EffectTypeDto
+            api.Effect.DTOs.EffectTypeDto dto = new api.Effect.DTOs.EffectTypeDto
             {
                 Id = System.Guid.NewGuid(),
                 Label = "EffectType"

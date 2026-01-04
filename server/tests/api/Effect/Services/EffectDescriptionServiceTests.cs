@@ -26,10 +26,10 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task List_Returns_Success_With_Mapped_Entities()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectDescriptionProvider(db);
-            var service = new EffectDescriptionService(provider);
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
 
-            var id = Guid.NewGuid();
+            Guid id = Guid.NewGuid();
             await provider.addAsync(new EffectDescription
             {
                 Id = id,
@@ -38,7 +38,7 @@ namespace VortexTCG.Tests.Api.Effect.Services
                 Parameter = "5"
             });
 
-            var result = await service.listAsync();
+            ResultDTO<List<EffectDescriptionDto>> result = await service.listAsync();
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
             Assert.NotNull(result.data);
@@ -51,10 +51,10 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Get_Returns_Success_When_Found()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectDescriptionProvider(db);
-            var service = new EffectDescriptionService(provider);
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
 
-            var id = Guid.NewGuid();
+            Guid id = Guid.NewGuid();
             await provider.addAsync(new EffectDescription
             {
                 Id = id,
@@ -63,7 +63,7 @@ namespace VortexTCG.Tests.Api.Effect.Services
                 Parameter = "10"
             });
 
-            var result = await service.getAsync(id);
+            ResultDTO<EffectDescriptionDto> result = await service.getAsync(id);
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
             Assert.NotNull(result.data);
@@ -74,10 +74,10 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Get_Returns_404_When_Not_Found()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectDescriptionProvider(db);
-            var service = new EffectDescriptionService(provider);
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
 
-            var result = await service.getAsync(Guid.NewGuid());
+            ResultDTO<EffectDescriptionDto> result = await service.getAsync(Guid.NewGuid());
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
         }
@@ -86,17 +86,17 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Create_Returns_Success_With_New_Entity()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectDescriptionProvider(db);
-            var service = new EffectDescriptionService(provider);
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
 
-            var dto = new EffectDescriptionInputDto
+            EffectDescriptionInputDto dto = new EffectDescriptionInputDto
             {
                 Label = "  Stun  ",
                 Description = "  Stun for 2 turns  ",
                 Parameter = "  2  "
             };
 
-            var result = await service.createAsync(dto);
+            ResultDTO<EffectDescriptionDto> result = await service.createAsync(dto);
             Assert.True(result.success);
             Assert.Equal(201, result.statusCode);
             Assert.NotNull(result.data);
@@ -109,17 +109,17 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Create_Returns_400_When_Label_Missing()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectDescriptionProvider(db);
-            var service = new EffectDescriptionService(provider);
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
 
-            var dto = new EffectDescriptionInputDto
+            EffectDescriptionInputDto dto = new EffectDescriptionInputDto
             {
                 Label = "   ",
                 Description = "Some description",
                 Parameter = null
             };
 
-            var result = await service.createAsync(dto);
+            ResultDTO<EffectDescriptionDto> result = await service.createAsync(dto);
             Assert.False(result.success);
             Assert.Equal(400, result.statusCode);
             Assert.Contains("Label", result.message!);
@@ -129,17 +129,17 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Create_Returns_400_When_Description_Missing()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectDescriptionProvider(db);
-            var service = new EffectDescriptionService(provider);
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
 
-            var dto = new EffectDescriptionInputDto
+            EffectDescriptionInputDto dto = new EffectDescriptionInputDto
             {
                 Label = "ValidLabel",
                 Description = "",
                 Parameter = null
             };
 
-            var result = await service.createAsync(dto);
+            ResultDTO<EffectDescriptionDto> result = await service.createAsync(dto);
             Assert.False(result.success);
             Assert.Equal(400, result.statusCode);
             Assert.Contains("Description", result.message!);
@@ -149,8 +149,8 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Create_Returns_409_When_Label_Already_Exists()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectDescriptionProvider(db);
-            var service = new EffectDescriptionService(provider);
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
 
             await provider.addAsync(new EffectDescription
             {
@@ -160,14 +160,14 @@ namespace VortexTCG.Tests.Api.Effect.Services
                 Parameter = null
             });
 
-            var dto = new EffectDescriptionInputDto
+            EffectDescriptionInputDto dto = new EffectDescriptionInputDto
             {
                 Label = "Duplicate",
                 Description = "Second",
                 Parameter = null
             };
 
-            var result = await service.createAsync(dto);
+            ResultDTO<EffectDescriptionDto> result = await service.createAsync(dto);
             Assert.False(result.success);
             Assert.Equal(409, result.statusCode);
             Assert.Contains("label existe déjà", result.message!);
@@ -177,11 +177,11 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Update_Returns_Success_With_Modified_Entity()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectDescriptionProvider(db);
-            var service = new EffectDescriptionService(provider);
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
 
-            var id = Guid.NewGuid();
-            var entity = new EffectDescription
+            Guid id = Guid.NewGuid();
+            EffectDescription entity = new EffectDescription
             {
                 Id = id,
                 Label = "Old",
@@ -194,14 +194,14 @@ namespace VortexTCG.Tests.Api.Effect.Services
             // Clear tracking to simulate fresh provider call
             db.ChangeTracker.Clear();
 
-            var dto = new EffectDescriptionInputDto
+            EffectDescriptionInputDto dto = new EffectDescriptionInputDto
             {
                 Label = "New",
                 Description = "New desc",
                 Parameter = "2"
             };
 
-            var result = await service.updateAsync(id, dto);
+            ResultDTO<EffectDescriptionDto> result = await service.updateAsync(id, dto);
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
             Assert.Equal("New", result.data!.Label);
@@ -213,17 +213,17 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Update_Returns_404_When_Not_Found()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectDescriptionProvider(db);
-            var service = new EffectDescriptionService(provider);
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
 
-            var dto = new EffectDescriptionInputDto
+            EffectDescriptionInputDto dto = new EffectDescriptionInputDto
             {
                 Label = "Test",
                 Description = "Test",
                 Parameter = null
             };
 
-            var result = await service.updateAsync(Guid.NewGuid(), dto);
+            ResultDTO<EffectDescriptionDto> result = await service.updateAsync(Guid.NewGuid(), dto);
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
         }
@@ -232,10 +232,10 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Update_Returns_400_When_Label_Invalid()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectDescriptionProvider(db);
-            var service = new EffectDescriptionService(provider);
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
 
-            var id = Guid.NewGuid();
+            Guid id = Guid.NewGuid();
             await provider.addAsync(new EffectDescription
             {
                 Id = id,
@@ -244,14 +244,14 @@ namespace VortexTCG.Tests.Api.Effect.Services
                 Parameter = null
             });
 
-            var dto = new EffectDescriptionInputDto
+            EffectDescriptionInputDto dto = new EffectDescriptionInputDto
             {
                 Label = "   ",
                 Description = "New desc",
                 Parameter = null
             };
 
-            var result = await service.updateAsync(id, dto);
+            ResultDTO<EffectDescriptionDto> result = await service.updateAsync(id, dto);
             Assert.False(result.success);
             Assert.Equal(400, result.statusCode);
         }
@@ -260,11 +260,11 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Update_Returns_409_When_New_Label_Already_Exists()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectDescriptionProvider(db);
-            var service = new EffectDescriptionService(provider);
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
 
-            var id1 = Guid.NewGuid();
-            var id2 = Guid.NewGuid();
+            Guid id1 = Guid.NewGuid();
+            Guid id2 = Guid.NewGuid();
 
             await provider.addAsync(new EffectDescription
             {
@@ -282,14 +282,14 @@ namespace VortexTCG.Tests.Api.Effect.Services
                 Parameter = null
             });
 
-            var dto = new EffectDescriptionInputDto
+            EffectDescriptionInputDto dto = new EffectDescriptionInputDto
             {
                 Label = "First",
                 Description = "Updated desc",
                 Parameter = null
             };
 
-            var result = await service.updateAsync(id2, dto);
+            ResultDTO<EffectDescriptionDto> result = await service.updateAsync(id2, dto);
             Assert.False(result.success);
             Assert.Equal(409, result.statusCode);
         }
@@ -298,11 +298,11 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Update_Allows_Same_Label_When_Updating_Same_Record()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectDescriptionProvider(db);
-            var service = new EffectDescriptionService(provider);
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
 
-            var id = Guid.NewGuid();
-            var entity = new EffectDescription
+            Guid id = Guid.NewGuid();
+            EffectDescription entity = new EffectDescription
             {
                 Id = id,
                 Label = "SameName",
@@ -315,14 +315,14 @@ namespace VortexTCG.Tests.Api.Effect.Services
             // Clear tracking to simulate fresh provider call
             db.ChangeTracker.Clear();
 
-            var dto = new EffectDescriptionInputDto
+            EffectDescriptionInputDto dto = new EffectDescriptionInputDto
             {
                 Label = "SameName",
                 Description = "Updated desc",
                 Parameter = "2"
             };
 
-            var result = await service.updateAsync(id, dto);
+            ResultDTO<EffectDescriptionDto> result = await service.updateAsync(id, dto);
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
         }
@@ -331,10 +331,10 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Delete_Returns_Success_When_Not_In_Use()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectDescriptionProvider(db);
-            var service = new EffectDescriptionService(provider);
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
 
-            var id = Guid.NewGuid();
+            Guid id = Guid.NewGuid();
             await provider.addAsync(new EffectDescription
             {
                 Id = id,
@@ -343,7 +343,7 @@ namespace VortexTCG.Tests.Api.Effect.Services
                 Parameter = null
             });
 
-            var result = await service.deleteAsync(id);
+            ResultDTO<bool> result = await service.deleteAsync(id);
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
             Assert.True(result.data);
@@ -353,10 +353,10 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Delete_Returns_404_When_Not_Found()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectDescriptionProvider(db);
-            var service = new EffectDescriptionService(provider);
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
 
-            var result = await service.deleteAsync(Guid.NewGuid());
+            ResultDTO<bool> result = await service.deleteAsync(Guid.NewGuid());
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
         }
@@ -365,10 +365,10 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Delete_Returns_409_When_In_Use()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectDescriptionProvider(db);
-            var service = new EffectDescriptionService(provider);
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
 
-            var effectDescId = Guid.NewGuid();
+            Guid effectDescId = Guid.NewGuid();
             await provider.addAsync(new EffectDescription
             {
                 Id = effectDescId,
@@ -394,7 +394,7 @@ namespace VortexTCG.Tests.Api.Effect.Services
             });
             await db.SaveChangesAsync();
 
-            var result = await service.deleteAsync(effectDescId);
+            ResultDTO<bool> result = await service.deleteAsync(effectDescId);
             Assert.False(result.success);
             Assert.Equal(409, result.statusCode);
             Assert.Contains("utilisée", result.message!);
