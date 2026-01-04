@@ -4,6 +4,7 @@ using VortexTCG.Api.Logs.ActionType.DTOs;
 using VortexTCG.Api.Logs.ActionType.Providers;
 using VortexTCG.Api.Logs.ActionType.Services;
 using VortexTCG.Common.DTO;
+using VortexTCG.Common.Services;
 using VortexTCG.DataAccess;
 using ActionTypeModel = VortexTCG.DataAccess.Models.ActionType;
 using GamelogModel = VortexTCG.DataAccess.Models.Gamelog;
@@ -13,13 +14,7 @@ namespace VortexTCG.Tests.Api.Log.ActionType.Services
 {
     public class ActionTypeServiceTests
     {
-        private static VortexDbContext CreateDb()
-        {
-            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
-            return new VortexDbContext(options);
-        }
+        private static VortexDbContext CreateDb() => VortexDbCoontextFactory.getInMemoryDbContext();
 
         private static ActionTypeService CreateService(VortexDbContext db)
         {

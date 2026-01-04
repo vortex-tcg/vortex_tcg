@@ -3,6 +3,7 @@ using VortexTCG.Api.Rank.DTOs;
 using VortexTCG.Api.Rank.Providers;
 using VortexTCG.Api.Rank.Services;
 using VortexTCG.Common.DTO;
+using VortexTCG.Common.Services;
 using VortexTCG.DataAccess;
 using RankModel = VortexTCG.DataAccess.Models.Rank;
 using Xunit;
@@ -11,13 +12,7 @@ namespace VortexTCG.Tests.Api.Rank.Services
 {
     public class RankServiceTests
     {
-        private static VortexDbContext CreateDb()
-        {
-            DbContextOptionsBuilder<VortexDbContext> optionsBuilder = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString());
-            DbContextOptions<VortexDbContext> options = optionsBuilder.Options;
-            return new VortexDbContext(options);
-        }
+        private static VortexDbContext CreateDb() => VortexDbCoontextFactory.getInMemoryDbContext();
 
         private static RankService CreateService(VortexDbContext db)
         {

@@ -7,6 +7,7 @@ using VortexTCG.Api.Rank.Controllers;
 using VortexTCG.Api.Rank.DTOs;
 using VortexTCG.Api.Rank.Providers;
 using VortexTCG.Api.Rank.Services;
+using VortexTCG.Common.Services;
 using VortexTCG.DataAccess;
 using VortexTCG.Common.DTO;
 using Microsoft.EntityFrameworkCore;
@@ -15,15 +16,9 @@ namespace VortexTCG.Tests.Api.Rank.Controllers
 {
     public class RankControllerTest
     {
-        private VortexDbContext CreateDb()
-        {
-            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
-            return new VortexDbContext(options);
-        }
+        private static VortexDbContext CreateDb() => VortexDbCoontextFactory.getInMemoryDbContext();
 
-        private RankController CreateController(VortexDbContext db)
+        private static RankController CreateController(VortexDbContext db)
         {
             RankProvider provider = new RankProvider(db);
             RankService service = new RankService(provider);

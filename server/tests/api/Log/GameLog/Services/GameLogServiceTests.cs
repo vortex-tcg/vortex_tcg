@@ -3,6 +3,7 @@ using VortexTCG.Api.Logs.GameLog.DTOs;
 using VortexTCG.Api.Logs.GameLog.Providers;
 using VortexTCG.Api.Logs.GameLog.Services;
 using VortexTCG.Common.DTO;
+using VortexTCG.Common.Services;
 using VortexTCG.DataAccess;
 using GameLogModel = VortexTCG.DataAccess.Models.Gamelog;
 using Xunit;
@@ -11,13 +12,7 @@ namespace VortexTCG.Tests.Api.Log.GameLog.Services
 {
     public class GameLogServiceTests
     {
-        private static VortexDbContext CreateDb()
-        {
-            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
-            return new VortexDbContext(options);
-        }
+        private static VortexDbContext CreateDb() => VortexDbCoontextFactory.getInMemoryDbContext();
 
         private static GameLogService CreateService(VortexDbContext db)
         {

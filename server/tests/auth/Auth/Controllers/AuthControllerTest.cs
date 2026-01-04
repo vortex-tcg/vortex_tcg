@@ -17,7 +17,7 @@ namespace VortexTCG.Tests.Auth.Controllers
 {
     public class AuthControllerTest
     {
-        private async Task createUser(VortexDbContext db)
+        private async Task CreateUser(VortexDbContext db)
         {
             ScryptEncoder encoder = new ScryptEncoder();
             string hashedPassword = encoder.Encode("CorrectPassword1!");
@@ -130,7 +130,7 @@ namespace VortexTCG.Tests.Auth.Controllers
             VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
             IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
 
-            await createUser(db);
+            await CreateUser(db);
 
             AuthController controller = new AuthController(db, config);
 
@@ -154,7 +154,7 @@ namespace VortexTCG.Tests.Auth.Controllers
             VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
             IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
 
-            await createUser(db);
+            await CreateUser(db);
 
             AuthController controller = new AuthController(db, config);
 

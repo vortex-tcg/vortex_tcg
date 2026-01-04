@@ -7,6 +7,7 @@ using VortexTCG.Api.User.Controllers;
 using VortexTCG.Api.User.DTOs;
 using VortexTCG.Api.User.Providers;
 using VortexTCG.Api.User.Services;
+using VortexTCG.Common.Services;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using RoleEnum = VortexTCG.DataAccess.Models.Role;
@@ -18,15 +19,9 @@ namespace VortexTCG.Tests.Api.User.Controllers
 {
 	public class UserControllerTest
 	{
-		private VortexDbContext CreateDb()
-		{
-			DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
-				.UseInMemoryDatabase(Guid.NewGuid().ToString())
-				.Options;
-			return new VortexDbContext(options);
-		}
+		private static VortexDbContext CreateDb() => VortexDbCoontextFactory.getInMemoryDbContext();
 
-		private UserController CreateController(VortexDbContext db)
+		private static UserController CreateController(VortexDbContext db)
 		{
 			UserProvider provider = new UserProvider(db);
 			UserService service = new UserService(provider);

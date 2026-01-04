@@ -8,6 +8,7 @@ using VortexTCG.Api.Logs.ActionType.Controllers;
 using VortexTCG.Api.Logs.ActionType.DTOs;
 using VortexTCG.Api.Logs.ActionType.Providers;
 using VortexTCG.Api.Logs.ActionType.Services;
+using VortexTCG.Common.Services;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.DTO;
@@ -17,15 +18,9 @@ namespace VortexTCG.Tests.Api.Log.ActionType
 {
     public class ActionTypeTest
     {
-        private VortexDbContext CreateDb()
-        {
-            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
-            return new VortexDbContext(options);
-        }
+        private static VortexDbContext CreateDb() => VortexDbCoontextFactory.getInMemoryDbContext();
 
-        private ActionTypeController CreateController(VortexDbContext db)
+        private static ActionTypeController CreateController(VortexDbContext db)
         {
             ActionTypeProvider provider = new ActionTypeProvider(db);
             ActionTypeService service = new ActionTypeService(provider);
