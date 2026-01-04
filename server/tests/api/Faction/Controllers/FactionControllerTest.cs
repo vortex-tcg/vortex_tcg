@@ -9,8 +9,7 @@ using VortexTCG.Auth.DTOs;
 using Scrypt;
 using VortexTCG.Faction.DTOs;
 
-namespace Tests
-
+namespace VortexTCG.Tests.Api.Faction.Controllers
 {
     public class FactionControllerTest
     {

@@ -11,7 +11,7 @@ using VortexTCG.Common.DTO;
 using Scrypt;
 using Xunit;
 
-namespace Tests
+namespace VortexTCG.Tests.Auth.Services
 {
     public class LoginServiceTests
     {

@@ -13,7 +13,7 @@ using RoleEnum = VortexTCG.DataAccess.Models.Role;
 using Microsoft.EntityFrameworkCore;
 using VortexTCG.Auth.Services;
 
-namespace Tests
+namespace VortexTCG.Tests.Auth.Controllers
 {
     public class AuthControllerTest
     {

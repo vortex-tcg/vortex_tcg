@@ -8,7 +8,7 @@ using UserModel = VortexTCG.DataAccess.Models.User;
 using VortexTCG.Common.Services;
 using Xunit;
 
-namespace Tests
+namespace VortexTCG.Tests.Auth.Providers
 {
     public class LoginProviderTests
     {

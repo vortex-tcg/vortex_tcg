@@ -7,7 +7,7 @@ using VortexTCG.DataAccess;
 using CardModel = VortexTCG.DataAccess.Models.Card;
 using Xunit;
 
-namespace Tests.Card.Services
+namespace VortexTCG.Tests.Api.Card.Services
 {
     public class CardServiceTests
     {
