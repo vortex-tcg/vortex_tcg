@@ -3,6 +3,7 @@ using VortexTCG.Api.Collection.DTOs;
 using VortexTCG.Api.Collection.Providers;
 using VortexTCG.Api.Collection.Services;
 using VortexTCG.Common.DTO;
+using VortexTCG.Common.Services;
 using VortexTCG.DataAccess;
 using CollectionModel = VortexTCG.DataAccess.Models.Collection;
 using Xunit;
@@ -11,13 +12,7 @@ namespace VortexTCG.Tests.Api.Collection.Services
 {
     public class CollectionServiceTests
     {
-        private static VortexDbContext CreateDb()
-        {
-            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
-            return new VortexDbContext(options);
-        }
+        private static VortexDbContext CreateDb() => VortexDbCoontextFactory.getInMemoryDbContext();
 
         private static CollectionService CreateService(VortexDbContext db)
         {

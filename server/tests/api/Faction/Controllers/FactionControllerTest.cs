@@ -13,14 +13,14 @@ namespace VortexTCG.Tests.Api.Faction.Controllers
 {
     public class FactionControllerTest
     {
-        private (FactionController controller, VortexDbContext db) createController()
+        private static (FactionController controller, VortexDbContext db) CreateController()
         {
             VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
             IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
             return (new FactionController(db, config), db);
         }
 
-        private async Task<Guid> createFaction(VortexDbContext db)
+        private static async Task<Guid> CreateFaction(VortexDbContext db)
         {
             Guid factionId = Guid.NewGuid();
             db.Factions.Add(new VortexTCG.DataAccess.Models.Faction
@@ -45,7 +45,7 @@ namespace VortexTCG.Tests.Api.Faction.Controllers
             IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
             FactionController controller = new FactionController(db, config);
 
-            await createFaction(db);
+            await CreateFaction(db);
 
             IActionResult result = await controller.GetAllFactions();
             ObjectResult okResult = Assert.IsType<ObjectResult>(result);
@@ -66,7 +66,7 @@ namespace VortexTCG.Tests.Api.Faction.Controllers
             IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
             FactionController controller = new FactionController(db, config);
 
-            Guid factionId = await createFaction(db);
+            Guid factionId = await CreateFaction(db);
 
             IActionResult result = await controller.GetFactionWithCardsById(factionId);
             ObjectResult okResult = Assert.IsType<ObjectResult>(result);
@@ -80,8 +80,8 @@ namespace VortexTCG.Tests.Api.Faction.Controllers
         [Fact(DisplayName = "Get faction by ID")]
         public async Task getFactionByIdReturnsFaction()
         {
-            (FactionController controller, VortexDbContext db) = createController();
-            Guid factionId = await createFaction(db);
+            (FactionController controller, VortexDbContext db) = CreateController();
+            Guid factionId = await CreateFaction(db);
 
             IActionResult result = await controller.GetFactionById(factionId);
             ObjectResult okResult = Assert.IsType<ObjectResult>(result);
@@ -94,8 +94,8 @@ namespace VortexTCG.Tests.Api.Faction.Controllers
         [Fact(DisplayName = "Get faction with champions by ID")]
         public async Task getFactionWithChampionsById()
         {
-            (FactionController controller, VortexDbContext db) = createController();
-            Guid factionId = await createFaction(db);
+            (FactionController controller, VortexDbContext db) = CreateController();
+            Guid factionId = await CreateFaction(db);
 
             IActionResult result = await controller.GetFactionWithChampionsById(factionId);
             ObjectResult okResult = Assert.IsType<ObjectResult>(result);
@@ -108,7 +108,7 @@ namespace VortexTCG.Tests.Api.Faction.Controllers
         [Fact(DisplayName = "Create faction")]
         public async Task createFactionReturnsCreated()
         {
-            (FactionController controller, VortexDbContext _) = createController();
+            (FactionController controller, VortexDbContext _) = CreateController();
             CreateFactionDto dto = new CreateFactionDto
             {
                 Label = "NewFaction",
@@ -128,8 +128,8 @@ namespace VortexTCG.Tests.Api.Faction.Controllers
         [Fact(DisplayName = "Update faction")]
         public async Task updateFactionReturnsUpdated()
         {
-            (FactionController controller, VortexDbContext db) = createController();
-            Guid factionId = await createFaction(db);
+            (FactionController controller, VortexDbContext db) = CreateController();
+            Guid factionId = await CreateFaction(db);
             UpdateFactionDto dto = new UpdateFactionDto
             {
                 Label = "UpdatedFaction",
@@ -150,8 +150,8 @@ namespace VortexTCG.Tests.Api.Faction.Controllers
         [Fact(DisplayName = "Delete faction")]
         public async Task deleteFactionReturnsOk()
         {
-            (FactionController controller, VortexDbContext db) = createController();
-            Guid factionId = await createFaction(db);
+            (FactionController controller, VortexDbContext db) = CreateController();
+            Guid factionId = await CreateFaction(db);
 
             IActionResult result = await controller.DeleteFaction(factionId);
             ObjectResult okResult = Assert.IsType<ObjectResult>(result);
@@ -163,7 +163,7 @@ namespace VortexTCG.Tests.Api.Faction.Controllers
         [Fact(DisplayName = "Delete faction not found")]
         public async Task deleteFactionReturnsNotFound()
         {
-            (FactionController controller, VortexDbContext _) = createController();
+            (FactionController controller, VortexDbContext _) = CreateController();
 
             IActionResult result = await controller.DeleteFaction(Guid.NewGuid());
             ObjectResult okResult = Assert.IsType<ObjectResult>(result);

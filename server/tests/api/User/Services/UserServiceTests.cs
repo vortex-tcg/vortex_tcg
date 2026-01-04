@@ -3,6 +3,7 @@ using VortexTCG.Api.User.DTOs;
 using VortexTCG.Api.User.Providers;
 using VortexTCG.Api.User.Services;
 using VortexTCG.Common.DTO;
+using VortexTCG.Common.Services;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using UserModel = VortexTCG.DataAccess.Models.User;
@@ -12,13 +13,7 @@ namespace VortexTCG.Tests.Api.User.Services
 {
     public class UserServiceTests
     {
-        private static VortexDbContext CreateDb()
-        {
-            DbContextOptionsBuilder<VortexDbContext> optionsBuilder = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString());
-            DbContextOptions<VortexDbContext> options = optionsBuilder.Options;
-            return new VortexDbContext(options);
-        }
+        private static VortexDbContext CreateDb() => VortexDbCoontextFactory.getInMemoryDbContext();
 
         private static UserService CreateService(VortexDbContext db)
         {
