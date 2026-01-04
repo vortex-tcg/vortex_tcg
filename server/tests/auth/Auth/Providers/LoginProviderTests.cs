@@ -1,28 +1,21 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+using VortexTCG.Auth.DTOs;
 using VortexTCG.Auth.Providers;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using UserModel = VortexTCG.DataAccess.Models.User;
+using VortexTCG.Common.Services;
 using Xunit;
 
-namespace Tests.Auth.Providers
+namespace Tests
 {
     public class LoginProviderTests
     {
-        private static VortexDbContext CreateDb()
-        {
-            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
-            return new VortexDbContext(options);
-        }
-
         [Fact]
         public async Task GetFirstUserByEmail_ReturnsUser_WhenExists()
         {
-            using VortexDbContext db = CreateDb();
+            using VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
             LoginProvider provider = new LoginProvider(db);
 
             db.Users.Add(new UserModel
@@ -39,7 +32,7 @@ namespace Tests.Auth.Providers
             });
             await db.SaveChangesAsync();
 
-            var result = await provider.getFirstUserByEmail("jane@example.com");
+            LoginUserDTO? result = await provider.getFirstUserByEmail("jane@example.com");
 
             Assert.NotNull(result);
             Assert.Equal("jane", result!.Username);
@@ -49,10 +42,10 @@ namespace Tests.Auth.Providers
         [Fact]
         public async Task GetFirstUserByEmail_ReturnsNull_WhenNotFound()
         {
-            using VortexDbContext db = CreateDb();
+            using VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
             LoginProvider provider = new LoginProvider(db);
 
-            var result = await provider.getFirstUserByEmail("missing@example.com");
+            LoginUserDTO? result = await provider.getFirstUserByEmail("missing@example.com");
 
             Assert.Null(result);
         }

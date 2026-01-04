@@ -1,27 +1,19 @@
 using System;
 using System.Linq;
-using Microsoft.EntityFrameworkCore;
 using api.Effect.Providers;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
+using VortexTCG.Common.Services;
 using Xunit;
 
-namespace VortexTCG.Tests.Api.Effect.Providers
+namespace Tests
 {
     public class EffectDescriptionProviderTests
     {
-        private static VortexDbContext CreateDb()
-        {
-            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
-            return new VortexDbContext(options);
-        }
-
         [Fact]
         public async Task Add_List_Find_Exists()
         {
-            using VortexDbContext db = CreateDb();
+            using VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
             EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
 
             EffectDescription entity = new EffectDescription
@@ -38,18 +30,18 @@ namespace VortexTCG.Tests.Api.Effect.Providers
             EffectDescription? found = await provider.findByIdAsync(entity.Id);
             Assert.NotNull(found);
 
-            var list = await provider.listAsync();
+            System.Collections.Generic.List<EffectDescription> list = await provider.listAsync();
             Assert.Single(list);
         }
 
         [Fact]
         public async Task Update_Success()
         {
-            using VortexDbContext db = CreateDb();
+            using VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
             EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
 
-            var id = Guid.NewGuid();
-            var entity = new EffectDescription
+            Guid id = Guid.NewGuid();
+            EffectDescription entity = new EffectDescription
             {
                 Id = id,
                 Label = "Original",
@@ -69,10 +61,10 @@ namespace VortexTCG.Tests.Api.Effect.Providers
         [Fact]
         public async Task Delete_Success()
         {
-            using VortexDbContext db = CreateDb();
+            using VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
             EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
 
-            var id = Guid.NewGuid();
+            Guid id = Guid.NewGuid();
             await provider.addAsync(new EffectDescription
             {
                 Id = id,
@@ -89,7 +81,7 @@ namespace VortexTCG.Tests.Api.Effect.Providers
         [Fact]
         public async Task Delete_ReturnsFalse_WhenMissing()
         {
-            using VortexDbContext db = CreateDb();
+            using VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
             EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
 
             bool deleted = await provider.deleteAsync(Guid.NewGuid());
@@ -99,7 +91,7 @@ namespace VortexTCG.Tests.Api.Effect.Providers
         [Fact]
         public async Task CountEffectsUsing_Returns_Number_Of_References()
         {
-            using VortexDbContext db = CreateDb();
+            using VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
             EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
 
             Guid descriptionId = Guid.NewGuid();

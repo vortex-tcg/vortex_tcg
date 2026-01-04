@@ -9,10 +9,10 @@ namespace VortexTCG.Tests.Api.Collection.DTOs
         [Fact]
         public void CollectionDto_CanSetAndGetProperties()
         {
-            var id = Guid.NewGuid();
-            var userId = Guid.NewGuid();
+            Guid id = Guid.NewGuid();
+            Guid userId = Guid.NewGuid();
 
-            var dto = new CollectionDto
+            CollectionDto dto = new CollectionDto
             {
                 Id = id,
                 UserId = userId
@@ -25,8 +25,8 @@ namespace VortexTCG.Tests.Api.Collection.DTOs
         [Fact]
         public void CollectionCreateDto_CanSetUserId()
         {
-            var userId = Guid.NewGuid();
-            var dto = new CollectionCreateDto { UserId = userId };
+            Guid userId = Guid.NewGuid();
+            CollectionCreateDto dto = new CollectionCreateDto { UserId = userId };
 
             Assert.Equal(userId, dto.UserId);
         }
@@ -34,8 +34,8 @@ namespace VortexTCG.Tests.Api.Collection.DTOs
         [Fact]
         public void UserCollectionDeckDto_CanSetAndGetProperties()
         {
-            var deckId = Guid.NewGuid();
-            var dto = new UserCollectionDeckDto
+            Guid deckId = Guid.NewGuid();
+            UserCollectionDeckDto dto = new UserCollectionDeckDto
             {
                 DeckId = deckId,
                 DeckName = "MyDeck",
@@ -50,7 +50,7 @@ namespace VortexTCG.Tests.Api.Collection.DTOs
         [Fact]
         public void UserCollectionCardOwnDto_CanSetAndGetProperties()
         {
-            var dto = new UserCollectionCardOwnDto
+            UserCollectionCardOwnDto dto = new UserCollectionCardOwnDto
             {
                 Number = 3,
                 Rarity = "Rare"
@@ -63,20 +63,20 @@ namespace VortexTCG.Tests.Api.Collection.DTOs
         [Fact]
         public void UserCollectionCardOwnDto_DefaultNumber()
         {
-            var dto = new UserCollectionCardOwnDto();
+            UserCollectionCardOwnDto dto = new UserCollectionCardOwnDto();
             Assert.Equal(0, dto.Number);
         }
 
         [Fact]
         public void UserCollectionCardDto_CanSetAndGetProperties()
         {
-            var card = new CardDto { Id = Guid.NewGuid(), Name = "TestCard" };
-            var ownData = new List<UserCollectionCardOwnDto>
+            CardDto card = new CardDto { Id = Guid.NewGuid(), Name = "TestCard" };
+            List<UserCollectionCardOwnDto> ownData = new List<UserCollectionCardOwnDto>
             {
                 new UserCollectionCardOwnDto { Number = 2, Rarity = "Common" }
             };
 
-            var dto = new UserCollectionCardDto
+            UserCollectionCardDto dto = new UserCollectionCardDto
             {
                 Card = card,
                 OwnData = ownData
@@ -90,7 +90,7 @@ namespace VortexTCG.Tests.Api.Collection.DTOs
         [Fact]
         public void UserCollectionCardDto_DefaultOwnData()
         {
-            var dto = new UserCollectionCardDto
+            UserCollectionCardDto dto = new UserCollectionCardDto
             {
                 Card = new CardDto()
             };
@@ -102,8 +102,8 @@ namespace VortexTCG.Tests.Api.Collection.DTOs
         [Fact]
         public void UserCollectionFactionDto_CanSetAndGetProperties()
         {
-            var factionId = Guid.NewGuid();
-            var dto = new UserCollectionFactionDto
+            Guid factionId = Guid.NewGuid();
+            UserCollectionFactionDto dto = new UserCollectionFactionDto
             {
                 FactionId = factionId,
                 FactionName = "Empire",
@@ -118,16 +118,16 @@ namespace VortexTCG.Tests.Api.Collection.DTOs
         [Fact]
         public void UserCollectionDto_CanSetAndGetProperties()
         {
-            var decks = new List<UserCollectionDeckDto>
+            List<UserCollectionDeckDto> decks = new List<UserCollectionDeckDto>
             {
                 new UserCollectionDeckDto { DeckId = Guid.NewGuid(), DeckName = "Deck1" }
             };
-            var factions = new List<UserCollectionFactionDto>
+            List<UserCollectionFactionDto> factions = new List<UserCollectionFactionDto>
             {
                 new UserCollectionFactionDto { FactionId = Guid.NewGuid(), FactionName = "Faction1" }
             };
 
-            var dto = new UserCollectionDto
+            UserCollectionDto dto = new UserCollectionDto
             {
                 Decks = decks,
                 Cards = new List<UserCollectionCardDto>(),
@@ -142,7 +142,7 @@ namespace VortexTCG.Tests.Api.Collection.DTOs
         [Fact]
         public void UserCollectionDto_DefaultEmptyCollections()
         {
-            var dto = new UserCollectionDto();
+            UserCollectionDto dto = new UserCollectionDto();
 
             Assert.NotNull(dto.Decks);
             Assert.NotNull(dto.Cards);

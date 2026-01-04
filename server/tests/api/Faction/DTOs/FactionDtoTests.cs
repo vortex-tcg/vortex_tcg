@@ -8,8 +8,8 @@ namespace VortexTCG.Tests.Api.Faction.DTOs
         [Fact]
         public void FactionDto_CanSetAndGetAllProperties()
         {
-            var id = Guid.NewGuid();
-            var dto = new FactionDto
+            Guid id = Guid.NewGuid();
+            FactionDto dto = new FactionDto
             {
                 Id = id,
                 Label = "Alliance",
@@ -26,7 +26,7 @@ namespace VortexTCG.Tests.Api.Faction.DTOs
         [Fact]
         public void FactionDto_InitializedWithDefaults()
         {
-            var dto = new FactionDto();
+            FactionDto dto = new FactionDto();
 
             Assert.Equal(Guid.Empty, dto.Id);
             Assert.Equal("", dto.Label);
@@ -37,8 +37,8 @@ namespace VortexTCG.Tests.Api.Faction.DTOs
         [Fact]
         public void FactionCardDto_CanSetAndGetAllProperties()
         {
-            var id = Guid.NewGuid();
-            var dto = new FactionCardDto
+            Guid id = Guid.NewGuid();
+            FactionCardDto dto = new FactionCardDto
             {
                 Id = id,
                 Name = "Warrior",
@@ -67,7 +67,7 @@ namespace VortexTCG.Tests.Api.Faction.DTOs
         [Fact]
         public void FactionCardDto_HpAndAttackCanBeNull()
         {
-            var dto = new FactionCardDto
+            FactionCardDto dto = new FactionCardDto
             {
                 Id = Guid.NewGuid(),
                 Name = "Spell",
@@ -88,8 +88,8 @@ namespace VortexTCG.Tests.Api.Faction.DTOs
         [Fact]
         public void FactionChampionDto_CanSetAndGetAllProperties()
         {
-            var id = Guid.NewGuid();
-            var dto = new FactionChampionDto
+            Guid id = Guid.NewGuid();
+            FactionChampionDto dto = new FactionChampionDto
             {
                 Id = id,
                 Name = "Dragon Lord",
@@ -108,14 +108,14 @@ namespace VortexTCG.Tests.Api.Faction.DTOs
         [Fact]
         public void FactionWithCardsDto_CanSetAndGetAllProperties()
         {
-            var id = Guid.NewGuid();
-            var cards = new List<FactionCardDto>
+            Guid id = Guid.NewGuid();
+            List<FactionCardDto> cards = new List<FactionCardDto>
             {
                 new FactionCardDto { Id = Guid.NewGuid(), Name = "Card1" },
                 new FactionCardDto { Id = Guid.NewGuid(), Name = "Card2" }
             };
 
-            var dto = new FactionWithCardsDto
+            FactionWithCardsDto dto = new FactionWithCardsDto
             {
                 Id = id,
                 Label = "Empire",
@@ -134,7 +134,7 @@ namespace VortexTCG.Tests.Api.Faction.DTOs
         [Fact]
         public void FactionWithCardsDto_CardsDefaultToEmptyList()
         {
-            var dto = new FactionWithCardsDto();
+            FactionWithCardsDto dto = new FactionWithCardsDto();
             Assert.NotNull(dto.Cards);
             Assert.Empty(dto.Cards);
         }
@@ -142,10 +142,10 @@ namespace VortexTCG.Tests.Api.Faction.DTOs
         [Fact]
         public void FactionWithChampionDto_CanSetAndGetAllProperties()
         {
-            var id = Guid.NewGuid();
-            var champion = new FactionChampionDto { Id = Guid.NewGuid(), Name = "Hero" };
+            Guid id = Guid.NewGuid();
+            FactionChampionDto champion = new FactionChampionDto { Id = Guid.NewGuid(), Name = "Hero" };
 
-            var dto = new FactionWithChampionDto
+            FactionWithChampionDto dto = new FactionWithChampionDto
             {
                 Id = id,
                 Label = "Kingdom",

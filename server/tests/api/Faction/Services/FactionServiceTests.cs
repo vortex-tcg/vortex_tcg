@@ -4,6 +4,7 @@ using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using VortexTCG.Faction.DTOs;
 using VortexTCG.Faction.Services;
+using VortexTCG.Common.DTO;
 using FactionModel = VortexTCG.DataAccess.Models.Faction;
 using CardModel = VortexTCG.DataAccess.Models.Card;
 using Xunit;
@@ -30,11 +31,11 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task GetAllFactions_ReturnsSuccess()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
-            var service = new FactionService(db, configuration);
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
 
-            var result = await service.GetAllFactions();
+            ResultDTO<List<FactionDto>> result = await service.GetAllFactions();
 
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
@@ -44,11 +45,11 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task GetAllFactions_ReturnsFactions()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
-            var service = new FactionService(db, configuration);
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
 
-            var faction = new FactionModel
+            FactionModel faction = new FactionModel
             {
                 Id = Guid.NewGuid(),
                 Label = "Test Faction",
@@ -62,7 +63,7 @@ namespace VortexTCG.Tests.Api.Faction.Services
             db.Factions.Add(faction);
             await db.SaveChangesAsync();
 
-            var result = await service.GetAllFactions();
+            ResultDTO<List<FactionDto>> result = await service.GetAllFactions();
 
             Assert.True(result.success);
             Assert.Single(result.data!);
@@ -72,12 +73,12 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task GetFactionById_ReturnsSuccess()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
-            var service = new FactionService(db, configuration);
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
 
-            var factionId = Guid.NewGuid();
-            var faction = new FactionModel
+            Guid factionId = Guid.NewGuid();
+            FactionModel faction = new FactionModel
             {
                 Id = factionId,
                 Label = "Test",
@@ -91,7 +92,7 @@ namespace VortexTCG.Tests.Api.Faction.Services
             db.Factions.Add(faction);
             await db.SaveChangesAsync();
 
-            var result = await service.GetFactionById(factionId);
+            ResultDTO<FactionDto> result = await service.GetFactionById(factionId);
 
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
@@ -102,11 +103,11 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task GetFactionById_ReturnsNotFoundWhenMissing()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
-            var service = new FactionService(db, configuration);
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
 
-            var result = await service.GetFactionById(Guid.NewGuid());
+            ResultDTO<FactionDto> result = await service.GetFactionById(Guid.NewGuid());
 
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
@@ -116,12 +117,12 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task GetFactionWithCardsById_ReturnsSuccess()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
-            var service = new FactionService(db, configuration);
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
 
-            var factionId = Guid.NewGuid();
-            var faction = new FactionModel
+            Guid factionId = Guid.NewGuid();
+            FactionModel faction = new FactionModel
             {
                 Id = factionId,
                 Label = "Test",
@@ -135,7 +136,7 @@ namespace VortexTCG.Tests.Api.Faction.Services
             db.Factions.Add(faction);
             await db.SaveChangesAsync();
 
-            var result = await service.GetFactionWithCardsById(factionId);
+            ResultDTO<FactionWithCardsDto> result = await service.GetFactionWithCardsById(factionId);
 
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
@@ -145,11 +146,11 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task GetFactionWithCardsById_ReturnsNotFoundWhenMissing()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
-            var service = new FactionService(db, configuration);
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
 
-            var result = await service.GetFactionWithCardsById(Guid.NewGuid());
+            ResultDTO<FactionWithCardsDto> result = await service.GetFactionWithCardsById(Guid.NewGuid());
 
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
@@ -159,12 +160,12 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task GetFactionWithChampionById_ReturnsSuccess()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
-            var service = new FactionService(db, configuration);
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
 
-            var factionId = Guid.NewGuid();
-            var faction = new FactionModel
+            Guid factionId = Guid.NewGuid();
+            FactionModel faction = new FactionModel
             {
                 Id = factionId,
                 Label = "Test",
@@ -178,7 +179,7 @@ namespace VortexTCG.Tests.Api.Faction.Services
             db.Factions.Add(faction);
             await db.SaveChangesAsync();
 
-            var result = await service.GetFactionWithChampionById(factionId);
+            ResultDTO<FactionWithChampionDto> result = await service.GetFactionWithChampionById(factionId);
 
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
@@ -188,11 +189,11 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task GetFactionWithChampionById_ReturnsNotFoundWhenMissing()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
-            var service = new FactionService(db, configuration);
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
 
-            var result = await service.GetFactionWithChampionById(Guid.NewGuid());
+            ResultDTO<FactionWithChampionDto> result = await service.GetFactionWithChampionById(Guid.NewGuid());
 
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
@@ -202,8 +203,8 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task CreateFaction_ReturnsConflictWhenLabelExists()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
             db.Factions.Add(new FactionModel
             {
                 Id = Guid.NewGuid(),
@@ -214,11 +215,11 @@ namespace VortexTCG.Tests.Api.Faction.Services
                 CreatedBy = "test"
             });
             await db.SaveChangesAsync();
-            var service = new FactionService(db, configuration);
+            FactionService service = new FactionService(db, configuration);
 
-            var dto = new CreateFactionDto { Label = "Dup", Currency = "Gold", Condition = "Cond" };
+            CreateFactionDto dto = new CreateFactionDto { Label = "Dup", Currency = "Gold", Condition = "Cond" };
 
-            var result = await service.CreateFaction(dto);
+            ResultDTO<FactionDto> result = await service.CreateFaction(dto);
 
             Assert.False(result.success);
             Assert.Equal(409, result.statusCode);
@@ -227,12 +228,12 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task CreateFaction_InvalidIds_ReturnsBadRequest()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
-            var service = new FactionService(db, configuration);
-            var missingId = Guid.NewGuid();
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
+            Guid missingId = Guid.NewGuid();
 
-            var dto = new CreateFactionDto
+            CreateFactionDto dto = new CreateFactionDto
             {
                 Label = "New",
                 Currency = "Gold",
@@ -240,7 +241,7 @@ namespace VortexTCG.Tests.Api.Faction.Services
                 CardIds = new List<Guid> { missingId }
             };
 
-            var result = await service.CreateFaction(dto);
+            ResultDTO<FactionDto> result = await service.CreateFaction(dto);
 
             Assert.False(result.success);
             Assert.Equal(400, result.statusCode);
@@ -250,9 +251,9 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task CreateFaction_SucceedsAndReturnsCreated()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
-            var cardId = Guid.NewGuid();
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            Guid cardId = Guid.NewGuid();
             db.Cards.Add(new CardModel
             {
                 Id = cardId,
@@ -269,9 +270,9 @@ namespace VortexTCG.Tests.Api.Faction.Services
                 CreatedBy = "test"
             });
             await db.SaveChangesAsync();
-            var service = new FactionService(db, configuration);
+            FactionService service = new FactionService(db, configuration);
 
-            var dto = new CreateFactionDto
+            CreateFactionDto dto = new CreateFactionDto
             {
                 Label = "Created",
                 Currency = "Gold",
@@ -279,7 +280,7 @@ namespace VortexTCG.Tests.Api.Faction.Services
                 CardIds = new List<Guid> { cardId }
             };
 
-            var result = await service.CreateFaction(dto);
+            ResultDTO<FactionDto> result = await service.CreateFaction(dto);
 
             Assert.True(result.success);
             Assert.Equal(201, result.statusCode);
@@ -290,11 +291,11 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task UpdateFaction_ReturnsNotFoundWhenMissing()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
-            var service = new FactionService(db, configuration);
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
 
-            var result = await service.UpdateFaction(Guid.NewGuid(), new UpdateFactionDto { Label = "X" });
+            ResultDTO<FactionDto> result = await service.UpdateFaction(Guid.NewGuid(), new UpdateFactionDto { Label = "X" });
 
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
@@ -303,9 +304,9 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task UpdateFaction_ReturnsConflictWhenLabelExists()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
-            var first = new FactionModel
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionModel first = new FactionModel
             {
                 Id = Guid.NewGuid(),
                 Label = "Existing",
@@ -314,7 +315,7 @@ namespace VortexTCG.Tests.Api.Faction.Services
                 CreatedAtUtc = DateTime.UtcNow,
                 CreatedBy = "test"
             };
-            var target = new FactionModel
+            FactionModel target = new FactionModel
             {
                 Id = Guid.NewGuid(),
                 Label = "Target",
@@ -325,9 +326,9 @@ namespace VortexTCG.Tests.Api.Faction.Services
             };
             db.Factions.AddRange(first, target);
             await db.SaveChangesAsync();
-            var service = new FactionService(db, configuration);
+            FactionService service = new FactionService(db, configuration);
 
-            var result = await service.UpdateFaction(target.Id, new UpdateFactionDto { Label = "Existing" });
+            ResultDTO<FactionDto> result = await service.UpdateFaction(target.Id, new UpdateFactionDto { Label = "Existing" });
 
             Assert.False(result.success);
             Assert.Equal(409, result.statusCode);
@@ -336,9 +337,9 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task UpdateFaction_InvalidIds_ReturnsBadRequest()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
-            var faction = new FactionModel
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionModel faction = new FactionModel
             {
                 Id = Guid.NewGuid(),
                 Label = "Target",
@@ -349,11 +350,11 @@ namespace VortexTCG.Tests.Api.Faction.Services
             };
             db.Factions.Add(faction);
             await db.SaveChangesAsync();
-            var service = new FactionService(db, configuration);
+            FactionService service = new FactionService(db, configuration);
 
-            var dto = new UpdateFactionDto { CardIds = new List<Guid> { Guid.NewGuid() } };
+            UpdateFactionDto dto = new UpdateFactionDto { CardIds = new List<Guid> { Guid.NewGuid() } };
 
-            var result = await service.UpdateFaction(faction.Id, dto);
+            ResultDTO<FactionDto> result = await service.UpdateFaction(faction.Id, dto);
 
             Assert.False(result.success);
             Assert.Equal(400, result.statusCode);
@@ -362,9 +363,9 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task UpdateFaction_Succeeds()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
-            var faction = new FactionModel
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionModel faction = new FactionModel
             {
                 Id = Guid.NewGuid(),
                 Label = "Target",
@@ -373,7 +374,7 @@ namespace VortexTCG.Tests.Api.Faction.Services
                 CreatedAtUtc = DateTime.UtcNow,
                 CreatedBy = "test"
             };
-            var card = new CardModel
+            CardModel card = new CardModel
             {
                 Id = Guid.NewGuid(),
                 Name = "Card",
@@ -391,9 +392,9 @@ namespace VortexTCG.Tests.Api.Faction.Services
             db.Factions.Add(faction);
             db.Cards.Add(card);
             await db.SaveChangesAsync();
-            var service = new FactionService(db, configuration);
+            FactionService service = new FactionService(db, configuration);
 
-            var dto = new UpdateFactionDto
+            UpdateFactionDto dto = new UpdateFactionDto
             {
                 Label = "Updated",
                 Currency = "Silver",
@@ -401,7 +402,7 @@ namespace VortexTCG.Tests.Api.Faction.Services
                 CardIds = new List<Guid> { card.Id }
             };
 
-            var result = await service.UpdateFaction(faction.Id, dto);
+            ResultDTO<FactionDto> result = await service.UpdateFaction(faction.Id, dto);
 
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
@@ -411,11 +412,11 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task DeleteFaction_ReturnsNotFound()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
-            var service = new FactionService(db, configuration);
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
 
-            var result = await service.DeleteFaction(Guid.NewGuid());
+            ResultDTO<object> result = await service.DeleteFaction(Guid.NewGuid());
 
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
@@ -424,9 +425,9 @@ namespace VortexTCG.Tests.Api.Faction.Services
         [Fact]
         public async Task DeleteFaction_Succeeds()
         {
-            using var db = CreateDb();
-            var configuration = CreateConfiguration();
-            var faction = new FactionModel
+            using VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionModel faction = new FactionModel
             {
                 Id = Guid.NewGuid(),
                 Label = "Target",
@@ -437,9 +438,9 @@ namespace VortexTCG.Tests.Api.Faction.Services
             };
             db.Factions.Add(faction);
             await db.SaveChangesAsync();
-            var service = new FactionService(db, configuration);
+            FactionService service = new FactionService(db, configuration);
 
-            var result = await service.DeleteFaction(faction.Id);
+            ResultDTO<object> result = await service.DeleteFaction(faction.Id);
 
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);

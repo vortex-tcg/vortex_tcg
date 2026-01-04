@@ -43,8 +43,8 @@ namespace Tests.Logs.GameLog
 				ActionIds = null
 			};
 			IActionResult result = await controller.Add(dto);
-			var created = Assert.IsType<ObjectResult>(result);
-			var payload = Assert.IsType<ResultDTO<GameLogDTO>>(created.Value);
+			ObjectResult created = Assert.IsType<ObjectResult>(result);
+			ResultDTO<GameLogDTO> payload = Assert.IsType<ResultDTO<GameLogDTO>>(created.Value);
 			Assert.True(payload.success);
 			Assert.Equal(201, payload.statusCode);
 			Assert.Equal("Game 1", payload.data.Label);
@@ -62,11 +62,11 @@ namespace Tests.Logs.GameLog
 				ActionIds = null
 			};
 			IActionResult createResult = await controller.Add(dto);
-			var created = Assert.IsType<ObjectResult>(createResult);
-			var payloadCreate = Assert.IsType<ResultDTO<GameLogDTO>>(created.Value);
+			ObjectResult created = Assert.IsType<ObjectResult>(createResult);
+			ResultDTO<GameLogDTO> payloadCreate = Assert.IsType<ResultDTO<GameLogDTO>>(created.Value);
 			IActionResult getResult = await controller.GetById(payloadCreate.data.Id);
-			var ok = Assert.IsType<ObjectResult>(getResult);
-			var payload = Assert.IsType<ResultDTO<GameLogDTO>>(ok.Value);
+			ObjectResult ok = Assert.IsType<ObjectResult>(getResult);
+			ResultDTO<GameLogDTO> payload = Assert.IsType<ResultDTO<GameLogDTO>>(ok.Value);
 			Assert.Equal("Game 2", payload.data.Label);
 			Assert.Equal(20, payload.data.TurnNumber);
 		}
@@ -83,8 +83,8 @@ namespace Tests.Logs.GameLog
 				ActionIds = null
 			};
 			IActionResult createResult = await controller.Add(dto);
-			var created = Assert.IsType<ObjectResult>(createResult);
-			var payloadCreate = Assert.IsType<ResultDTO<GameLogDTO>>(created.Value);
+			ObjectResult created = Assert.IsType<ObjectResult>(createResult);
+			ResultDTO<GameLogDTO> payloadCreate = Assert.IsType<ResultDTO<GameLogDTO>>(created.Value);
 			GameLogCreateDTO updateDto = new GameLogCreateDTO {
 				Label = "Game 3 Updated",
 				TurnNumber = 31,
@@ -92,8 +92,8 @@ namespace Tests.Logs.GameLog
 				ActionIds = null
 			};
 			IActionResult updateResult = await controller.Update(payloadCreate.data.Id, updateDto);
-			var ok = Assert.IsType<ObjectResult>(updateResult);
-			var payload = Assert.IsType<ResultDTO<GameLogDTO>>(ok.Value);
+			ObjectResult ok = Assert.IsType<ObjectResult>(updateResult);
+			ResultDTO<GameLogDTO> payload = Assert.IsType<ResultDTO<GameLogDTO>>(ok.Value);
 			Assert.True(payload.success);
 			Assert.Equal("Game 3 Updated", payload.data.Label);
 			Assert.Equal(31, payload.data.TurnNumber);
@@ -111,16 +111,16 @@ namespace Tests.Logs.GameLog
 				ActionIds = null
 			};
 			IActionResult createResult = await controller.Add(dto);
-			var created = Assert.IsType<ObjectResult>(createResult);
-			var payloadCreate = Assert.IsType<ResultDTO<GameLogDTO>>(created.Value);
+			ObjectResult created = Assert.IsType<ObjectResult>(createResult);
+			ResultDTO<GameLogDTO> payloadCreate = Assert.IsType<ResultDTO<GameLogDTO>>(created.Value);
 			IActionResult deleteResult = await controller.Delete(payloadCreate.data.Id);
-			var deleted = Assert.IsType<ObjectResult>(deleteResult);
-			var payload = Assert.IsType<ResultDTO<object>>(deleted.Value);
+			ObjectResult deleted = Assert.IsType<ObjectResult>(deleteResult);
+			ResultDTO<object> payload = Assert.IsType<ResultDTO<object>>(deleted.Value);
 			Assert.True(payload.success);
 			IActionResult getResult = await controller.GetById(payloadCreate.data.Id);
 			if (getResult is ObjectResult notFound)
 			{
-				var payloadNotFound = Assert.IsType<ResultDTO<GameLogDTO>>(notFound.Value);
+				ResultDTO<GameLogDTO> payloadNotFound = Assert.IsType<ResultDTO<GameLogDTO>>(notFound.Value);
 				Assert.False(payloadNotFound.success);
 				Assert.Equal(404, payloadNotFound.statusCode);
 			}

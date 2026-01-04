@@ -13,7 +13,7 @@ namespace Tests.Card.Services
     {
         private static VortexDbContext CreateDb()
         {
-            var options = new DbContextOptionsBuilder<VortexDbContext>()
+            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString())
                 .Options;
             return new VortexDbContext(options);
@@ -21,16 +21,16 @@ namespace Tests.Card.Services
 
         private static CardService CreateService(VortexDbContext db)
         {
-            var provider = new CardProvider(db);
+            CardProvider provider = new CardProvider(db);
             return new CardService(provider);
         }
 
         [Fact]
         public async Task Create_Returns400_WhenNameMissing()
         {
-            using var db = CreateDb();
-            var service = CreateService(db);
-            var input = new CardCreateDto { Name = string.Empty, Price = 1, Hp = 1, Attack = 1, Description = "d", Picture = "p" };
+            using VortexDbContext db = CreateDb();
+            CardService service = CreateService(db);
+            CardCreateDto input = new CardCreateDto { Name = string.Empty, Price = 1, Hp = 1, Attack = 1, Description = "d", Picture = "p" };
 
             ResultDTO<CardDto> result = await service.CreateAsync(input);
 
@@ -41,13 +41,13 @@ namespace Tests.Card.Services
         [Fact]
         public async Task Create_Returns409_WhenDuplicate()
         {
-            using var db = CreateDb();
+            using VortexDbContext db = CreateDb();
             db.Cards.Add(new CardModel { Id = Guid.NewGuid(), Name = "Card", Price = 1, Description = "d", Picture = "p" });
             await db.SaveChangesAsync();
-            var service = CreateService(db);
-            var input = new CardCreateDto { Name = "Card", Price = 1, Hp = 1, Attack = 1, Description = "d", Picture = "p" };
+            CardService service = CreateService(db);
+            CardCreateDto input = new CardCreateDto { Name = "Card", Price = 1, Hp = 1, Attack = 1, Description = "d", Picture = "p" };
 
-            var result = await service.CreateAsync(input);
+            ResultDTO<CardDto> result = await service.CreateAsync(input);
 
             Assert.False(result.success);
             Assert.Equal(409, result.statusCode);
@@ -56,11 +56,11 @@ namespace Tests.Card.Services
         [Fact]
         public async Task Create_Succeeds()
         {
-            using var db = CreateDb();
-            var service = CreateService(db);
-            var input = new CardCreateDto { Name = "New", Price = 1, Hp = 1, Attack = 1, Description = "d", Picture = "p" };
+            using VortexDbContext db = CreateDb();
+            CardService service = CreateService(db);
+            CardCreateDto input = new CardCreateDto { Name = "New", Price = 1, Hp = 1, Attack = 1, Description = "d", Picture = "p" };
 
-            var result = await service.CreateAsync(input);
+            ResultDTO<CardDto> result = await service.CreateAsync(input);
 
             Assert.True(result.success);
             Assert.Equal(201, result.statusCode);
@@ -70,10 +70,10 @@ namespace Tests.Card.Services
         [Fact]
         public async Task GetById_ReturnsNull_WhenMissing()
         {
-            using var db = CreateDb();
-            var service = CreateService(db);
+            using VortexDbContext db = CreateDb();
+            CardService service = CreateService(db);
 
-            var result = await service.GetByIdAsync(Guid.NewGuid());
+            ResultDTO<CardDto> result = await service.GetByIdAsync(Guid.NewGuid());
 
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
@@ -82,13 +82,13 @@ namespace Tests.Card.Services
         [Fact]
         public async Task GetById_ReturnsData()
         {
-            using var db = CreateDb();
-            var entity = new CardModel { Id = Guid.NewGuid(), Name = "Card", Price = 1, Description = "d", Picture = "p" };
+            using VortexDbContext db = CreateDb();
+            CardModel entity = new CardModel { Id = Guid.NewGuid(), Name = "Card", Price = 1, Description = "d", Picture = "p" };
             db.Cards.Add(entity);
             await db.SaveChangesAsync();
-            var service = CreateService(db);
+            CardService service = CreateService(db);
 
-            var dto = await service.GetByIdAsync(entity.Id);
+            ResultDTO<CardDto> dto = await service.GetByIdAsync(entity.Id);
 
             Assert.NotNull(dto);
             Assert.True(dto.success);

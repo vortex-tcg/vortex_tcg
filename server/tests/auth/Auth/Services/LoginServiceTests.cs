@@ -1,38 +1,23 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using VortexTCG.Auth.DTOs;
 using VortexTCG.Auth.Services;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using UserModel = VortexTCG.DataAccess.Models.User;
+using VortexTCG.Common.Services;
+using VortexTCG.Common.DTO;
+using Scrypt;
 using Xunit;
 
-namespace Tests.Auth.Services
+namespace Tests
 {
     public class LoginServiceTests
     {
-        private static VortexDbContext CreateDb()
-        {
-            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
-            return new VortexDbContext(options);
-        }
-
-        private static IConfiguration CreateConfig(bool includeSecret = true)
-        {
-            var values = new Dictionary<string, string?>();
-            if (includeSecret)
-                values["JwtSettings:SecretKey"] = "this_is_a_very_long_secret_key_value_32";
-            return new ConfigurationBuilder().AddInMemoryCollection(values!).Build();
-        }
-
         private static async Task SeedUserAsync(VortexDbContext db, string email, string password, Role role)
         {
-            var encoder = new Scrypt.ScryptEncoder();
+            ScryptEncoder encoder = new ScryptEncoder();
             string hash = encoder.Encode(password);
 
             db.Users.Add(new UserModel
@@ -53,11 +38,11 @@ namespace Tests.Auth.Services
         [Fact]
         public async Task Login_Returns400_WhenInputMissing()
         {
-            using VortexDbContext db = CreateDb();
-            IConfiguration config = CreateConfig();
-            var service = new LoginService(db, config);
+            using VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
+            LoginService service = new LoginService(db, config);
 
-            var result = await service.login(new LoginDTO { email = "", password = "" });
+            ResultDTO<LoginResponseDTO> result = await service.login(new LoginDTO { email = "", password = "" });
 
             Assert.False(result.success);
             Assert.Equal(400, result.statusCode);
@@ -66,11 +51,11 @@ namespace Tests.Auth.Services
         [Fact]
         public async Task Login_Returns401_WhenUserNotFound()
         {
-            using VortexDbContext db = CreateDb();
-            IConfiguration config = CreateConfig();
-            var service = new LoginService(db, config);
+            using VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
+            LoginService service = new LoginService(db, config);
 
-            var result = await service.login(new LoginDTO { email = "missing@example.com", password = "P@ssw0rd1!" });
+            ResultDTO<LoginResponseDTO> result = await service.login(new LoginDTO { email = "missing@example.com", password = "P@ssw0rd1!" });
 
             Assert.False(result.success);
             Assert.Equal(401, result.statusCode);
@@ -79,12 +64,12 @@ namespace Tests.Auth.Services
         [Fact]
         public async Task Login_Returns401_WhenPasswordIncorrect()
         {
-            using VortexDbContext db = CreateDb();
-            IConfiguration config = CreateConfig();
+            using VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
             await SeedUserAsync(db, "user@example.com", "CorrectPassword1!", Role.USER);
-            var service = new LoginService(db, config);
+            LoginService service = new LoginService(db, config);
 
-            var result = await service.login(new LoginDTO { email = "user@example.com", password = "WrongPass1!" });
+            ResultDTO<LoginResponseDTO> result = await service.login(new LoginDTO { email = "user@example.com", password = "WrongPass1!" });
 
             Assert.False(result.success);
             Assert.Equal(401, result.statusCode);
@@ -93,12 +78,12 @@ namespace Tests.Auth.Services
         [Fact]
         public async Task Login_Returns200_WithToken_WhenCredentialsValid()
         {
-            using VortexDbContext db = CreateDb();
-            IConfiguration config = CreateConfig();
+            using VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
             await SeedUserAsync(db, "admin@example.com", "CorrectPassword1!", Role.ADMIN);
-            var service = new LoginService(db, config);
+            LoginService service = new LoginService(db, config);
 
-            var result = await service.login(new LoginDTO { email = "admin@example.com", password = "CorrectPassword1!" });
+            ResultDTO<LoginResponseDTO> result = await service.login(new LoginDTO { email = "admin@example.com", password = "CorrectPassword1!" });
 
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
@@ -110,10 +95,10 @@ namespace Tests.Auth.Services
         [Fact]
         public async Task Login_Throws_WhenSecretKeyMissing()
         {
-            using VortexDbContext db = CreateDb();
-            IConfiguration config = CreateConfig(includeSecret: false);
+            using VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
+            IConfiguration config = new ConfigurationBuilder().AddInMemoryCollection().Build();
             await SeedUserAsync(db, "user2@example.com", "CorrectPassword1!", Role.USER);
-            var service = new LoginService(db, config);
+            LoginService service = new LoginService(db, config);
 
             await Assert.ThrowsAsync<InvalidOperationException>(() => service.login(new LoginDTO
             {

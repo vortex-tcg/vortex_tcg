@@ -14,28 +14,28 @@ namespace Tests.User.Services
     {
         private static VortexDbContext CreateDb()
         {
-            var options = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
+            DbContextOptionsBuilder<VortexDbContext> optionsBuilder = new DbContextOptionsBuilder<VortexDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString());
+            DbContextOptions<VortexDbContext> options = optionsBuilder.Options;
             return new VortexDbContext(options);
         }
 
         private static UserService CreateService(VortexDbContext db)
         {
-            var provider = new UserProvider(db);
+            UserProvider provider = new UserProvider(db);
             return new UserService(provider);
         }
 
         [Fact]
         public async Task Create_Returns409_WhenUsernameExists()
         {
-            using var db = CreateDb();
+            using VortexDbContext db = CreateDb();
             db.Users.Add(new UserModel { Id = Guid.NewGuid(), FirstName = "f", LastName = "l", Username = "taken", Password = "x", Email = "a@b.c", Language = "en", Role = Role.USER, Status = UserStatus.DISCONNECTED });
             await db.SaveChangesAsync();
-            var service = CreateService(db);
-            var input = new UserCreateDTO { FirstName = "f", LastName = "l", Username = "taken", Password = "pwd", Email = "a@b.c", Language = "en", Role = Role.USER, Status = UserStatus.DISCONNECTED };
+            UserService service = CreateService(db);
+            UserCreateDTO input = new UserCreateDTO { FirstName = "f", LastName = "l", Username = "taken", Password = "pwd", Email = "a@b.c", Language = "en", Role = Role.USER, Status = UserStatus.DISCONNECTED };
 
-            var result = await service.CreateAsync(input);
+            ResultDTO<UserDTO> result = await service.CreateAsync(input);
 
             Assert.False(result.success);
             Assert.Equal(409, result.statusCode);
@@ -44,11 +44,11 @@ namespace Tests.User.Services
         [Fact]
         public async Task Create_Succeeds()
         {
-            using var db = CreateDb();
-            var service = CreateService(db);
-            var input = new UserCreateDTO { FirstName = "f", LastName = "l", Username = "john", Password = "pwd", Email = "j@e.com", Language = "en", Role = Role.USER, Status = UserStatus.DISCONNECTED };
+            using VortexDbContext db = CreateDb();
+            UserService service = CreateService(db);
+            UserCreateDTO input = new UserCreateDTO { FirstName = "f", LastName = "l", Username = "john", Password = "pwd", Email = "j@e.com", Language = "en", Role = Role.USER, Status = UserStatus.DISCONNECTED };
 
-            var result = await service.CreateAsync(input);
+            ResultDTO<UserDTO> result = await service.CreateAsync(input);
 
             Assert.True(result.success);
             Assert.Equal(201, result.statusCode);
@@ -58,11 +58,11 @@ namespace Tests.User.Services
         [Fact]
         public async Task GetAll_ReturnsItems()
         {
-            using var db = CreateDb();
+            using VortexDbContext db = CreateDb();
             db.Users.Add(new UserModel { Id = Guid.NewGuid(), FirstName = "f", LastName = "l", Username = "a", Password = "x", Email = "a@a", Language = "en", Role = Role.USER, Status = UserStatus.DISCONNECTED });
             db.Users.Add(new UserModel { Id = Guid.NewGuid(), FirstName = "f2", LastName = "l2", Username = "b", Password = "y", Email = "b@b", Language = "en", Role = Role.USER, Status = UserStatus.DISCONNECTED });
             await db.SaveChangesAsync();
-            var service = CreateService(db);
+            UserService service = CreateService(db);
 
             ResultDTO<UserDTO[]> result = await service.GetAllAsync();
 
@@ -73,11 +73,11 @@ namespace Tests.User.Services
         [Fact]
         public async Task Update_Returns404_WhenMissing()
         {
-            using var db = CreateDb();
-            var service = CreateService(db);
-            var input = new UserCreateDTO { FirstName = "f", LastName = "l", Username = "x", Password = "y", Email = "z", Language = "en", Role = Role.USER, Status = UserStatus.DISCONNECTED };
+            using VortexDbContext db = CreateDb();
+            UserService service = CreateService(db);
+            UserCreateDTO input = new UserCreateDTO { FirstName = "f", LastName = "l", Username = "x", Password = "y", Email = "z", Language = "en", Role = Role.USER, Status = UserStatus.DISCONNECTED };
 
-            var result = await service.UpdateAsync(Guid.NewGuid(), input);
+            ResultDTO<UserDTO> result = await service.UpdateAsync(Guid.NewGuid(), input);
 
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
@@ -86,14 +86,14 @@ namespace Tests.User.Services
         [Fact]
         public async Task Update_Succeeds()
         {
-            using var db = CreateDb();
-            var entity = new UserModel { Id = Guid.NewGuid(), FirstName = "f", LastName = "l", Username = "old", Password = "p", Email = "o@o", Language = "en", Role = Role.USER, Status = UserStatus.DISCONNECTED };
+            using VortexDbContext db = CreateDb();
+            UserModel entity = new UserModel { Id = Guid.NewGuid(), FirstName = "f", LastName = "l", Username = "old", Password = "p", Email = "o@o", Language = "en", Role = Role.USER, Status = UserStatus.DISCONNECTED };
             db.Users.Add(entity);
             await db.SaveChangesAsync();
-            var service = CreateService(db);
-            var input = new UserCreateDTO { FirstName = "fn", LastName = "ln", Username = "new", Password = "np", Email = "n@n", Language = "fr", Role = Role.USER, Status = UserStatus.CONNECTED };
+            UserService service = CreateService(db);
+            UserCreateDTO input = new UserCreateDTO { FirstName = "fn", LastName = "ln", Username = "new", Password = "np", Email = "n@n", Language = "fr", Role = Role.USER, Status = UserStatus.CONNECTED };
 
-            var result = await service.UpdateAsync(entity.Id, input);
+            ResultDTO<UserDTO> result = await service.UpdateAsync(entity.Id, input);
 
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
@@ -103,10 +103,10 @@ namespace Tests.User.Services
         [Fact]
         public async Task Delete_Returns404_WhenMissing()
         {
-            using var db = CreateDb();
-            var service = CreateService(db);
+            using VortexDbContext db = CreateDb();
+            UserService service = CreateService(db);
 
-            var result = await service.DeleteAsync(Guid.NewGuid());
+            ResultDTO<object> result = await service.DeleteAsync(Guid.NewGuid());
 
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
@@ -115,13 +115,13 @@ namespace Tests.User.Services
         [Fact]
         public async Task Delete_Succeeds()
         {
-            using var db = CreateDb();
-            var entity = new UserModel { Id = Guid.NewGuid(), FirstName = "f", LastName = "l", Username = "old", Password = "p", Email = "o@o", Language = "en", Role = Role.USER, Status = UserStatus.DISCONNECTED };
+            using VortexDbContext db = CreateDb();
+            UserModel entity = new UserModel { Id = Guid.NewGuid(), FirstName = "f", LastName = "l", Username = "old", Password = "p", Email = "o@o", Language = "en", Role = Role.USER, Status = UserStatus.DISCONNECTED };
             db.Users.Add(entity);
             await db.SaveChangesAsync();
-            var service = CreateService(db);
+            UserService service = CreateService(db);
 
-            var result = await service.DeleteAsync(entity.Id);
+            ResultDTO<object> result = await service.DeleteAsync(entity.Id);
 
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);

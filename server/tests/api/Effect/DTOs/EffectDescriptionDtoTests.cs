@@ -8,7 +8,7 @@ namespace VortexTCG.Tests.Api.Effect.DTOs
         [Fact]
         public void EffectDescriptionInputDto_CanSetAndGetProperties()
         {
-            var dto = new EffectDescriptionInputDto
+            EffectDescriptionInputDto dto = new EffectDescriptionInputDto
             {
                 Label = "Test Label",
                 Description = "Test Description",
@@ -23,7 +23,7 @@ namespace VortexTCG.Tests.Api.Effect.DTOs
         [Fact]
         public void EffectDescriptionInputDto_Parameter_CanBeNull()
         {
-            var dto = new EffectDescriptionInputDto
+            EffectDescriptionInputDto dto = new EffectDescriptionInputDto
             {
                 Label = "Test",
                 Description = "Desc",
@@ -36,7 +36,7 @@ namespace VortexTCG.Tests.Api.Effect.DTOs
         [Fact]
         public void EffectDescriptionInputDto_InitializedWithDefaults()
         {
-            var dto = new EffectDescriptionInputDto();
+            EffectDescriptionInputDto dto = new EffectDescriptionInputDto();
 
             Assert.Equal("", dto.Label);
             Assert.Equal("", dto.Description);
@@ -46,8 +46,8 @@ namespace VortexTCG.Tests.Api.Effect.DTOs
         [Fact]
         public void EffectDescriptionDto_CanSetAndGetProperties()
         {
-            var id = Guid.NewGuid();
-            var dto = new EffectDescriptionDto
+            Guid id = Guid.NewGuid();
+            EffectDescriptionDto dto = new EffectDescriptionDto
             {
                 Id = id,
                 Label = "Effect Label",
@@ -64,7 +64,7 @@ namespace VortexTCG.Tests.Api.Effect.DTOs
         [Fact]
         public void EffectDescriptionDto_Parameter_CanBeNull()
         {
-            var dto = new EffectDescriptionDto
+            EffectDescriptionDto dto = new EffectDescriptionDto
             {
                 Id = Guid.NewGuid(),
                 Label = "Test",
@@ -78,8 +78,8 @@ namespace VortexTCG.Tests.Api.Effect.DTOs
         [Fact]
         public void EffectDescriptionDto_AllPropertiesAreIndependent()
         {
-            var dto1 = new EffectDescriptionDto { Id = Guid.NewGuid(), Label = "Label1", Description = "Desc1" };
-            var dto2 = new EffectDescriptionDto { Id = Guid.NewGuid(), Label = "Label2", Description = "Desc2" };
+            EffectDescriptionDto dto1 = new EffectDescriptionDto { Id = Guid.NewGuid(), Label = "Label1", Description = "Desc1" };
+            EffectDescriptionDto dto2 = new EffectDescriptionDto { Id = Guid.NewGuid(), Label = "Label2", Description = "Desc2" };
 
             Assert.NotEqual(dto1.Id, dto2.Id);
             Assert.NotEqual(dto1.Label, dto2.Label);

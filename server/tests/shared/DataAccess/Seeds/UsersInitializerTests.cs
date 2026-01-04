@@ -26,14 +26,14 @@ namespace VortexTCG.Tests.DataAccess.Seeds
 
             seeder.Seed();
 
-            var users = db.Users.ToList();
+            System.Collections.Generic.List<User> users = db.Users.ToList();
             Assert.Equal(2, users.Count);
 
-            var john = users.Single(u => u.Username == "Superman");
+            User john = users.Single(u => u.Username == "Superman");
             Assert.Equal(Role.USER, john.Role);
             Assert.NotEqual("Password123", john.Password); // password must be hashed
 
-            var jane = users.Single(u => u.Username == "Batman");
+            User jane = users.Single(u => u.Username == "Batman");
             Assert.Equal("jane.doe@email.com", jane.Email);
             Assert.NotEqual("Password456", jane.Password);
         }

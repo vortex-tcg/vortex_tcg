@@ -24,17 +24,17 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task List_Returns_Success_With_Mapped_Entities()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectTypeProvider(db);
-            var service = new EffectTypeService(provider);
+            EffectTypeProvider provider = new EffectTypeProvider(db);
+            EffectTypeService service = new EffectTypeService(provider);
 
-            var id = Guid.NewGuid();
+            Guid id = Guid.NewGuid();
             await provider.addAsync(new EffectType
             {
                 Id = id,
                 Label = "Burn"
             });
 
-            var result = await service.listAsync();
+            ResultDTO<List<EffectTypeDto>> result = await service.listAsync();
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
             Assert.NotNull(result.data);
@@ -47,17 +47,17 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Get_Returns_Success_When_Found()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectTypeProvider(db);
-            var service = new EffectTypeService(provider);
+            EffectTypeProvider provider = new EffectTypeProvider(db);
+            EffectTypeService service = new EffectTypeService(provider);
 
-            var id = Guid.NewGuid();
+            Guid id = Guid.NewGuid();
             await provider.addAsync(new EffectType
             {
                 Id = id,
                 Label = "Poison"
             });
 
-            var result = await service.getAsync(id);
+            ResultDTO<EffectTypeDto> result = await service.getAsync(id);
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
             Assert.NotNull(result.data);
@@ -68,10 +68,10 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Get_Returns_404_When_Not_Found()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectTypeProvider(db);
-            var service = new EffectTypeService(provider);
+            EffectTypeProvider provider = new EffectTypeProvider(db);
+            EffectTypeService service = new EffectTypeService(provider);
 
-            var result = await service.getAsync(Guid.NewGuid());
+            ResultDTO<EffectTypeDto> result = await service.getAsync(Guid.NewGuid());
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
         }
@@ -80,12 +80,12 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Create_Returns_Success_With_New_Entity()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectTypeProvider(db);
-            var service = new EffectTypeService(provider);
+            EffectTypeProvider provider = new EffectTypeProvider(db);
+            EffectTypeService service = new EffectTypeService(provider);
 
-            var dto = new EffectTypeCreateDto { Label = "  Freeze  " };
+            EffectTypeCreateDto dto = new EffectTypeCreateDto { Label = "  Freeze  " };
 
-            var result = await service.createAsync(dto);
+            ResultDTO<EffectTypeDto> result = await service.createAsync(dto);
             Assert.True(result.success);
             Assert.Equal(201, result.statusCode);
             Assert.NotNull(result.data);
@@ -96,12 +96,12 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Create_Returns_400_When_Label_Missing()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectTypeProvider(db);
-            var service = new EffectTypeService(provider);
+            EffectTypeProvider provider = new EffectTypeProvider(db);
+            EffectTypeService service = new EffectTypeService(provider);
 
-            var dto = new EffectTypeCreateDto { Label = "   " };
+            EffectTypeCreateDto dto = new EffectTypeCreateDto { Label = "   " };
 
-            var result = await service.createAsync(dto);
+            ResultDTO<EffectTypeDto> result = await service.createAsync(dto);
             Assert.False(result.success);
             Assert.Equal(400, result.statusCode);
             Assert.Contains("Label", result.message!);
@@ -111,8 +111,8 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Create_Returns_409_When_Label_Already_Exists()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectTypeProvider(db);
-            var service = new EffectTypeService(provider);
+            EffectTypeProvider provider = new EffectTypeProvider(db);
+            EffectTypeService service = new EffectTypeService(provider);
 
             await provider.addAsync(new EffectType
             {
@@ -120,9 +120,9 @@ namespace VortexTCG.Tests.Api.Effect.Services
                 Label = "Duplicate"
             });
 
-            var dto = new EffectTypeCreateDto { Label = "Duplicate" };
+            EffectTypeCreateDto dto = new EffectTypeCreateDto { Label = "Duplicate" };
 
-            var result = await service.createAsync(dto);
+            ResultDTO<EffectTypeDto> result = await service.createAsync(dto);
             Assert.False(result.success);
             Assert.Equal(409, result.statusCode);
             Assert.Contains("label existe déjà", result.message!);
@@ -132,11 +132,11 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Update_Returns_Success_With_Modified_Entity()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectTypeProvider(db);
-            var service = new EffectTypeService(provider);
+            EffectTypeProvider provider = new EffectTypeProvider(db);
+            EffectTypeService service = new EffectTypeService(provider);
 
-            var id = Guid.NewGuid();
-            var entity = new EffectType
+            Guid id = Guid.NewGuid();
+            EffectType entity = new EffectType
             {
                 Id = id,
                 Label = "OldLabel"
@@ -147,9 +147,9 @@ namespace VortexTCG.Tests.Api.Effect.Services
             // Clear tracking to simulate fresh provider call
             db.ChangeTracker.Clear();
 
-            var dto = new EffectTypeUpdateDto { Label = "NewLabel" };
+            EffectTypeUpdateDto dto = new EffectTypeUpdateDto { Label = "NewLabel" };
 
-            var result = await service.updateAsync(id, dto);
+            ResultDTO<EffectTypeDto> result = await service.updateAsync(id, dto);
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
             Assert.Equal("NewLabel", result.data!.Label);
@@ -159,12 +159,12 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Update_Returns_404_When_Not_Found()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectTypeProvider(db);
-            var service = new EffectTypeService(provider);
+            EffectTypeProvider provider = new EffectTypeProvider(db);
+            EffectTypeService service = new EffectTypeService(provider);
 
-            var dto = new EffectTypeUpdateDto { Label = "SomeName" };
+            EffectTypeUpdateDto dto = new EffectTypeUpdateDto { Label = "SomeName" };
 
-            var result = await service.updateAsync(Guid.NewGuid(), dto);
+            ResultDTO<EffectTypeDto> result = await service.updateAsync(Guid.NewGuid(), dto);
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
         }
@@ -173,19 +173,19 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Update_Returns_400_When_Label_Invalid()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectTypeProvider(db);
-            var service = new EffectTypeService(provider);
+            EffectTypeProvider provider = new EffectTypeProvider(db);
+            EffectTypeService service = new EffectTypeService(provider);
 
-            var id = Guid.NewGuid();
+            Guid id = Guid.NewGuid();
             await provider.addAsync(new EffectType
             {
                 Id = id,
                 Label = "Original"
             });
 
-            var dto = new EffectTypeUpdateDto { Label = "   " };
+            EffectTypeUpdateDto dto = new EffectTypeUpdateDto { Label = "   " };
 
-            var result = await service.updateAsync(id, dto);
+            ResultDTO<EffectTypeDto> result = await service.updateAsync(id, dto);
             Assert.False(result.success);
             Assert.Equal(400, result.statusCode);
         }
@@ -194,11 +194,11 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Update_Returns_409_When_New_Label_Already_Exists()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectTypeProvider(db);
-            var service = new EffectTypeService(provider);
+            EffectTypeProvider provider = new EffectTypeProvider(db);
+            EffectTypeService service = new EffectTypeService(provider);
 
-            var id1 = Guid.NewGuid();
-            var id2 = Guid.NewGuid();
+            Guid id1 = Guid.NewGuid();
+            Guid id2 = Guid.NewGuid();
 
             await provider.addAsync(new EffectType
             {
@@ -212,9 +212,9 @@ namespace VortexTCG.Tests.Api.Effect.Services
                 Label = "Second"
             });
 
-            var dto = new EffectTypeUpdateDto { Label = "First" };
+            EffectTypeUpdateDto dto = new EffectTypeUpdateDto { Label = "First" };
 
-            var result = await service.updateAsync(id2, dto);
+            ResultDTO<EffectTypeDto> result = await service.updateAsync(id2, dto);
             Assert.False(result.success);
             Assert.Equal(409, result.statusCode);
         }
@@ -223,11 +223,11 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Update_Allows_Same_Label_When_Updating_Same_Record()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectTypeProvider(db);
-            var service = new EffectTypeService(provider);
+            EffectTypeProvider provider = new EffectTypeProvider(db);
+            EffectTypeService service = new EffectTypeService(provider);
 
-            var id = Guid.NewGuid();
-            var entity = new EffectType
+            Guid id = Guid.NewGuid();
+            EffectType entity = new EffectType
             {
                 Id = id,
                 Label = "SameName"
@@ -238,9 +238,9 @@ namespace VortexTCG.Tests.Api.Effect.Services
             // Clear tracking to simulate fresh provider call
             db.ChangeTracker.Clear();
 
-            var dto = new EffectTypeUpdateDto { Label = "SameName" };
+            EffectTypeUpdateDto dto = new EffectTypeUpdateDto { Label = "SameName" };
 
-            var result = await service.updateAsync(id, dto);
+            ResultDTO<EffectTypeDto> result = await service.updateAsync(id, dto);
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
         }
@@ -249,17 +249,17 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Delete_Returns_Success_When_Found()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectTypeProvider(db);
-            var service = new EffectTypeService(provider);
+            EffectTypeProvider provider = new EffectTypeProvider(db);
+            EffectTypeService service = new EffectTypeService(provider);
 
-            var id = Guid.NewGuid();
+            Guid id = Guid.NewGuid();
             await provider.addAsync(new EffectType
             {
                 Id = id,
                 Label = "ToDelete"
             });
 
-            var result = await service.deleteAsync(id);
+            ResultDTO<bool> result = await service.deleteAsync(id);
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
             Assert.True(result.data);
@@ -269,10 +269,10 @@ namespace VortexTCG.Tests.Api.Effect.Services
         public async Task Delete_Returns_404_When_Not_Found()
         {
             using VortexDbContext db = CreateDb();
-            var provider = new EffectTypeProvider(db);
-            var service = new EffectTypeService(provider);
+            EffectTypeProvider provider = new EffectTypeProvider(db);
+            EffectTypeService service = new EffectTypeService(provider);
 
-            var result = await service.deleteAsync(Guid.NewGuid());
+            ResultDTO<bool> result = await service.deleteAsync(Guid.NewGuid());
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
         }

@@ -15,7 +15,7 @@ namespace Tests.Logs.ActionType.Services
     {
         private static VortexDbContext CreateDb()
         {
-            var options = new DbContextOptionsBuilder<VortexDbContext>()
+            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString())
                 .Options;
             return new VortexDbContext(options);
@@ -23,18 +23,18 @@ namespace Tests.Logs.ActionType.Services
 
         private static ActionTypeService CreateService(VortexDbContext db)
         {
-            var provider = new ActionTypeProvider(db);
+            ActionTypeProvider provider = new ActionTypeProvider(db);
             return new ActionTypeService(provider);
         }
 
         [Fact]
         public async Task GetAll_ReturnsData()
         {
-            using var db = CreateDb();
+            using VortexDbContext db = CreateDb();
             db.Actions.Add(new ActionTypeModel { Id = Guid.NewGuid(), actionDescription = "A1" });
             db.Actions.Add(new ActionTypeModel { Id = Guid.NewGuid(), actionDescription = "A2" });
             await db.SaveChangesAsync();
-            var service = CreateService(db);
+            ActionTypeService service = CreateService(db);
 
             ResultDTO<ActionTypeDTO[]> result = await service.GetAllAsync();
 
@@ -45,10 +45,10 @@ namespace Tests.Logs.ActionType.Services
         [Fact]
         public async Task GetById_ReturnsNull_WhenMissing()
         {
-            using var db = CreateDb();
-            var service = CreateService(db);
+            using VortexDbContext db = CreateDb();
+            ActionTypeService service = CreateService(db);
 
-            var dto = await service.GetByIdAsync(Guid.NewGuid());
+            ActionTypeDTO? dto = await service.GetByIdAsync(Guid.NewGuid());
 
             Assert.Null(dto);
         }
@@ -56,14 +56,14 @@ namespace Tests.Logs.ActionType.Services
         [Fact]
         public async Task Create_ReturnsCreatedDto()
         {
-            using var db = CreateDb();
-            var gamelogId = Guid.NewGuid();
+            using VortexDbContext db = CreateDb();
+            Guid gamelogId = Guid.NewGuid();
             db.Gamelogs.Add(new GamelogModel { Id = gamelogId, Label = "log", TurnNumber = 1 });
             await db.SaveChangesAsync();
-            var service = CreateService(db);
-            var input = new ActionTypeCreateDTO { ActionDescription = "New", GameLogId = gamelogId, ParentId = null };
+            ActionTypeService service = CreateService(db);
+            ActionTypeCreateDTO input = new ActionTypeCreateDTO { ActionDescription = "New", GameLogId = gamelogId, ParentId = null };
 
-            var result = await service.CreateAsync(input);
+            ResultDTO<ActionTypeDTO> result = await service.CreateAsync(input);
 
             Assert.True(result.success);
             Assert.Equal(201, result.statusCode);
@@ -74,11 +74,11 @@ namespace Tests.Logs.ActionType.Services
         [Fact]
         public async Task Update_Returns404_WhenMissing()
         {
-            using var db = CreateDb();
-            var service = CreateService(db);
-            var input = new ActionTypeCreateDTO { ActionDescription = "Upd", GameLogId = Guid.NewGuid(), ParentId = null };
+            using VortexDbContext db = CreateDb();
+            ActionTypeService service = CreateService(db);
+            ActionTypeCreateDTO input = new ActionTypeCreateDTO { ActionDescription = "Upd", GameLogId = Guid.NewGuid(), ParentId = null };
 
-            var result = await service.UpdateAsync(Guid.NewGuid(), input);
+            ResultDTO<ActionTypeDTO> result = await service.UpdateAsync(Guid.NewGuid(), input);
 
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
@@ -87,19 +87,19 @@ namespace Tests.Logs.ActionType.Services
         [Fact]
         public async Task Update_Succeeds()
         {
-            using var db = CreateDb();
-            var gamelogId = Guid.NewGuid();
+            using VortexDbContext db = CreateDb();
+            Guid gamelogId = Guid.NewGuid();
             db.Gamelogs.Add(new GamelogModel { Id = gamelogId, Label = "log", TurnNumber = 1 });
-            var parentId = Guid.NewGuid();
-            var parent = new ActionTypeModel { Id = parentId, actionDescription = "Parent", GameLogId = gamelogId, ParentId = parentId };
-            var childId = Guid.NewGuid();
-            var child = new ActionTypeModel { Id = childId, actionDescription = "Old", GameLogId = gamelogId, ParentId = parentId };
+            Guid parentId = Guid.NewGuid();
+            ActionTypeModel parent = new ActionTypeModel { Id = parentId, actionDescription = "Parent", GameLogId = gamelogId, ParentId = parentId };
+            Guid childId = Guid.NewGuid();
+            ActionTypeModel child = new ActionTypeModel { Id = childId, actionDescription = "Old", GameLogId = gamelogId, ParentId = parentId };
             db.Actions.AddRange(parent, child);
             await db.SaveChangesAsync();
-            var service = CreateService(db);
-            var input = new ActionTypeCreateDTO { ActionDescription = "New", GameLogId = gamelogId, ParentId = null };
+            ActionTypeService service = CreateService(db);
+            ActionTypeCreateDTO input = new ActionTypeCreateDTO { ActionDescription = "New", GameLogId = gamelogId, ParentId = null };
 
-            var result = await service.UpdateAsync(childId, input);
+            ResultDTO<ActionTypeDTO> result = await service.UpdateAsync(childId, input);
 
             Assert.Equal(200, result.statusCode);
             Assert.True(result.success);
@@ -109,10 +109,10 @@ namespace Tests.Logs.ActionType.Services
         [Fact]
         public async Task Delete_Returns404_WhenMissing()
         {
-            using var db = CreateDb();
-            var service = CreateService(db);
+            using VortexDbContext db = CreateDb();
+            ActionTypeService service = CreateService(db);
 
-            var result = await service.DeleteAsync(Guid.NewGuid());
+            ResultDTO<object> result = await service.DeleteAsync(Guid.NewGuid());
 
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
@@ -121,18 +121,18 @@ namespace Tests.Logs.ActionType.Services
         [Fact]
         public async Task Delete_Succeeds()
         {
-            using var db = CreateDb();
-            var gamelogId = Guid.NewGuid();
+            using VortexDbContext db = CreateDb();
+            Guid gamelogId = Guid.NewGuid();
             db.Gamelogs.Add(new GamelogModel { Id = gamelogId, Label = "log", TurnNumber = 1 });
-            var parentId = Guid.NewGuid();
-            var parent = new ActionTypeModel { Id = parentId, actionDescription = "Parent", GameLogId = gamelogId, ParentId = parentId };
-            var childId = Guid.NewGuid();
-            var child = new ActionTypeModel { Id = childId, actionDescription = "Del", GameLogId = gamelogId, ParentId = parentId };
+            Guid parentId = Guid.NewGuid();
+            ActionTypeModel parent = new ActionTypeModel { Id = parentId, actionDescription = "Parent", GameLogId = gamelogId, ParentId = parentId };
+            Guid childId = Guid.NewGuid();
+            ActionTypeModel child = new ActionTypeModel { Id = childId, actionDescription = "Del", GameLogId = gamelogId, ParentId = parentId };
             db.Actions.AddRange(parent, child);
             await db.SaveChangesAsync();
-            var service = CreateService(db);
+            ActionTypeService service = CreateService(db);
 
-            var result = await service.DeleteAsync(childId);
+            ResultDTO<object> result = await service.DeleteAsync(childId);
 
             Assert.Equal(200, result.statusCode);
             Assert.True(result.success);

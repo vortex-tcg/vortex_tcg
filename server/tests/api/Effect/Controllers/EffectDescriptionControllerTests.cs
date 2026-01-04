@@ -18,16 +18,16 @@ namespace VortexTCG.Tests.Api.Effect.Controllers
         private static (EffectDescriptionController, VortexDbContext) CreateControllerWithDb()
         {
             VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
-            var provider = new EffectDescriptionProvider(db);
-            var service = new EffectDescriptionService(provider);
-            var controller = new EffectDescriptionController(service);
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
+            EffectDescriptionController controller = new EffectDescriptionController(service);
             return (controller, db);
         }
 
         [Fact]
         public async Task List_Returns_200_With_Results()
         {
-            var (controller, db) = CreateControllerWithDb();
+            (EffectDescriptionController controller, VortexDbContext db) = CreateControllerWithDb();
 
             await db.EffectDescriptions.AddAsync(new EffectDescription
             {
@@ -38,11 +38,11 @@ namespace VortexTCG.Tests.Api.Effect.Controllers
             });
             await db.SaveChangesAsync();
 
-            var result = await controller.list(CancellationToken.None);
-            var okResult = Assert.IsType<ObjectResult>(result);
+            IActionResult result = await controller.list(CancellationToken.None);
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(200, okResult.StatusCode);
 
-            var dto = Assert.IsType<ResultDTO<List<EffectDescriptionDto>>>(okResult.Value);
+            ResultDTO<List<EffectDescriptionDto>> dto = Assert.IsType<ResultDTO<List<EffectDescriptionDto>>>(okResult.Value);
             Assert.True(dto.success);
             Assert.Single(dto.data!);
         }
@@ -50,13 +50,13 @@ namespace VortexTCG.Tests.Api.Effect.Controllers
         [Fact]
         public async Task List_Returns_Empty_When_No_Data()
         {
-            var (controller, db) = CreateControllerWithDb();
+            (EffectDescriptionController controller, VortexDbContext db) = CreateControllerWithDb();
 
-            var result = await controller.list(CancellationToken.None);
-            var okResult = Assert.IsType<ObjectResult>(result);
+            IActionResult result = await controller.list(CancellationToken.None);
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(200, okResult.StatusCode);
 
-            var dto = Assert.IsType<ResultDTO<List<EffectDescriptionDto>>>(okResult.Value);
+            ResultDTO<List<EffectDescriptionDto>> dto = Assert.IsType<ResultDTO<List<EffectDescriptionDto>>>(okResult.Value);
             Assert.True(dto.success);
             Assert.Empty(dto.data!);
         }
@@ -64,8 +64,8 @@ namespace VortexTCG.Tests.Api.Effect.Controllers
         [Fact]
         public async Task Get_Returns_200_When_Found()
         {
-            var (controller, db) = CreateControllerWithDb();
-            var id = Guid.NewGuid();
+            (EffectDescriptionController controller, VortexDbContext db) = CreateControllerWithDb();
+            Guid id = Guid.NewGuid();
 
             await db.EffectDescriptions.AddAsync(new EffectDescription
             {
@@ -76,11 +76,11 @@ namespace VortexTCG.Tests.Api.Effect.Controllers
             });
             await db.SaveChangesAsync();
 
-            var result = await controller.get(id, CancellationToken.None);
-            var okResult = Assert.IsType<ObjectResult>(result);
+            IActionResult result = await controller.get(id, CancellationToken.None);
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(200, okResult.StatusCode);
 
-            var dto = Assert.IsType<ResultDTO<EffectDescriptionDto>>(okResult.Value);
+            ResultDTO<EffectDescriptionDto> dto = Assert.IsType<ResultDTO<EffectDescriptionDto>>(okResult.Value);
             Assert.True(dto.success);
             Assert.Equal(id, dto.data!.Id);
         }
@@ -88,33 +88,33 @@ namespace VortexTCG.Tests.Api.Effect.Controllers
         [Fact]
         public async Task Get_Returns_404_When_Not_Found()
         {
-            var (controller, db) = CreateControllerWithDb();
+            (EffectDescriptionController controller, VortexDbContext db) = CreateControllerWithDb();
 
-            var result = await controller.get(Guid.NewGuid(), CancellationToken.None);
-            var okResult = Assert.IsType<ObjectResult>(result);
+            IActionResult result = await controller.get(Guid.NewGuid(), CancellationToken.None);
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(404, okResult.StatusCode);
 
-            var dto = Assert.IsType<ResultDTO<EffectDescriptionDto>>(okResult.Value);
+            ResultDTO<EffectDescriptionDto> dto = Assert.IsType<ResultDTO<EffectDescriptionDto>>(okResult.Value);
             Assert.False(dto.success);
         }
 
         [Fact]
         public async Task Create_Returns_201_With_New_Entity()
         {
-            var (controller, db) = CreateControllerWithDb();
+            (EffectDescriptionController controller, VortexDbContext db) = CreateControllerWithDb();
 
-            var createDto = new EffectDescriptionInputDto
+            EffectDescriptionInputDto createDto = new EffectDescriptionInputDto
             {
                 Label = "NewEffect",
                 Description = "Effect description",
                 Parameter = "5"
             };
 
-            var result = await controller.create(createDto, CancellationToken.None);
-            var createdResult = Assert.IsType<ObjectResult>(result);
+            IActionResult result = await controller.create(createDto, CancellationToken.None);
+            ObjectResult createdResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(201, createdResult.StatusCode);
 
-            var dto = Assert.IsType<ResultDTO<EffectDescriptionDto>>(createdResult.Value);
+            ResultDTO<EffectDescriptionDto> dto = Assert.IsType<ResultDTO<EffectDescriptionDto>>(createdResult.Value);
             Assert.True(dto.success);
             Assert.NotNull(dto.data);
             Assert.Equal("NewEffect", dto.data.Label);
@@ -123,27 +123,27 @@ namespace VortexTCG.Tests.Api.Effect.Controllers
         [Fact]
         public async Task Create_Returns_400_For_Invalid_Input()
         {
-            var (controller, db) = CreateControllerWithDb();
+            (EffectDescriptionController controller, VortexDbContext db) = CreateControllerWithDb();
 
-            var createDto = new EffectDescriptionInputDto
+            EffectDescriptionInputDto createDto = new EffectDescriptionInputDto
             {
                 Label = "  ",
                 Description = "Effect description",
                 Parameter = null
             };
 
-            var result = await controller.create(createDto, CancellationToken.None);
-            var okResult = Assert.IsType<ObjectResult>(result);
+            IActionResult result = await controller.create(createDto, CancellationToken.None);
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(400, okResult.StatusCode);
 
-            var dto = Assert.IsType<ResultDTO<EffectDescriptionDto>>(okResult.Value);
+            ResultDTO<EffectDescriptionDto> dto = Assert.IsType<ResultDTO<EffectDescriptionDto>>(okResult.Value);
             Assert.False(dto.success);
         }
 
         [Fact]
         public async Task Create_Returns_409_For_Duplicate_Label()
         {
-            var (controller, db) = CreateControllerWithDb();
+            (EffectDescriptionController controller, VortexDbContext db) = CreateControllerWithDb();
 
             await db.EffectDescriptions.AddAsync(new EffectDescription
             {
@@ -154,28 +154,28 @@ namespace VortexTCG.Tests.Api.Effect.Controllers
             });
             await db.SaveChangesAsync();
 
-            var createDto = new EffectDescriptionInputDto
+            EffectDescriptionInputDto createDto = new EffectDescriptionInputDto
             {
                 Label = "Existing",
                 Description = "New desc",
                 Parameter = null
             };
 
-            var result = await controller.create(createDto, CancellationToken.None);
-            var okResult = Assert.IsType<ObjectResult>(result);
+            IActionResult result = await controller.create(createDto, CancellationToken.None);
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(409, okResult.StatusCode);
 
-            var dto = Assert.IsType<ResultDTO<EffectDescriptionDto>>(okResult.Value);
+            ResultDTO<EffectDescriptionDto> dto = Assert.IsType<ResultDTO<EffectDescriptionDto>>(okResult.Value);
             Assert.False(dto.success);
         }
 
         [Fact]
         public async Task Update_Returns_200_On_Success()
         {
-            var (controller, db) = CreateControllerWithDb();
-            var id = Guid.NewGuid();
+            (EffectDescriptionController controller, VortexDbContext db) = CreateControllerWithDb();
+            Guid id = Guid.NewGuid();
 
-            var entity = new EffectDescription
+            EffectDescription entity = new EffectDescription
             {
                 Id = id,
                 Label = "Original",
@@ -188,18 +188,18 @@ namespace VortexTCG.Tests.Api.Effect.Controllers
             // Clear tracking to avoid conflicts
             db.ChangeTracker.Clear();
 
-            var updateDto = new EffectDescriptionInputDto
+            EffectDescriptionInputDto updateDto = new EffectDescriptionInputDto
             {
                 Label = "Updated",
                 Description = "Updated desc",
                 Parameter = "new"
             };
 
-            var result = await controller.update(id, updateDto, CancellationToken.None);
-            var okResult = Assert.IsType<ObjectResult>(result);
+            IActionResult result = await controller.update(id, updateDto, CancellationToken.None);
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(200, okResult.StatusCode);
 
-            var dto = Assert.IsType<ResultDTO<EffectDescriptionDto>>(okResult.Value);
+            ResultDTO<EffectDescriptionDto> dto = Assert.IsType<ResultDTO<EffectDescriptionDto>>(okResult.Value);
             Assert.True(dto.success);
             Assert.Equal("Updated", dto.data!.Label);
         }
@@ -207,28 +207,28 @@ namespace VortexTCG.Tests.Api.Effect.Controllers
         [Fact]
         public async Task Update_Returns_404_When_Not_Found()
         {
-            var (controller, db) = CreateControllerWithDb();
+            (EffectDescriptionController controller, VortexDbContext db) = CreateControllerWithDb();
 
-            var updateDto = new EffectDescriptionInputDto
+            EffectDescriptionInputDto updateDto = new EffectDescriptionInputDto
             {
                 Label = "NonExistent",
                 Description = "Desc",
                 Parameter = null
             };
 
-            var result = await controller.update(Guid.NewGuid(), updateDto, CancellationToken.None);
-            var okResult = Assert.IsType<ObjectResult>(result);
+            IActionResult result = await controller.update(Guid.NewGuid(), updateDto, CancellationToken.None);
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(404, okResult.StatusCode);
 
-            var dto = Assert.IsType<ResultDTO<EffectDescriptionDto>>(okResult.Value);
+            ResultDTO<EffectDescriptionDto> dto = Assert.IsType<ResultDTO<EffectDescriptionDto>>(okResult.Value);
             Assert.False(dto.success);
         }
 
         [Fact]
         public async Task Delete_Returns_200_On_Success()
         {
-            var (controller, db) = CreateControllerWithDb();
-            var id = Guid.NewGuid();
+            (EffectDescriptionController controller, VortexDbContext db) = CreateControllerWithDb();
+            Guid id = Guid.NewGuid();
 
             await db.EffectDescriptions.AddAsync(new EffectDescription
             {
@@ -239,11 +239,11 @@ namespace VortexTCG.Tests.Api.Effect.Controllers
             });
             await db.SaveChangesAsync();
 
-            var result = await controller.delete(id, CancellationToken.None);
-            var okResult = Assert.IsType<ObjectResult>(result);
+            IActionResult result = await controller.delete(id, CancellationToken.None);
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(200, okResult.StatusCode);
 
-            var dto = Assert.IsType<ResultDTO<bool>>(okResult.Value);
+            ResultDTO<bool> dto = Assert.IsType<ResultDTO<bool>>(okResult.Value);
             Assert.True(dto.success);
             Assert.True(dto.data);
         }
@@ -251,13 +251,13 @@ namespace VortexTCG.Tests.Api.Effect.Controllers
         [Fact]
         public async Task Delete_Returns_404_When_Not_Found()
         {
-            var (controller, db) = CreateControllerWithDb();
+            (EffectDescriptionController controller, VortexDbContext db) = CreateControllerWithDb();
 
-            var result = await controller.delete(Guid.NewGuid(), CancellationToken.None);
-            var okResult = Assert.IsType<ObjectResult>(result);
+            IActionResult result = await controller.delete(Guid.NewGuid(), CancellationToken.None);
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(404, okResult.StatusCode);
 
-            var dto = Assert.IsType<ResultDTO<bool>>(okResult.Value);
+            ResultDTO<bool> dto = Assert.IsType<ResultDTO<bool>>(okResult.Value);
             Assert.False(dto.success);
         }
     }
