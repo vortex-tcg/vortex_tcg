@@ -1,11 +1,15 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/ProfileView.uss?fileID=7433441132597879392&amp;guid=5c34d3c011bf19e44bb1036447ec721b&amp;type=3" />
-    <ui:VisualElement name="Root" class="root" style="flex-grow: 1;">
+    <Style src="project://database/Assets/ProfileView.uss?fileID=7433441132597879392&amp;guid=5c34d3c011bf19e44bb1036447ec721b&amp;type=3#ProfileView" />
+    <ui:VisualElement name="Root" class="root" style="flex-grow: 1; -unity-background-image-tint-color: rgb(228, 199, 199);">
         <ui:VisualElement name="LeftPanel" class="side-panel left" style="flex-grow: 1; flex-direction: row;">
             <ui:VisualElement name="Avatar" class="avatar" style="flex-grow: 0; width: 150px; height: 150px;" />
             <ui:VisualElement name="TextContainer" style="flex-grow: 1;">
-                <ui:Label text="Name&#10;" name="PLayerName" class="player-name" />
+                <ui:Label text="Name&#10;" name="PlayerName" class="player-name" />
                 <ui:Label text="1343 Exp" name="PlayerExp" class="player-exp" />
+                <ui:Label text="Email:" name="EmailLabel" class="player-exp" />
+                <ui:Label text="Currency: " name="CurrencyLabel" class="player-exp" />
+                <ui:Label text="Country:" name="LanguageLabel" class="player-exp" />
+                <ui:Label text="Rank:&#10;" name="RankLabel" class="player-exp" />
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="CenterPanel" class="center-panel" style="flex-grow: 1;" />
@@ -19,11 +23,16 @@
             <ui:Label text="Average match duration :" name="AverageMatchTimeLabel" triple-click-selects-line="false" class="stat-line" />
             <ui:Label text="Rage quits :&#10;" name="RageQuitLabel" class="stat-line" />
             <ui:Label text="CARD &amp; DECKS: " name="CardAndDeckSectionLabel" parse-escape-sequences="false" class="section-title" />
-            <ui:Label text="Matches played :" name="MatchPlayedLabel" class="stat-line" />
-            <ui:Label text="Matches played :" name="MatchPlayedLabel" class="stat-line" />
-            <ui:Label text="Matches played :" name="MatchPlayedLabel" class="stat-line" />
-            <ui:Label text="Matches played :" name="MatchPlayedLabel" class="stat-line" />
-            <ui:Label text="Matches played :" name="MatchPlayedLabel" class="stat-line" />
+            <ui:Label text="Cards owned :" name="CardsOwned" class="stat-line" />
+            <ui:Label text="CollectionCompletion:" name="CollectionCompletion" class="stat-line" />
+            <ui:Label text="DeckCreated :" name="DecksCount" double-click-selects-word="false" class="stat-line" />
+            <ui:Label text="Most played faction:&#x9;" name="MostPlayedFaction" triple-click-selects-line="false" class="stat-line" />
+            <ui:Label text="Most played card;" name="MostPlayedCard" selectable="false" class="stat-line" />
+            <ui:Label text="SOCIAL" name="SocialLabelSection" parse-escape-sequences="true" class="section-title" />
+            <ui:Label text="Matches vs Friends :" name="MatchVsFriend" triple-click-selects-line="false" class="stat-line" />
+            <ui:Label text="Matches vs randoms:" name="RandomMatches" triple-click-selects-line="false" class="stat-line" />
+            <ui:Label text="Last Opponent:" name="LastOpponent" triple-click-selects-line="false" class="stat-line" />
+            <ui:Label text="Last active:" name="LastActive" triple-click-selects-line="false" class="stat-line" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
