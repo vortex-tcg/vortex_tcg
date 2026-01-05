@@ -129,6 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 112828493}
   - component: {fileID: 112828492}
+  - component: {fileID: 112828494}
   m_Layer: 5
   m_Name: ProfilePanel
   m_TagString: Untagged
@@ -170,6 +171,26 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &112828494
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 112828491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba7bbe6e7238aab408bacfc529c82c15, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 112828492}
+  createMissingLabels: 1
+  jwtStore: {fileID: 11400000, guid: 9db856da50927ff4591f100916cdba3a, type: 2}
+  loadJwtFromPrefsIfEmpty: 1
+  configFileName: application-properties.json
+  apiBaseUrlOverride: 
+  userIdFallback: 
+  autoLoadOnEnable: 1
 --- !u!1 &435444167
 GameObject:
   m_ObjectHideFlags: 0
