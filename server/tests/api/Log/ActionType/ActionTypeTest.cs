@@ -8,24 +8,19 @@ using VortexTCG.Api.Logs.ActionType.Controllers;
 using VortexTCG.Api.Logs.ActionType.DTOs;
 using VortexTCG.Api.Logs.ActionType.Providers;
 using VortexTCG.Api.Logs.ActionType.Services;
+using VortexTCG.Common.Services;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.DTO;
 using Microsoft.EntityFrameworkCore;
 
-namespace Tests.Logs.ActionType
+namespace VortexTCG.Tests.Api.Log.ActionType
 {
     public class ActionTypeTest
     {
-        private VortexDbContext CreateDb()
-        {
-            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
-            return new VortexDbContext(options);
-        }
+        private static VortexDbContext CreateDb() => VortexDbCoontextFactory.getInMemoryDbContext();
 
-        private ActionTypeController CreateController(VortexDbContext db)
+        private static ActionTypeController CreateController(VortexDbContext db)
         {
             ActionTypeProvider provider = new ActionTypeProvider(db);
             ActionTypeService service = new ActionTypeService(provider);
@@ -43,8 +38,8 @@ namespace Tests.Logs.ActionType
                 ParentId = null
             };
             IActionResult createResult = await controller.Add(dto);
-            var created = Assert.IsType<ObjectResult>(createResult);
-            var payload = Assert.IsType<ResultDTO<ActionTypeDTO>>(created.Value);
+            ObjectResult created = Assert.IsType<ObjectResult>(createResult);
+            ResultDTO<ActionTypeDTO> payload = Assert.IsType<ResultDTO<ActionTypeDTO>>(created.Value);
             Assert.True(payload.success);
             Assert.Equal(201, payload.statusCode);
             Assert.Equal("Action 1", payload.data.ActionDescription);
@@ -61,13 +56,13 @@ namespace Tests.Logs.ActionType
                 ParentId = null
             };
             IActionResult createResult = await controller.Add(dto);
-            var created = Assert.IsType<ObjectResult>(createResult);
-            var payload = Assert.IsType<ResultDTO<ActionTypeDTO>>(created.Value);
-            var id = payload?.data?.Id;
+            ObjectResult created = Assert.IsType<ObjectResult>(createResult);
+            ResultDTO<ActionTypeDTO> payload = Assert.IsType<ResultDTO<ActionTypeDTO>>(created.Value);
+            Guid? id = payload?.data?.Id;
             IActionResult getResult = await controller.GetById(id ?? Guid.Empty);
             if (getResult is ObjectResult ok)
             {
-                var payloadGet = Assert.IsType<ResultDTO<ActionTypeDTO>>(ok.Value);
+                ResultDTO<ActionTypeDTO> payloadGet = Assert.IsType<ResultDTO<ActionTypeDTO>>(ok.Value);
                 if (payloadGet != null && payloadGet.data != null)
                 {
                     Assert.Equal("Action 2", payloadGet.data.ActionDescription);
@@ -90,9 +85,9 @@ namespace Tests.Logs.ActionType
                 ParentId = null
             };
             IActionResult createResult = await controller.Add(dto);
-            var created = Assert.IsType<ObjectResult>(createResult);
-            var payload = Assert.IsType<ResultDTO<ActionTypeDTO>>(created.Value);
-            var id = payload?.data?.Id;
+            ObjectResult created = Assert.IsType<ObjectResult>(createResult);
+            ResultDTO<ActionTypeDTO> payload = Assert.IsType<ResultDTO<ActionTypeDTO>>(created.Value);
+            Guid? id = payload?.data?.Id;
             ActionTypeCreateDTO updateDto = new ActionTypeCreateDTO {
                 ActionDescription = "Action 3 Updated",
                 GameLogId = (payload?.data?.GameLogId) ?? Guid.Empty,
@@ -101,7 +96,7 @@ namespace Tests.Logs.ActionType
             IActionResult updateResult = await controller.Update(id ?? Guid.Empty, updateDto);
             if (updateResult is ObjectResult ok)
             {
-                var payloadUpdate = Assert.IsType<ResultDTO<ActionTypeDTO>>(ok.Value);
+                ResultDTO<ActionTypeDTO> payloadUpdate = Assert.IsType<ResultDTO<ActionTypeDTO>>(ok.Value);
                 if (payloadUpdate != null && payloadUpdate.data != null)
                 {
                     Assert.True(payloadUpdate.success);
@@ -125,13 +120,13 @@ namespace Tests.Logs.ActionType
                 ParentId = null
             };
             IActionResult createResult = await controller.Add(dto);
-            var created = Assert.IsType<ObjectResult>(createResult);
-            var payload = Assert.IsType<ResultDTO<ActionTypeDTO>>(created.Value);
-            var id = payload?.data?.Id;
+            ObjectResult created = Assert.IsType<ObjectResult>(createResult);
+            ResultDTO<ActionTypeDTO> payload = Assert.IsType<ResultDTO<ActionTypeDTO>>(created.Value);
+            Guid? id = payload?.data?.Id;
             IActionResult deleteResult = await controller.Delete(id ?? Guid.Empty);
             if (deleteResult is ObjectResult deleted)
             {
-                var payloadDelete = Assert.IsType<ResultDTO<object>>(deleted.Value);
+                ResultDTO<object> payloadDelete = Assert.IsType<ResultDTO<object>>(deleted.Value);
                 if (payloadDelete != null)
                 {
                     Assert.True(payloadDelete.success || payloadDelete.statusCode == 404);
@@ -144,7 +139,7 @@ namespace Tests.Logs.ActionType
             IActionResult getResult = await controller.GetById(id ?? Guid.Empty);
             if (getResult is ObjectResult notFound)
             {
-                var payloadNotFound = Assert.IsType<ResultDTO<ActionTypeDTO>>(notFound.Value);
+                ResultDTO<ActionTypeDTO> payloadNotFound = Assert.IsType<ResultDTO<ActionTypeDTO>>(notFound.Value);
                 Assert.False(payloadNotFound.success);
                 Assert.Equal(404, payloadNotFound.statusCode);
             }
