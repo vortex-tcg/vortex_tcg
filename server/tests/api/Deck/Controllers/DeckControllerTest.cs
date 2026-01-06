@@ -27,9 +27,10 @@ namespace VortexTCG.Tests.Api.Deck.Controllers
 
             // Assert
             ObjectResult okResult = Assert.IsType<ObjectResult>(result);
-            ResultDTO<DeckDTO> response = Assert.IsType<ResultDTO<DeckDTO>>(okResult.Value);
-            DeckDTO deck = response.data;
-            Assert.Equal(testDeckId, deck.Id);
+            ResultDTO<DeckDTO>? response = Assert.IsType<ResultDTO<DeckDTO>>(okResult.Value);
+            DeckDTO? deck = response?.data;
+            Assert.NotNull(deck);
+            Assert.Equal(testDeckId, deck!.Id);
             Assert.StartsWith("Mock Deck", deck.Name);
             Assert.NotNull(deck.Cards);
             Assert.Equal(30, deck.Cards.Count);
