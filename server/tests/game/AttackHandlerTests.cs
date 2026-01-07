@@ -179,5 +179,94 @@ namespace game.Tests
             Assert.Same(defenderTwo, result.card);
             Assert.Equal(opponentTwo.GetGameCardId(), result.oppositeCardId);
         }
+
+        [Fact]
+        public void AddAttack_MultipleCards_ShouldTrackAll()
+        {
+            AttackHandler handler = new AttackHandler();
+            List<GameCard> cards = new List<GameCard>();
+            for (int i = 0; i < 5; i++)
+            {
+                GameCard card = BuildCard(100 + i);
+                cards.Add(card);
+                handler.AddAttack(card);
+            }
+
+            List<GameCard> attackers = handler.GetAttacker();
+            Assert.Equal(5, attackers.Count);
+
+            for (int i = 0; i < 5; i++)
+            {
+                Assert.Same(cards[i], attackers[i]);
+            }
+        }
+
+        [Fact]
+        public void AddDefense_MultipleOpponents_ShouldTrackAll()
+        {
+            AttackHandler handler = new AttackHandler();
+
+            for (int i = 0; i < 4; i++)
+            {
+                GameCard defender = BuildCard(200 + i);
+                GameCard opponent = BuildCard(300 + i);
+                handler.AddDefense(defender, opponent);
+            }
+
+            List<GameDefenseCard> defenders = handler.GetDefender();
+            Assert.Equal(4, defenders.Count);
+        }
+
+        [Fact]
+        public void RemoveAttack_LastCard_ShouldLeaveEmpty()
+        {
+            AttackHandler handler = new AttackHandler();
+            GameCard card = BuildCard(500);
+            handler.AddAttack(card);
+            handler.RemoveAttack(card);
+
+            Assert.Empty(handler.GetAttacker());
+        }
+
+        [Fact]
+        public void RemoveDefense_LastCard_ShouldLeaveEmpty()
+        {
+            AttackHandler handler = new AttackHandler();
+            GameCard defender = BuildCard(600);
+            GameCard opponent = BuildCard(700);
+            handler.AddDefense(defender, opponent);
+            handler.RemoveDefense(defender);
+
+            Assert.Empty(handler.GetDefender());
+        }
+
+        [Fact]
+        public void FormatAttackResponseDto_EmptyHandler_ShouldReturnEmptyList()
+        {
+            AttackHandler handler = new AttackHandler();
+            Guid playerId = Guid.NewGuid();
+            Guid opponentId = Guid.NewGuid();
+
+            AttackResponseDto dto = handler.FormatAttackResponseDto(playerId, opponentId);
+
+            Assert.Empty(dto.AttackCardsId);
+            Assert.Equal(playerId, dto.PlayerId);
+            Assert.Equal(opponentId, dto.OpponentId);
+        }
+
+        [Fact]
+        public void FormatDefenseResponseDto_EmptyHandler_ShouldReturnEmptyLists()
+        {
+            AttackHandler handler = new AttackHandler();
+            Guid playerId = Guid.NewGuid();
+            Guid opponentId = Guid.NewGuid();
+
+            DefenseResponseDto dto = handler.FormatDefenseResponseDto(playerId, opponentId);
+
+            Assert.Empty(dto.data.AttackCardsId);
+            Assert.Empty(dto.data.DefenseCards);
+            Assert.Equal(playerId, dto.PlayerId);
+            Assert.Equal(opponentId, dto.OpponentId);
+        }
     }
 }

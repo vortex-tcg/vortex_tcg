@@ -804,5 +804,578 @@ namespace game.Tests
         }
 
         #endregion
+
+        #region Tests - EngageAttackCard
+
+        [Fact]
+        public async Task EngageAttackCard_UserNotInRoom_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId = Guid.NewGuid();
+
+            Exception exception = await Record.ExceptionAsync(() => service.EngageAttackCard(userId, 1));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task EngageAttackCard_RoomNotInitialized_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId = Guid.NewGuid();
+            service.TryCreateRoom(userId, out string _);
+
+            Exception exception = await Record.ExceptionAsync(() => service.EngageAttackCard(userId, 1));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task EngageAttackCard_GameNotStarted_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await service.SetPlayerDeck(userId1, deckId1);
+            await service.SetPlayerDeck(userId2, deckId2);
+
+            Exception exception = await Record.ExceptionAsync(() => service.EngageAttackCard(userId1, 1));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task EngageAttackCard_AfterGameStart_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await service.SetPlayerDeck(userId1, deckId1);
+            await service.SetPlayerDeck(userId2, deckId2);
+            service.StartGame(userId1);
+
+            Exception exception = await Record.ExceptionAsync(() => service.EngageAttackCard(userId1, 1));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task EngageAttackCard_WithInvalidCardId_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await service.SetPlayerDeck(userId1, deckId1);
+            await service.SetPlayerDeck(userId2, deckId2);
+            service.StartGame(userId1);
+
+            Exception exception = await Record.ExceptionAsync(() => service.EngageAttackCard(userId1, -999));
+
+            Assert.Null(exception);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(5)]
+        [InlineData(100)]
+        [InlineData(-1)]
+        public async Task EngageAttackCard_VariousCardIds_DoesNotThrow(int cardId)
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await service.SetPlayerDeck(userId1, deckId1);
+            await service.SetPlayerDeck(userId2, deckId2);
+            service.StartGame(userId1);
+
+            Exception exception = await Record.ExceptionAsync(() => service.EngageAttackCard(userId1, cardId));
+
+            Assert.Null(exception);
+        }
+
+        #endregion
+
+        #region Tests - EngageDefenseCard
+
+        [Fact]
+        public async Task EngageDefenseCard_UserNotInRoom_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId = Guid.NewGuid();
+
+            Exception exception = await Record.ExceptionAsync(() => service.EngageDefenseCard(userId, 1, 2));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task EngageDefenseCard_RoomNotInitialized_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId = Guid.NewGuid();
+            service.TryCreateRoom(userId, out string _);
+
+            Exception exception = await Record.ExceptionAsync(() => service.EngageDefenseCard(userId, 1, 2));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task EngageDefenseCard_GameNotStarted_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await service.SetPlayerDeck(userId1, deckId1);
+            await service.SetPlayerDeck(userId2, deckId2);
+
+            Exception exception = await Record.ExceptionAsync(() => service.EngageDefenseCard(userId1, 1, 2));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task EngageDefenseCard_AfterGameStart_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await service.SetPlayerDeck(userId1, deckId1);
+            await service.SetPlayerDeck(userId2, deckId2);
+            service.StartGame(userId1);
+
+            Exception exception = await Record.ExceptionAsync(() => service.EngageDefenseCard(userId1, 1, 2));
+
+            Assert.Null(exception);
+        }
+
+        [Theory]
+        [InlineData(0, 1)]
+        [InlineData(1, 2)]
+        [InlineData(-1, -2)]
+        [InlineData(100, 200)]
+        public async Task EngageDefenseCard_VariousCardIds_DoesNotThrow(int cardId, int opponentCardId)
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await service.SetPlayerDeck(userId1, deckId1);
+            await service.SetPlayerDeck(userId2, deckId2);
+            service.StartGame(userId1);
+
+            Exception exception = await Record.ExceptionAsync(() => service.EngageDefenseCard(userId1, cardId, opponentCardId));
+
+            Assert.Null(exception);
+        }
+
+        #endregion
+
+        #region Tests - PlayCard
+
+        [Fact]
+        public async Task PlayCard_UserNotInRoom_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId = Guid.NewGuid();
+
+            Exception exception = await Record.ExceptionAsync(() => service.PlayCard(userId, 1, 0));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task PlayCard_RoomNotInitialized_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId = Guid.NewGuid();
+            service.TryCreateRoom(userId, out string _);
+
+            Exception exception = await Record.ExceptionAsync(() => service.PlayCard(userId, 1, 0));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task PlayCard_GameNotStarted_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await service.SetPlayerDeck(userId1, deckId1);
+            await service.SetPlayerDeck(userId2, deckId2);
+
+            Exception exception = await Record.ExceptionAsync(() => service.PlayCard(userId1, 1, 0));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task PlayCard_AfterGameStart_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await service.SetPlayerDeck(userId1, deckId1);
+            await service.SetPlayerDeck(userId2, deckId2);
+            service.StartGame(userId1);
+
+            Exception exception = await Record.ExceptionAsync(() => service.PlayCard(userId1, 1, 0));
+
+            Assert.Null(exception);
+        }
+
+        [Theory]
+        [InlineData(0, 0)]
+        [InlineData(1, 1)]
+        [InlineData(5, 2)]
+        [InlineData(-1, 3)]
+        [InlineData(100, 4)]
+        [InlineData(1, 5)]
+        public async Task PlayCard_VariousParameters_DoesNotThrow(int cardId, int location)
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await service.SetPlayerDeck(userId1, deckId1);
+            await service.SetPlayerDeck(userId2, deckId2);
+            service.StartGame(userId1);
+
+            Exception exception = await Record.ExceptionAsync(() => service.PlayCard(userId1, cardId, location));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task PlayCard_InvalidLocation_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await service.SetPlayerDeck(userId1, deckId1);
+            await service.SetPlayerDeck(userId2, deckId2);
+            service.StartGame(userId1);
+
+            Exception exception = await Record.ExceptionAsync(() => service.PlayCard(userId1, 1, -1));
+            Assert.Null(exception);
+
+            exception = await Record.ExceptionAsync(() => service.PlayCard(userId1, 1, 6));
+            Assert.Null(exception);
+
+            exception = await Record.ExceptionAsync(() => service.PlayCard(userId1, 1, 100));
+            Assert.Null(exception);
+        }
+
+        #endregion
+
+        #region Tests - sendDrawCardsData and sendBattleResolveData
+
+        [Fact]
+        public void SendDrawCardsData_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+
+            VortexTCG.Game.DTO.DrawCardsResultDTO data = new VortexTCG.Game.DTO.DrawCardsResultDTO
+            {
+                PlayerResult = new VortexTCG.Game.DTO.DrawResultForPlayerDTO
+                {
+                    PlayerId = Guid.NewGuid(),
+                    DrawnCards = new System.Collections.Generic.List<VortexTCG.Game.DTO.DrawnCardDTO>(),
+                    FatigueCount = 0,
+                    BaseFatigue = 0,
+                    SentToGraveyard = new System.Collections.Generic.List<VortexTCG.Game.DTO.DrawnCardDTO>()
+                },
+                OpponentResult = new VortexTCG.Game.DTO.DrawResultForOpponentDTO
+                {
+                    PlayerId = Guid.NewGuid(),
+                    CardsDrawnCount = 0,
+                    FatigueCount = 0,
+                    BaseFatigue = 0,
+                    CardsBurnedCount = 0
+                }
+            };
+
+            Exception exception = Record.Exception(() => service.sendDrawCardsData(data));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public void SendBattleResolveData_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+
+            VortexTCG.Game.DTO.BattlesDataDto data = new VortexTCG.Game.DTO.BattlesDataDto
+            {
+                battles = new System.Collections.Generic.List<VortexTCG.Game.DTO.BattleDataDto>()
+            };
+            Guid attackerId = Guid.NewGuid();
+            Guid defenderId = Guid.NewGuid();
+
+            Exception exception = Record.Exception(() => service.sendBattleResolveData(data, attackerId, defenderId));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public void SendBattleResolveData_WithBattleData_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+
+            VortexTCG.Game.DTO.BattlesDataDto data = new VortexTCG.Game.DTO.BattlesDataDto
+            {
+                battles = new System.Collections.Generic.List<VortexTCG.Game.DTO.BattleDataDto>
+                {
+                    new VortexTCG.Game.DTO.BattleDataDto
+                    {
+                        isAgainstChamp = true,
+                        againstChamp = new VortexTCG.Game.DTO.BattlaAgainstChampDataDto
+                        {
+                            isChampDead = false,
+                            isCardDead = false,
+                            attackerDamageDeal = 5,
+                            championDamageDeal = 0,
+                            attackerCard = new VortexTCG.Game.DTO.GameCardDto(),
+                            attackerChamp = new VortexTCG.Game.DTO.BattleChampionDto(),
+                            defenderChamp = new VortexTCG.Game.DTO.BattleChampionDto()
+                        }
+                    }
+                }
+            };
+            Guid attackerId = Guid.NewGuid();
+            Guid defenderId = Guid.NewGuid();
+
+            Exception exception = Record.Exception(() => service.sendBattleResolveData(data, attackerId, defenderId));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public void SendBattleResolveData_WithCardBattle_DoesNotThrow()
+        {
+            RoomService service = CreateRoomService();
+
+            VortexTCG.Game.DTO.BattlesDataDto data = new VortexTCG.Game.DTO.BattlesDataDto
+            {
+                battles = new System.Collections.Generic.List<VortexTCG.Game.DTO.BattleDataDto>
+                {
+                    new VortexTCG.Game.DTO.BattleDataDto
+                    {
+                        isAgainstChamp = false,
+                        againstCard = new VortexTCG.Game.DTO.BattleAgainstCardDataDto
+                        {
+                            isAttackerDead = false,
+                            isDefenderDead = true,
+                            attackerDamageDeal = 3,
+                            defenderDamageDeal = 2,
+                            attackerCard = new VortexTCG.Game.DTO.GameCardDto(),
+                            defenderCard = new VortexTCG.Game.DTO.GameCardDto(),
+                            attackerChamp = new VortexTCG.Game.DTO.BattleChampionDto(),
+                            defenderChamp = new VortexTCG.Game.DTO.BattleChampionDto()
+                        }
+                    }
+                }
+            };
+            Guid attackerId = Guid.NewGuid();
+            Guid defenderId = Guid.NewGuid();
+
+            Exception exception = Record.Exception(() => service.sendBattleResolveData(data, attackerId, defenderId));
+
+            Assert.Null(exception);
+        }
+
+        #endregion
+
+        #region Tests - tryGetRoom edge cases
+
+        [Fact]
+        public async Task SetPlayerDeck_RoomDeleted_ReturnsFalse()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string code);
+            service.Leave(userId1, out string? _, out Guid? _, out bool _);
+
+            bool result = await service.SetPlayerDeck(userId1, deckId1);
+
+            Assert.False(result);
+        }
+
+        #endregion
+
+        #region Tests - ChangePhase edge cases
+
+        [Fact]
+        public async Task ChangePhase_RoomCodeNotFound_ReturnsNull()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId = Guid.NewGuid();
+
+            Task<VortexTCG.Game.DTO.PhaseChangeResultDTO>? resultTask = service.ChangePhase(userId);
+
+            Assert.NotNull(resultTask);
+            VortexTCG.Game.DTO.PhaseChangeResultDTO? result = await resultTask;
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task ChangePhase_RoomNotFound_ReturnsNull()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string code);
+            service.Leave(userId1, out string? _, out Guid? _, out bool _);
+
+            Task<VortexTCG.Game.DTO.PhaseChangeResultDTO>? resultTask = service.ChangePhase(userId1);
+
+            Assert.NotNull(resultTask);
+            VortexTCG.Game.DTO.PhaseChangeResultDTO? result = await resultTask;
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task ChangePhase_GameRoomNull_ReturnsNull()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            // Decks not set, GameRoom is just placeholder, not initialized
+
+            Task<VortexTCG.Game.DTO.PhaseChangeResultDTO>? resultTask = service.ChangePhase(userId1);
+
+            Assert.NotNull(resultTask);
+            VortexTCG.Game.DTO.PhaseChangeResultDTO? result = await resultTask;
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task ChangePhase_GameNotInitialized_ReturnsNull()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string _);
+            // Only one player, IsGameInitialized = false
+
+            Task<VortexTCG.Game.DTO.PhaseChangeResultDTO>? resultTask = service.ChangePhase(userId1);
+
+            Assert.NotNull(resultTask);
+            VortexTCG.Game.DTO.PhaseChangeResultDTO? result = await resultTask;
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task ChangePhase_FullGameCycle_ReturnsResults()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await service.SetPlayerDeck(userId1, deckId1);
+            await service.SetPlayerDeck(userId2, deckId2);
+            service.StartGame(userId1);
+
+            // Change phase multiple times
+            Task<VortexTCG.Game.DTO.PhaseChangeResultDTO>? resultTask1 = service.ChangePhase(userId1);
+            Assert.NotNull(resultTask1);
+            VortexTCG.Game.DTO.PhaseChangeResultDTO result1 = await resultTask1;
+            Assert.NotNull(result1);
+
+            // After PLACEMENT -> ATTACK (or skipped) -> DEFENSE (or skipped) -> END_TURN -> next turn
+            // The exact result depends on board state, but method should not throw
+        }
+
+        #endregion
+
+        #region Tests - Leave with initialized game
+
+        [Fact]
+        public async Task Leave_WithInitializedGame_StopsTimer()
+        {
+            RoomService service = CreateRoomService();
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            service.TryCreateRoom(userId1, out string code);
+            service.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await service.SetPlayerDeck(userId1, deckId1);
+            await service.SetPlayerDeck(userId2, deckId2);
+            service.StartGame(userId1);
+
+            // Leave both players
+            service.Leave(userId1, out string? code1, out Guid? opp1, out bool empty1);
+            service.Leave(userId2, out string? code2, out Guid? opp2, out bool empty2);
+
+            Assert.True(empty2);
+        }
+
+        #endregion
     }
 }

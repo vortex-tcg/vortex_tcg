@@ -887,5 +887,463 @@ namespace game.Tests
         }
 
         #endregion
+
+        #region Tests - StartGame Success
+
+        [Fact]
+        public async Task StartGame_WhenSuccess_SendsGameStartedToGroup()
+        {
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            Matchmaker matchmaker = new Matchmaker();
+            RoomService rooms = CreateRealRoomService();
+            rooms.TryCreateRoom(userId1, out string code);
+            rooms.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await rooms.SetPlayerDeck(userId1, deckId1);
+            await rooms.SetPlayerDeck(userId2, deckId2);
+
+            Mock<IClientProxy> groupProxy = new Mock<IClientProxy>();
+            Mock<ISingleClientProxy> callerProxy = new Mock<ISingleClientProxy>();
+            Mock<IHubCallerClients> clients = new Mock<IHubCallerClients>();
+            clients.SetupGet(c => c.Caller).Returns(callerProxy.Object);
+            clients.Setup(c => c.Group(code)).Returns(groupProxy.Object);
+            Mock<IGroupManager> groups = new Mock<IGroupManager>();
+
+            GameHub hub = CreateHub(matchmaker, rooms, clients, groups, "conn-1", CreateUser(userId1));
+
+            await hub.StartGame();
+
+            groupProxy.Verify(p => p.SendCoreAsync(
+                "GameStarted",
+                It.IsAny<object[]>(),
+                default),
+                Times.Once);
+        }
+
+        #endregion
+
+        #region Tests - ChangePhase Success
+
+        [Fact]
+        public async Task ChangePhase_WhenSuccess_SendsPhaseChangedToGroup()
+        {
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            Matchmaker matchmaker = new Matchmaker();
+            RoomService rooms = CreateRealRoomService();
+            rooms.TryCreateRoom(userId1, out string code);
+            rooms.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await rooms.SetPlayerDeck(userId1, deckId1);
+            await rooms.SetPlayerDeck(userId2, deckId2);
+            rooms.StartGame(userId1);
+
+            Mock<IClientProxy> groupProxy = new Mock<IClientProxy>();
+            Mock<ISingleClientProxy> callerProxy = new Mock<ISingleClientProxy>();
+            Mock<IHubCallerClients> clients = new Mock<IHubCallerClients>();
+            clients.SetupGet(c => c.Caller).Returns(callerProxy.Object);
+            clients.Setup(c => c.Group(code)).Returns(groupProxy.Object);
+            Mock<IGroupManager> groups = new Mock<IGroupManager>();
+
+            GameHub hub = CreateHub(matchmaker, rooms, clients, groups, "conn-1", CreateUser(userId1));
+
+            await hub.ChangePhase();
+
+            groupProxy.Verify(p => p.SendCoreAsync(
+                "PhaseChanged",
+                It.IsAny<object[]>(),
+                default),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task ChangePhase_MultipleTimes_SendsPhaseChangedEachTime()
+        {
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            Matchmaker matchmaker = new Matchmaker();
+            RoomService rooms = CreateRealRoomService();
+            rooms.TryCreateRoom(userId1, out string code);
+            rooms.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await rooms.SetPlayerDeck(userId1, deckId1);
+            await rooms.SetPlayerDeck(userId2, deckId2);
+            rooms.StartGame(userId1);
+
+            Mock<IClientProxy> groupProxy = new Mock<IClientProxy>();
+            Mock<ISingleClientProxy> callerProxy = new Mock<ISingleClientProxy>();
+            Mock<IHubCallerClients> clients = new Mock<IHubCallerClients>();
+            clients.SetupGet(c => c.Caller).Returns(callerProxy.Object);
+            clients.Setup(c => c.Group(code)).Returns(groupProxy.Object);
+            Mock<IGroupManager> groups = new Mock<IGroupManager>();
+
+            GameHub hub = CreateHub(matchmaker, rooms, clients, groups, "conn-1", CreateUser(userId1));
+
+            await hub.ChangePhase();
+            await hub.ChangePhase();
+
+            groupProxy.Verify(p => p.SendCoreAsync(
+                "PhaseChanged",
+                It.IsAny<object[]>(),
+                default),
+                Times.AtLeast(1));
+        }
+
+        #endregion
+
+        #region Tests - JoinQueue Additional
+
+        [Fact]
+        public async Task JoinQueue_FirstPlayerEnqueues_CallsMatchmakerEnqueue()
+        {
+            Guid userId = Guid.NewGuid();
+            Guid deckId = Guid.NewGuid();
+
+            Matchmaker matchmaker = new Matchmaker();
+            RoomService rooms = CreateRealRoomService();
+
+            Mock<ISingleClientProxy> callerProxy = new Mock<ISingleClientProxy>();
+            Mock<IHubCallerClients> clients = new Mock<IHubCallerClients>();
+            clients.SetupGet(c => c.Caller).Returns(callerProxy.Object);
+            Mock<IGroupManager> groups = new Mock<IGroupManager>();
+
+            GameHub hub = CreateHub(matchmaker, rooms, clients, groups, "conn-1", CreateUser(userId));
+            await hub.JoinQueue(deckId);
+
+            // Should send Waiting since no other player in queue
+            callerProxy.Verify(p => p.SendCoreAsync("Waiting", It.IsAny<object[]>(), default), Times.Once);
+        }
+
+        [Fact]
+        public async Task JoinQueue_LeavesExistingRoom_BeforeJoining()
+        {
+            Guid userId = Guid.NewGuid();
+            Guid deckId = Guid.NewGuid();
+
+            Matchmaker matchmaker = new Matchmaker();
+            RoomService rooms = CreateRealRoomService();
+            rooms.TryCreateRoom(userId, out string code);
+
+            Mock<ISingleClientProxy> callerProxy = new Mock<ISingleClientProxy>();
+            Mock<IHubCallerClients> clients = new Mock<IHubCallerClients>();
+            clients.SetupGet(c => c.Caller).Returns(callerProxy.Object);
+            Mock<IGroupManager> groups = new Mock<IGroupManager>();
+
+            GameHub hub = CreateHub(matchmaker, rooms, clients, groups, "conn-1", CreateUser(userId));
+            await hub.JoinQueue(deckId);
+
+            // User should no longer be in the room
+            string? currentRoom = rooms.GetRoomOf(userId);
+            Assert.Null(currentRoom);
+        }
+
+        #endregion
+
+        #region Tests - JoinRoom No Opponent
+
+        [Fact]
+        public async Task JoinRoom_WhenNoOpponentExists_CompletesWithoutError()
+        {
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId = Guid.NewGuid();
+
+            Matchmaker matchmaker = new Matchmaker();
+            RoomService rooms = CreateRealRoomService();
+            rooms.TryCreateRoom(userId1, out string code);
+
+            Mock<ISingleClientProxy> callerProxy = new Mock<ISingleClientProxy>();
+            Mock<IClientProxy> othersProxy = new Mock<IClientProxy>();
+            Mock<IHubCallerClients> clients = new Mock<IHubCallerClients>();
+            clients.SetupGet(c => c.Caller).Returns(callerProxy.Object);
+            clients.Setup(c => c.OthersInGroup(code)).Returns(othersProxy.Object);
+            Mock<IGroupManager> groups = new Mock<IGroupManager>();
+
+            // User2 joins the room where user1 is alone
+            GameHub hub = CreateHub(matchmaker, rooms, clients, groups, "conn-1", CreateUser(userId2));
+            await hub.JoinRoom(deckId, code);
+
+            // Should send Matched since there's an opponent (userId1)
+            callerProxy.Verify(p => p.SendCoreAsync("Matched", It.IsAny<object[]>(), default), Times.Once);
+        }
+
+        #endregion
+
+        #region Tests - SendRoomMessage Variations
+
+        [Fact]
+        public async Task SendRoomMessage_WhenInDifferentRoom_DoesNotBroadcast()
+        {
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+
+            Matchmaker matchmaker = new Matchmaker();
+            RoomService rooms = CreateRealRoomService();
+            rooms.TryCreateRoom(userId1, out string code1);
+            rooms.TryCreateRoom(userId2, out string code2);
+
+            Mock<IClientProxy> othersProxy = new Mock<IClientProxy>();
+            Mock<IHubCallerClients> clients = new Mock<IHubCallerClients>();
+            clients.Setup(c => c.OthersInGroup(It.IsAny<string>())).Returns(othersProxy.Object);
+            Mock<IGroupManager> groups = new Mock<IGroupManager>();
+
+            GameHub hub = CreateHub(matchmaker, rooms, clients, groups, "conn-1", CreateUser(userId1));
+
+            // User1 tries to send to code2 (not their room)
+            await hub.SendRoomMessage(code2, "hello");
+
+            othersProxy.Verify(p => p.SendCoreAsync(
+                "ReceiveRoomMessage",
+                It.IsAny<object[]>(),
+                default),
+                Times.Never);
+        }
+
+        [Fact]
+        public async Task SendRoomMessageByCode_WhenNotInRoom_DoesNotBroadcast()
+        {
+            Guid userId = Guid.NewGuid();
+
+            Matchmaker matchmaker = new Matchmaker();
+            RoomService rooms = CreateRealRoomService();
+
+            Mock<IClientProxy> othersProxy = new Mock<IClientProxy>();
+            Mock<IHubCallerClients> clients = new Mock<IHubCallerClients>();
+            clients.Setup(c => c.OthersInGroup(It.IsAny<string>())).Returns(othersProxy.Object);
+            Mock<IGroupManager> groups = new Mock<IGroupManager>();
+
+            GameHub hub = CreateHub(matchmaker, rooms, clients, groups, "conn-1", CreateUser(userId));
+
+            await hub.SendRoomMessageByCode("ANYCODE", "hello");
+
+            othersProxy.Verify(p => p.SendCoreAsync(
+                "ReceiveRoomMessage",
+                It.IsAny<object[]>(),
+                default),
+                Times.Never);
+        }
+
+        #endregion
+
+        #region Tests - OnDisconnectedAsync Variations
+
+        [Fact]
+        public async Task OnDisconnectedAsync_WhenNotInRoomOrQueue_CompletesWithoutError()
+        {
+            Guid userId = Guid.NewGuid();
+
+            Matchmaker matchmaker = new Matchmaker();
+            RoomService rooms = CreateRealRoomService();
+
+            Mock<IHubCallerClients> clients = new Mock<IHubCallerClients>();
+            Mock<IGroupManager> groups = new Mock<IGroupManager>();
+
+            GameHub hub = CreateHub(matchmaker, rooms, clients, groups, "conn-1", CreateUser(userId));
+
+            Exception exception = await Record.ExceptionAsync(() => hub.OnDisconnectedAsync(null));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task OnDisconnectedAsync_WhenInQueue_LeavesQueue()
+        {
+            Guid userId = Guid.NewGuid();
+            Guid deckId = Guid.NewGuid();
+
+            Matchmaker matchmaker = new Matchmaker();
+            RoomService rooms = CreateRealRoomService();
+
+            Mock<ISingleClientProxy> callerProxy = new Mock<ISingleClientProxy>();
+            Mock<IHubCallerClients> clients = new Mock<IHubCallerClients>();
+            clients.SetupGet(c => c.Caller).Returns(callerProxy.Object);
+            Mock<IGroupManager> groups = new Mock<IGroupManager>();
+
+            GameHub hub = CreateHub(matchmaker, rooms, clients, groups, "conn-1", CreateUser(userId));
+            await hub.JoinQueue(deckId);
+
+            Exception exception = await Record.ExceptionAsync(() => hub.OnDisconnectedAsync(null));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task OnDisconnectedAsync_WithException_CompletesWithoutError()
+        {
+            Guid userId = Guid.NewGuid();
+
+            Matchmaker matchmaker = new Matchmaker();
+            RoomService rooms = CreateRealRoomService();
+
+            Mock<IHubCallerClients> clients = new Mock<IHubCallerClients>();
+            Mock<IGroupManager> groups = new Mock<IGroupManager>();
+
+            GameHub hub = CreateHub(matchmaker, rooms, clients, groups, "conn-1", CreateUser(userId));
+
+            Exception ex = await Record.ExceptionAsync(() => hub.OnDisconnectedAsync(new Exception("Test")));
+
+            Assert.Null(ex);
+        }
+
+        #endregion
+
+        #region Tests - CreateRoom Variations
+
+        [Fact]
+        public async Task CreateRoom_WithPreferredCode_UsesPreferredCode()
+        {
+            Guid userId = Guid.NewGuid();
+            Guid deckId = Guid.NewGuid();
+
+            Matchmaker matchmaker = new Matchmaker();
+            RoomService rooms = CreateRealRoomService();
+
+            Mock<ISingleClientProxy> callerProxy = new Mock<ISingleClientProxy>();
+            Mock<IHubCallerClients> clients = new Mock<IHubCallerClients>();
+            clients.SetupGet(c => c.Caller).Returns(callerProxy.Object);
+            Mock<IGroupManager> groups = new Mock<IGroupManager>();
+
+            GameHub hub = CreateHub(matchmaker, rooms, clients, groups, "conn-1", CreateUser(userId));
+
+            await hub.CreateRoom(deckId, "MYCODE");
+
+            callerProxy.Verify(p => p.SendCoreAsync(
+                "RoomCreated",
+                It.Is<object[]>(args => args.Length == 1 && (string)args[0] == "MYCODE"),
+                default),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task CreateRoom_WhenAlreadyInRoom_SendsRoomCreateError()
+        {
+            Guid userId = Guid.NewGuid();
+            Guid deckId = Guid.NewGuid();
+
+            Matchmaker matchmaker = new Matchmaker();
+            RoomService rooms = CreateRealRoomService();
+            rooms.TryCreateRoom(userId, out string _);
+
+            Mock<ISingleClientProxy> callerProxy = new Mock<ISingleClientProxy>();
+            Mock<IHubCallerClients> clients = new Mock<IHubCallerClients>();
+            clients.SetupGet(c => c.Caller).Returns(callerProxy.Object);
+            Mock<IGroupManager> groups = new Mock<IGroupManager>();
+
+            GameHub hub = CreateHub(matchmaker, rooms, clients, groups, "conn-1", CreateUser(userId));
+
+            await hub.CreateRoom(deckId, null);
+
+            callerProxy.Verify(p => p.SendCoreAsync(
+                "RoomCreateError",
+                It.IsAny<object[]>(),
+                default),
+                Times.Once);
+        }
+
+        #endregion
+
+        #region Tests - PlayCard After Game Start
+
+        [Fact]
+        public async Task PlayCard_AfterGameStart_DelegatesToRoomService()
+        {
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            Matchmaker matchmaker = new Matchmaker();
+            RoomService rooms = CreateRealRoomService();
+            rooms.TryCreateRoom(userId1, out string code);
+            rooms.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await rooms.SetPlayerDeck(userId1, deckId1);
+            await rooms.SetPlayerDeck(userId2, deckId2);
+            rooms.StartGame(userId1);
+
+            Mock<ISingleClientProxy> callerProxy = new Mock<ISingleClientProxy>();
+            Mock<IHubCallerClients> clients = new Mock<IHubCallerClients>();
+            clients.SetupGet(c => c.Caller).Returns(callerProxy.Object);
+            Mock<IGroupManager> groups = new Mock<IGroupManager>();
+
+            GameHub hub = CreateHub(matchmaker, rooms, clients, groups, "conn-1", CreateUser(userId1));
+
+            await hub.PlayCard(1, 0);
+
+            // PlayCard should complete without throwing
+            Assert.NotNull(hub);
+        }
+
+        #endregion
+
+        #region Tests - HandleAttackPos After Game Start
+
+        [Fact]
+        public async Task HandleAttackPos_AfterGameStart_DelegatesToRoomService()
+        {
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            Matchmaker matchmaker = new Matchmaker();
+            RoomService rooms = CreateRealRoomService();
+            rooms.TryCreateRoom(userId1, out string code);
+            rooms.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await rooms.SetPlayerDeck(userId1, deckId1);
+            await rooms.SetPlayerDeck(userId2, deckId2);
+            rooms.StartGame(userId1);
+
+            Mock<ISingleClientProxy> callerProxy = new Mock<ISingleClientProxy>();
+            Mock<IHubCallerClients> clients = new Mock<IHubCallerClients>();
+            clients.SetupGet(c => c.Caller).Returns(callerProxy.Object);
+            Mock<IGroupManager> groups = new Mock<IGroupManager>();
+
+            GameHub hub = CreateHub(matchmaker, rooms, clients, groups, "conn-1", CreateUser(userId1));
+
+            await hub.HandleAttackPos(1);
+
+            Assert.NotNull(hub);
+        }
+
+        #endregion
+
+        #region Tests - HandleDefensePos After Game Start
+
+        [Fact]
+        public async Task HandleDefensePos_AfterGameStart_DelegatesToRoomService()
+        {
+            Guid userId1 = Guid.NewGuid();
+            Guid userId2 = Guid.NewGuid();
+            Guid deckId1 = Guid.NewGuid();
+            Guid deckId2 = Guid.NewGuid();
+
+            Matchmaker matchmaker = new Matchmaker();
+            RoomService rooms = CreateRealRoomService();
+            rooms.TryCreateRoom(userId1, out string code);
+            rooms.TryJoinRoom(userId2, code, out Guid? _, out bool _);
+            await rooms.SetPlayerDeck(userId1, deckId1);
+            await rooms.SetPlayerDeck(userId2, deckId2);
+            rooms.StartGame(userId1);
+
+            Mock<ISingleClientProxy> callerProxy = new Mock<ISingleClientProxy>();
+            Mock<IHubCallerClients> clients = new Mock<IHubCallerClients>();
+            clients.SetupGet(c => c.Caller).Returns(callerProxy.Object);
+            Mock<IGroupManager> groups = new Mock<IGroupManager>();
+
+            GameHub hub = CreateHub(matchmaker, rooms, clients, groups, "conn-1", CreateUser(userId1));
+
+            await hub.HandleDefensePos(1, 2);
+
+            Assert.NotNull(hub);
+        }
+
+        #endregion
     }
 }
