@@ -17,7 +17,10 @@ namespace VortexTCG.Scripts.MatchScene
         [Header("P2 Board Slots")] [SerializeField]
         private List<CardSlot> p2BoardSlots = new List<CardSlot>();
 
-        [Header("Generation Settings")] [SerializeField]
+        private const int MaxHandSize = 7;
+
+        [Header("Generation Settings")]
+        [SerializeField, Range(0, MaxHandSize)]
         private int handSize = 5;
 
         [SerializeField] private int minBoardCards = 2;
@@ -62,7 +65,9 @@ namespace VortexTCG.Scripts.MatchScene
                 }
             }
 
-            for (int i = 0; i < handSize; i++)
+            int cappedHandSize = Mathf.Clamp(handSize, 0, MaxHandSize);
+
+            for (int i = 0; i < cappedHandSize; i++)
             {
                 Card handCard = Instantiate(cardPrefab, p2HandParent ? p2HandParent : transform);
                 ApplyRandomData(handCard, i);
