@@ -35,10 +35,28 @@ builder.Services.AddControllers();
 
 // Configuration DB
 var connectionString = builder.Configuration["CONNECTION_STRING"];
+var useInMemoryDb = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
 
-builder.Services.AddDbContext<VortexDbContext>(options =>
-    options.UseMySql(connectionString, new MariaDbServerVersion(new Version(11, 8, 3)) )
-);
+if (!useInMemoryDb && builder.Environment.IsEnvironment("Testing") && string.IsNullOrWhiteSpace(connectionString))
+{
+    useInMemoryDb = true;
+}
+
+if (useInMemoryDb)
+{
+    builder.Services.AddDbContext<VortexDbContext>(options =>
+        options.UseInMemoryDatabase("VortexApi")
+    );
+}
+else
+{
+    if (string.IsNullOrWhiteSpace(connectionString))
+        throw new InvalidOperationException("CONNECTION_STRING is not configured.");
+
+    builder.Services.AddDbContext<VortexDbContext>(options =>
+        options.UseMySql(connectionString, new MariaDbServerVersion(new Version(11, 8, 3)))
+    );
+}
 builder.Services.AddScoped<api.Effect.Providers.EffectTypeProvider>();
 builder.Services.AddScoped<api.Effect.Services.EffectTypeService>();
 builder.Services.AddScoped<api.Effect.Providers.EffectDescriptionProvider>();
@@ -118,6 +136,11 @@ app.MapGet("/health/db", async (VortexDbContext db) =>
 
 
 app.Run();
+
+namespace VortexTCG.Api
+{
+    public partial class Program { }
+}
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
