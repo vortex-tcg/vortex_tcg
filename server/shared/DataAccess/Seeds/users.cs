@@ -10,6 +10,7 @@ namespace VortexTCG.DataAccess.Seeds
     {
         private readonly VortexDbContext _db;
         private static readonly ScryptEncoder encoder = new ScryptEncoder();
+        private const string SeederName = "Seeder";
 
         public UsersInitializer(VortexDbContext db)
         {
@@ -43,9 +44,9 @@ namespace VortexTCG.DataAccess.Seeds
                     CollectionId = null,  // null pour éviter violation FK
 
                     CreatedAtUtc = utcDate,
-                    CreatedBy = "Seeder",
+                    CreatedBy = SeederName,
                     UpdatedAtUtc = utcDate,
-                    UpdatedBy = "Seeder",
+                    UpdatedBy = SeederName,
                 },
                 new User
                 {

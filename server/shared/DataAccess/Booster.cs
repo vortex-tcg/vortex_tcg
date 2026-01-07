@@ -23,10 +23,10 @@ namespace VortexTCG.DataAccess.Models
 
         public float Probability { get; set; } = default!;
 
-        public Guid CardId { get; set; } = default!;
+        public Guid CardId { get; set; } = Guid.Empty;
         public Card Card { get; set; } = default!;
 
-        public Guid BoosterId { get; set; } = default!;
+        public Guid BoosterId { get; set; } = Guid.Empty!;
         public Booster Booster { get; set; } = default!;
     }
 }
