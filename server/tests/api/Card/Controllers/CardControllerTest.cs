@@ -7,6 +7,7 @@ using VortexTCG.Api.Card.DTOs;
 using VortexTCG.Api.Card.Providers;
 using VortexTCG.Api.Card.Services;
 using VortexTCG.Common.DTO;
+using VortexTCG.Common.Services;
 using VortexTCG.DataAccess;
 using Xunit;
 
@@ -14,15 +15,9 @@ namespace VortexTCG.Tests.Api.Card.Controllers
 {
     public class CardControllerTest
     {
-        private VortexDbContext CreateDb()
-        {
-            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
-            return new VortexDbContext(options);
-        }
+        private static VortexDbContext CreateDb() => VortexDbCoontextFactory.getInMemoryDbContext();
 
-        private CardController CreateController(VortexDbContext db)
+        private static CardController CreateController(VortexDbContext db)
         {
             CardProvider provider = new CardProvider(db);
             CardService service = new CardService(provider);
