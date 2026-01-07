@@ -38,36 +38,11 @@ namespace VortexTCG.Scripts.MatchScene
 
             CurrentCard = card;
             Transform t = card.transform;
-            Vector3 baseScale = t.localScale; 
             t.SetParent(transform, false);
             t.localPosition = Vector3.zero;
             t.localRotation = Quaternion.identity;
-            t.localScale = baseScale;
-
-            Renderer[] renderers = card.GetComponentsInChildren<Renderer>(true);
-            float refSize = 1f;
-
-            if (renderers != null && renderers.Length > 0)
-            {
-                Bounds b = renderers[0].bounds;
-                for (int i = 1; i < renderers.Length; i++)
-                    b.Encapsulate(renderers[i].bounds);
-
-                float sizeY = b.size.y;
-                float sizeXZ = Mathf.Max(b.size.x, b.size.z);
-                refSize = (sizeY > 0.0005f) ? sizeY : sizeXZ;
-                if (refSize <= 0.0005f) refSize = 1f;
-            }
-
-            float scaleFactor = (targetHeight > 0f) ? (targetHeight / refSize) : 1f;
-            scaleFactor = Mathf.Clamp(scaleFactor, 0.01f, 10f);
-            t.localScale = baseScale * scaleFactor;
-
-            float parentScaleY = transform.lossyScale.y;
-            if (Mathf.Abs(parentScaleY) < 0.0001f) parentScaleY = 1f;
-
-            float localY = (targetHeight * 0.5f) / parentScaleY;
-            t.localPosition = new Vector3(0f, localY, 0f);
+            t.localScale = Vector3.one;
+            t.localPosition = new Vector3(0f, 1f, 0f);
 
             if (AttackManager.Instance != null && AttackManager.Instance.IsP1BoardSlot(this))
                 AttackManager.Instance.RegisterCard(card);
@@ -76,7 +51,7 @@ namespace VortexTCG.Scripts.MatchScene
                 DefenseManager.Instance.RegisterCard(card);
 
             Debug.Log($"[CardSlot] PlaceCard slot='{name}' isOpp={isOpponentSlot} " +
-                      $"slotLossy={transform.lossyScale} cardLocalScale={t.localScale} scaleFactor={scaleFactor}");
+                      $"slotLossy={transform.lossyScale} cardLocalScale={t.localScale}");
         }
     }
 }
