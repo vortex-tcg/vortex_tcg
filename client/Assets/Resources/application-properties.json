@@ -1,5 +1,5 @@
 {
   "apiBaseUrl": "http://localhost:4000",
   "gameHubUrl": "http://localhost:8008/hubs/game",
-  "baseUrl": "http://localhost:6006"
+  "baseUrl": "http://localhost:6006"  
 }

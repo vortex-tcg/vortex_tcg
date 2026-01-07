@@ -47,6 +47,8 @@ builder.Services.AddScoped<VortexTCG.Api.Card.Providers.CardProvider>();
 builder.Services.AddScoped<VortexTCG.Api.Card.Services.CardService>();
 builder.Services.AddScoped<VortexTCG.Api.Collection.Providers.CollectionProvider>();
 builder.Services.AddScoped<VortexTCG.Api.Collection.Services.CollectionService>();
+builder.Services.AddScoped<VortexTCG.Api.User.Providers.UserProvider>();
+builder.Services.AddScoped<VortexTCG.Api.User.Services.UserService>();
 
 // CORS
 builder.Services.AddCors(options =>
