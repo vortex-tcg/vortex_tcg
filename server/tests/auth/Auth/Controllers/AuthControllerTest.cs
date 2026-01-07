@@ -13,16 +13,16 @@ using RoleEnum = VortexTCG.DataAccess.Models.Role;
 using Microsoft.EntityFrameworkCore;
 using VortexTCG.Auth.Services;
 
-namespace Tests
+namespace VortexTCG.Tests.Auth.Controllers
 {
     public class AuthControllerTest
     {
-        private async Task createUser(VortexDbContext db)
+        private async Task CreateUser(VortexDbContext db)
         {
             ScryptEncoder encoder = new ScryptEncoder();
             string hashedPassword = encoder.Encode("CorrectPassword1!");
 
-            var rank = db.Ranks.Add(new VortexTCG.DataAccess.Models.Rank { Label = "Bronze", nbVictory = 0 }).Entity;
+            VortexTCG.DataAccess.Models.Rank rank = db.Ranks.Add(new VortexTCG.DataAccess.Models.Rank { Label = "Bronze", nbVictory = 0 }).Entity;
             db.Users.Add(new UserModel
             {
                 FirstName = "John",
@@ -53,7 +53,7 @@ namespace Tests
                 password = ""
             };
 
-            var result = await controller.login(request);
+            IActionResult result = await controller.login(request);
             ObjectResult badRequest = Assert.IsType<ObjectResult>(result);
             ResultDTO<LoginResponseDTO> payload = Assert.IsType<ResultDTO<LoginResponseDTO>>(badRequest.Value);
             Assert.Equal(400, badRequest.StatusCode);
@@ -130,7 +130,7 @@ namespace Tests
             VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
             IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
 
-            await createUser(db);
+            await CreateUser(db);
 
             AuthController controller = new AuthController(db, config);
 
@@ -154,7 +154,7 @@ namespace Tests
             VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
             IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
 
-            await createUser(db);
+            await CreateUser(db);
 
             AuthController controller = new AuthController(db, config);
 
@@ -175,18 +175,18 @@ namespace Tests
 
         private static VortexDbContext CreateDb()
         {
-            var options = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
+            DbContextOptionsBuilder<VortexDbContext> optionsBuilder = new DbContextOptionsBuilder<VortexDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString());
+            DbContextOptions<VortexDbContext> options = optionsBuilder.Options;
             return new VortexDbContext(options);
         }
 
         [Fact]
         public async Task Missing_fields_returns_400()
         {
-            using var db = CreateDb();
-            var service = new RegisterService(db);
-            var dto = new RegisterDTO
+            using VortexDbContext db = CreateDb();
+            RegisterService service = new RegisterService(db);
+            RegisterDTO dto = new RegisterDTO
             {
                 first_name = "John",
                 last_name = "Doe",
@@ -196,7 +196,7 @@ namespace Tests
                 password_confirmation = "P@ssw0rd1!"
             };
 
-            var result = await service.RegisterAsync(dto);
+            RegisterService.RegisterResult result = await service.RegisterAsync(dto);
             Assert.False(result.Success);
             Assert.Equal(400, result.StatusCode);
             Assert.Contains("Tous les champs sont requis", result.Message);
@@ -205,9 +205,9 @@ namespace Tests
         [Fact]
         public async Task Password_mismatch_returns_400()
         {
-            using var db = CreateDb();
-            var service = new RegisterService(db);
-            var dto = new RegisterDTO
+            using VortexDbContext db = CreateDb();
+            RegisterService service = new RegisterService(db);
+            RegisterDTO dto = new RegisterDTO
             {
                 first_name = "John",
                 last_name = "Doe",
@@ -217,7 +217,7 @@ namespace Tests
                 password_confirmation = "P@ssw0rd2!"
             };
 
-            var result = await service.RegisterAsync(dto);
+            RegisterService.RegisterResult result = await service.RegisterAsync(dto);
             Assert.False(result.Success);
             Assert.Equal(400, result.StatusCode);
             Assert.Contains("Les mots de passe ne correspondent pas", result.Message);
@@ -230,9 +230,9 @@ namespace Tests
         [InlineData("NoSpecialChar1")]
         public async Task Weak_password_returns_400(string password)
         {
-            using var db = CreateDb();
-            var service = new RegisterService(db);
-            var dto = new RegisterDTO
+            using VortexDbContext db = CreateDb();
+            RegisterService service = new RegisterService(db);
+            RegisterDTO dto = new RegisterDTO
             {
                 first_name = "John",
                 last_name = "Doe",
@@ -242,7 +242,7 @@ namespace Tests
                 password_confirmation = password
             };
 
-            var result = await service.RegisterAsync(dto);
+            RegisterService.RegisterResult result = await service.RegisterAsync(dto);
             Assert.False(result.Success);
             Assert.Equal(400, result.StatusCode);
             Assert.Contains("Le mot de passe doit contenir au minimum 8 caractères, une majuscule, un chiffre et un caractère spécial", result.Message);
@@ -251,7 +251,7 @@ namespace Tests
         [Fact]
         public async Task Email_already_used_returns_409()
         {
-            using var db = CreateDb();
+            using VortexDbContext db = CreateDb();
             db.Users.Add(new UserModel
             {
                 FirstName = "Existing",
@@ -264,8 +264,8 @@ namespace Tests
             });
             await db.SaveChangesAsync();
 
-            var service = new RegisterService(db);
-            var dto = new RegisterDTO
+            RegisterService service = new RegisterService(db);
+            RegisterDTO dto = new RegisterDTO
             {
                 first_name = "John",
                 last_name = "Doe",
@@ -275,7 +275,7 @@ namespace Tests
                 password_confirmation = "P@ssw0rd1!"
             };
 
-            var result = await service.RegisterAsync(dto);
+            RegisterService.RegisterResult result = await service.RegisterAsync(dto);
             Assert.False(result.Success);
             Assert.Equal(409, result.StatusCode);
             Assert.Contains("Email déjà utilisé", result.Message);
@@ -284,7 +284,7 @@ namespace Tests
         [Fact]
         public async Task Username_already_used_returns_409()
         {
-            using var db = CreateDb();
+            using VortexDbContext db = CreateDb();
             db.Users.Add(new UserModel
             {
                 FirstName = "Existing",
@@ -297,8 +297,8 @@ namespace Tests
             });
             await db.SaveChangesAsync();
 
-            var service = new RegisterService(db);
-            var dto = new RegisterDTO
+            RegisterService service = new RegisterService(db);
+            RegisterDTO dto = new RegisterDTO
             {
                 first_name = "John",
                 last_name = "Doe",
@@ -308,7 +308,7 @@ namespace Tests
                 password_confirmation = "P@ssw0rd1!"
             };
 
-            var result = await service.RegisterAsync(dto);
+            RegisterService.RegisterResult result = await service.RegisterAsync(dto);
             Assert.False(result.Success);
             Assert.Equal(409, result.StatusCode);
             Assert.Contains("Nom d'utilisateur déjà pris", result.Message);
@@ -317,9 +317,9 @@ namespace Tests
         [Fact]
         public async Task Success_returns_201_and_persists_user()
         {
-            using var db = CreateDb();
-            var service = new RegisterService(db);
-            var dto = new RegisterDTO
+            using VortexDbContext db = CreateDb();
+            RegisterService service = new RegisterService(db);
+            RegisterDTO dto = new RegisterDTO
             {
                 first_name = "Ada",
                 last_name = "Lovelace",
@@ -329,12 +329,12 @@ namespace Tests
                 password_confirmation = "P@ssw0rd1!"
             };
 
-            var result = await service.RegisterAsync(dto);
+            RegisterService.RegisterResult result = await service.RegisterAsync(dto);
             Assert.True(result.Success);
             Assert.Equal(201, result.StatusCode);
             Assert.Contains("Utilisateur créé", result.Message);
 
-            var saved = await db.Users.SingleOrDefaultAsync(u => u.Email == "ada@example.com");
+            UserModel? saved = await db.Users.SingleOrDefaultAsync(u => u.Email == "ada@example.com");
             Assert.NotNull(saved);
             Assert.Equal("ada", saved!.Username);
         }

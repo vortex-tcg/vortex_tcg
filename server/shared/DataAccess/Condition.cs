@@ -14,7 +14,7 @@ namespace VortexTCG.DataAccess.Models
 
         public string ConditionDescription { get; set; } = default!;
 
-        public Guid ConditionTypeId { get; set; } = default!;
+        public Guid ConditionTypeId { get; set; } = Guid.Empty;
         public ConditionType ConditionType { get; set; } = default!;
 
         public ICollection<Effect> StartEffects { get; set; } = default!;

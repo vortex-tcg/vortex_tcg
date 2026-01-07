@@ -9,14 +9,20 @@ using VortexTCG.Auth.DTOs;
 using Scrypt;
 using VortexTCG.Faction.DTOs;
 
-namespace Tests
-
+namespace VortexTCG.Tests.Api.Faction.Controllers
 {
     public class FactionControllerTest
     {
-        private async Task<Guid> createFaction(VortexDbContext db)
+        private static (FactionController controller, VortexDbContext db) CreateController()
         {
-            var factionId = Guid.NewGuid();
+            VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
+            return (new FactionController(db, config), db);
+        }
+
+        private static async Task<Guid> CreateFaction(VortexDbContext db)
+        {
+            Guid factionId = Guid.NewGuid();
             db.Factions.Add(new VortexTCG.DataAccess.Models.Faction
             {
                 Id = factionId,
@@ -39,9 +45,9 @@ namespace Tests
             IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
             FactionController controller = new FactionController(db, config);
 
-            await createFaction(db);
+            await CreateFaction(db);
 
-            var result = await controller.GetAllFactions();
+            IActionResult result = await controller.GetAllFactions();
             ObjectResult okResult = Assert.IsType<ObjectResult>(result);
             ResultDTO<List<FactionDto>> payload = Assert.IsType<ResultDTO<List<FactionDto>>>(okResult.Value);
             Assert.Equal(200, okResult.StatusCode);
@@ -60,15 +66,110 @@ namespace Tests
             IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
             FactionController controller = new FactionController(db, config);
 
-            var factionId = await createFaction(db);
+            Guid factionId = await CreateFaction(db);
 
-            var result = await controller.GetFactionWithCardsById(factionId);
+            IActionResult result = await controller.GetFactionWithCardsById(factionId);
             ObjectResult okResult = Assert.IsType<ObjectResult>(result);
             ResultDTO<FactionWithCardsDto> payload = Assert.IsType<ResultDTO<FactionWithCardsDto>>(okResult.Value);
             Assert.Equal(200, okResult.StatusCode);
             Assert.NotNull(payload);
             Assert.True(payload.success);
             Assert.NotNull(payload.data);
+        }
+
+        [Fact(DisplayName = "Get faction by ID")]
+        public async Task getFactionByIdReturnsFaction()
+        {
+            (FactionController controller, VortexDbContext db) = CreateController();
+            Guid factionId = await CreateFaction(db);
+
+            IActionResult result = await controller.GetFactionById(factionId);
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
+            ResultDTO<FactionDto> payload = Assert.IsType<ResultDTO<FactionDto>>(okResult.Value);
+            Assert.Equal(200, okResult.StatusCode);
+            Assert.NotNull(payload.data);
+            Assert.Equal(factionId, payload.data!.Id);
+        }
+
+        [Fact(DisplayName = "Get faction with champions by ID")]
+        public async Task getFactionWithChampionsById()
+        {
+            (FactionController controller, VortexDbContext db) = CreateController();
+            Guid factionId = await CreateFaction(db);
+
+            IActionResult result = await controller.GetFactionWithChampionsById(factionId);
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
+            ResultDTO<FactionWithChampionDto> payload = Assert.IsType<ResultDTO<FactionWithChampionDto>>(okResult.Value);
+            Assert.Equal(200, okResult.StatusCode);
+            Assert.NotNull(payload.data);
+            Assert.Equal(factionId, payload.data!.Id);
+        }
+
+        [Fact(DisplayName = "Create faction")]
+        public async Task createFactionReturnsCreated()
+        {
+            (FactionController controller, VortexDbContext _) = CreateController();
+            CreateFactionDto dto = new CreateFactionDto
+            {
+                Label = "NewFaction",
+                Currency = "Silver",
+                Condition = "None"
+            };
+
+            IActionResult result = await controller.CreateFaction(dto);
+            ObjectResult created = Assert.IsType<ObjectResult>(result);
+            ResultDTO<FactionDto> payload = Assert.IsType<ResultDTO<FactionDto>>(created.Value);
+            Assert.Equal(201, created.StatusCode);
+            Assert.True(payload.success);
+            Assert.NotNull(payload.data);
+            Assert.Equal("NewFaction", payload.data!.Label);
+        }
+
+        [Fact(DisplayName = "Update faction")]
+        public async Task updateFactionReturnsUpdated()
+        {
+            (FactionController controller, VortexDbContext db) = CreateController();
+            Guid factionId = await CreateFaction(db);
+            UpdateFactionDto dto = new UpdateFactionDto
+            {
+                Label = "UpdatedFaction",
+                Currency = "Bronze",
+                Condition = "Updated"
+            };
+
+            IActionResult result = await controller.UpdateFaction(factionId, dto);
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
+            ResultDTO<FactionDto> payload = Assert.IsType<ResultDTO<FactionDto>>(okResult.Value);
+            Assert.Equal(200, okResult.StatusCode);
+            Assert.True(payload.success);
+            Assert.NotNull(payload.data);
+            Assert.Equal("UpdatedFaction", payload.data!.Label);
+            Assert.Equal("Bronze", payload.data.Currency);
+        }
+
+        [Fact(DisplayName = "Delete faction")]
+        public async Task deleteFactionReturnsOk()
+        {
+            (FactionController controller, VortexDbContext db) = CreateController();
+            Guid factionId = await CreateFaction(db);
+
+            IActionResult result = await controller.DeleteFaction(factionId);
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
+            ResultDTO<object> payload = Assert.IsType<ResultDTO<object>>(okResult.Value);
+            Assert.Equal(200, okResult.StatusCode);
+            Assert.True(payload.success);
+        }
+
+        [Fact(DisplayName = "Delete faction not found")]
+        public async Task deleteFactionReturnsNotFound()
+        {
+            (FactionController controller, VortexDbContext _) = CreateController();
+
+            IActionResult result = await controller.DeleteFaction(Guid.NewGuid());
+            ObjectResult okResult = Assert.IsType<ObjectResult>(result);
+            ResultDTO<object> payload = Assert.IsType<ResultDTO<object>>(okResult.Value);
+            Assert.Equal(404, okResult.StatusCode);
+            Assert.False(payload.success);
         }
 
     }

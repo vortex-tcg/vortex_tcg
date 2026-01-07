@@ -71,12 +71,13 @@ jobs:
             /v:"1.0" `
             /d:sonar.token="$env:SONAR_TOKEN" `
             /d:sonar.host.url="$env:SONAR_HOST_URL" `
-            /d:sonar.cs.opencover.reportsPaths="**/TestResults/coverage.opencover.xml"
+            /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml"
 
           dotnet build VortexTCG.sln --configuration Release
 
-          dotnet test VortexTCG.sln --configuration Release --no-restore /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./TestResults/
-          if ($LASTEXITCODE -ne 0) { Write-Host "Tests en échec, mais on continue." }
+          dotnet test VortexTCG.sln --configuration Release --no-restore --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+          if ($LASTEXITCODE -ne 0) { Write-Host "Tests en échec, le déploiement continue" }
 
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
 

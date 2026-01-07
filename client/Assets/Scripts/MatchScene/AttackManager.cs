@@ -219,7 +219,7 @@ namespace VortexTCG.Scripts.MatchScene
                 card.ShowAttackOrder(i + 1);
             }
         }
-
+        
         private Card FindOrRegisterBoardCardById(int id)
         {
             if (boardCardsById.TryGetValue(id, out Card found) && found != null)
