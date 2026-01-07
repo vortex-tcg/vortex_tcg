@@ -10,6 +10,7 @@ namespace VortexTCG.DataAccess
 {
     public class VortexDbContext : DbContext
     {
+        private const string Varchar256 = "varchar(256)";
         private readonly IHttpContextAccessor? _httpContextAccessor;
 
         public VortexDbContext(DbContextOptions<VortexDbContext> options, IHttpContextAccessor? httpContextAccessor = null)
@@ -77,17 +78,17 @@ namespace VortexTCG.DataAccess
             modelBuilder.Entity<Card>()
                 .Property(p => p.Extension)
                 .HasConversion<string>()
-                .HasColumnType("varchar(256)");
+                .HasColumnType(Varchar256);
 
             modelBuilder.Entity<Card>()
                 .Property(p => p.CardType)
                 .HasConversion<string>()
-                .HasColumnType("varchar(256)");
+                .HasColumnType(Varchar256);
 
             modelBuilder.Entity<CollectionCard>()
                 .Property(p => p.Rarity)
                 .HasConversion<string>()
-                .HasColumnType("varchar(256)");
+                .HasColumnType(Varchar256);
 
             modelBuilder.Entity<Friend>()
                         .HasOne(c => c.FriendUser)
@@ -102,17 +103,17 @@ namespace VortexTCG.DataAccess
             modelBuilder.Entity<User>()
                 .Property(p => p.Status)
                 .HasConversion<string>()
-                .HasColumnType("varchar(256)");
+                .HasColumnType(Varchar256);
 
             modelBuilder.Entity<User>()
                 .Property(p => p.Role)
                 .HasConversion<string>()
-                .HasColumnType("varchar(256)");
+                .HasColumnType(Varchar256);
 
             modelBuilder.Entity<Game>()
                 .Property(p => p.Status)
                 .HasConversion<string>()
-                .HasColumnType("varchar(256)");
+                .HasColumnType(Varchar256);
 
             modelBuilder.Entity<ActionType>()
                         .HasOne(a => a.Parent)
@@ -121,9 +122,10 @@ namespace VortexTCG.DataAccess
 
             modelBuilder.Entity<FactionCard>()
                         .ToTable("FactionCard");
-            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-            {
-                if (typeof(AuditableEntity).IsAssignableFrom(entityType.ClrType))
+            modelBuilder.Model.GetEntityTypes()
+                .Where(entityType => typeof(AuditableEntity).IsAssignableFrom(entityType.ClrType))
+                .ToList()
+                .ForEach(entityType =>
                 {
                     modelBuilder.Entity(entityType.ClrType)
                         .Property<DateTime?>("CreatedAt")
@@ -137,8 +139,7 @@ namespace VortexTCG.DataAccess
 
                     modelBuilder.Entity(entityType.ClrType)
                         .Property<string>("UpdatedBy");
-                }
-            }
+                });
         }
 
         // 🔹 Override SaveChanges pour audit
