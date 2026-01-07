@@ -306,8 +306,20 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
 
+        public void CardIsPlaced() {
+            transform.localScale = Vector3.one;
+
+            isSelected = false;
+
+            if (AttackOutline != null)
+                AttackOutline.SetActive(false);
+            if (AttackOrder != null)
+                AttackOrder.SetActive(false);
+        }
+
         public void SetOpponentAttacking(bool active)
         {
+            Debug.Log("Je try d'attack !!!!");
             EnsureAttackOutlineRef();
             if (AttackOutline == null) return;
 
