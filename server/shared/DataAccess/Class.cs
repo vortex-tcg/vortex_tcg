@@ -20,10 +20,10 @@ namespace VortexTCG.DataAccess.Models
         [Key]
         public Guid Id { get; set; }
 
-        public Guid CardId { get; set; } = default!;
+        public Guid CardId { get; set; } = Guid.Empty;
         public Card Card { get; set; } = default!;
 
-        public Guid ClassId { get; set; } = default!;
+        public Guid ClassId { get; set; } = Guid.Empty;
         public Class Class { get; set; } = default!;
     }
 

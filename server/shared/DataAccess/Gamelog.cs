@@ -28,10 +28,10 @@ namespace VortexTCG.DataAccess.Models
 
         public string actionDescription { get; set; } = default!;
 
-        public Guid GameLogId { get; set; } = default!;
+        public Guid GameLogId { get; set; } = Guid.Empty;
         public Gamelog Gamelog { get; set; } = default!;
 
-        public Guid ParentId { get; set; } = default!;
+        public Guid ParentId { get; set; } = Guid.Empty;
         public ActionType Parent { get; set; } = default!;
 
         public ICollection<ActionType> Childs { get; set; } = default!;
@@ -44,10 +44,10 @@ namespace VortexTCG.DataAccess.Models
 
         public GameEndStatus Status { get; set; } = default!;
 
-        public Guid UserId { get; set; } = default!;
+        public Guid UserId { get; set; } = Guid.Empty;
         public User User { get; set; } = default!;
 
-        public Guid GamelogId { get; set; } = default!;
+        public Guid GamelogId { get; set; } = Guid.Empty;
         public Gamelog Gamelog { get; set; } = default!;
     }
 }

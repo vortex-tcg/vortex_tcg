@@ -29,10 +29,10 @@ namespace VortexTCG.DataAccess.Models
 
         public ICollection<DeckCard> DeckCards { get; set; } = default!;
 
-        public Guid CardId { get; set; } = default!;
+        public Guid CardId { get; set; } = Guid.Empty;
         public Card Card { get; set; } = default!;
 
-        public Guid CollectionId { get; set; } = default!;
+        public Guid CollectionId { get; set; } = Guid.Empty;
         public Collection Collection { get; set; } = default!;
 
     }
@@ -42,10 +42,10 @@ namespace VortexTCG.DataAccess.Models
         [Key]
         public Guid Id { get; set; }
 
-        public Guid ChampionId { get; set; } = default!;
+        public Guid ChampionId { get; set; } = Guid.Empty;
         public Champion Champion { get; set; } = default!;
 
-        public Guid CollectionId { get; set; } = default!;
+        public Guid CollectionId { get; set; } = Guid.Empty;
         public Collection Collection { get; set; } = default!;
     }
 }
