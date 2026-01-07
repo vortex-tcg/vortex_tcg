@@ -62,7 +62,7 @@ public static class ConfigLoader
         if (string.IsNullOrWhiteSpace(cfg.baseUrl))
             return null;
 
-        string baseUrl = cfg.apiBaseUrl.TrimEnd('/');
+        string baseUrl = cfg.gameHubUrl.TrimEnd('/');
         if (baseUrl.EndsWith("/api", StringComparison.OrdinalIgnoreCase))
             baseUrl = baseUrl.Substring(0, baseUrl.Length - 4);
 

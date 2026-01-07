@@ -6,7 +6,7 @@
   },
   "prod": {
     "apiBaseUrl": "https://vortex-tcg.online/auth",
-    "gameHubUrl": "https://vortex-tcg.online/game",
+    "gameHubUrl": "https://vortex-tcg.online/game/hubs/game",
     "baseUrl": "https://vortex-tcg.online/api"
   }  
 }
