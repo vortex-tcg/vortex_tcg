@@ -1,8 +1,7 @@
 services:
   migrations:
-    build:
-      context: .
-      dockerfile: ./apps/migrations/Dockerfile
+    image: vortextcg/vortex_repository:migrations
+    pull_policy: always
     env_file:
       - .env
     deploy:
@@ -11,9 +10,8 @@ services:
         max_attempts: 5
 
   auth:
-    build:
-      context: .
-      dockerfile: ./apps/auth/Dockerfile
+    image: vortextcg/vortex_repository:auth
+    pull_policy: always
     env_file:
       - .env
     ports:
@@ -23,9 +21,8 @@ services:
         condition: service_completed_successfully
 
   game:
-    build:
-      context: .
-      dockerfile: ./apps/game/Dockerfile
+    image: vortextcg/vortex_repository:game
+    pull_policy: always
     env_file:
       - .env
     ports:
@@ -35,9 +32,8 @@ services:
         condition: service_completed_successfully
 
   api:
-    build:
-      context: .
-      dockerfile: ./apps/api/Dockerfile
+    image: vortextcg/vortex_repository:api
+    pull_policy: always
     env_file:
       - .env
     ports:

@@ -44,6 +44,17 @@ namespace VortexTCG.Scripts.MatchScene
             t.localScale = Vector3.one;
             t.localPosition = new Vector3(0f, 1f, 0f);
 
+            // Ajuster la position Y du collider à 200
+            Collider col = card.GetComponent<Collider>();
+            if (col != null)
+            {
+                if (col is BoxCollider boxCol)
+                {
+                    boxCol.center = new Vector3(boxCol.center.x, 200f, boxCol.center.z);
+                    Debug.Log($"[CardSlot] Collider center ajusté à Y=200 pour {card.cardName}");
+                }
+            }
+
             if (AttackManager.Instance != null && AttackManager.Instance.IsP1BoardSlot(this))
                 AttackManager.Instance.RegisterCard(card);
 

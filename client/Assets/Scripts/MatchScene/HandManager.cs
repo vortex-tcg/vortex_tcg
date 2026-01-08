@@ -216,12 +216,17 @@ namespace VortexTCG.Scripts.MatchScene
                 slot.PlaceCard(cardToPlace);
                 handCards.Remove(cardToPlace);
 
-                if (SelectedCard == cardToPlace) DeselectCurrentCard();
+                if (SelectedCard == cardToPlace) PlaceCard();
                 LayoutHand();
             }
 
             _pendingCard = null;
             _pendingSlot = null;
+        }
+
+        private void PlaceCard() {
+            SelectedCard.CardIsPlaced();
+            SelectedCard = null;
         }
 
         public void CancelPendingPlay(string reason)
