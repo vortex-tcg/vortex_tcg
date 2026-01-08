@@ -223,28 +223,12 @@ namespace VortexTCG.Scripts.MatchScene
                 attackOrderText.text = order.ToString();
                 attackOrderText.enabled = true;
                 attackOrderText.ForceMeshUpdate();
-
-
-                RectTransform rectTransform = attackOrderText.GetComponent<RectTransform>();
-                if (rectTransform != null)
-                {
-                    LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
-
-                    rectTransform.sizeDelta = new Vector2(150, -200);
-
-
-                    Debug.Log($"[Card] ShowAttackOrder({order}) - RectTransform resizé à {rectTransform.sizeDelta}");
-                }
-
-                Debug.Log(
-                    $"[Card] ShowAttackOrder({order}) - text='{attackOrderText.text}', enabled={attackOrderText.enabled}, fontSize={attackOrderText.fontSize}");
             }
             else
             {
                 Debug.LogError($"[Card] ShowAttackOrder({order}) - attackOrderText est NULL!");
             }
 
-            // Debug pour vérifier
             Debug.Log(
                 $"[Card] ShowAttackOrder({order}) - AttackOrder={AttackOrder?.activeSelf}, AttackOrder.activeInHierarchy={AttackOrder?.activeInHierarchy}");
         }
@@ -306,23 +290,28 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
 
+        public void CardIsPlaced() {
+            transform.localScale = Vector3.one;
+
+            isSelected = false;
+
+            if (AttackOutline != null)
+                AttackOutline.SetActive(false);
+            if (AttackOrder != null)
+                AttackOrder.SetActive(false);
+        }
+
         public void SetOpponentAttacking(bool active)
         {
+            Debug.Log("Je try d'attack !!!!");
             EnsureAttackOutlineRef();
             if (AttackOutline == null) return;
-
             AttackOutline.SetActive(active);
-
-            Renderer renderer = AttackOutline.GetComponent<Renderer>();
-            if (renderer != null && renderer.material != null)
-            {
-                renderer.material.color = active ? Color.red : Color.white;
-            }
         }
 
         private void EnsureAttackOutlineRef()
         {
-            if (AttackOutline != null) return;
+            if (AttackOutline != null || DefenseOutline == true) return;
 
             foreach (Transform t in GetComponentsInChildren<Transform>(true))
             {
@@ -343,7 +332,7 @@ namespace VortexTCG.Scripts.MatchScene
 
         private void EnsureDefenseOutlineRef()
         {
-            if (DefenseOutline != null) return;
+            if (DefenseOutline != null || AttackOutline == true) return;
 
             foreach (Transform t in GetComponentsInChildren<Transform>(true))
             {
