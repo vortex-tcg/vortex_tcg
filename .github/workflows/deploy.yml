@@ -71,7 +71,8 @@ jobs:
             /v:"1.0" `
             /d:sonar.token="$env:SONAR_TOKEN" `
             /d:sonar.host.url="$env:SONAR_HOST_URL" `
-            /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml"
+            /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml" `
+            /d:sonar.coverage.exclusions="**/Migrations/**,**/Program.cs"
 
           dotnet build VortexTCG.sln --configuration Release
 
@@ -149,7 +150,7 @@ jobs:
           port: 22
           script: |
             cd /var/www/vortex_tcg/server
-            docker-compose -f docker-compose.prod.yaml up -d --remove-orphans
+            docker compose -f docker-compose.prod.yaml up -d --remove-orphans
       - name: Ensure SonarQube is running with persistence
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
