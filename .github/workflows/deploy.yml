@@ -72,6 +72,7 @@ jobs:
             /d:sonar.token="$env:SONAR_TOKEN" `
             /d:sonar.host.url="$env:SONAR_HOST_URL" `
             /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml"
+            /d:sonar.coverage.exclusions="**/Migrations/**,**/Program.cs"
 
           dotnet build VortexTCG.sln --configuration Release
 
