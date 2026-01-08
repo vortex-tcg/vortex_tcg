@@ -8,6 +8,7 @@ using Xunit;
 using CardModel = VortexTCG.DataAccess.Models.Card;
 using FactionModel = VortexTCG.DataAccess.Models.Faction;
 using FactionCardModel = VortexTCG.DataAccess.Models.FactionCard;
+using ChampionModel = VortexTCG.DataAccess.Models.Champion;
 
 namespace VortexTCG.Tests.Api.Faction.Providers
 {
@@ -131,6 +132,27 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         }
 
         [Fact]
+        public async Task CreateFaction_InvalidChampion_ReturnsError()
+        {
+            using VortexDbContext db = CreateDb();
+            FactionProvider provider = new FactionProvider(db);
+            Guid missingChampion = Guid.NewGuid();
+            CreateFactionDto dto = new CreateFactionDto
+            {
+                Label = "FactionWithChampion",
+                Currency = "Gold",
+                Condition = "None",
+                ChampionId = missingChampion
+            };
+
+            (bool success, FactionDto? result, string error) = await provider.CreateFaction(dto);
+
+            Assert.False(success);
+            Assert.Null(result);
+            Assert.Contains(missingChampion.ToString(), error);
+        }
+
+        [Fact]
         public async Task CreateFaction_WithCards_PersistsFactionAndLinks()
         {
             using VortexDbContext db = CreateDb();
@@ -157,6 +179,40 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         }
 
         [Fact]
+        public async Task CreateFaction_WithChampion_AssignsChampion()
+        {
+            using VortexDbContext db = CreateDb();
+            ChampionModel champion = new ChampionModel
+            {
+                Id = Guid.NewGuid(),
+                Name = "ChampionA",
+                Description = "desc",
+                HP = 10,
+                Picture = "pic",
+                CreatedAtUtc = DateTime.UtcNow,
+                CreatedBy = "test"
+            };
+            db.Champions.Add(champion);
+            await db.SaveChangesAsync();
+            FactionProvider provider = new FactionProvider(db);
+            CreateFactionDto dto = new CreateFactionDto
+            {
+                Label = "New Faction",
+                Currency = "Gold",
+                Condition = "None",
+                ChampionId = champion.Id
+            };
+
+            (bool success, FactionDto? result, string error) = await provider.CreateFaction(dto);
+
+            Assert.True(success);
+            Assert.NotNull(result);
+            Assert.True(string.IsNullOrEmpty(error));
+            ChampionModel? updated = await db.Champions.SingleAsync(ch => ch.Id == champion.Id);
+            Assert.Equal(result!.Id, updated.FactionId);
+        }
+
+        [Fact]
         public async Task UpdateFaction_InvalidCardIds_ReturnsError()
         {
             using VortexDbContext db = CreateDb();
@@ -174,6 +230,26 @@ namespace VortexTCG.Tests.Api.Faction.Providers
             Assert.False(success);
             Assert.Null(result);
             Assert.Contains("IDs de cartes", error);
+        }
+
+        [Fact]
+        public async Task UpdateFaction_InvalidChampion_ReturnsError()
+        {
+            using VortexDbContext db = CreateDb();
+            FactionModel faction = CreateFaction();
+            db.Factions.Add(faction);
+            await db.SaveChangesAsync();
+            FactionProvider provider = new FactionProvider(db);
+            UpdateFactionDto update = new UpdateFactionDto
+            {
+                ChampionId = Guid.NewGuid()
+            };
+
+            (bool success, FactionDto? result, string error) = await provider.UpdateFaction(faction.Id, update);
+
+            Assert.False(success);
+            Assert.Null(result);
+            Assert.Contains("champion", error, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]
@@ -212,6 +288,52 @@ namespace VortexTCG.Tests.Api.Faction.Providers
             Assert.Equal("UpdatedCond", result.Condition);
             Assert.Equal(1, db.FactionCards.Count());
             Assert.Equal(newCard.Id, db.FactionCards.Single().CardId);
+            Assert.True(string.IsNullOrEmpty(error));
+        }
+
+        [Fact]
+        public async Task UpdateFaction_ChangesChampionAssignments()
+        {
+            using VortexDbContext db = CreateDb();
+            FactionModel faction = CreateFaction();
+            ChampionModel oldChampion = new ChampionModel
+            {
+                Id = Guid.NewGuid(),
+                Name = "Old",
+                Description = "desc",
+                HP = 10,
+                Picture = "pic",
+                FactionId = faction.Id,
+                CreatedAtUtc = DateTime.UtcNow,
+                CreatedBy = "test"
+            };
+            ChampionModel newChampion = new ChampionModel
+            {
+                Id = Guid.NewGuid(),
+                Name = "New",
+                Description = "desc",
+                HP = 12,
+                Picture = "pic",
+                CreatedAtUtc = DateTime.UtcNow,
+                CreatedBy = "test"
+            };
+            db.Factions.Add(faction);
+            db.Champions.AddRange(oldChampion, newChampion);
+            await db.SaveChangesAsync();
+            FactionProvider provider = new FactionProvider(db);
+            UpdateFactionDto update = new UpdateFactionDto
+            {
+                ChampionId = newChampion.Id
+            };
+
+            (bool success, FactionDto? result, string error) = await provider.UpdateFaction(faction.Id, update);
+
+            Assert.True(success);
+            Assert.NotNull(result);
+            ChampionModel? refreshedOld = await db.Champions.SingleAsync(ch => ch.Id == oldChampion.Id);
+            ChampionModel? refreshedNew = await db.Champions.SingleAsync(ch => ch.Id == newChampion.Id);
+            Assert.Equal(Guid.Empty, refreshedOld.FactionId);
+            Assert.Equal(faction.Id, refreshedNew.FactionId);
             Assert.True(string.IsNullOrEmpty(error));
         }
 
