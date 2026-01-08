@@ -1,6 +1,15 @@
 using UnityEngine;
 using System;
 
+
+
+[System.Serializable]
+public class AppConfigs
+{
+    public AppConfig dev;
+    public AppConfig prod;
+}
+
 [System.Serializable]
 public class AppConfig
 {
@@ -11,12 +20,17 @@ public class AppConfig
 
 public static class ConfigLoader
 {
-    private static AppConfig config;
+    private static AppConfigs config;
 
     public static AppConfig Load()
     {
-        if (config != null)
-            return config;
+        if (config != null) {
+            #if UNITY_EDITOR
+                return config.dev;
+            #else
+                return config.prod;
+            #endif
+        }
 
         TextAsset configText = Resources.Load<TextAsset>("application-properties");
         if (configText == null)
@@ -25,8 +39,13 @@ public static class ConfigLoader
             return null;
         }
 
-        config = JsonUtility.FromJson<AppConfig>(configText.text);
-        return config;
+        config = JsonUtility.FromJson<AppConfigs>(configText.text);
+
+        #if UNITY_EDITOR
+            return config.dev;
+        #else
+            return config.prod;
+        #endif
     }
 
     public static string BuildGameHubUrl(AppConfig cfg)
@@ -43,7 +62,7 @@ public static class ConfigLoader
         if (string.IsNullOrWhiteSpace(cfg.baseUrl))
             return null;
 
-        string baseUrl = cfg.apiBaseUrl.TrimEnd('/');
+        string baseUrl = cfg.gameHubUrl.TrimEnd('/');
         if (baseUrl.EndsWith("/api", StringComparison.OrdinalIgnoreCase))
             baseUrl = baseUrl.Substring(0, baseUrl.Length - 4);
 

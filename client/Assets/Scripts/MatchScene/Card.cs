@@ -40,6 +40,32 @@ namespace VortexTCG.Scripts.MatchScene
         {
             selectionBaseScale = transform.localScale;
 
+            Collider col = GetComponent<Collider>();
+            if (col == null)
+            {
+                Debug.LogWarning($"[Card] {gameObject.name} n'a PAS de Collider ! Ajout d'un BoxCollider.");
+                BoxCollider bc = gameObject.AddComponent<BoxCollider>();
+                bc.size = new Vector3(2f, 3f, 0.1f);
+            }
+            else
+            {
+                Debug.Log($"[Card] {gameObject.name} a un Collider: {col.GetType().Name}, enabled={col.enabled}, isTrigger={col.isTrigger}");
+                if (col is BoxCollider box)
+                {
+                    Debug.Log($"[Card] BoxCollider size: {box.size}, center: {box.center}");
+                }
+            }
+
+            Camera cam = Camera.main;
+            if (cam != null)
+            {
+                Debug.Log($"[Card] Camera.main trouvée: {cam.name}, tag={cam.tag}");
+            }
+            else
+            {
+                Debug.LogError("[Card] Camera.main est NULL ! OnMouseDown ne fonctionnera pas.");
+            }
+
             if (AttackOrder != null && attackOrderText == null)
             {
                 attackOrderText = AttackOrder.GetComponentInChildren<TMP_Text>();
@@ -58,11 +84,38 @@ namespace VortexTCG.Scripts.MatchScene
                 AttackOrder.SetActive(false);
         }
 
-        void OnMouseDown()
+        void OnMouseEnter()
         {
             if (faceDown) return;
 
-            if (PhaseManager.Instance == null) return;
+            CardSlot slot = GetComponentInParent<CardSlot>();
+            if (slot != null && slot.isOpponentSlot) return;
+
+            if (CardPreviewManager.Instance != null)
+            {
+                CardPreviewManager.Instance.ShowCardPreview(this);
+            }
+        }
+
+        void OnMouseExit()
+        {
+            if (CardPreviewManager.Instance != null)
+            {
+                CardPreviewManager.Instance.HidePreview();
+            }
+        }
+
+        void OnMouseDown()
+        {
+            Debug.Log($"[Card] OnMouseDown sur {cardName}, faceDown={faceDown}");
+            
+            if (faceDown) return;
+
+            if (PhaseManager.Instance == null)
+            {
+                Debug.LogWarning("[Card] PhaseManager.Instance est null");
+                return;
+            }
 
             CardSlot slot = GetComponentInParent<CardSlot>();
             if (PhaseManager.Instance.CurrentPhase == GamePhase.ATTACK)
@@ -170,28 +223,12 @@ namespace VortexTCG.Scripts.MatchScene
                 attackOrderText.text = order.ToString();
                 attackOrderText.enabled = true;
                 attackOrderText.ForceMeshUpdate();
-
-
-                RectTransform rectTransform = attackOrderText.GetComponent<RectTransform>();
-                if (rectTransform != null)
-                {
-                    LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
-
-                    rectTransform.sizeDelta = new Vector2(150, -200);
-
-
-                    Debug.Log($"[Card] ShowAttackOrder({order}) - RectTransform resizé à {rectTransform.sizeDelta}");
-                }
-
-                Debug.Log(
-                    $"[Card] ShowAttackOrder({order}) - text='{attackOrderText.text}', enabled={attackOrderText.enabled}, fontSize={attackOrderText.fontSize}");
             }
             else
             {
                 Debug.LogError($"[Card] ShowAttackOrder({order}) - attackOrderText est NULL!");
             }
 
-            // Debug pour vérifier
             Debug.Log(
                 $"[Card] ShowAttackOrder({order}) - AttackOrder={AttackOrder?.activeSelf}, AttackOrder.activeInHierarchy={AttackOrder?.activeInHierarchy}");
         }
@@ -253,23 +290,58 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
 
+        public void CardIsPlaced() {
+            transform.localScale = Vector3.one;
+
+            isSelected = false;
+
+            if (AttackOutline != null)
+                AttackOutline.SetActive(false);
+            if (AttackOrder != null)
+                AttackOrder.SetActive(false);
+        }
+
         public void SetOpponentAttacking(bool active)
         {
+            Debug.Log("Je try d'attack !!!!");
+            EnsureAttackOutlineRef();
             if (AttackOutline == null) return;
-
             AttackOutline.SetActive(active);
+        }
 
-            Renderer renderer = AttackOutline.GetComponent<Renderer>();
-            if (renderer != null && renderer.material != null)
+        private void EnsureAttackOutlineRef()
+        {
+            if (AttackOutline != null || DefenseOutline == true) return;
+
+            foreach (Transform t in GetComponentsInChildren<Transform>(true))
             {
-                renderer.material.color = active ? Color.red : Color.white;
+                if (t != null && t.name == "AttackOutline")
+                {
+                    AttackOutline = t.gameObject;
+                    break;
+                }
             }
         }
 
         public void SetDefenseSelected(bool active)
         {
+            EnsureDefenseOutlineRef();
             if (DefenseOutline != null)
                 DefenseOutline.SetActive(active);
+        }
+
+        private void EnsureDefenseOutlineRef()
+        {
+            if (DefenseOutline != null || AttackOutline == true) return;
+
+            foreach (Transform t in GetComponentsInChildren<Transform>(true))
+            {
+                if (t != null && t.name == "DefenseOutline")
+                {
+                    DefenseOutline = t.gameObject;
+                    break;
+                }
+            }
         }
 
         public bool IsAttackingOutlineActive()

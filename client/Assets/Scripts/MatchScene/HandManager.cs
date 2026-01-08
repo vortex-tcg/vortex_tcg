@@ -17,6 +17,7 @@ namespace VortexTCG.Scripts.MatchScene
         [SerializeField] private Card cardPrefab;
         [SerializeField] private Transform handRoot;
         [SerializeField] private float cardSpacing = 1.2f;
+        private const int MaxHandSize = 7;
 
         [HideInInspector] public Card SelectedCard;
 
@@ -57,6 +58,8 @@ namespace VortexTCG.Scripts.MatchScene
 
             foreach (DrawnCardDto dto in drawnCards)
             {
+                if (handCards.Count >= MaxHandSize) break;
+
                 Card card = Instantiate(cardPrefab, handRoot);
                 card.ApplyDTO(
                     dto.GameCardId.ToString(),
@@ -213,12 +216,17 @@ namespace VortexTCG.Scripts.MatchScene
                 slot.PlaceCard(cardToPlace);
                 handCards.Remove(cardToPlace);
 
-                if (SelectedCard == cardToPlace) DeselectCurrentCard();
+                if (SelectedCard == cardToPlace) PlaceCard();
                 LayoutHand();
             }
 
             _pendingCard = null;
             _pendingSlot = null;
+        }
+
+        private void PlaceCard() {
+            SelectedCard.CardIsPlaced();
+            SelectedCard = null;
         }
 
         public void CancelPendingPlay(string reason)
@@ -258,12 +266,24 @@ namespace VortexTCG.Scripts.MatchScene
 
         private void LayoutHand()
         {
+            if (handCards.Count == 0) return;
+
+            // Recenter hand container on X
+            if (handRoot != null)
+            {
+                Vector3 rp = handRoot.localPosition;
+                if (!Mathf.Approximately(rp.x, 0f))
+                    handRoot.localPosition = new Vector3(0f, rp.y, rp.z);
+            }
+
+            float startX = -((handCards.Count - 1) * cardSpacing) * 0.5f;
+
             for (int i = 0; i < handCards.Count; i++)
             {
                 Card c = handCards[i];
                 if (c == null) continue;
 
-                c.transform.localPosition = new Vector3(i * cardSpacing, 0f, 0f);
+                c.transform.localPosition = new Vector3(startX + i * cardSpacing, 0f, 0f);
                 c.transform.localRotation = Quaternion.identity;
             }
         }
@@ -272,10 +292,15 @@ namespace VortexTCG.Scripts.MatchScene
         {
             if (card == null) return;
 
-            if (card.GetComponent<Collider>() == null)
+            Collider col = card.GetComponent<Collider>();
+            if (col == null)
             {
-                BoxCollider bc = card.gameObject.AddComponent<BoxCollider>();
-                bc.size = Vector3.one;
+                col = card.gameObject.AddComponent<BoxCollider>();
+            }
+
+            if (col is BoxCollider bc)
+            {
+                bc.size = new Vector3(1f, 20f, 1f);
             }
         }
     }
