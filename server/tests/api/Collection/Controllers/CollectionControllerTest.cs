@@ -7,23 +7,18 @@ using VortexTCG.Api.Collection.Controllers;
 using VortexTCG.Api.Collection.DTOs;
 using VortexTCG.Api.Collection.Providers;
 using VortexTCG.Api.Collection.Services;
+using VortexTCG.Common.Services;
 using VortexTCG.DataAccess;
 using VortexTCG.Common.DTO;
 using Microsoft.EntityFrameworkCore;
 
-namespace Tests.Collection
+namespace VortexTCG.Tests.Api.Collection.Controllers
 {
     public class CollectionControllerTest
     {
-        private VortexDbContext CreateDb()
-        {
-            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
-            return new VortexDbContext(options);
-        }
+        private static VortexDbContext CreateDb() => VortexDbCoontextFactory.getInMemoryDbContext();
 
-        private CollectionController CreateController(VortexDbContext db)
+        private static CollectionController CreateController(VortexDbContext db)
         {
             CollectionProvider provider = new CollectionProvider(db);
             CollectionService service = new CollectionService(provider);
@@ -70,9 +65,9 @@ namespace Tests.Collection
             ObjectResult result = Assert.IsType<ObjectResult>(getCollectionResult);
             ResultDTO<UserCollectionDto> data = Assert.IsType<ResultDTO<UserCollectionDto>>(result.Value);
             Assert.True(data.success);
-            Assert.Equal(data.data.Decks.Count, 2);
-            Assert.Equal(data.data.Faction.Count, 2);
-            Assert.Equal(data.data.Cards.Count, 120);
+            Assert.Equal(2, data.data.Decks.Count);
+            Assert.Equal(2, data.data.Faction.Count);
+            Assert.Equal(120, data.data.Cards.Count);
         }
 
         [Fact]

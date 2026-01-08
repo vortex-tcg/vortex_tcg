@@ -1,5 +1,12 @@
 {
-  "apiBaseUrl": "http://localhost:4000",
-  "gameHubUrl": "http://localhost:8008/hubs/game",
-  "baseUrl": "http://localhost:6006"
+  "dev": {
+    "apiBaseUrl": "http://localhost:4000",
+    "gameHubUrl": "http://localhost:8008/hubs/game",
+    "baseUrl": "http://localhost:6006"
+  },
+  "prod": {
+    "apiBaseUrl": "https://vortex-tcg.online/auth",
+    "gameHubUrl": "https://vortex-tcg.online/game/hubs/game",
+    "baseUrl": "https://vortex-tcg.online/api"
+  }  
 }

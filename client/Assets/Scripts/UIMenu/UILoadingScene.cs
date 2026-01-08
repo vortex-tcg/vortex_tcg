@@ -22,7 +22,7 @@ public class UILoadingScene : MonoBehaviour
     {
         if (uiDocument == null)
         {
-            Debug.LogError("UILoadingScene : UIDocument non assigné.");
+            Debug.LogError("UILoadingScene : UIDocument non assignï¿½.");
             return;
         }
 
@@ -131,8 +131,7 @@ public class UILoadingScene : MonoBehaviour
     }
 
     private void CallLoadScene(string loadScene, UpMenuStatus newStatus)
-    {
-        Debug.Log("Holla");
+    { 
         if (menuParams != null)
             menuParams.status = newStatus;
 
