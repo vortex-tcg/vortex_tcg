@@ -35,10 +35,28 @@ builder.Services.AddControllers();
 
 // Configuration DB
 var connectionString = builder.Configuration["CONNECTION_STRING"];
+var useInMemoryDb = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
 
-builder.Services.AddDbContext<VortexDbContext>(options =>
-    options.UseMySql(connectionString, new MariaDbServerVersion(new Version(11, 8, 3)) )
-);
+if (!useInMemoryDb && builder.Environment.IsEnvironment("Testing") && string.IsNullOrWhiteSpace(connectionString))
+{
+    useInMemoryDb = true;
+}
+
+if (useInMemoryDb)
+{
+    builder.Services.AddDbContext<VortexDbContext>(options =>
+        options.UseInMemoryDatabase("VortexAuth")
+    );
+}
+else
+{
+    if (string.IsNullOrWhiteSpace(connectionString))
+        throw new InvalidOperationException("CONNECTION_STRING is not configured.");
+
+    builder.Services.AddDbContext<VortexDbContext>(options =>
+        options.UseMySql(connectionString, new MariaDbServerVersion(new Version(11, 8, 3)))
+    );
+}
 
 // CORS
 builder.Services.AddCors(options =>
@@ -110,3 +128,9 @@ app.MapGet("/health/db", async (VortexDbContext db) =>
 });
 
 app.Run();
+
+// Required for WebApplicationFactory in tests
+namespace VortexTCG.Auth
+{
+    public partial class Program { }
+}
