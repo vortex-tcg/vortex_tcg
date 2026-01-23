@@ -16,3 +16,12 @@ resource "aws_db_instance" "vortex_db" {
   // This parameter will skip a save, so if terraform is down, db while be deleted
   skip_final_snapshot = true
 }
+
+resource "aws_s3_bucket" "vortex-s3-assets" {
+  bucket = "vortex-s3-assets"
+  
+  tags = {
+    Name = "vortex-bucket"
+    Environment = "Prod"
+  }
+}
