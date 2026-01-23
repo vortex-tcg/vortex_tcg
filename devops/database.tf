@@ -17,7 +17,7 @@ resource "aws_db_instance" "vortex_db" {
   skip_final_snapshot = true
 }
 
-resource "aws_s3_bucket" "vortex-s3-assets" {
+resource "aws_s3_bucket" "vortex_s3_assets" {
   bucket = "vortex-s3-assets"
   
   tags = {
