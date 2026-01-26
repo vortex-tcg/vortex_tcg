@@ -135,6 +135,7 @@ app.MapGet("/health/db", async (VortexDbContext db) =>
 });
 
 
+
 app.Run();
 
 namespace VortexTCG.Api
