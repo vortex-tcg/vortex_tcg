@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Amazon.S3;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.Services;
@@ -32,8 +33,8 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddRazorPages();
 builder.Services.AddControllers();
-
-// Configuration DB
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+builder.Services.AddAWSService<IAmazonS3>();
 var connectionString = builder.Configuration["CONNECTION_STRING"];
 var useInMemoryDb = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
 
