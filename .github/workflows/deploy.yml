@@ -135,6 +135,9 @@ jobs:
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             DB_PORT=${{ secrets.DB_PORT }}
             CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}
+            TRAEFIK_DASHBOARD_URL=${{ secrets.TRAEFIK_DASHBOARD_URL }}
+            TRAEFIK_DASHBOARD_PORT=${{ secrets.TRAEFIK_DASHBOARD_PORT }}
+            TRAEFIK_DASHBOARD_PASSWORD=${{ secrets.TRAEFIK_DASHBOARD_PASSWORD }}
             EOF
       - name: Start services
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
