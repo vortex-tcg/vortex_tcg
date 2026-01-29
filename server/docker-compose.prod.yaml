@@ -4,6 +4,7 @@ services:
     command:
       - "--api.insecure=false"
       - "--api.dashboard=true"
+      - "--entrypoints.websecure.address=:443"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik.rule=Host(`${TRAEFIK_DASHBOARD_URL}`)"
@@ -11,8 +12,6 @@ services:
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.middlewares=auth"
       - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_DASHBOARD_PASSWORD}"
-    command:
-    - "--entrypoints.websecure.address=:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
   migrations:
