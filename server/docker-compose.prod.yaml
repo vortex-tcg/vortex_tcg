@@ -1,4 +1,20 @@
 services:
+  traefik:
+    image: traefik:v2.9
+    command:
+      - "--api.insecure=false"
+      - "--api.dashboard=true"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`${TRAEFIK_DASHBOARD_URL}`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_DASHBOARD_PASSWORD}"
+    command:
+    - "--entrypoints.websecure.address=:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
   migrations:
     image: vortextcg/vortex_repository:migrations
     pull_policy: always
@@ -12,6 +28,8 @@ services:
   auth:
     image: vortextcg/vortex_repository:auth
     pull_policy: always
+    labels:
+      - "traefik.enable=true"
     env_file:
       - .env
     ports:
@@ -23,6 +41,8 @@ services:
   game:
     image: vortextcg/vortex_repository:game
     pull_policy: always
+    labels:
+      - "traefik.enable=true"
     env_file:
       - .env
     ports:
@@ -34,6 +54,8 @@ services:
   api:
     image: vortextcg/vortex_repository:api
     pull_policy: always
+    labels:
+      - "traefik.enable=true"
     env_file:
       - .env
     ports:
