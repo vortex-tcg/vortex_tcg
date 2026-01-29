@@ -1,3 +1,7 @@
+resource "aws_iam_group" "admin_group" {
+  name = "VortexAdmin"
+}
+
 resource "aws_iam_group" "game_artists" {
   name = "GameArtists"
 }
@@ -49,6 +53,23 @@ resource "aws_iam_group_policy" "game_artist_policy" {
       }
     ]
   })
+}
+
+resource "aws_iam_group_policy" "admin_group_policy" {
+  group  = aws_iam_group.admin_group.name
+  policy = jsonencode(
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "fulladministrative",
+          "Effect": "Allow",
+          "Action": "*",
+          "Resource": "*"
+        }
+      ]
+    }
+  )
 }
 
 resource "aws_iam_group_policy" "back_end_policy" {
@@ -111,13 +132,31 @@ resource "aws_iam_user" "J_Mikael" {
   name = "JARREAU.Mikael"
 }
 
+resource "aws_iam_user" "M_Alex" {
+  name = "MIVELAZ.Alex"
+}
+
+resource "aws_iam_user" "L_Maxime" {
+  name = "LOMBARD.Maxime"
+}
+
 resource "aws_iam_user_login_profile" "G_Clara_login" {
   user                    = aws_iam_user.G_Clara.name
   password_reset_required = true 
 }
 
 resource "aws_iam_user_login_profile" "J_Mikael_login" {
-  user =aws_iam_user.J_Mikael.name
+  user = aws_iam_user.J_Mikael.name
+  password_reset_required = true
+}
+
+resource "aws_iam_user_login_profile" "M_Alex_login" {
+  user = aws_iam_user.M_Alex.name
+  password_reset_required = true
+}
+
+resource "aws_iam_user_login_profile" "L_Maxime_login" {
+  user = aws_iam_user.L_Maxime.name
   password_reset_required = true
 }
 
@@ -133,6 +172,16 @@ resource "aws_iam_user_group_membership" "J_Mikael_membership" {
   groups = [aws_iam_group.back_end_dev.name]
 }
 
+resource "aws_iam_user_group_membership" "M_Alex_membership" {
+  user = aws_iam_user.M_Alex.name
+  groups = [aws_iam_group.admin_group.name]
+}
+
+resource "aws_iam_user_group_membership" "L_Maxime_membership" {
+  user = aws_iam_user.L_Maxime.name
+  groups = [aws_iam_group.admin_group.name]
+}
+
 // Access Key 
 
 resource "aws_iam_access_key" "G_Clara_key" {
@@ -141,6 +190,14 @@ resource "aws_iam_access_key" "G_Clara_key" {
 
 resource "aws_iam_access_key" "J_Mikael_key" {
   user = aws_iam_user.J_Mikael.name
+}
+
+resource "aws_iam_access_key" "M_Alex_key" {
+  user = aws_iam_user.M_Alex.name
+}
+
+resource "aws_iam_access_key" "L_Maxime_key" {
+  user = aws_iam_user.L_Maxime.name
 }
 
 // use to get aws url 
@@ -172,6 +229,36 @@ output "J_Mikael_credentials" {
 
     access_key_id = aws_iam_access_key.J_Mikael_key.id
     secret_access_key = aws_iam_access_key.J_Mikael_key.secret
+  }
+  sensitive = true
+}
+
+output "M_Alex_credentials" {
+  value = {
+    username = aws_iam_user.M_Alex.name
+    group = "Admin"
+
+    console_url       = "https://${data.aws_caller_identity.current.account_id}.signin.aws.amazon.com/console"
+    initial_password  = aws_iam_user_login_profile.M_Alex_login.password
+    password_note     = "Warning you will have to change your password"
+
+    access_key_id = aws_iam_access_key.M_Alex_key.id
+    secret_access_key = aws_iam_access_key.M_Alex_key.secret
+  }
+  sensitive = true
+}
+
+output "L_Maxime_credentials" {
+  value = {
+    username = aws_iam_user.L_Maxime.name
+    group = "Admin"
+
+    console_url       = "https://${data.aws_caller_identity.current.account_id}.signin.aws.amazon.com/console"
+    initial_password  = aws_iam_user_login_profile.L_Maxime_login.password
+    password_note     = "Warning you will have to change your password"
+
+    access_key_id = aws_iam_access_key.L_Maxime_key.id
+    secret_access_key = aws_iam_access_key.L_Maxime_key.secret
   }
   sensitive = true
 }
