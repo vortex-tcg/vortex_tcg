@@ -1,25 +1,26 @@
 services:
   traefik:
-    image: traefik:v2.9
-    command:
-      - "--api.dashboard=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - traefik-network
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=Host(`${TRAEFIK_DASHBOARD_URL}`)"
-      - "traefik.http.routers.traefik.service=api@internal"
-      - "traefik.http.routers.traefik.entrypoints=websecure"
-      - "traefik.http.routers.traefik.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_DASHBOARD_PASSWORD}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+      - ./acme:/acme
+      - ./logs:/var/log/traefik
+    environment:
+      - TZ=Europe/Paris # Pour avoir les bonnes heures des logs
+
   migrations:
     image: vortextcg/vortex_repository:migrations
     pull_policy: always
@@ -33,12 +34,17 @@ services:
   auth:
     image: vortextcg/vortex_repository:auth
     pull_policy: always
+    networks:
+      - traefik-network
     labels:
       - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=Host(`auth.vortex-tcg.online`)"
+      - "traefik.http.routers.auth.entrypoints=websecure"
+      - "traefik.http.routers.auth.tls=true"
+      - "traefik.http.routers.auth.tls.certresolver=letsencrypt"
+      - "traefik.http.services.auth.loadbalancer.server.port=${AUTH_INTERNAL_PORT}"
     env_file:
       - .env
-    ports:
-      - "${AUTH_PORT}:${AUTH_INTERNAL_PORT}"
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -68,3 +74,8 @@ services:
     depends_on:
       migrations:
         condition: service_completed_successfully
+
+networks:
+  traefik-network:
+    name: traefik-network
+    driver: bridge

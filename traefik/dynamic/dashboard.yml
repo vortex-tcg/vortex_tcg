@@ -1,0 +1,17 @@
+http:
+  router:
+    dashboard:
+      rule: "Host(`${TRAEFIK_DASHBOARD_URL}`)"
+      entryPoints:
+        - websecure
+      service: api@internal
+      middlewares:
+        - auth
+      tls:
+        certResolver: letsencrypt
+
+  middlewares:
+    auth:
+      basicAuth:
+        users:
+          - "${TRAEFIK_DASHBOARD_PASSWORD}"
