@@ -14,16 +14,14 @@ services:
       - "traefik.enable=true"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./traefik/dynamic:/etc/traefik/dynamic:ro
-      - ./acme:/acme
-      - ./logs:/var/log/traefik
+      - ../traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ../traefik/dynamic:/etc/traefik/dynamic:ro
+      - ../acme:/acme
+      - ../logs:/var/log/traefik
     environment:
       - TZ=Europe/Paris # Pour avoir les bonnes heures des logs
     env_file:
       - .env
-    command:
-      - --configfile=/etc/traefik/traefik.yml
 
   migrations:
     image: vortextcg/vortex_repository:migrations
