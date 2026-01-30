@@ -1,5 +1,6 @@
 api:
   dashboard: true
+  debug: true
 
 entrypoints:
   web:
