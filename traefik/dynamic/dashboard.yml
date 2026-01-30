@@ -1,7 +1,7 @@
 http:
   routers:
     dashboard:
-      rule: "Host(`${TRAEFIK_DASHBOARD_URL}`)"
+      rule: "Host(`traefik.vortex-tcg.online`)"
       entryPoints:
         - websecure
       service: api@internal
