@@ -46,6 +46,10 @@ services:
       - "--accesslog=true"
       - "--metrics.prometheus=true"
 
+      - "--certificatesresolvers.le.acme.email=vortex-tcg.aws@gmail.com"
+      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+
     # Traefik Dynamic configuration via Docker labels
     labels:
       # Enable self‑routing
