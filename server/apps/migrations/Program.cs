@@ -55,6 +55,8 @@ try
     // 🔹 Seed runtime avec UsersInitializer
     var seeder = new UsersInitializer(db);
     seeder.Seed();
+    Seeder.Seed(db);
+
     Console.WriteLine("✅ Users seedés avec succès !");
 
     Console.WriteLine("✅ Tout est prêt ! L'application continue de tourner...");
