@@ -35,7 +35,7 @@ services:
       # Providers
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=proxy"
+      - "--providers.docker.network=traefik-network"
 
       # API & Dashboard
       - "--api.dashboard=true"
@@ -58,7 +58,7 @@ services:
       - "traefik.http.routers.dashboard.tls=true"
 
       # Basic‑auth middleware
-      - "traefik.http.middlewares.dashboard-auth.basicauth.users=<PASTE_HASH_HERE>"
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_PASSWORD}"
       - "traefik.http.routers.dashboard.middlewares=dashboard-auth@docker"
     env_file:
       - .env
