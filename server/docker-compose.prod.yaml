@@ -19,6 +19,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ../certs:/certs:ro
       - ../traefik/dynamic:/dynamic:ro
+      - ./letsencrypt:/letsencrypt
 
     command:
       # EntryPoints
@@ -61,8 +62,11 @@ services:
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.tls=true"
 
+      - "traefik.http.routers.dashboard.tls.certresolver=le"
+
       # Basic‑auth middleware
       - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_PASSWORD}"
+      - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
     env_file:
       - .env
 
