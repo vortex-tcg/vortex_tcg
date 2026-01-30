@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using VortexTCG.Api.Card.DTOs;
 using VortexTCG.Api.Card.Services;
 using VortexTCG.Common.Services;
-using VortexTCG.Common.DTO;
 
 namespace VortexTCG.Api.Card.Controllers
 {
