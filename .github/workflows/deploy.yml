@@ -53,7 +53,7 @@ jobs:
           port: 22
           script: |
             cd /var/www/vortex_tcg/server
-            cat > .env << EOF
+            cat > .env << 'EOF'
             AUTH_PORT=${{ secrets.AUTH_PORT }}
             AUTH_INTERNAL_PORT=${{ secrets.AUTH_INTERNAL_PORT }}
             GAME_PORT=${{ secrets.GAME_PORT }}
