@@ -20,6 +20,8 @@ services:
       - ./logs:/var/log/traefik
     environment:
       - TZ=Europe/Paris # Pour avoir les bonnes heures des logs
+    env_file:
+      - .env
 
   migrations:
     image: vortextcg/vortex_repository:migrations

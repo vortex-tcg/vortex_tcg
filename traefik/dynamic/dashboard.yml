@@ -1,5 +1,5 @@
 http:
-  router:
+  routers:
     dashboard:
       rule: "Host(`${TRAEFIK_DASHBOARD_URL}`)"
       entryPoints:
