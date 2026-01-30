@@ -1,25 +1,65 @@
 services:
   traefik:
-    image: traefik:v3.0
+    image: traefik:v3.4
     container_name: traefik
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+
     networks:
+      # Connect to the 'traefik-network' overlay network for inter-container communication across nodes
       - traefik-network
+
     ports:
       - "80:80"
       - "443:443"
-    labels:
-      - "traefik.enable=true"
+      - "8080:8080"
+
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ../traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ../traefik/dynamic:/etc/traefik/dynamic:ro
-      - ../acme:/acme
-      - ../logs:/var/log/traefik
-    environment:
-      - TZ=Europe/Paris # Pour avoir les bonnes heures des logs
+      - ../certs:/certs:ro
+      - ../traefik/dynamic:/dynamic:ro
+
+    command:
+      # EntryPoints
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.http.tls=true"
+
+      # Attach the static configuration tls.yaml file that contains the tls configuration settings
+      - "--providers.file.filename=/dynamic/tls.yaml"
+
+      # Providers
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=proxy"
+
+      # API & Dashboard
+      - "--api.dashboard=true"
+      - "--api.insecure=false"
+
+      # Observability
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--metrics.prometheus=true"
+
+    # Traefik Dynamic configuration via Docker labels
+    labels:
+      # Enable self‑routing
+      - "traefik.enable=true"
+
+      # Dashboard router
+      - "traefik.http.routers.dashboard.rule=Host(`dashboard.docker.localhost`)"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.tls=true"
+
+      # Basic‑auth middleware
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=<PASTE_HASH_HERE>"
+      - "traefik.http.routers.dashboard.middlewares=dashboard-auth@docker"
     env_file:
       - .env
 
@@ -56,10 +96,13 @@ services:
     pull_policy: always
     labels:
       - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=Host(`game.vortex-tcg.online`)"
+      - "traefik.http.routers.auth.entrypoints=websecure"
+      - "traefik.http.routers.auth.tls=true"
+      - "traefik.http.routers.auth.tls.certresolver=letsencrypt"
+      - "traefik.http.services.auth.loadbalancer.server.port=${GAME_INTERNAL_PORT}"
     env_file:
       - .env
-    ports:
-      - "${GAME_PORT}:${GAME_INTERNAL_PORT}"
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -69,10 +112,13 @@ services:
     pull_policy: always
     labels:
       - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=Host(`api.vortex-tcg.online`)"
+      - "traefik.http.routers.auth.entrypoints=websecure"
+      - "traefik.http.routers.auth.tls=true"
+      - "traefik.http.routers.auth.tls.certresolver=letsencrypt"
+      - "traefik.http.services.auth.loadbalancer.server.port=${API_INTERNAL_PORT}"
     env_file:
       - .env
-    ports:
-      - "${API_PORT}:${API_INTERNAL_PORT}"
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -80,4 +126,4 @@ services:
 networks:
   traefik-network:
     name: traefik-network
-    driver: bridge
+    external: true
