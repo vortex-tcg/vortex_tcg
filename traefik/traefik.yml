@@ -18,15 +18,14 @@ entrypoints:
 
 providers:
   docker:
-    exposedBydefault: false
+    exposedByDefault: false
     endpoint: "unix:///var/run/docker.sock"
     # connexion au socket docker par défaut, permet de détecter tout les conteneurs d'un coup
     network: traefik-network
-
-file:
-  directory: /etc/traefik/dynamic
-  watch: true
-  # Emplacement des fichier de conf + watch true = hot reload
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+    # Emplacement des fichier de conf + watch true = hot reload
 
 certificatesResolvers:
   letsencrypt:
