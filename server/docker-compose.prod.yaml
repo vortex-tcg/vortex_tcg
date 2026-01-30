@@ -29,8 +29,8 @@ services:
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.websecure.http.tls=true"
 
-      # Attach the static configuration tls.yaml file that contains the tls configuration settings
-      - "--providers.file.filename=/dynamic/tls.yaml"
+      # Attach the static configuration tls.yml file that contains the tls configuration settings
+      - "--providers.file.filename=/dynamic/tls.yml"
 
       # Providers
       - "--providers.docker=true"
