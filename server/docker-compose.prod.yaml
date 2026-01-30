@@ -52,14 +52,13 @@ services:
       - "traefik.enable=true"
 
       # Dashboard router
-      - "traefik.http.routers.dashboard.rule=Host(`dashboard.docker.localhost`)"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.vortex-tcg.online`)"
       - "traefik.http.routers.dashboard.entrypoints=websecure"
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.tls=true"
 
       # Basic‑auth middleware
       - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_PASSWORD}"
-      - "traefik.http.routers.dashboard.middlewares=dashboard-auth@docker"
     env_file:
       - .env
 
@@ -94,13 +93,15 @@ services:
   game:
     image: vortextcg/vortex_repository:game
     pull_policy: always
+    networks:
+      - traefik-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.auth.rule=Host(`game.vortex-tcg.online`)"
-      - "traefik.http.routers.auth.entrypoints=websecure"
-      - "traefik.http.routers.auth.tls=true"
-      - "traefik.http.routers.auth.tls.certresolver=letsencrypt"
-      - "traefik.http.services.auth.loadbalancer.server.port=${GAME_INTERNAL_PORT}"
+      - "traefik.http.routers.game.rule=Host(`game.vortex-tcg.online`)"
+      - "traefik.http.routers.game.entrypoints=websecure"
+      - "traefik.http.routers.game.tls=true"
+      - "traefik.http.routers.game.tls.certresolver=letsencrypt"
+      - "traefik.http.services.game.loadbalancer.server.port=${GAME_INTERNAL_PORT}"
     env_file:
       - .env
     depends_on:
@@ -110,13 +111,15 @@ services:
   api:
     image: vortextcg/vortex_repository:api
     pull_policy: always
+    networks:
+      - traefik-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.auth.rule=Host(`api.vortex-tcg.online`)"
-      - "traefik.http.routers.auth.entrypoints=websecure"
-      - "traefik.http.routers.auth.tls=true"
-      - "traefik.http.routers.auth.tls.certresolver=letsencrypt"
-      - "traefik.http.services.auth.loadbalancer.server.port=${API_INTERNAL_PORT}"
+      - "traefik.http.routers.api.rule=Host(`api.vortex-tcg.online`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls=true"
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.api.loadbalancer.server.port=${API_INTERNAL_PORT}"
     env_file:
       - .env
     depends_on:
