@@ -1,31 +1,33 @@
 ﻿using game.Domaine.Matchmaking.Interface;
 using game.Domaine.Interface;
 using game.Domaine;
+using game.Domaine.Match.ValueObject;
+using VortexTCG.DataAccess.Models;
+
 namespace game.Domaine.Matchmaking;
 
 public sealed class Matchmaker : IMatchmaker, IEventContainer
 {
-    private readonly object _lock = new();
-    private readonly Dictionary<Guid, Guid> _queue = new(); 
+    private readonly Dictionary<UserId, DeckId> _queue = new(); 
     private readonly List<IEvent> _events = new();
 
-    public Task JoinQueueAsync(Guid userId, Guid deckId, CancellationToken ct = default)
+    public Task JoinQueueAsync(UserId userId, DeckId deckId, CancellationToken ct = default)
     {
-        List<(Guid userId, Guid deckId)>? matchedPair = null;
+        List<(UserId userId, DeckId deckId)>? matchedPair = null;
 
-        lock (_lock)
+        lock (_queue)
         {
             _queue[userId] = deckId;
 
-            foreach (KeyValuePair<Guid,Guid> kv in _queue)
+            foreach (KeyValuePair<UserId,DeckId> kv in _queue)
             {
                 if (kv.Key == userId) continue;
 
-                Guid oppUserId = kv.Key;
-                Guid oppDeckId = kv.Value;
+                UserId oppUserId = kv.Key;
+                DeckId oppDeckId = kv.Value;
                 _queue.Remove(oppUserId);
                 _queue.Remove(userId);
-                matchedPair = new List<(Guid userId, Guid deckId)>
+                matchedPair = new List<(UserId userId, DeckId deckId)>
                 {
                     (oppUserId, oppDeckId),
                     (userId, deckId)
@@ -44,9 +46,9 @@ public sealed class Matchmaker : IMatchmaker, IEventContainer
         return Task.CompletedTask;
     }
 
-    public Task LeaveQueueAsync(Guid userId, CancellationToken ct = default)
+    public Task LeaveQueueAsync(UserId userId, CancellationToken ct = default)
     {
-        lock (_lock)
+        lock (_queue)
         {
             _queue.Remove(userId);
         }
@@ -54,16 +56,15 @@ public sealed class Matchmaker : IMatchmaker, IEventContainer
         return Task.CompletedTask;
     }
 
-    public Task<IReadOnlyList<IEvent>> PullEventsAsync(CancellationToken ct = default)
+    public IReadOnlyList<IEvent> PullEvents(CancellationToken ct = default)
     {
-        lock (_lock)
+        lock (_queue)
         {
-            if (_events.Count == 0)
-                return Task.FromResult<IReadOnlyList<IEvent>>(Array.Empty<IEvent>());
+            if (_events.Count == 0) return Array.Empty<IEvent>();
             IEvent[] batch = _events.ToArray();
-            _events.Clear();    
-
-            return Task.FromResult<IReadOnlyList<IEvent>>(batch);
+            _events.Clear();
+            return batch;
         }
     }
+
 }

@@ -1,7 +1,9 @@
-﻿namespace game.Domaine.Matchmaking.Interface;
+﻿using game.Domaine.Match.ValueObject;
+
+namespace game.Domaine.Matchmaking.Interface;
 
 public interface IMatchmaker
 {
-    Task JoinQueueAsync(Guid userId, Guid deckId, CancellationToken ct = default);
-    Task LeaveQueueAsync(Guid userId, CancellationToken ct = default);
+    Task JoinQueueAsync(UserId userId, DeckId deckId, CancellationToken ct = default);
+    Task LeaveQueueAsync(UserId userId, CancellationToken ct = default);
 }

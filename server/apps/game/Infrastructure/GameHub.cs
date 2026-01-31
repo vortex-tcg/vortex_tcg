@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 using game.Application.Service;
+using game.Domaine.Match.ValueObject;
+
 namespace game.Infrastructure;
 public class GameHubClean : Hub
 {
@@ -13,11 +15,11 @@ public class GameHubClean : Hub
  
     }
 
-    private Guid GetAuthenticatedUserId()
+    private UserId GetAuthenticatedUserId()
     {
         string? userIdClaim = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
             ?? throw new HubException("User not authenticated");
-        return Guid.Parse(userIdClaim);
+        return new UserId(Guid.Parse(userIdClaim));
     }
 
     public override async Task OnConnectedAsync()
@@ -26,7 +28,7 @@ public class GameHubClean : Hub
         await base.OnConnectedAsync();
     }
     
-    public Task JoinQueue(Guid deckId)
+    public Task JoinQueue(DeckId deckId)
         => _queueService.JoinQueueAsync(GetAuthenticatedUserId(), deckId);
 
     public Task LeaveQueue()

@@ -7,5 +7,5 @@ using System.Threading.Tasks;
 
 public interface IEventContainer
 {
-    Task<IReadOnlyList<IEvent>> PullEventsAsync(CancellationToken ct = default);
+    IReadOnlyList<IEvent> PullEvents(CancellationToken ct = default);
 }
