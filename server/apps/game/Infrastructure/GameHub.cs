@@ -6,15 +6,7 @@ using game.Domaine.Match.ValueObject;
 namespace game.Infrastructure;
 public class GameHubClean : Hub
 {
-
-    private readonly QueueService _queueService;
-
-    public GameHubClean(QueueService queueService)
-    {
-        _queueService = queueService;
- 
-    }
-
+    
     private UserId GetAuthenticatedUserId()
     {
         string? userIdClaim = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -29,9 +21,9 @@ public class GameHubClean : Hub
     }
     
     public Task JoinQueue(DeckId deckId)
-        => _queueService.JoinQueueAsync(GetAuthenticatedUserId(), deckId);
+        => QueueService.JoinQueueAsync(GetAuthenticatedUserId(), deckId, Context.ConnectionAborted);
 
     public Task LeaveQueue()
-        => _queueService.LeaveQueueAsync(GetAuthenticatedUserId());
+        => QueueService.LeaveQueueAsync(GetAuthenticatedUserId(), Context.ConnectionAborted);
     
 }

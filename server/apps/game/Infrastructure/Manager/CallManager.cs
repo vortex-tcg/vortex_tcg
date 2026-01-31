@@ -7,7 +7,7 @@ namespace game.Infrastructure.Manager;
 
 
 
-public sealed class CallManager
+public sealed class CallManager : ICallManager
 {
     private readonly IHubContext<GameHub> _hubContext;
 
