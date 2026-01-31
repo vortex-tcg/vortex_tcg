@@ -1,5 +1,7 @@
 ﻿using game.Domaine.Interface;
 using game.Domaine.Match.Entity;
+using game.Domaine.Match.ValueObject;
+using game.Domaine.Matchmaking;
 using game.Domaine.Matchmaking.Interface;
 using game.Infrastructure.Interface;
 
@@ -12,18 +14,23 @@ using System.Linq;
 
 public sealed class RoomManager :IRoomManager
 {
-    private readonly object _lock = new();
+    private static readonly Lazy<RoomManager> _instance =
+        new(() => new RoomManager(new Matchmaker()));
+
+    public static RoomManager Instance => _instance.Value;
+
     private readonly List<Match> _matches = new();
+
     public IMatchmaker Matchmaker { get; }
     public IEventContainer MatchmakerEventContainer { get; }
 
-    public RoomManager(IMatchmaker matchmaker, IEventContainer matchmakerEventContainer)
+    private RoomManager(Matchmaker matchmaker)
     {
         Matchmaker = matchmaker;
-        MatchmakerEventContainer = matchmakerEventContainer;
+        MatchmakerEventContainer = matchmaker; 
     }
 
-    public Match CreateMatch(List<(Guid userId, Guid deckId)> players)
+    public Match CreateMatch(List<(UserId userId, DeckId deckId)> players)
     {
         // TODO: appeler la factory createMatch(players) 
         Match match = new Match
@@ -31,7 +38,7 @@ public sealed class RoomManager :IRoomManager
             players = players
         };
 
-        lock (_lock)
+        lock (_matches)
         {
             _matches.Add(match);
         }
@@ -41,7 +48,7 @@ public sealed class RoomManager :IRoomManager
 
     public Match? GetMatchByUserId(Guid userId)
     {
-        lock (_lock)
+        lock (_matches)
         {
             return _matches.FirstOrDefault(m => m.players.Any(p => p.userId == userId));
         }
@@ -49,7 +56,7 @@ public sealed class RoomManager :IRoomManager
 
     public void RemoveFinishedMatches()
     {
-        lock (_lock)
+        lock (_matches)
         {
             _matches.RemoveAll(m => m.players.Count == 0);
         }
