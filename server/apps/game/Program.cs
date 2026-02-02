@@ -13,6 +13,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
+using game.Application.Enum;
+using game.Application.Service;
+using game.Domaine.Interface;
+using game.Domaine.Matchmaking.Interface;
+using game.Infrastructure.Interface;
+using game.Infrastructure.Manager;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,7 +45,9 @@ builder.Services.AddSingleton<RoomService>();
 // Logs console
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
-
+builder.Services.AddSingleton<IRoomManager, RoomManager>();
+builder.Services.AddSingleton<ICallManager, CallManager>();
+builder.Services.AddScoped<QueueService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddRazorPages();
