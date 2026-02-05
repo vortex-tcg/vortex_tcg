@@ -90,7 +90,6 @@ services:
 
   auth:
     image: vortextcg/vortex_repository:auth
-    pull_policy: always
     networks:
       - traefik-network
     labels:
@@ -123,7 +122,6 @@ services:
 
   game:
     image: vortextcg/vortex_repository:game
-    pull_policy: always
     networks:
       - traefik-network
     labels:
@@ -156,7 +154,6 @@ services:
 
   api:
     image: vortextcg/vortex_repository:api
-    pull_policy: always
     networks:
       - traefik-network
     labels:
