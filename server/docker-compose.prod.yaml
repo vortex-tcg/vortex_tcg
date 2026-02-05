@@ -1,12 +1,7 @@
 services:
   traefik:
     image: traefik:v3.4
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-
     networks:
-      # Connect to the 'traefik-network' overlay network for inter-container communication across nodes
       - traefik-network
 
     ports:
@@ -51,24 +46,19 @@ services:
       - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
       - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
 
-    # Traefik Dynamic configuration via Docker labels
     labels:
-      # Enable self‑routing
       - "traefik.enable=true"
-
-      # Dashboard router
       - "traefik.http.routers.dashboard.rule=Host(`traefik.vortex-tcg.online`)"
       - "traefik.http.routers.dashboard.entrypoints=websecure"
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.tls=true"
-
       - "traefik.http.routers.dashboard.tls.certresolver=le"
-
-      # Basic‑auth middleware
       - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_PASSWORD}"
       - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
+
     env_file:
       - .env
+
     deploy:
       mode: replicated
       replicas: 1
@@ -114,7 +104,7 @@ services:
       - .env
     deploy:
       mode: replicated
-      replicas: 2 # Démarre avec 2 instances en prod
+      replicas: 2
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -130,9 +120,6 @@ services:
         reservations:
           cpus: "0.25"
           memory: 256M
-    depends_on:
-      migrations:
-        condition: service_completed_successfully
 
   game:
     image: vortextcg/vortex_repository:game
@@ -148,9 +135,6 @@ services:
       - "traefik.http.services.game.loadbalancer.server.port=${GAME_INTERNAL_PORT}"
     env_file:
       - .env
-    depends_on:
-      migrations:
-        condition: service_completed_successfully
     deploy:
       mode: replicated
       replicas: 2
@@ -184,9 +168,6 @@ services:
       - "traefik.http.services.api.loadbalancer.server.port=${API_INTERNAL_PORT}"
     env_file:
       - .env
-    depends_on:
-      migrations:
-        condition: service_completed_successfully
     deploy:
       mode: replicated
       replicas: 2
