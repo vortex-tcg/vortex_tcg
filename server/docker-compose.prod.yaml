@@ -74,7 +74,7 @@ services:
       replicas: 1
       placement:
         constraints:
-          - node.role == manager  
+          - node.role == manager
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -83,7 +83,7 @@ services:
         parallelism: 1
         delay: 10s
 
-    migrations:
+  migrations:
     image: vortextcg/vortex_repository:migrations
     env_file:
       - .env
@@ -114,7 +114,7 @@ services:
       - .env
     deploy:
       mode: replicated
-      replicas: 2  # Démarre avec 2 instances en prod
+      replicas: 2 # Démarre avec 2 instances en prod
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -125,10 +125,10 @@ services:
         failure_action: rollback
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 256M
     depends_on:
       migrations:
@@ -164,10 +164,10 @@ services:
         failure_action: rollback
       resources:
         limits:
-          cpus: '1'
+          cpus: "1"
           memory: 1G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
 
   api:
@@ -200,10 +200,10 @@ services:
         failure_action: rollback
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 256M
 
 networks:
