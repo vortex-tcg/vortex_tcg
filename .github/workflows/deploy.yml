@@ -1,4 +1,4 @@
-name: Build, Analyze and Deploy
+name: Build, Analyze and Deploy (Swarm)
 
 on:
   push:
@@ -11,10 +11,11 @@ permissions:
 
 jobs:
   deploy:
-    name: Deploy to EC2
+    name: Deploy to EC2 (Swarm Mode)
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     environment: production
+
     steps:
       - name: Pull latest code on EC2
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
@@ -28,22 +29,21 @@ jobs:
             git fetch --all
             git checkout ${{ github.ref_name }}
             git pull origin ${{ github.ref_name }}
+
       - name: Pull new Docker images
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
           script: |
-            cd /var/www/vortex_tcg/server
-            docker compose down
-            docker system prune -a -f
+            # Pull les nouvelles images
             docker pull vortextcg/vortex_repository:api
             docker pull vortextcg/vortex_repository:game
             docker pull vortextcg/vortex_repository:auth
             docker pull vortextcg/vortex_repository:migrations
             docker logout
+
       - name: Create env file on server
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
@@ -71,17 +71,73 @@ jobs:
             TRAEFIK_DASHBOARD_PORT=${{ secrets.TRAEFIK_DASHBOARD_PORT }}
             TRAEFIK_DASHBOARD_PASSWORD=${{ secrets.TRAEFIK_DASHBOARD_PASSWORD }}
             EOF
-      - name: Start services
+
+      - name: Deploy stack with zero-downtime
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
           script: |
             cd /var/www/vortex_tcg/server
-            docker compose -f docker-compose.prod.yaml up -d --remove-orphans
-      - name: Ensure SonarQube is running with persistence
+
+            # Deploy en mode Swarm avec zero-downtime
+            docker stack deploy \
+              -c docker-compose.prod.yaml \
+              --with-registry-auth \
+              vortex
+
+            echo "⏳ Waiting for services to start..."
+            sleep 15
+
+      - name: Verify deployment health
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "📊 Services status:"
+            docker service ls --filter "label=com.docker.stack.namespace=vortex"
+
+            echo ""
+            echo "📋 Detailed stack status:"
+            docker stack ps vortex --no-trunc
+
+            # Vérifie si des services sont en échec
+            FAILED=$(docker service ls --filter "label=com.docker.stack.namespace=vortex" --format "{{.Name}} {{.Replicas}}" | grep "0/" || true)
+
+            if [ ! -z "$FAILED" ]; then
+              echo "❌ Some services failed to start:"
+              echo "$FAILED"
+              echo ""
+              echo "📋 Checking logs for failed services..."
+              for service in $(echo "$FAILED" | awk '{print $1}'); do
+                echo "--- Logs for $service ---"
+                docker service logs --tail 50 $service
+              done
+              exit 1
+            fi
+
+            echo "✅ All services are running successfully"
+
+      - name: Cleanup old images
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Nettoie uniquement les images non utilisées (pas les images actives)
+            echo "🧹 Cleaning up unused images..."
+            docker image prune -f
+
+            # Optionnel: nettoie les images de plus de 24h non utilisées
+            docker image prune -a -f --filter "until=24h"
+
+            echo "✅ Cleanup completed"
+
+      - name: Ensure SonarQube is running
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -89,7 +145,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             if [ ! "$(docker ps -q -f name=sonarqube)" ]; then
-                docker rm -f sonarqube || true
+                echo "🚀 Starting SonarQube..."
+                docker rm -f sonarqube 2>/dev/null || true
                 docker run -d --name sonarqube \
                   -p ${{ secrets.SONARQUBE_PORT }}:9000 \
                   -e SONAR_WEB_CONTEXT=/sonarqube \
@@ -98,6 +155,27 @@ jobs:
                   -v /var/sonarqube/extensions:/opt/sonarqube/extensions \
                   --restart always \
                   sonarqube:lts
+                echo "✅ SonarQube started"
             else
-                echo "SonarQube is already running, skipping."
+                echo "✅ SonarQube is already running"
             fi
+
+      - name: Display deployment summary
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "════════════════════════════════════════"
+            echo "🎉 DEPLOYMENT SUMMARY"
+            echo "════════════════════════════════════════"
+            echo ""
+            echo "📦 Stack: vortex"
+            echo "🌿 Branch: ${{ github.ref_name }}"
+            echo "📝 Commit: ${{ github.sha }}"
+            echo ""
+            echo "🔧 Services:"
+            docker service ls --filter "label=com.docker.stack.namespace=vortex" --format "table {{.Name}}\t{{.Mode}}\t{{.Replicas}}\t{{.Image}}"
+            echo ""
+            echo "════════════════════════════════════════"
