@@ -50,6 +50,9 @@ services:
     env_file:
       - .env
 
+    labels:
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_PASSWORD}"
+
     deploy:
       mode: replicated
       replicas: 1
@@ -60,7 +63,6 @@ services:
         - "traefik.http.routers.dashboard.service=api@internal"
         - "traefik.http.routers.dashboard.tls=true"
         - "traefik.http.routers.dashboard.tls.certresolver=le"
-        - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_PASSWORD}"
         - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
         - "traefik.http.services.vortex-traefik.loadbalancer.server.port=8080"
       placement:
