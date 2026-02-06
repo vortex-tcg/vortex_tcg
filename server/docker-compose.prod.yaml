@@ -30,7 +30,8 @@ services:
       # Providers - Swarm Provider pour Traefik v3
       - "--providers.swarm=true"
       - "--providers.swarm.exposedbydefault=false"
-      - "--providers.swarm.network=traefik-network"
+      # Comment for now to check if network is the issue
+      # - "--providers.swarm.network=traefik-network"
       - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
 
       # API & Dashboard
@@ -46,22 +47,21 @@ services:
       - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
       - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
 
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.vortex-tcg.online`)"
-      - "traefik.http.routers.dashboard.entrypoints=websecure"
-      - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.tls=true"
-      - "traefik.http.routers.dashboard.tls.certresolver=le"
-      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_PASSWORD}"
-      - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
-
     env_file:
       - .env
 
     deploy:
       mode: replicated
       replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.dashboard.rule=Host(`traefik.vortex-tcg.online`)"
+        - "traefik.http.routers.dashboard.entrypoints=websecure"
+        - "traefik.http.routers.dashboard.service=api@internal"
+        - "traefik.http.routers.dashboard.tls=true"
+        - "traefik.http.routers.dashboard.tls.certresolver=le"
+        - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_PASSWORD}"
+        - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
       placement:
         constraints:
           - node.role == manager
