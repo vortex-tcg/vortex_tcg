@@ -103,16 +103,33 @@ jobs:
             mkdir -p ../traefik/dynamic
             mkdir -p ./letsencrypt
 
-            # Créer un fichier tls.yml vide si inexistant
             if [ ! -f ../traefik/dynamic/tls.yml ]; then
               echo "📝 Creating empty tls.yml..."
               touch ../traefik/dynamic/tls.yml
             fi
 
-            # Vérifier les permissions sur letsencrypt
-            chmod 600 ./letsencrypt 2>/dev/null || true
+            if [ ! -f ./letsencrypt/acme.json ]; then
+              echo "📝 Creating acme.json..."
+              touch ./letsencrypt/acme.json
+              chmod 600 ./letsencrypt/acme.json
+            else
+              chmod 600 ./letsencrypt/acme.json
+            fi
 
-            echo "✅ Directories prepared"
+            echo "🔍 Verifying docker-compose.prod.yaml..."
+            if grep -q "migrations:" docker-compose.prod.yaml; then
+              echo "⚠️  WARNING: migrations service found in docker-compose.prod.yaml"
+              echo "This will be removed by forcing git checkout..."
+              git checkout HEAD -- docker-compose.prod.yaml
+            fi
+
+            if grep -q "migrations:" docker-compose.prod.yaml; then
+              echo "❌ ERROR: migrations still present after git checkout!"
+              echo "Please verify the file was committed correctly in the repository."
+              exit 1
+            fi
+
+            echo "✅ Directories prepared and docker-compose verified"
 
       - name: Run database migrations
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
@@ -145,7 +162,6 @@ jobs:
 
             echo "🚀 Deploying stack..."
 
-            # Deploy en mode Swarm avec zero-downtime et capture les erreurs
             if docker stack deploy -c docker-compose.prod.yaml --with-registry-auth vortex; then
               echo "✅ Stack deployment command succeeded"
             else
@@ -153,10 +169,18 @@ jobs:
               exit 1
             fi
 
-            echo "⏳ Waiting for services to start..."
+            echo "⏳ Waiting for initial deployment..."
+            sleep 10
+
+            echo "🔄 Forcing Traefik restart to apply new configuration..."
+            docker service update --force vortex_traefik
+
+            echo "⏳ Waiting for services to stabilize..."
             sleep 20
 
-            # Vérifie que la stack existe
+            echo "🧹 Cleaning up stopped containers..."
+            docker container prune -f
+
             if ! docker stack ls | grep -q vortex; then
               echo "❌ Stack 'vortex' was not created!"
               exit 1
@@ -176,7 +200,6 @@ jobs:
             echo "════════════════════════════════════════"
             echo ""
 
-            # Vérifie que la stack existe
             if ! docker stack ls | grep -q vortex; then
               echo "❌ CRITICAL: Stack 'vortex' does not exist!"
               echo ""
@@ -188,12 +211,10 @@ jobs:
             echo "✅ Stack 'vortex' exists"
             echo ""
 
-            # Liste tous les services
             echo "📋 Services in stack:"
             docker service ls --filter "label=com.docker.stack.namespace=vortex"
             echo ""
 
-            # Compte les services
             SERVICE_COUNT=$(docker service ls --filter "label=com.docker.stack.namespace=vortex" --quiet | wc -l)
             echo "Total services: $SERVICE_COUNT"
 
@@ -210,7 +231,6 @@ jobs:
             docker stack ps vortex --no-trunc
             echo ""
 
-            # Vérifie si des services sont en échec
             FAILED=$(docker service ls --filter "label=com.docker.stack.namespace=vortex" --format "{{.Name}} {{.Replicas}}" | grep "0/" || true)
 
             if [ ! -z "$FAILED" ]; then
@@ -250,12 +270,19 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Nettoie uniquement les images non utilisées (pas les images actives)
-            echo "🧹 Cleaning up unused images..."
+            echo "🧹 Cleaning up resources..."
+
+            echo "  → Removing stopped containers..."
+            docker container prune -f
+
+            echo "  → Removing unused images..."
             docker image prune -f
 
-            # Optionnel: nettoie les images de plus de 24h non utilisées
+            echo "  → Removing old images (24h+)..."
             docker image prune -a -f --filter "until=24h"
+
+            echo "  → Removing unused networks..."
+            docker network prune -f
 
             echo "✅ Cleanup completed"
 
