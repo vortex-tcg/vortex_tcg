@@ -57,7 +57,6 @@ jobs:
             docker pull vortextcg/vortex_repository:api
             docker pull vortextcg/vortex_repository:game
             docker pull vortextcg/vortex_repository:auth
-            docker pull vortextcg/vortex_repository:migrations
             docker logout
 
       - name: Create env file on server
@@ -113,6 +112,26 @@ jobs:
             chmod 600 ./letsencrypt 2>/dev/null || true
 
             echo "✅ Directories prepared"
+
+      - name: Run database migrations
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/vortex_tcg/server
+
+            echo "🗄️ Running database migrations..."
+
+            docker pull vortextcg/vortex_repository:migrations
+
+            docker run --rm \
+              --env-file .env \
+              --name migrations-$(date +%s) \
+              vortextcg/vortex_repository:migrations
+
+            echo "✅ Migrations completed"
 
       - name: Deploy stack with zero-downtime
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
