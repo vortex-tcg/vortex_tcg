@@ -57,6 +57,7 @@ jobs:
             docker pull vortextcg/vortex_repository:api
             docker pull vortextcg/vortex_repository:game
             docker pull vortextcg/vortex_repository:auth
+            docker pull vortextcg/vortex_repository:migrations
             docker logout
 
       - name: Create env file on server
@@ -184,11 +185,11 @@ jobs:
               exit 1
             fi
 
-            echo "Stack 'vortex' exists"
+            echo "✅ Stack 'vortex' exists"
             echo ""
 
             # Liste tous les services
-            echo "Services in stack:"
+            echo "📋 Services in stack:"
             docker service ls --filter "label=com.docker.stack.namespace=vortex"
             echo ""
 
@@ -221,7 +222,18 @@ jobs:
                 echo "════════════════════════════════════════"
                 echo "Logs for $service"
                 echo "════════════════════════════════════════"
-                docker service logs --tail 100 $service
+                docker service logs --tail 100 $service 2>&1 || echo "No logs available yet"
+                echo ""
+                echo "📋 Task details for $service:"
+                docker service ps $service --no-trunc
+                echo ""
+                echo "📋 Inspecting failed tasks..."
+                TASK_IDS=$(docker service ps $service -q -f "desired-state=shutdown")
+                for task_id in $TASK_IDS; do
+                  echo "--- Task $task_id ---"
+                  docker inspect $task_id --format='{{.Status.Err}}' 2>&1 || echo "No error info"
+                  docker inspect $task_id --format='{{json .Status}}' 2>&1 | python3 -m json.tool || echo "No status info"
+                done
                 echo ""
               done
               exit 1
