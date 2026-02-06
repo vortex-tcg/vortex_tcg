@@ -77,18 +77,18 @@ services:
     image: vortextcg/vortex_repository:auth
     networks:
       - traefik-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.auth.rule=Host(`auth.vortex-tcg.online`)"
-      - "traefik.http.routers.auth.entrypoints=websecure"
-      - "traefik.http.routers.auth.tls=true"
-      - "traefik.http.routers.auth.tls.certresolver=le"
-      - "traefik.http.services.auth.loadbalancer.server.port=${AUTH_INTERNAL_PORT}"
     env_file:
       - .env
     deploy:
       mode: replicated
       replicas: 2
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.auth.rule=Host(`auth.vortex-tcg.online`)"
+        - "traefik.http.routers.auth.entrypoints=websecure"
+        - "traefik.http.routers.auth.tls=true"
+        - "traefik.http.routers.auth.tls.certresolver=le"
+        - "traefik.http.services.auth.loadbalancer.server.port=${AUTH_INTERNAL_PORT}"
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -109,18 +109,18 @@ services:
     image: vortextcg/vortex_repository:game
     networks:
       - traefik-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.game.rule=Host(`game.vortex-tcg.online`)"
-      - "traefik.http.routers.game.entrypoints=websecure"
-      - "traefik.http.routers.game.tls=true"
-      - "traefik.http.routers.game.tls.certresolver=le"
-      - "traefik.http.services.game.loadbalancer.server.port=${GAME_INTERNAL_PORT}"
     env_file:
       - .env
     deploy:
       mode: replicated
       replicas: 2
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.game.rule=Host(`game.vortex-tcg.online`)"
+        - "traefik.http.routers.game.entrypoints=websecure"
+        - "traefik.http.routers.game.tls=true"
+        - "traefik.http.routers.game.tls.certresolver=le"
+        - "traefik.http.services.game.loadbalancer.server.port=${GAME_INTERNAL_PORT}"
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -141,18 +141,18 @@ services:
     image: vortextcg/vortex_repository:api
     networks:
       - traefik-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`api.vortex-tcg.online`)"
-      - "traefik.http.routers.api.entrypoints=websecure"
-      - "traefik.http.routers.api.tls=true"
-      - "traefik.http.routers.api.tls.certresolver=le"
-      - "traefik.http.services.api.loadbalancer.server.port=${API_INTERNAL_PORT}"
     env_file:
       - .env
     deploy:
       mode: replicated
       replicas: 2
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.api.rule=Host(`api.vortex-tcg.online`)"
+        - "traefik.http.routers.api.entrypoints=websecure"
+        - "traefik.http.routers.api.tls=true"
+        - "traefik.http.routers.api.tls.certresolver=le"
+        - "traefik.http.services.api.loadbalancer.server.port=${API_INTERNAL_PORT}"
       restart_policy:
         condition: on-failure
         delay: 5s
