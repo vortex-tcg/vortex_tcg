@@ -171,6 +171,7 @@
             append("JoinQueue envoyé. Attente adversaire…");
         } catch (e) {
             console.error(e);
+            console.log()
             append("❌ JoinQueue error: " + (e?.message || e));
         }
     };
