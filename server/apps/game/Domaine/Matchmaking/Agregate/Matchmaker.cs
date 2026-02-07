@@ -22,7 +22,7 @@ public sealed class Matchmaker : IMatchmaker, IEventContainer
             UserId? oppUserId = null;
             DeckId oppDeckId = default;
 
-            foreach (var kv in _queue)
+            foreach (KeyValuePair<UserId, DeckId> kv in _queue)
             {
                 if (kv.Key.Equals(userId)) continue;
                 oppUserId = kv.Key;
