@@ -128,7 +128,7 @@ public class LoginScript : MonoBehaviour
         loginButton.SetEnabled(ready);
     }
 
-    private static bool IsEmailValid(string email)
+    private static bool IsValidEmail(string email)
     {
         string pattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
         return Regex.IsMatch(email ?? string.Empty, pattern);
