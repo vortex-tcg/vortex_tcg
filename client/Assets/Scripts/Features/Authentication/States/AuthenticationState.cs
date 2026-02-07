@@ -1,6 +1,3 @@
-/// <summary>
-/// Énumération des états d'authentification possibles
-/// </summary>
 public enum AuthenticationState
 {
     Unauthenticated,

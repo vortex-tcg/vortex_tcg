@@ -130,6 +130,7 @@ GameObject:
   - component: {fileID: 1687906746}
   - component: {fileID: 1687906745}
   - component: {fileID: 1687906747}
+  - component: {fileID: 1687906748}
   m_Layer: 5
   m_Name: HUD
   m_TagString: Untagged
@@ -185,6 +186,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   uiDocument: {fileID: 1687906745}
   cardTemplate: {fileID: 9197481963319205126, guid: 3a92674ccbbb835448fb48ab94805e2c, type: 3}
+--- !u!114 &1687906748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1687906744}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54a480754762f3c44ab5ede535bbf61c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 1687906745}
+  menuParams: {fileID: 0}
 --- !u!1 &1762338876
 GameObject:
   m_ObjectHideFlags: 0
