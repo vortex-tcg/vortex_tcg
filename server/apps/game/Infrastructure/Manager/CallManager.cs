@@ -25,7 +25,6 @@ public sealed class CallManager : ICallManager
     {
         new[] { nameof(ResponseCode.SUCCESS_POSE_CARTE), "opponentPoseCarte" },
         new[] { nameof(ResponseCode.SUCCESS_PHASE_CHANGED), "opponentPhaseChanged" },
-        new[] { nameof(ResponseCode.MATCH_FOUND), "matchFound" },
     };
 
     private static readonly string[][] mapCodesToMsgError =

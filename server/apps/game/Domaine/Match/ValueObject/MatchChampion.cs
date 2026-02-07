@@ -78,8 +78,6 @@ public readonly record struct ChampionSecondaryCurrencyName
     public string Value { get; }
     public ChampionSecondaryCurrencyName(string value)
     {
-        if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("SecondaryCurrencyName can't be empty.", nameof(value));
         Value = value.Trim();
     }
     public static implicit operator string(ChampionSecondaryCurrencyName x) => x.Value;
