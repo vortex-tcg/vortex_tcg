@@ -9,7 +9,7 @@ public interface IRoomManager
 {
     IMatchmaker Matchmaker { get; }
     IEventContainer MatchmakerEventContainer { get; }
-    Match CreateMatch(List<(UserId userId, DeckId deckId)> players);
-    Match? GetMatchByUserId(Guid userId);
+    Task<Match> CreateMatchAsync(List<(UserId userId, DeckId deckId)> players, CancellationToken ct = default);
+    Match? GetMatchByUserId(UserId userId);
     void RemoveFinishedMatches();
 }

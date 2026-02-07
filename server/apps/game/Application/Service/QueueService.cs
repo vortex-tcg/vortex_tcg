@@ -1,4 +1,5 @@
 ﻿using game.Domaine.Interface;
+using game.Domaine.Match.Entity;
 using game.Domaine.Match.ValueObject;
 using game.Domaine.Matchmaking;
 using game.Infrastructure.Manager;
@@ -7,7 +8,7 @@ namespace game.Application.Service;
 
 public class QueueService
 {
-    public static async Task JoinQueueAsync(UserId userId, DeckId deckId, CancellationToken ct = default)
+    public static async Task<Match?> JoinQueueAsync(UserId userId, DeckId deckId, CancellationToken ct = default)
     {
         RoomManager rm = RoomManager.Instance;
 
@@ -22,11 +23,15 @@ public class QueueService
             if (ev.Name == MatchmakerEvent.FOUND)
             {
                 MatchFoundData data = ev.GetData<MatchFoundData>();
-                rm.CreateMatch(data.players);
+
+                Match match = await rm.CreateMatchAsync(data.players, ct);
+
+                return match;
             }
         }
-    }
 
+        return null; 
+    }
     public static Task LeaveQueueAsync(UserId userId, CancellationToken ct = default)
         => RoomManager.Instance.Matchmaker.LeaveQueueAsync(userId, ct);
 }
