@@ -5,26 +5,28 @@ using game.Hubs;
 
 namespace game.Infrastructure.Manager;
 
-
-
 public sealed class CallManager : ICallManager
 {
-    private readonly IHubContext<GameHub> _hubContext;
+    private static readonly Lazy<CallManager> _instance =
+        new(() => new CallManager(null!));
+
+    public static CallManager Instance => _instance.Value;
+
+    private readonly IHubContext<GameHubClean> _hubContext;
 
     private static readonly string[][] mapCodesToSignalRCallPlayer =
     {
         new[] { nameof(ResponseCode.SUCCESS_POSE_CARTE), "successPoseCarte" },
-        new[] { nameof(ResponseCode.SUCCESS_PHASE_CHANGED), "successPhaseChanged" }
+        new[] { nameof(ResponseCode.SUCCESS_PHASE_CHANGED), "successPhaseChanged" },
+        new[] { nameof(ResponseCode.MATCH_FOUND), "matchFound" },
     };
 
     private static readonly string[][] mapCodesToSignalRCallOpponent =
     {
-        new[] { nameof(ResponseCode.SUCCESS_POSE_CARTE), "opponentPoseCarte" }, 
-        new[] { nameof(ResponseCode.SUCCESS_PHASE_CHANGED), "opponentPhaseChanged" }
+        new[] { nameof(ResponseCode.SUCCESS_POSE_CARTE), "opponentPoseCarte" },
+        new[] { nameof(ResponseCode.SUCCESS_PHASE_CHANGED), "opponentPhaseChanged" },
+        new[] { nameof(ResponseCode.MATCH_FOUND), "matchFound" },
     };
-
-
-
 
     private static readonly string[][] mapCodesToMsgError =
     {
@@ -36,14 +38,29 @@ public sealed class CallManager : ICallManager
         new[] { nameof(ResponseCode.UNKNOWN_ERROR), "Une erreur est survenue." }
     };
 
-    public CallManager(IHubContext<GameHub> hubContext)
+    public static void Configure(IHubContext<GameHubClean> hubContext)
+    {
+        _instance.Value._setHubContext(hubContext);
+    }
+
+    private void _setHubContext(IHubContext<GameHubClean> hubContext)
+    {
+        typeof(CallManager)
+            .GetField("_hubContext", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            ?.SetValue(this, hubContext);
+    }
+
+    private CallManager(IHubContext<GameHubClean> hubContext)
     {
         _hubContext = hubContext;
     }
-    
+
     public async Task CallAsync<T>(responseDTO<T> response, CancellationToken ct = default)
     {
         if (response is null) return;
+
+        if (_hubContext == null)
+            throw new InvalidOperationException("CallManager is not configured. Call CallManager.Configure(...) at startup.");
 
         IClientProxy? player = response.userId != Guid.Empty
             ? _hubContext.Clients.User(response.userId.ToString())
@@ -84,5 +101,4 @@ public sealed class CallManager : ICallManager
         }
         return "";
     }
-    
 }

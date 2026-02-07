@@ -20,8 +20,12 @@ public class GameHubClean : Hub
         await base.OnConnectedAsync();
     }
     
-    public Task JoinQueue(DeckId deckId)
-        => QueueService.JoinQueueAsync(GetAuthenticatedUserId(), deckId, Context.ConnectionAborted);
+    public Task JoinQueue(Guid deckId)
+        => QueueService.JoinQueueAsync(
+            GetAuthenticatedUserId(),
+            new DeckId(deckId),
+            Context.ConnectionAborted
+        );
 
     public Task LeaveQueue()
         => QueueService.LeaveQueueAsync(GetAuthenticatedUserId(), Context.ConnectionAborted);

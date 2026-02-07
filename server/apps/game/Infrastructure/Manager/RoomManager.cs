@@ -1,42 +1,51 @@
-﻿using game.Domaine.Interface;
-using game.Domaine.Match.Entity;
+﻿using game.Domaine.Match.Entity;
 using game.Domaine.Match.ValueObject;
 using game.Domaine.Matchmaking;
 using game.Domaine.Matchmaking.Interface;
 using game.Infrastructure.Interface;
+using game.Application.Factory;
+using game.Domaine.Interface;
 
 namespace game.Infrastructure.Manager;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-
-public sealed class RoomManager :IRoomManager
+public sealed class RoomManager : IRoomManager
 {
     private static readonly Lazy<RoomManager> _instance =
-        new(() => new RoomManager(new Matchmaker()));
+        new(() => new RoomManager(new Matchmaker(), null!));
 
     public static RoomManager Instance => _instance.Value;
 
     private readonly List<Match> _matches = new();
+    private readonly CreateMatchFactory _createMatchFactory;
 
     public IMatchmaker Matchmaker { get; }
     public IEventContainer MatchmakerEventContainer { get; }
 
-    private RoomManager(Matchmaker matchmaker)
+    public static void Configure(CreateMatchFactory factory)
     {
-        Matchmaker = matchmaker;
-        MatchmakerEventContainer = matchmaker; 
+        _instance.Value._setFactory(factory);
     }
 
-    public Match CreateMatch(List<(UserId userId, DeckId deckId)> players)
+    private void _setFactory(CreateMatchFactory factory)
     {
-        // TODO: appeler la factory createMatch(players) 
-        Match match = new Match
-        {
-            players = players
-        };
+        typeof(RoomManager)
+            .GetField("_createMatchFactory", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            ?.SetValue(this, factory);
+    }
+
+    private RoomManager(Matchmaker matchmaker, CreateMatchFactory factory)
+    {
+        Matchmaker = matchmaker;
+        MatchmakerEventContainer = matchmaker;
+        _createMatchFactory = factory;
+    }
+
+    public async Task<Match> CreateMatchAsync(List<(UserId userId, DeckId deckId)> players, CancellationToken ct = default)
+    {
+        if (players.Count != 2)
+            throw new ArgumentException("CreateMatch requires exactly 2 players.", nameof(players));
+
+        Match match = await _createMatchFactory.CreateMatchAsync(players[0], players[1], ct);
 
         lock (_matches)
         {
@@ -46,11 +55,11 @@ public sealed class RoomManager :IRoomManager
         return match;
     }
 
-    public Match? GetMatchByUserId(Guid userId)
+    public Match? GetMatchByUserId(UserId userId)
     {
         lock (_matches)
         {
-            return _matches.FirstOrDefault(m => m.players.Any(p => p.userId == userId));
+            return _matches.FirstOrDefault(m => m.HasUser(userId));
         }
     }
 
@@ -58,9 +67,7 @@ public sealed class RoomManager :IRoomManager
     {
         lock (_matches)
         {
-            _matches.RemoveAll(m => m.players.Count == 0);
+            _matches.RemoveAll(m => m.IsFinished);
         }
     }
-    
 }
-
