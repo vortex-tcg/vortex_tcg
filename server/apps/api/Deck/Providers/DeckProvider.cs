@@ -62,92 +62,26 @@ namespace VortexTCG.Api.Deck.Providers
             return deck;
         }
 
-        public async Task<DeckDataDto?> GetDeckDataAsync(Guid deckId)
+        public async Task<DeckModel?> GetDeckWithCardsAndChampionAsync(Guid deckId)
         {
-            DeckModel? deck = await _db.Decks
+            return await _db.Decks
                 .AsNoTracking()
                 .Include(d => d.DeckCard)
-                .ThenInclude((DeckCardModel dc) => dc.Card) 
-                .ThenInclude((CollectionCardModel cc) => cc.Card) 
+                .ThenInclude((DeckCardModel dc) => dc.Card)
+                .ThenInclude((CollectionCardModel cc) => cc.Card)
                 .Include(d => d.Champion)
                 .FirstOrDefaultAsync(d => d.Id == deckId);
-
-            if (deck == null) return null;
-
-            List<Guid> cardIds = deck.DeckCard
-                .Select((DeckCardModel dc) => dc.Card.CardId) 
-                .Distinct()
-                .ToList();
-
-            List<(Guid CardId, string Label)> classRows = await _db.Set<ClassCardModel>()
+        } public async Task<List<(Guid CardId, string Label)>> GetClassRowsByCardIdsAsync(List<Guid> cardIds)
+        {
+            return await _db.Set<ClassCardModel>()
                 .AsNoTracking()
-                .Include((ClassCardModel x) => x.Class)
-                .Where((ClassCardModel x) => cardIds.Contains(x.CardId))
-                .Select((ClassCardModel x) => new ValueTuple<Guid, string>(
+                .Include(x => x.Class)
+                .Where(x => cardIds.Contains(x.CardId))
+                .Select(x => new ValueTuple<Guid, string>(
                     x.CardId,
                     x.Class != null ? x.Class.Label : ""
                 ))
                 .ToListAsync();
-
-            Dictionary<Guid, List<string>> classMap = classRows
-                .Where(t => !string.IsNullOrWhiteSpace(t.Label))
-                .GroupBy(t => t.CardId)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Select(t => t.Label).Distinct().ToList()
-                ); 
-            List<DeckCardDto> cards = deck.DeckCard.Select((DeckCardModel dc) =>
-            {
-                CollectionCardModel cc = dc.Card;
-                CardModel c = cc.Card;
-
-                List<string> classes = classMap.TryGetValue(c.Id, out List<string>? labels)
-                    ? labels
-                    : new List<string>();
-
-                return new DeckCardDto
-                {
-                    DeckCardId = dc.Id,
-                    Quantity = dc.Quantity,
-
-                    CollectionCardId = cc.Id,
-                    Rarity = cc.Rarity,
-
-                    CardId = c.Id,
-                    Name = c.Name,
-                    Hp = c.Hp,
-                    Attack = c.Attack,
-                    Cost = c.Cost,
-                    Description = c.Description,
-                    Picture = c.Picture,
-                    Extension = c.Extension,
-                    CardType = c.CardType,
-                    Price = c.Price,
-
-                    Classes = classes
-                };
-            }).ToList();
-
-            return new DeckDataDto
-            {
-                Cards = cards,
-                Champion = MapToDeckChampionDto(deck.Champion)
-            };
-
-        }
-
-
-        private static DeckChampionDto MapToDeckChampionDto(DataAccess.Models.Champion ch)
-        {
-            return new DeckChampionDto
-            {
-                ChampionID = ch.Id,
-                Name = ch.Name,
-                Description = ch.Description,
-                HP = ch.HP,
-                Picture = ch.Picture,
-                FactionId = ch.FactionId
-            };
         }
     }
 }

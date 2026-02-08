@@ -54,7 +54,7 @@ public sealed class CallManager : ICallManager
         _hubContext = hubContext;
     }
 
-    public async Task CallAsync<T>(responseDTO<T> response, CancellationToken ct = default)
+    public async Task CallAsync<MatchFoundSelfDto, MatchFoundOpponentDto>(responseDTO<MatchFoundSelfDto, MatchFoundOpponentDto> response, CancellationToken ct = default)
     {
         if (response is null) return;
 

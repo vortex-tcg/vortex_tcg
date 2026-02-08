@@ -20,7 +20,7 @@ public sealed class Player
     public Player(UserId userId, DeckId deckId, PlayerDeck deck, GameChampionDto champion)
     {
         UserId = userId;
-        DeckId = deckId;
+        DeckId = deckId;    
         Deck = deck;
         Hand = new Hand();
         Board = new Board();
