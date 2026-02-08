@@ -31,13 +31,5 @@ public sealed class PlayerDeck
     }
 }
 
-public sealed class Hand
-{
-    private readonly List<GameCardDto> _cards = new();
-    public IReadOnlyList<GameCardDto> Cards => _cards;
-
-    public void Add(GameCardDto card) => _cards.Add(card);
-}
-
 public sealed class Board { }
 public sealed class Graveyard { }

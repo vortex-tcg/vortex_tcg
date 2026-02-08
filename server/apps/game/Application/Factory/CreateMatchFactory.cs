@@ -8,7 +8,6 @@ using Domaine.Match.Entity;
 using Domaine.Match.ValueObject;
 using Infrastructure.Interface;
 
-
 public sealed class CreateMatchFactory
 {
     private readonly IDeckApiClient _deckApiClient;
@@ -22,28 +21,14 @@ public sealed class CreateMatchFactory
         (UserId userId, DeckId deckId) p1,
         (UserId userId, DeckId deckId) p2,
         CancellationToken ct = default)
-    { 
-        ApiDeckDataDto apiDeck1 = await _deckApiClient.GetDeckDataAsync(p1.deckId, ct);
-        ApiDeckDataDto apiDeck2 = await _deckApiClient.GetDeckDataAsync(p2.deckId, ct);
-        DeckData deckData1 = DeckDataMapper.Map(p1.deckId, apiDeck1);
-        DeckData deckData2 = DeckDataMapper.Map(p2.deckId, apiDeck2);
+    {
         int globalGameCardId = 1;
-        AssignGlobalGameCardIds(deckData1.Cards, ref globalGameCardId);
-        AssignGlobalGameCardIds(deckData2.Cards, ref globalGameCardId);
-        Player player1 = new Player(
-            p1.userId,
-            p1.deckId,
-            new PlayerDeck(deckData1.Cards),
-            deckData1.Champion
-        );
 
-        Player player2 = new Player(
-            p2.userId,
-            p2.deckId,
-            new PlayerDeck(deckData2.Cards),
-            deckData2.Champion
-        );
+        (Player player1, int nextId1) = await GeneratePlayerAsync(p1, globalGameCardId, ct);
+        (Player player2, int nextId2) = await GeneratePlayerAsync(p2, nextId1, ct);
+
         Match match = new Match(player1, player2);
+
         Random rng = Random.Shared;
         player1.Deck.Shuffle(rng);
         player2.Deck.Shuffle(rng);
@@ -52,18 +37,40 @@ public sealed class CreateMatchFactory
         DrawOpeningHand(player2, 5);
 
         match.Start();
-
         return match;
     }
 
-    private static void AssignGlobalGameCardIds(List<GameCardDto> cards, ref int globalId)
+    private async Task<(Player player, int nextGlobalGameCardId)> GeneratePlayerAsync(
+        (UserId userId, DeckId deckId) p,
+        int startGlobalGameCardId,
+        CancellationToken ct)
     {
+        ApiDeckDataDto apiDeck = await _deckApiClient.GetDeckDataAsync(p.deckId, ct);
+        DeckData deckData = DeckDataMapper.Map(p.deckId, apiDeck);
+
+        int nextId = AssignGlobalGameCardIds(deckData.Cards, startGlobalGameCardId);
+
+        Player player = new Player(
+            p.userId,
+            p.deckId,
+            new PlayerDeck(deckData.Cards),
+            deckData.Champion
+        );
+
+        return (player, nextId);
+    }
+
+    private static int AssignGlobalGameCardIds(List<GameCardDto> cards, int startId)
+    {
+        int id = startId;
         for (int i = 0; i < cards.Count; i++)
         {
-            cards[i].GameCardId = (GameCardId)globalId;
-            globalId++;
+            cards[i].GameCardId = (GameCardId)id;
+            id++;
         }
+        return id;
     }
+
 
     private static void DrawOpeningHand(Player p, int count)
     {

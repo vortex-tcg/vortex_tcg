@@ -17,9 +17,8 @@ public class QueueService
         await rm.Matchmaker.JoinQueueAsync(userId, deckId, ct);
         IReadOnlyList<IEvent> events = rm.MatchmakerEventContainer.PullEvents(ct);
 
-        for (int i = 0; i < events.Count; i++)
+        foreach (IEvent ev in events)
         {
-            IEvent ev = events[i];
             if (ev.Name != MatchmakerEvent.FOUND) continue;
 
             MatchFoundData data = ev.GetData<MatchFoundData>();
@@ -29,42 +28,42 @@ public class QueueService
             ChampionId p1ChampionId =  new ChampionId(match.Player1.Champion.Id.Value);
             ChampionId p2ChampionId = new ChampionId(match.Player2.Champion.Id.Value);
             //TODO : init match, avec toute la data 
-            await CallManager.Instance.CallAsync(new responseDTO<object>
+            await CallManager.Instance.CallAsync(new responseDTO<MatchFoundSelfDto, MatchFoundOpponentDto>
             {
                 userId = (Guid)p1,
                 opponentId = (Guid)p2,
                 success = true,
                 code = ResponseCode.MATCH_FOUND,
-                data = new
+                data = new MatchFoundSelfDto
                 {
                     matchId = match.MatchId.Value,
                     championId = p1ChampionId,
                 },
-                opponentData = new
+                opponentData = new MatchFoundOpponentDto
                 {
                     opponentHandSize = 5,
-                    championId = p2ChampionId
+                    championId = p2ChampionId,
                 }
             }, ct);
 
-            await CallManager.Instance.CallAsync(new responseDTO<object>
+            await CallManager.Instance.CallAsync(new responseDTO<MatchFoundSelfDto, MatchFoundOpponentDto>
             {
                 userId = (Guid)p2,
                 opponentId = (Guid)p1,
                 success = true,
                 code = ResponseCode.MATCH_FOUND,
-                data = new
+                data = new MatchFoundSelfDto
                 {
                     matchId = match.MatchId.Value,
-                    championId = p2ChampionId
-                },
-                opponentData = new
+                    championId =  p2ChampionId,
+               },
+                opponentData = new MatchFoundOpponentDto
                 {
                     opponentHandSize = 6,
-                    championId = p1ChampionId
-
+                    championId = p1ChampionId,
                 }
             }, ct);
+
         }
 
     }

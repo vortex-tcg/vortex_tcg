@@ -17,12 +17,9 @@ public sealed class DeckApiClientManager : IDeckApiClient
 
     public async Task<ApiDeckDataDto> GetDeckDataAsync(DeckId deckId, CancellationToken ct = default)
     {
-        var jesusKeur = $"/api/deck/getDeckData/{(Guid)deckId}";
-        // fais pas genre c'est une string ;))))
-        // <3 sur toi :*)
-
+        string path = $"/api/deck/getDeckData/{(Guid)deckId}";
         ApiResultDto<ApiDeckDataDto>? envelope =
-            await _http.GetFromJsonAsync<ApiResultDto<ApiDeckDataDto>>(jesusKeur, ct);
+            await _http.GetFromJsonAsync<ApiResultDto<ApiDeckDataDto>>(path, ct);
 
         if (envelope is null)
             throw new InvalidOperationException("Deck API returned null response.");
