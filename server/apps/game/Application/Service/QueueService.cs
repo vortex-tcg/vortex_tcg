@@ -26,7 +26,9 @@ public class QueueService
             Match match = await rm.CreateMatchAsync(data.players, ct);
             UserId p1 = data.players[0].userId;
             UserId p2 = data.players[1].userId;
-
+            ChampionId p1ChampionId =  new ChampionId(match.Player1.Champion.Id.Value);
+            ChampionId p2ChampionId = new ChampionId(match.Player2.Champion.Id.Value);
+            //TODO : init match, avec toute la data 
             await CallManager.Instance.CallAsync(new responseDTO<object>
             {
                 userId = (Guid)p1,
@@ -36,7 +38,12 @@ public class QueueService
                 data = new
                 {
                     matchId = match.MatchId.Value,
-                    opponentId = (Guid)p2
+                    championId = p1ChampionId,
+                },
+                opponentData = new
+                {
+                    opponentHandSize = 5,
+                    championId = p2ChampionId
                 }
             }, ct);
 
@@ -49,7 +56,13 @@ public class QueueService
                 data = new
                 {
                     matchId = match.MatchId.Value,
-                    opponentId = (Guid)p1
+                    championId = p2ChampionId
+                },
+                opponentData = new
+                {
+                    opponentHandSize = 6,
+                    championId = p1ChampionId
+
                 }
             }, ct);
         }
