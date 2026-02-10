@@ -25,6 +25,8 @@ public sealed class CallManager : ICallManager
     {
         new[] { nameof(ResponseCode.SUCCESS_POSE_CARTE), "opponentPoseCarte" },
         new[] { nameof(ResponseCode.SUCCESS_PHASE_CHANGED), "opponentPhaseChanged" },
+        new[] { nameof(ResponseCode.MATCH_FOUND), "matchFound" },
+
     };
 
     private static readonly string[][] mapCodesToMsgError =
@@ -54,7 +56,9 @@ public sealed class CallManager : ICallManager
         _hubContext = hubContext;
     }
 
-    public async Task CallAsync<MatchFoundSelfDto, MatchFoundOpponentDto>(responseDTO<MatchFoundSelfDto, MatchFoundOpponentDto> response, CancellationToken ct = default)
+    public async Task CallAsync<TSelf, TOpponent>(
+        responseDTO<TSelf, TOpponent> response,
+        CancellationToken ct = default)
     {
         if (response is null) return;
 
@@ -72,22 +76,19 @@ public sealed class CallManager : ICallManager
         if (!response.success)
         {
             string errorMsg = Resolve(mapCodesToMsgError, response.code);
-
             if (player != null)
                 await player.SendAsync("Error", errorMsg, ct);
-
             return;
         }
 
         string playerCall = Resolve(mapCodesToSignalRCallPlayer, response.code);
         string opponentCall = Resolve(mapCodesToSignalRCallOpponent, response.code);
-
         if (player != null && !string.IsNullOrWhiteSpace(playerCall))
-            await player.SendAsync(playerCall, response, ct);
-
+            await player.SendAsync(playerCall, response.data, ct);
         if (opponent != null && !string.IsNullOrWhiteSpace(opponentCall))
-            await opponent.SendAsync(opponentCall, response, ct);
+            await opponent.SendAsync(opponentCall, response.opponentData, ct);
     }
+
 
     private static string Resolve(string[][] map, ResponseCode code)
     {

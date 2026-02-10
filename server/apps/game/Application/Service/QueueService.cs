@@ -28,41 +28,28 @@ public class QueueService
             ChampionId p1ChampionId =  new ChampionId(match.Player1.Champion.Id.Value);
             ChampionId p2ChampionId = new ChampionId(match.Player2.Champion.Id.Value);
             //TODO : init match, avec toute la data 
-            await CallManager.Instance.CallAsync(new responseDTO<MatchFoundSelfDto, MatchFoundOpponentDto>
+            await CallManager.Instance.CallAsync(new responseDTO<MatchFoundUserDto, MatchFoundUserDto>
             {
                 userId = (Guid)p1,
                 opponentId = (Guid)p2,
                 success = true,
                 code = ResponseCode.MATCH_FOUND,
-                data = new MatchFoundSelfDto
+                data = new MatchFoundUserDto
                 {
                     matchId = match.MatchId.Value,
-                    championId = p1ChampionId,
+                    championId = p1ChampionId.Value,         
+                    opponentChampionId = p2ChampionId.Value,
+                    opponentHandSize = 5
                 },
-                opponentData = new MatchFoundOpponentDto
+                opponentData = new MatchFoundUserDto
                 {
-                    opponentHandSize = 5,
-                    championId = p2ChampionId,
+                    matchId = match.MatchId.Value,
+                    championId = p2ChampionId.Value,
+                    opponentChampionId = p1ChampionId.Value,
+                    opponentHandSize = 6
                 }
             }, ct);
 
-            await CallManager.Instance.CallAsync(new responseDTO<MatchFoundSelfDto, MatchFoundOpponentDto>
-            {
-                userId = (Guid)p2,
-                opponentId = (Guid)p1,
-                success = true,
-                code = ResponseCode.MATCH_FOUND,
-                data = new MatchFoundSelfDto
-                {
-                    matchId = match.MatchId.Value,
-                    championId =  p2ChampionId,
-               },
-                opponentData = new MatchFoundOpponentDto
-                {
-                    opponentHandSize = 6,
-                    championId = p1ChampionId,
-                }
-            }, ct);
 
         }
 
