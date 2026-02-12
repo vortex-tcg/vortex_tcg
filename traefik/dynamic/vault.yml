@@ -12,7 +12,7 @@ http:
     vault-service:
       loadBalancer:
         servers:
-          - url: "https://127.0.0.1:8200"
+          - url: "https://host.docker.internal:8200"
         serversTransport: insecureTransport
 
   serversTransports:
