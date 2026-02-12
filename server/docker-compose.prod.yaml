@@ -1,13 +1,7 @@
 services:
   traefik:
     image: traefik:v3.4
-    container_name: traefik
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-
     networks:
-      # Connect to the 'traefik-network' overlay network for inter-container communication across nodes
       - traefik-network
 
     ports:
@@ -19,6 +13,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ../certs:/certs:ro
       - ../traefik/dynamic:/dynamic:ro
+      - ./letsencrypt:/letsencrypt
 
     command:
       # EntryPoints
@@ -32,10 +27,12 @@ services:
       # Attach the static configuration tls.yml file that contains the tls configuration settings
       - "--providers.file.filename=/dynamic/tls.yml"
 
-      # Providers
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=traefik-network"
+      # Providers - Swarm Provider pour Traefik v3
+      - "--providers.swarm=true"
+      - "--providers.swarm.exposedbydefault=false"
+      # Comment for now to check if network is the issue
+      # - "--providers.swarm.network=traefik-network"
+      - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
 
       # API & Dashboard
       - "--api.dashboard=true"
@@ -50,86 +47,131 @@ services:
       - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
       - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
 
-    # Traefik Dynamic configuration via Docker labels
-    labels:
-      # Enable self‑routing
-      - "traefik.enable=true"
-
-      # Dashboard router
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.vortex-tcg.online`)"
-      - "traefik.http.routers.dashboard.entrypoints=websecure"
-      - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.tls=true"
-
-      # Basic‑auth middleware
-      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_PASSWORD}"
     env_file:
       - .env
 
-  migrations:
-    image: vortextcg/vortex_repository:migrations
-    pull_policy: always
-    env_file:
-      - .env
     deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.dashboard.rule=Host(`traefik.vortex-tcg.online`)"
+        - "traefik.http.routers.dashboard.entrypoints=websecure"
+        - "traefik.http.routers.dashboard.service=api@internal"
+        - "traefik.http.routers.dashboard.tls=true"
+        - "traefik.http.routers.dashboard.tls.certresolver=le"
+        #- "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_PASSWORD}"
+        #- "traefik.http.routers.dashboard.middlewares=dashboard-auth@swarm"
+        # Todo, if time check for vault to secure password
+        - "traefik.http.services.vortex-traefik.loadbalancer.server.port=8080"
+      placement:
+        constraints:
+          - node.role == manager
       restart_policy:
         condition: on-failure
-        max_attempts: 5
+        delay: 5s
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
 
   auth:
     image: vortextcg/vortex_repository:auth
-    pull_policy: always
     networks:
       - traefik-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.auth.rule=Host(`auth.vortex-tcg.online`)"
-      - "traefik.http.routers.auth.entrypoints=websecure"
-      - "traefik.http.routers.auth.tls=true"
-      - "traefik.http.routers.auth.tls.certresolver=letsencrypt"
-      - "traefik.http.services.auth.loadbalancer.server.port=${AUTH_INTERNAL_PORT}"
     env_file:
       - .env
-    depends_on:
-      migrations:
-        condition: service_completed_successfully
+    deploy:
+      mode: replicated
+      replicas: 2
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.auth.rule=Host(`auth.vortex-tcg.online`)"
+        - "traefik.http.routers.auth.entrypoints=websecure"
+        - "traefik.http.routers.auth.tls=true"
+        - "traefik.http.routers.auth.tls.certresolver=le"
+        - "traefik.http.services.auth.loadbalancer.server.port=5238"
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
   game:
     image: vortextcg/vortex_repository:game
-    pull_policy: always
     networks:
       - traefik-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.game.rule=Host(`game.vortex-tcg.online`)"
-      - "traefik.http.routers.game.entrypoints=websecure"
-      - "traefik.http.routers.game.tls=true"
-      - "traefik.http.routers.game.tls.certresolver=letsencrypt"
-      - "traefik.http.services.game.loadbalancer.server.port=${GAME_INTERNAL_PORT}"
     env_file:
       - .env
-    depends_on:
-      migrations:
-        condition: service_completed_successfully
+    deploy:
+      mode: replicated
+      replicas: 2
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.game.rule=Host(`game.vortex-tcg.online`)"
+        - "traefik.http.routers.game.entrypoints=websecure"
+        - "traefik.http.routers.game.tls=true"
+        - "traefik.http.routers.game.tls.certresolver=le"
+        - "traefik.http.services.game.loadbalancer.server.port=8000"
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
 
   api:
     image: vortextcg/vortex_repository:api
-    pull_policy: always
     networks:
       - traefik-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`api.vortex-tcg.online`)"
-      - "traefik.http.routers.api.entrypoints=websecure"
-      - "traefik.http.routers.api.tls=true"
-      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.api.loadbalancer.server.port=${API_INTERNAL_PORT}"
     env_file:
       - .env
-    depends_on:
-      migrations:
-        condition: service_completed_successfully
+    deploy:
+      mode: replicated
+      replicas: 2
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.api.rule=Host(`api.vortex-tcg.online`)"
+        - "traefik.http.routers.api.entrypoints=websecure"
+        - "traefik.http.routers.api.tls=true"
+        - "traefik.http.routers.api.tls.certresolver=le"
+        - "traefik.http.services.api.loadbalancer.server.port=5238"
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
 networks:
   traefik-network:
-    name: traefik-network
+    driver: overlay
+    attachable: true
