@@ -14,6 +14,8 @@ services:
       - ../certs:/certs:ro
       - ../traefik/dynamic:/dynamic:ro
       - ./letsencrypt:/letsencrypt
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     command:
       # EntryPoints
@@ -33,6 +35,8 @@ services:
       # Comment for now to check if network is the issue
       # - "--providers.swarm.network=traefik-network"
       - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
+      - "--providers.file.directory=/dynamic"
+      - "--providers.file.watch=true"
 
       # API & Dashboard
       - "--api.dashboard=true"
