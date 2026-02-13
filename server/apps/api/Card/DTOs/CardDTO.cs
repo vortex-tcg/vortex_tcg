@@ -18,6 +18,7 @@ namespace VortexTCG.Api.Card.DTOs
         public List<string> Class { get; set; } = new List<string>();
         public List<Guid> Factions { get; set; } = new List<Guid>();
     }
+    
 
     public class CardCreateDto
     {
