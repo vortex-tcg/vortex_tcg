@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Domaine\Match\Entity\" />
+    <Folder Include="Domaine\Matchmaking\DTO\" />
   </ItemGroup>
 
 </Project>

@@ -1,8 +1,10 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Moq;
 using VortexTCG.Common.DTO;
 using VortexTCG.Api.Deck.Controllers;
 using VortexTCG.Api.Deck.DTOs;
+using VortexTCG.Api.Deck.Interface;
 using VortexTCG.Api.Deck.Services;
 using Xunit;
 
@@ -10,18 +12,19 @@ namespace VortexTCG.Tests.Api.Deck.Controllers
 {
     public class DeckControllerTest
     {
-        private DeckController CreateController()
+        private static DeckController CreateController(out Mock<IDeckService> deckServiceMock)
         {
-            return new DeckController();
+            deckServiceMock = new Mock<IDeckService>();
+            return new DeckController(deckServiceMock.Object);
         }
 
         [Fact]
         public async Task GetDeckById_ReturnsOk_WithMockDeck()
         {
             // Arrange
-            DeckController controller = CreateController();
+            DeckController controller = CreateController(out var deckServiceMock);
             string testDeckId = "deck42";
-
+    
             // Act
             IActionResult result = await controller.GetDeckById(testDeckId);
 

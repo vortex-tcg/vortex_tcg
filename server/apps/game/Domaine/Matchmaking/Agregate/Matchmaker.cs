@@ -19,32 +19,38 @@ public sealed class Matchmaker : IMatchmaker, IEventContainer
         {
             _queue[userId] = deckId;
 
-            foreach (KeyValuePair<UserId,DeckId> kv in _queue)
-            {
-                if (kv.Key == userId) continue;
+            UserId? oppUserId = null;
+            DeckId oppDeckId = default;
 
-                UserId oppUserId = kv.Key;
-                DeckId oppDeckId = kv.Value;
-                _queue.Remove(oppUserId);
+            foreach (KeyValuePair<UserId, DeckId> kv in _queue)
+            {
+                if (kv.Key.Equals(userId)) continue;
+                oppUserId = kv.Key;
+                oppDeckId = kv.Value;
+                break;
+            }
+
+            if (oppUserId != null)
+            {
+                _queue.Remove(oppUserId.Value);
                 _queue.Remove(userId);
+
                 matchedPair = new List<(UserId userId, DeckId deckId)>
                 {
-                    (oppUserId, oppDeckId),
+                    (oppUserId.Value, oppDeckId),
                     (userId, deckId)
                 };
 
-                break;
-            }
-            if (matchedPair != null)
-            {
                 _events.Add(new MatchmakerEvent(
                     MatchmakerEvent.FOUND,
                     new MatchFoundData(matchedPair)
                 ));
             }
         }
+
         return Task.CompletedTask;
     }
+
 
     public Task LeaveQueueAsync(UserId userId, CancellationToken ct = default)
     {
