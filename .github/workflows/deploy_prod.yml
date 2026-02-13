@@ -105,8 +105,11 @@ jobs:
           port: 22
           script: |
             cd /var/www/vortex_tcg/server
-            docker compose down
+            docker stack rm vortex
+            sleep 10
+
             docker system prune -a -f
+
             docker pull vortextcg/vortex_repository:api
             docker pull vortextcg/vortex_repository:game
             docker pull vortextcg/vortex_repository:auth
@@ -148,7 +151,7 @@ jobs:
           port: 22
           script: |
             cd /var/www/vortex_tcg/server
-            docker compose -f docker-compose.prod.yaml up -d --remove-orphans
+            docker stack deploy -c docker-compose.prod.yaml vortex -d
       - name: Ensure SonarQube is running with persistence
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
