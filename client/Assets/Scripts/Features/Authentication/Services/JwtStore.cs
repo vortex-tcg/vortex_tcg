@@ -7,16 +7,12 @@ using System.Collections.Generic;
 [CreateAssetMenu(fileName = "JwtStore", menuName = "Vortex/Authentication/Services/JwtStore")]
 public class JwtStore : ScriptableObject
 {
-    [Header("Current token (read-only)")]
     [SerializeField] private string token;
-
-    [Header("Persistence")]
     [SerializeField] private string playerPrefsKey = "jwt_token";
 
     private Dictionary<string, object> claims;
     private AuthenticationStatus authStatus = new AuthenticationStatus();
 
-    // Événements
     public event System.Action<AuthenticationStatus> OnAuthenticationStatusChanged;
 
     public string Token => token;
@@ -28,17 +24,17 @@ public class JwtStore : ScriptableObject
 
     public bool IsExpired(int leewaySeconds = 0)
     {
-        if (!TryGetClaim("exp", out var expStr)) return false;
-        if (!long.TryParse(expStr, out var expUnix)) return false;
-        var expUtc = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
+        if (!TryGetClaim("exp", out string expStr)) return false;
+        if (!long.TryParse(expStr, out long expUnix)) return false;
+        DateTime expUtc = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
         return DateTime.UtcNow >= expUtc.AddSeconds(leewaySeconds);
     }
 
     public double? SecondsToExpiry()
     {
-        if (!TryGetClaim("exp", out var expStr)) return null;
-        if (!long.TryParse(expStr, out var expUnix)) return null;
-        var expUtc = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
+        if (!TryGetClaim("exp", out string expStr)) return null;
+        if (!long.TryParse(expStr, out long expUnix)) return null;
+        DateTime expUtc = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
         return (expUtc - DateTime.UtcNow).TotalSeconds;
     }
 
@@ -46,22 +42,15 @@ public class JwtStore : ScriptableObject
     {
         token = jwt;
         ParseClaims();
-        
-        // Mettre à jour le statut
         authStatus.State = AuthenticationState.Authenticated;
-        authStatus.UserId = TryGetClaim("sub", out var sub) ? sub : null;
-        authStatus.Email = TryGetClaim("email", out var email) ? email : null;
-        
-        // Calculer l'expiration
-        if (TryGetClaim("exp", out var expStr) && long.TryParse(expStr, out var expUnix))
+        authStatus.UserId = TryGetClaim("sub", out string sub) ? sub : null;
+        authStatus.Email = TryGetClaim("email", out string email) ? email : null;
+        if (TryGetClaim("exp", out string expStr) && long.TryParse(expStr, out long expUnix))
         {
             authStatus.TokenExpiryTime = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
         }
-        
         authStatus.ErrorMessage = null;
-        
         if (persist) PlayerPrefs.SetString(playerPrefsKey, token);
-        
         OnAuthenticationStatusChanged?.Invoke(authStatus);
     }
 
@@ -69,12 +58,8 @@ public class JwtStore : ScriptableObject
     {
         token = null;
         claims = null;
-        
-        // Réinitialiser le statut
         authStatus.Reset();
-        
         if (removePersist) PlayerPrefs.DeleteKey(playerPrefsKey);
-        
         OnAuthenticationStatusChanged?.Invoke(authStatus);
     }
 
@@ -83,23 +68,18 @@ public class JwtStore : ScriptableObject
         if (!PlayerPrefs.HasKey(playerPrefsKey)) return false;
         token = PlayerPrefs.GetString(playerPrefsKey, "");
         ParseClaims();
-        
         if (!string.IsNullOrEmpty(token))
         {
-            // Token valide, mettre à jour le statut
             authStatus.State = IsExpired() ? AuthenticationState.TokenExpired : AuthenticationState.Authenticated;
-            authStatus.UserId = TryGetClaim("sub", out var sub) ? sub : null;
-            authStatus.Email = TryGetClaim("email", out var email) ? email : null;
-            
-            if (TryGetClaim("exp", out var expStr) && long.TryParse(expStr, out var expUnix))
+            authStatus.UserId = TryGetClaim("sub", out string sub) ? sub : null;
+            authStatus.Email = TryGetClaim("email", out string email) ? email : null;
+            if (TryGetClaim("exp", out string expStr) && long.TryParse(expStr, out long expUnix))
             {
                 authStatus.TokenExpiryTime = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
             }
-            
             OnAuthenticationStatusChanged?.Invoke(authStatus);
             return true;
         }
-        
         return false;
     }
 
@@ -110,12 +90,11 @@ public class JwtStore : ScriptableObject
     {
         value = null;
         if (claims == null || !claims.ContainsKey(key)) return false;
-        var v = claims[key];
+        object v = claims[key];
         value = v?.ToString();
         return true;
     }
 
-    /// <summary>Change l'état d'authentification et notifie les observateurs</summary>
     public void SetAuthenticationState(AuthenticationState state, string errorMessage = null)
     {
         authStatus.State = state;
@@ -133,17 +112,15 @@ public class JwtStore : ScriptableObject
     {
         claims = null;
         if (string.IsNullOrEmpty(token)) return;
-
         try
         {
-            var parts = token.Split('.');
+            string[] parts = token.Split('.');
             if (parts.Length < 2) return;
-
             string payloadJson = Encoding.UTF8.GetString(Base64UrlDecode(parts[1]));
             claims = MiniJson.Deserialize(payloadJson) as Dictionary<string, object>;
             if (claims != null)
             {
-                foreach (var k in new List<string>(claims.Keys))
+                foreach (string k in new List<string>(claims.Keys))
                 {
                     if (claims[k] is List<object> list)
                         claims[k] = string.Join(",", list);
@@ -182,7 +159,7 @@ public class JwtStore : ScriptableObject
 
             private Dictionary<string, object> ParseObject()
             {
-                var dict = new Dictionary<string, object>(); 
+                Dictionary<string, object> dict = new Dictionary<string, object>(); 
                 NextChar(); 
                 while (true)
                 {
@@ -190,10 +167,10 @@ public class JwtStore : ScriptableObject
                     if (PeekChar() == '}') { NextChar(); break; }
                     string key = ParseString();
                     SkipWs(); NextChar(); 
-                    var val = ParseValue();
+                    object val = ParseValue();
                     dict[key] = val;
                     SkipWs();
-                    var c = PeekChar();
+                    char c = PeekChar();
                     if (c == ',') { NextChar(); continue; }
                     if (c == '}') { NextChar(); break; }
                 }
@@ -202,14 +179,14 @@ public class JwtStore : ScriptableObject
 
             private List<object> ParseArray()
             {
-                var list = new List<object>(); NextChar(); 
+                List<object> list = new List<object>(); NextChar(); 
                 while (true)
                 {
                     SkipWs();
                     if (PeekChar() == ']') { NextChar(); break; }
                     list.Add(ParseValue());
                     SkipWs();
-                    var c = PeekChar();
+                    char c = PeekChar();
                     if (c == ',') { NextChar(); continue; }
                     if (c == ']') { NextChar(); break; }
                 }
@@ -232,7 +209,7 @@ public class JwtStore : ScriptableObject
 
             private string ParseString()
             {
-                var sb = new StringBuilder(); NextChar(); 
+                StringBuilder sb = new StringBuilder(); NextChar(); 
                 while (true)
                 {
                     char c = NextChar();
@@ -263,8 +240,8 @@ public class JwtStore : ScriptableObject
                 while (index < json.Length && "0123456789+-.eE".IndexOf(json[index]) != -1) index++;
                 string num = json.Substring(start, index - start);
                 if (num.IndexOf('.') != -1 || num.IndexOf('e') != -1 || num.IndexOf('E') != -1)
-                { if (double.TryParse(num, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var d)) return d; }
-                if (long.TryParse(num, out var l)) return l.ToString();
+                { if (double.TryParse(num, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double d)) return d; }
+                if (long.TryParse(num, out long l)) return l.ToString();
                 return num;
             }
 

@@ -130,8 +130,9 @@ GameObject:
   - component: {fileID: 112828493}
   - component: {fileID: 112828492}
   - component: {fileID: 112828494}
+  - component: {fileID: 112828495}
   m_Layer: 5
-  m_Name: ProfilePanel
+  m_Name: HUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -185,6 +186,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   uiDocument: {fileID: 112828492}
   jwtStore: {fileID: 11400000, guid: 9db856da50927ff4591f100916cdba3a, type: 2}
+--- !u!114 &112828495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 112828491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54a480754762f3c44ab5ede535bbf61c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 112828492}
+  menuParams: {fileID: 0}
 --- !u!1 &435444167
 GameObject:
   m_ObjectHideFlags: 0

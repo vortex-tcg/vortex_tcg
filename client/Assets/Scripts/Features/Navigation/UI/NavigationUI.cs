@@ -1,14 +1,15 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class UILoadingScene : MonoBehaviour
+public class NavigationUI : MonoBehaviour
 {
-    [Header("UI Toolkit")]
     [SerializeField] private UIDocument uiDocument;
 
     public LoadingRequest menuParams;
 
-    private UpMenuStatus status = UpMenuStatus.MAIN;
+    private NavigationService navigationService;
+    private NavigationState navigationState;
+    private EventBus eventBus = EventBus.Instance;
 
     private Button playButton;
     private Button profileButton;
@@ -22,16 +23,22 @@ public class UILoadingScene : MonoBehaviour
     {
         if (uiDocument == null)
         {
-            Debug.LogError("UILoadingScene : UIDocument non assign�.");
+            Debug.LogError("UIDocument non assigné.");
             return;
         }
 
         VisualElement root = uiDocument.rootVisualElement;
         if (root == null)
         {
-            Debug.LogError("UILoadingScene : rootVisualElement null.");
+            Debug.LogError("rootVisualElement null.");
             return;
         }
+
+        UpMenuStatus initialStatus = menuParams != null ? menuParams.status : UpMenuStatus.MAIN;
+        navigationState = new NavigationState(initialStatus);
+        navigationService = new NavigationService(navigationState);
+
+        eventBus.Subscribe<NavigationStatusChangedEvent>(OnNavigationStatusChanged);
 
         playButton = root.Q<Button>("Play");
         profileButton = root.Q<Button>("Profile");
@@ -48,10 +55,9 @@ public class UILoadingScene : MonoBehaviour
         if (cartIcon == null) Debug.LogError("VisualElement 'CartIcon' introuvable.");
         if (settingsIcon == null) Debug.LogError("VisualElement 'SettingsIcon' introuvable.");
 
-        status = menuParams != null ? menuParams.status : UpMenuStatus.MAIN;
-        ApplyStatusVisual(status);
+        ApplyStatusVisual(navigationState.GetStatus());
 
-        if (playButton != null) playButton.clicked += OnPlayClicked;
+        if (playButton != null) playButton.clicked += OnHomeClicked;
         if (profileButton != null) profileButton.clicked += OnProfileClicked;
         if (collectionButton != null) collectionButton.clicked += OnCollectionClicked;
         if (friendsButton != null) friendsButton.clicked += OnFriendsClicked;
@@ -62,7 +68,9 @@ public class UILoadingScene : MonoBehaviour
 
     private void OnDisable()
     {
-        if (playButton != null) playButton.clicked -= OnPlayClicked;
+        eventBus.Unsubscribe<NavigationStatusChangedEvent>(OnNavigationStatusChanged);
+
+        if (playButton != null) playButton.clicked -= OnHomeClicked;
         if (profileButton != null) profileButton.clicked -= OnProfileClicked;
         if (collectionButton != null) collectionButton.clicked -= OnCollectionClicked;
         if (friendsButton != null) friendsButton.clicked -= OnFriendsClicked;
@@ -71,34 +79,39 @@ public class UILoadingScene : MonoBehaviour
         if (settingsIcon != null) settingsIcon.UnregisterCallback<ClickEvent>(OnSettingsClicked);
     }
 
-    private void OnPlayClicked()
+    private void OnHomeClicked()
     {
-        CallLoadScene("Scene/MainPage", UpMenuStatus.MAIN);
+        eventBus.Publish(new NavigationRequestedEvent("Scenes/HomeScene", UpMenuStatus.MAIN));
     }
 
     private void OnProfileClicked()
     {
-        CallLoadScene("Scene/ProfilScene", UpMenuStatus.PROFIL);
+        eventBus.Publish(new NavigationRequestedEvent("Scenes/ProfileScene", UpMenuStatus.PROFIL));
     }
 
     private void OnCollectionClicked()
     {
-        CallLoadScene("Scene/CollectionScene", UpMenuStatus.COLLECTION);
+        eventBus.Publish(new NavigationRequestedEvent("Scenes/CollectionScene", UpMenuStatus.COLLECTION));
     }
 
     private void OnFriendsClicked()
     {
-        CallLoadScene("Scene/FriendsScene", UpMenuStatus.FRIENDS);
+        eventBus.Publish(new NavigationRequestedEvent("Scenes/FriendsScene", UpMenuStatus.FRIENDS));
     }
 
     private void OnCartClicked(ClickEvent evt)
     {
-        CallLoadScene("Scene/MarketScene", UpMenuStatus.MARKET);
+        eventBus.Publish(new NavigationRequestedEvent("Scenes/MarketScene", UpMenuStatus.MARKET));
     }
 
     private void OnSettingsClicked(ClickEvent evt)
     {
-        CallLoadScene("Scene/OptionScene", UpMenuStatus.OPTIONS);
+        eventBus.Publish(new NavigationRequestedEvent("Scenes/OptionScene", UpMenuStatus.OPTIONS));
+    }
+
+    private void OnNavigationStatusChanged(NavigationStatusChangedEvent evt)
+    {
+        ApplyStatusVisual(evt.NewStatus);
     }
 
     private void ApplyStatusVisual(UpMenuStatus s)
@@ -130,16 +143,8 @@ public class UILoadingScene : MonoBehaviour
         if (settingsIcon != null) settingsIcon.RemoveFromClassList("underline");
     }
 
-    private void CallLoadScene(string loadScene, UpMenuStatus newStatus)
-    { 
-        if (menuParams != null)
-            menuParams.status = newStatus;
-
-        LoadingScreen.Load(loadScene, loadMenu: true, unloadMenu: false);
-    }
-
     public UpMenuStatus GetStatus()
     {
-        return status;
+        return navigationState.GetStatus();
     }
 }

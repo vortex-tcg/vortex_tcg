@@ -129,7 +129,8 @@ GameObject:
   m_Component:
   - component: {fileID: 580204059}
   - component: {fileID: 580204058}
-  - component: {fileID: 580204057}
+  - component: {fileID: 580204060}
+  - component: {fileID: 580204061}
   m_Layer: 5
   m_Name: HUD
   m_TagString: Untagged
@@ -137,28 +138,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &580204057
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 580204056}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b72bf5614db54cf4d8f772e0c7e7ce3e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  uiDocument: {fileID: 580204058}
-  searchOpponentButtonName: PlayButton
-  inviteFriendButtonName: PlayWithFriendsButton
-  statusTextName: StatusText
-  searchingPanelName: SearchingPanel
-  networkRef: {fileID: 11400000, guid: adba553b1733d8841aca87392be0c551, type: 2}
-  deckId: d3b07384-d9a1-4d3b-92d8-4f5c6e7a8b9c
-  connectHereIfNeeded: 1
-  verboseLogs: 1
-  matchSceneName: 3DMatchScene
 --- !u!114 &580204058
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -193,6 +172,42 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &580204060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 580204056}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c22fd964ed9738243a3158332ff0bfa9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 580204058}
+  searchOpponentButtonName: PlayButton
+  inviteFriendButtonName: PlayWithFriendsButton
+  statusTextName: StatusText
+  searchingPanelName: SearchingPanel
+  networkRef: {fileID: 0}
+  deckId: d3b07384-d9a1-4d3b-92d8-4f5c6e7a8b9c
+  connectHereIfNeeded: 1
+  verboseLogs: 1
+  matchSceneName: 3DMatchScene
+--- !u!114 &580204061
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 580204056}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54a480754762f3c44ab5ede535bbf61c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 580204058}
+  menuParams: {fileID: 0}
 --- !u!1 &689827792
 GameObject:
   m_ObjectHideFlags: 0
