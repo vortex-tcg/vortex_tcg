@@ -150,9 +150,8 @@ public class LoginScript : MonoBehaviour
         isSubmitting = true;
         UpdateLoginButtonState();
         HideError();
-
-        AppConfig cfg = ConfigLoader.Load();
-        if (cfg == null || string.IsNullOrEmpty(cfg.apiBaseUrl))
+        
+        if (ConfigLoader.Load() == null || string.IsNullOrEmpty(ConfigLoader.Load().apiBaseUrl))
         {
             ShowError("Configuration API manquante.");
             isSubmitting = false;
