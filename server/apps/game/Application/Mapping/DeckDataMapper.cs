@@ -49,13 +49,12 @@ public static class DeckDataMapper
         {
             Id = (ChampionId)ch.ChampionID,
             DeckId = deckId,
-
+            Name = (ChampionName)ch.Name,
             BaseHp = (ChampionBaseHp)ch.HP,
             Hp = (ChampionHp)ch.HP,
-
+            Description = (ChampionDescription)ch.Description,
             BaseGold = (ChampionBaseGold)0,
             Gold = (ChampionGold)0,
-
             SecondaryCurrency = (ChampionSecondaryCurrency)0,
             SecondaryCurrencyName = (ChampionSecondaryCurrencyName)"",
             FatigueCounter = (ChampionFatigueCounter)0

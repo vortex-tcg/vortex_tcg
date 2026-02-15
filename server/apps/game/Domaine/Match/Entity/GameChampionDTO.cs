@@ -11,4 +11,7 @@ public class GameChampionDto
     public ChampionSecondaryCurrency SecondaryCurrency { get; set; }
     public ChampionSecondaryCurrencyName SecondaryCurrencyName { get; set; } = default!;
     public ChampionFatigueCounter FatigueCounter { get; set; }
+    public ChampionName Name { get; set; } = default!;
+    public ChampionDescription Description { get; set; } = default!;
+
 }

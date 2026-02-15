@@ -95,3 +95,31 @@ public readonly record struct ChampionFatigueCounter
     public static implicit operator int(ChampionFatigueCounter x) => x.Value;
     public static explicit operator ChampionFatigueCounter(int value) => new(value);
 }
+public readonly record struct ChampionName
+{
+    public string Value { get; }
+
+    public ChampionName(string value)
+    {
+        value = (value ?? string.Empty).Trim();
+        if (value.Length == 0) throw new ArgumentException("ChampionName can't be empty.", nameof(value));
+        Value = value;
+    }
+
+    public static implicit operator string(ChampionName x) => x.Value;
+    public static explicit operator ChampionName(string value) => new(value);
+}
+
+public readonly record struct ChampionDescription
+{
+    public string Value { get; }
+
+    public ChampionDescription(string value)
+    {
+        Value = (value ?? string.Empty).Trim();
+    }
+
+    public static implicit operator string(ChampionDescription x) => x.Value;
+    public static explicit operator ChampionDescription(string value) => new(value);
+}
+
