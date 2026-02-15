@@ -58,12 +58,14 @@ public partial class SignalRClient
 
         _conn.On<PhaseChangeResultDTO>("GameStarted", r => Enqueue(() =>
         {
+            Debug.Log($"[SignalRClient] ✅ GameStarted reçu - phase={r.CurrentPhase}");
             OnGameStarted?.Invoke(r);
             OnLog?.Invoke($"GameStarted: phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct}");
         }));
 
         _conn.On<PhaseChangeResultDTO>("PhaseChanged", r => Enqueue(() =>
         {
+            Debug.Log($"[SignalRClient] ✅ PhaseChanged reçu - phase={r.CurrentPhase}");
             OnPhaseChanged?.Invoke(r);
             OnLog?.Invoke($"PhaseChanged: phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct} auto={r.AutoChanged}");
         }));
@@ -111,12 +113,15 @@ public partial class SignalRClient
             Debug.Log("[RAW CardsDrawn] " + r.ToString());
 
             OnCardsDrawn?.Invoke(r);
+            Debug.Log("[SignalRClient] ✅ OnCardsDrawn event invoked");
         }));
 
         _conn.On<DrawResultForOpponentDto>("OpponentCardsDrawn", r => Enqueue(() =>
         {
+            Debug.Log("[SignalRClient] OpponentCardsDrawn reçu - Invoking OnOpponentCardsDrawn");
             OnOpponentCardsDrawn?.Invoke(r);
             OnLog?.Invoke($"OpponentCardsDrawn reçu: {r?.CardsDrawnCount ?? 0} cartes");
+            Debug.Log("[SignalRClient] ✅ OnOpponentCardsDrawn event invoked");
         }));
 
         _conn.On<string>("Error", msg => Enqueue(() =>
@@ -153,7 +158,7 @@ public partial class SignalRClient
         {
             Debug.Log("[SignalR] Connecting… " + hubUrl);
             await _conn.StartAsync();
-            Debug.Log("[SignalR] Connected.");
+            Debug.Log("[SignalR] Connected. ✅ All handlers registered and ready for events.");
         }
         catch (Exception ex)
         {

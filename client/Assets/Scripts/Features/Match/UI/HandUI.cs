@@ -18,16 +18,18 @@ namespace VortexTCG.Scripts.Features.Match.UI
         public static HandUI Instance { get; private set; }
         public CardUI CardPrefab => _cardPrefab;
         public Transform HandRoot => _handRoot;
+        public List<CardUI> HandCards => _handCards;
+        protected List<Transform> HandSlots => _handSlots;
+        protected const int MaxHandSize = 7;
 
         [Header("Hand Spawn")]
         [SerializeField] private CardUI _cardPrefab;
         [SerializeField] private Transform _handRoot;
-        [SerializeField] private float _cardSpacing = 1.2f;
-        private const int MaxHandSize = 7;
+        [SerializeField] protected List<Transform> _handSlots = new();
 
         [HideInInspector] public CardUI SelectedCard;
 
-        private readonly List<CardUI> _handCards = new();
+        protected readonly List<CardUI> _handCards = new();
         private bool _playRequestInFlight;
         private CardUI _pendingCard;
         private CardSlotUI _pendingSlot;
@@ -39,14 +41,24 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             if (Instance != null && Instance != this)
             {
-                Destroy(gameObject);
+                enabled = false;
                 return;
             }
             Instance = this;
+            Debug.Log("[HandUI] Awake - FindAndAssignHandSlots");
+            FindAndAssignHandSlots();
+            Debug.Log($"[HandUI] Awake - Slots trouvés: {_handSlots.Count}, CardPrefab: {(_cardPrefab != null ? _cardPrefab.name : "NULL")}");
         }
 
         private void OnEnable()
         {
+            Debug.Log("[HandUI] OnEnable appelé");
+            OnEnableEvents();
+        }
+
+        protected virtual void OnEnableEvents()
+        {
+            Debug.Log("[HandUI] OnEnableEvents - Inscription aux événements");
             MatchEvents.OnGameStarted += HandleGameStarted;
             MatchEvents.OnPlayerCardsDrawn += HandleCardsDrawn;
             MatchEvents.OnCardSelected += HandleCardSelected;
@@ -55,9 +67,23 @@ namespace VortexTCG.Scripts.Features.Match.UI
             MatchEvents.OnServerStatusMessage += HandleServerStatus;
             MatchEvents.OnPlayerCardPlayed += HandleCardPlayResult;
             MatchEvents.OnPendingPlayCancelled += HandlePendingPlayCancelled;
+            Debug.Log("[HandUI] ✅ Tous les événements enregistrés");
+
+            // Fallback: s'enregistrer directement auprès de SignalRClient
+            SignalRClient client = SignalRClient.Instance;
+            if (client != null)
+            {
+                Debug.Log("[HandUI] SignalRClient trouvé, s'enregistrer directement pour CardsDrawn");
+                client.OnCardsDrawn += HandleSignalRCardsDrawn;
+            }
         }
 
         private void OnDisable()
+        {
+            OnDisableEvents();
+        }
+
+        protected virtual void OnDisableEvents()
         {
             MatchEvents.OnGameStarted -= HandleGameStarted;
             MatchEvents.OnPlayerCardsDrawn -= HandleCardsDrawn;
@@ -67,19 +93,80 @@ namespace VortexTCG.Scripts.Features.Match.UI
             MatchEvents.OnServerStatusMessage -= HandleServerStatus;
             MatchEvents.OnPlayerCardPlayed -= HandleCardPlayResult;
             MatchEvents.OnPendingPlayCancelled -= HandlePendingPlayCancelled;
+
+            // Unsubscribe from SignalRClient fallback
+            SignalRClient client = SignalRClient.Instance;
+            if (client != null)
+            {
+                client.OnCardsDrawn -= HandleSignalRCardsDrawn;
+            }
         }
 
-        // ========== EVENT HANDLERS ==========
-
-        private void HandleGameStarted(PhaseChangeResultDTO result)
+        /// <summary>
+        /// Cherche automatiquement les slots enfants de la main
+        /// Si des slots sont déjà assignés, ne fait rien
+        /// </summary>
+        protected virtual void FindAndAssignHandSlots()
         {
+            // Si les slots sont déjà assignés manuellement dans l'inspecteur, ne pas chercher
+            if (_handSlots.Count > 0)
+            {
+                Debug.Log($"[HandUI] ✅ {_handSlots.Count} slots assignés manuellement");
+                return;
+            }
+            
+            // Sinon, cherche automatiquement P1HandSlot1 à P1HandSlot7
+            _handSlots.Clear();
+            Transform parent = transform;
+            for (int i = 1; i <= 7; i++)
+            {
+                Transform slot = parent.Find($"P1HandSlot{i}");
+                if (slot != null)
+                {
+                    _handSlots.Add(slot);
+                    Debug.Log($"[HandUI] ✅ Slot P1HandSlot{i} trouvé automatiquement");
+                }
+            }
+            
+            if (_handSlots.Count > 0)
+            {
+                Debug.Log($"[HandUI] ✅ {_handSlots.Count} slots trouvés automatiquement");
+            }
+            else
+            {
+                Debug.LogWarning("[HandUI] ⚠️ Aucun slot trouvé! Assignez les manuellement ou créez P1HandSlot1-7");
+            }
+        }
+
+        protected void HandleGameStarted(PhaseChangeResultDTO result)
+        {
+            Debug.Log("[HandUI] HandleGameStarted appelé - Clearing hand");
             ClearHand();
         }
 
-        private void HandleCardsDrawn(DrawResultForPlayerDto result)
+        protected void HandleCardsDrawn(DrawResultForPlayerDto result)
         {
+            Debug.Log($"[HandUI] HandleCardsDrawn appelé - Cards: {result?.DrawnCards?.Count ?? 0}");
             if (result?.DrawnCards != null && result.DrawnCards.Count > 0)
+            {
+                Debug.Log($"[HandUI] Appel de AddCards avec {result.DrawnCards.Count} cartes");
                 AddCards(result.DrawnCards);
+            }
+            else
+            {
+                Debug.LogWarning("[HandUI] HandleCardsDrawn: Aucune carte dans result");
+            }
+        }
+
+        /// <summary>
+        /// Fallback direct de SignalRClient si MatchService n'existe pas
+        /// </summary>
+        protected void HandleSignalRCardsDrawn(DrawResultForPlayerDto result)
+        {
+            Debug.Log("[HandUI] 🔥 HandleSignalRCardsDrawn (fallback direct) - Cartes reçues");
+            Debug.Log($"[HandUI] Result: {(result != null ? "NOT NULL" : "NULL")}");
+            Debug.Log($"[HandUI] DrawnCards: {(result?.DrawnCards != null ? result.DrawnCards.Count : "NULL")}");
+            HandleCardsDrawn(result);
         }
 
         private void HandleCardSelected(CardUI card)
@@ -106,7 +193,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
             RequestPlayCard(card, slot);
         }
 
-        private void HandleServerStatus(string message)
+        protected void HandleServerStatus(string message)
         {
             if (string.IsNullOrWhiteSpace(message)) return;
             if (!HasPendingPlay) return;
@@ -118,13 +205,13 @@ namespace VortexTCG.Scripts.Features.Match.UI
             }
         }
 
-        private void HandleCardPlayResult(PlayCardPlayerResultDto result)
+        protected void HandleCardPlayResult(PlayCardPlayerResultDto result)
         {
             if (result == null) return;
             ConfirmPlayFromServer(result.PlayedCard?.GameCardId ?? -1, result.location, result.canPlayed);
         }
 
-        private void HandlePendingPlayCancelled(string reason)
+        protected void HandlePendingPlayCancelled(string reason)
         {
             CancelPendingPlay(reason);
         }
@@ -141,32 +228,103 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             if (drawnCards == null || drawnCards.Count == 0) return;
 
-            if (_cardPrefab == null || _handRoot == null)
+            AddCardsInternal(drawnCards);
+        }
+
+        /// <summary>
+        /// Méthode virtuelle pour ajouter les cartes
+        /// OpponentHandUI peut surcharger pour un comportement différent
+        /// </summary>
+        protected virtual void AddCardsInternal(List<DrawnCardDto> drawnCards)
+        {
+            Debug.Log($"[HandUI] AddCardsInternal appelé - {drawnCards?.Count ?? 0} cartes à ajouter");
+            
+            if (_cardPrefab == null)
             {
-                Debug.LogError("[HandUIManager] cardPrefab ou handRoot non assigné.");
+                Debug.LogError("[HandUI] ❌ cardPrefab non assigné.");
                 return;
             }
 
-            foreach (DrawnCardDto dto in drawnCards)
+            Debug.Log($"[HandUI] État: Slots={_handSlots.Count}, HandRoot={(_handRoot != null ? _handRoot.name : "NULL")}, CardPrefab={_cardPrefab.name}");
+
+            // Utiliser les slots pré-définis si disponibles
+            if (_handSlots != null && _handSlots.Count > 0)
             {
-                if (_handCards.Count >= MaxHandSize) break;
+                Debug.Log($"[HandUI] ✅ Utilisation de {_handSlots.Count} slots pour les cartes");
+                int cardIndex = 0;
+                foreach (DrawnCardDto dto in drawnCards)
+                {
+                    if (cardIndex >= _handSlots.Count || cardIndex >= MaxHandSize)
+                    {
+                        Debug.LogWarning($"[HandUI] Plus de slots disponibles. CardIndex: {cardIndex}, SlotCount: {_handSlots.Count}");
+                        break;
+                    }
 
-                CardUI card = Instantiate(_cardPrefab, _handRoot);
-                card.ApplyDTO(
-                    dto.GameCardId.ToString(),
-                    dto.Name,
-                    dto.Hp,
-                    dto.Attack,
-                    dto.Cost,
-                    dto.Description,
-                    ""
-                );
+                    Transform slot = _handSlots[cardIndex];
+                    if (slot == null)
+                    {
+                        Debug.LogError($"[HandUI] ❌ Slot {cardIndex} est NULL!");
+                        cardIndex++;
+                        continue;
+                    }
 
-                EnsureCollider(card);
-                _handCards.Add(card);
+                    Debug.Log($"[HandUI] Création carte {cardIndex + 1}: '{dto.Name}' dans slot '{slot.name}'");
+                    
+                    CardUI card = Instantiate(_cardPrefab, slot);
+                    card.gameObject.name = $"Card_{dto.Name}_{cardIndex}";
+                    
+                    Debug.Log($"[HandUI] Carte instantiée '{card.gameObject.name}', parent: {card.transform.parent.name}");
+                    
+                    card.ApplyDTO(
+                        dto.GameCardId.ToString(),
+                        dto.Name,
+                        dto.Hp,
+                        dto.Attack,
+                        dto.Cost,
+                        dto.Description,
+                        ""
+                    );
+
+                    // Positionner la carte sur le slot
+                    card.transform.localPosition = Vector3.zero;
+                    card.transform.localRotation = Quaternion.identity;
+                    card.transform.localScale = Vector3.one;
+                    
+                    Debug.Log($"[HandUI] ✅ Carte {cardIndex}: pos={card.transform.localPosition}, active={card.gameObject.activeSelf}");
+
+                    EnsureCollider(card);
+                    _handCards.Add(card);
+                    cardIndex++;
+                }
+                Debug.Log($"[HandUI] ✅ {cardIndex} cartes ajoutées avec succès");
             }
+            else if (_handRoot != null)
+            {
+                // Fallback: utiliser _handRoot si aucun slot n'est configuré
+                Debug.LogWarning("[HandUI] ⚠️ Aucun slot configuré, fallback sur _handRoot");
+                foreach (DrawnCardDto dto in drawnCards)
+                {
+                    if (_handCards.Count >= MaxHandSize) break;
 
-            LayoutHand();
+                    CardUI card = Instantiate(_cardPrefab, _handRoot);
+                    card.ApplyDTO(
+                        dto.GameCardId.ToString(),
+                        dto.Name,
+                        dto.Hp,
+                        dto.Attack,
+                        dto.Cost,
+                        dto.Description,
+                        ""
+                    );
+
+                    EnsureCollider(card);
+                    _handCards.Add(card);
+                }
+            }
+            else
+            {
+                Debug.LogError("[HandUI] ❌ Ni slots ni handRoot assignés!");
+            }
         }
 
         public void SelectCard(CardUI card)
@@ -213,25 +371,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
             SelectedCard = null;
         }
 
-        private void LayoutHand()
-        {
-            if (_handRoot == null) return;
-
-            int count = _handCards.Count;
-            float totalWidth = (count - 1) * _cardSpacing;
-            float startX = -totalWidth / 2f;
-
-            for (int i = 0; i < count; i++)
-            {
-                RectTransform rect = _handCards[i].GetComponent<RectTransform>();
-                if (rect != null)
-                {
-                    rect.localPosition = new Vector3(startX + i * _cardSpacing, 0, 0);
-                }
-            }
-        }
-
-        private void EnsureCollider(CardUI card)
+        protected void EnsureCollider(CardUI card)
         {
             if (card.GetComponent<Collider>() != null) return;
 
@@ -296,7 +436,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 {
                     Destroy(_pendingCard.gameObject);
                     _handCards.Remove(_pendingCard);
-                    LayoutHand();
                 }
             }
             else

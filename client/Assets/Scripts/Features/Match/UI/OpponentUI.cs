@@ -17,6 +17,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
         [Header("Opponent Hand")]
         [SerializeField] private Transform _opponentHandRoot;
         [SerializeField] private CardUI _faceDownCardPrefab;
+        [SerializeField] protected List<Transform> _opponentHandSlots = new();
 
         [Header("Opponent Board")]
         [SerializeField] private List<CardSlotUI> _opponentBoardSlots = new();
@@ -32,13 +33,62 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 return;
             }
             Instance = this;
+            Debug.Log("[OpponentUI] Awake - FindAndAssignOpponentHandSlots");
+            FindAndAssignOpponentHandSlots();
+            Debug.Log($"[OpponentUI] Awake - Slots trouvés: {_opponentHandSlots.Count}");
+        }
+
+        /// <summary>
+        /// Cherche automatiquement les slots enfants de la main adversaire
+        /// Si des slots sont déjà assignés, ne fait rien
+        /// </summary>
+        private void FindAndAssignOpponentHandSlots()
+        {
+            // Si les slots sont déjà assignés manuellement dans l'inspecteur, ne pas chercher
+            if (_opponentHandSlots.Count > 0)
+            {
+                Debug.Log($"[OpponentUI] ✅ {_opponentHandSlots.Count} slots assignés manuellement");
+                return;
+            }
+            
+            // Sinon, cherche automatiquement P2HandSlot1 à P2HandSlot7
+            _opponentHandSlots.Clear();
+            Transform parent = transform;
+            for (int i = 1; i <= 7; i++)
+            {
+                Transform slot = parent.Find($"P2HandSlot{i}");
+                if (slot != null)
+                {
+                    _opponentHandSlots.Add(slot);
+                    Debug.Log($"[OpponentUI] ✅ Slot P2HandSlot{i} trouvé automatiquement");
+                }
+            }
+            
+            if (_opponentHandSlots.Count > 0)
+            {
+                Debug.Log($"[OpponentUI] ✅ {_opponentHandSlots.Count} slots trouvés automatiquement");
+            }
+            else
+            {
+                Debug.LogWarning("[OpponentUI] ⚠️ Aucun slot trouvé! Assignez les manuellement ou créez P2HandSlot1-7");
+            }
         }
 
         private void OnEnable()
         {
+            Debug.Log("[OpponentUI] OnEnable - Inscription aux événements");
             MatchEvents.OnGameStarted += HandleGameStarted;
             MatchEvents.OnOpponentCardsDrawn += HandleOpponentCardsDrawn;
             MatchEvents.OnOpponentCardPlayed += HandleOpponentCardPlayed;
+            Debug.Log("[OpponentUI] ✅ Événements MatchEvents enregistrés");
+
+            // Fallback: s'enregistrer directement auprès de SignalRClient
+            SignalRClient client = SignalRClient.Instance;
+            if (client != null)
+            {
+                Debug.Log("[OpponentUI] SignalRClient trouvé, s'enregistrer directement pour OpponentCardsDrawn");
+                client.OnOpponentCardsDrawn += HandleSignalROpponentCardsDrawn;
+            }
         }
 
         private void OnDisable()
@@ -46,6 +96,13 @@ namespace VortexTCG.Scripts.Features.Match.UI
             MatchEvents.OnGameStarted -= HandleGameStarted;
             MatchEvents.OnOpponentCardsDrawn -= HandleOpponentCardsDrawn;
             MatchEvents.OnOpponentCardPlayed -= HandleOpponentCardPlayed;
+
+            // Fallback: se désinscrire de SignalRClient
+            SignalRClient client = SignalRClient.Instance;
+            if (client != null)
+            {
+                client.OnOpponentCardsDrawn -= HandleSignalROpponentCardsDrawn;
+            }
         }
 
         private void HandleGameStarted(PhaseChangeResultDTO result)
@@ -58,6 +115,15 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             int count = result?.CardsDrawnCount ?? 0;
             AddFaceDownCards(count);
+        }
+
+        /// <summary>
+        /// Fallback direct de SignalRClient si MatchService n'existe pas
+        /// </summary>
+        private void HandleSignalROpponentCardsDrawn(DrawResultForOpponentDto result)
+        {
+            Debug.Log("[OpponentUI] 🔥 HandleSignalROpponentCardsDrawn (fallback direct) - Cartes adversaire reçues");
+            HandleOpponentCardsDrawn(result);
         }
 
         private void HandleOpponentCardPlayed(PlayCardOpponentResultDto result)
@@ -83,20 +149,59 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         public void AddFaceDownCards(int count)
         {
-            if (_faceDownCardPrefab == null || _opponentHandRoot == null)
+            if (_faceDownCardPrefab == null)
             {
-                Debug.LogError("[OpponentUIManager] Prefab ou Root non assigné.");
+                Debug.LogError("[OpponentUI] ❌ Prefab face cachée non assigné.");
                 return;
             }
 
-            for (int i = 0; i < count; i++)
-            {
-                CardUI faceDown = Instantiate(_faceDownCardPrefab, _opponentHandRoot);
-                faceDown.gameObject.name = $"FaceDownCard_{_opponentHandCards.Count}";
-                _opponentHandCards.Add(faceDown);
-            }
+            Debug.Log($"[OpponentUI] AddFaceDownCards appelé - {count} cartes à ajouter, Slots={_opponentHandSlots.Count}");
 
-            Debug.Log($"[OpponentUIManager] Added {count} face-down cards. Total: {_opponentHandCards.Count}");
+            // Utiliser les slots pré-définis si disponibles
+            if (_opponentHandSlots != null && _opponentHandSlots.Count > 0)
+            {
+                Debug.Log($"[OpponentUI] ✅ Utilisation de {_opponentHandSlots.Count} slots adversaire");
+                for (int i = 0; i < count && i < _opponentHandSlots.Count; i++)
+                {
+                    Transform slot = _opponentHandSlots[i];
+                    if (slot == null)
+                    {
+                        Debug.LogError($"[OpponentUI] ❌ Slot {i} est NULL!");
+                        continue;
+                    }
+
+                    Debug.Log($"[OpponentUI] Création carte adversaire {i + 1} dans slot '{slot.name}'");
+                    
+                    CardUI faceDown = Instantiate(_faceDownCardPrefab, slot);
+                    faceDown.gameObject.name = $"OpponentCard_{i}";
+                    
+                    // Positionner la carte sur le slot
+                    faceDown.transform.localPosition = Vector3.zero;
+                    faceDown.transform.localRotation = Quaternion.identity;
+                    faceDown.transform.localScale = Vector3.one;
+                    
+                    Debug.Log($"[OpponentUI] ✅ Carte adversaire {i}: pos={faceDown.transform.localPosition}, parent={faceDown.transform.parent.name}");
+                    
+                    _opponentHandCards.Add(faceDown);
+                }
+                Debug.Log($"[OpponentUI] ✅ {count} cartes adversaire ajoutées. Total: {_opponentHandCards.Count}");
+            }
+            else if (_opponentHandRoot != null)
+            {
+                // Fallback: utiliser _opponentHandRoot si aucun slot n'est configuré
+                Debug.LogWarning("[OpponentUI] ⚠️ Aucun slot configuré, fallback sur _opponentHandRoot");
+                for (int i = 0; i < count; i++)
+                {
+                    CardUI faceDown = Instantiate(_faceDownCardPrefab, _opponentHandRoot);
+                    faceDown.gameObject.name = $"FaceDownCard_{_opponentHandCards.Count}";
+                    _opponentHandCards.Add(faceDown);
+                }
+                Debug.Log($"[OpponentUI] Added {count} face-down cards. Total: {_opponentHandCards.Count}");
+            }
+            else
+            {
+                Debug.LogError("[OpponentUI] ❌ Ni slots ni handRoot assignés!");
+            }
         }
 
         public void RemoveOneCardFromHand()

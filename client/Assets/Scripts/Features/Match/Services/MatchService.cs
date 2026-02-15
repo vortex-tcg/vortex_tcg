@@ -24,16 +24,20 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
         private void Awake()
         {
+            Debug.Log("[MatchService] Awake");
             if (Instance != null && Instance != this)
             {
+                Debug.Log("[MatchService] Instance déjà existante, destruction");
                 Destroy(gameObject);
                 return;
             }
             Instance = this;
+            Debug.Log("[MatchService] ✅ Instance définie");
         }
 
         private void OnEnable()
         {
+            Debug.Log("[MatchService] OnEnable appelé");
             _client = SignalRClient.Instance;
             if (_client == null)
             {
@@ -41,6 +45,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
                 return;
             }
 
+            Debug.Log("[MatchService] S'abonner aux événements SignalR");
             // S'abonner aux événements SignalR
             _client.OnGameStarted += HandleGameStarted;
             _client.OnPhaseChanged += HandlePhaseChanged;
@@ -54,6 +59,8 @@ namespace VortexTCG.Scripts.Features.Match.Services
             _client.OnBattleResolution += HandleBattleResolution;
             _client.OnDefenseEngage += HandleDefenseEngage;
             _client.OnOpponentDefenseEngage += HandleOpponentDefenseEngage;
+
+            Debug.Log("[MatchService] ✅ Tous les événements enregistrés");
 
             // S'abonner aux événements locaux
             if (PhaseService.Instance != null)
@@ -98,18 +105,24 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
         private void HandleGameStarted(PhaseChangeResultDTO result)
         {
+            Debug.Log($"[MatchService] HandleGameStarted APPELÉ phase={result?.CurrentPhase}, turn={result?.TurnNumber}");
             Debug.Log($"[MatchService] GameStarted phase={result.CurrentPhase} turn={result.TurnNumber}");
             _gameStarted = true;
 
             // Émettre l'événement pour que les UI/Services réagissent
+            Debug.Log("[MatchService] 🔥 Déclenchement FireGameStarted");
             MatchEvents.FireGameStarted(result);
+            Debug.Log("[MatchService] ✅ FireGameStarted fait");
 
             // Traiter les draws mis en buffer
+            Debug.Log($"[MatchService] Traitement de {_bufferedDraws.Count} draws bufferisés");
             foreach (DrawResultForPlayerDto d in _bufferedDraws)
             {
+                Debug.Log($"[MatchService] 🔥 Déclenchement FirePlayerCardsDrawn pour {d.DrawnCards?.Count ?? 0} cartes");
                 MatchEvents.FirePlayerCardsDrawn(d);
             }
             _bufferedDraws.Clear();
+            Debug.Log("[MatchService] ✅ Tous les draws traités");
 
             foreach (DrawResultForOpponentDto od in _bufferedOpponentDraws)
             {
@@ -129,6 +142,8 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
         private void HandleCardsDrawn(DrawResultForPlayerDto result)
         {
+            Debug.Log($"[MatchService] HandleCardsDrawn appelé - drawnCards={result?.DrawnCards?.Count ?? 0}, gameStarted={_gameStarted}");
+            
             if (!_gameStarted)
             {
                 _bufferedDraws.Add(result);

@@ -74,8 +74,16 @@ public partial class SignalRClient : MonoBehaviour
 
     private async void Start()
     {
+        Debug.Log($"[SignalRClient] Start() - autoConnectOnStart={autoConnectOnStart}");
         if (autoConnectOnStart)
+        {
+            Debug.Log("[SignalRClient] ✅ Calling ConnectAndIdentify from Start()");
             await ConnectAndIdentify(defaultPlayerName);
+        }
+        else
+        {
+            Debug.Log("[SignalRClient] ⚠️ autoConnectOnStart is FALSE - waiting for external call");
+        }
     }
 
     private async void OnApplicationQuit()
