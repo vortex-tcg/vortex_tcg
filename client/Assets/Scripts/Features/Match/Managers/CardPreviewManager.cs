@@ -69,7 +69,7 @@ namespace VortexTCG.Scripts.MatchScene
             HidePreview();
         }
 
-        public void ShowCardPreview(Card card)
+        public void ShowCardPreview(CardUI card)
         {
             if (card == null || cardPreviewContainer == null)
             {

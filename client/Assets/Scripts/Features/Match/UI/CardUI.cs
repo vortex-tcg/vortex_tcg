@@ -2,10 +2,12 @@
 using TMPro;
 using UnityEngine.UI;
 using VortexTCG.Scripts.DTOs;
+using VortexTCG.Scripts.Features.Match.Events;
+using VortexTCG.Scripts.Features.Match.Services;
 
 namespace VortexTCG.Scripts.MatchScene
 {
-    public class Card : MonoBehaviour
+    public class CardUI : MonoBehaviour
     {
         [Header("Data")] public string cardId;
         
@@ -88,21 +90,23 @@ namespace VortexTCG.Scripts.MatchScene
         {
             if (faceDown) return;
 
-            CardSlot slot = GetComponentInParent<CardSlot>();
+            CardSlotUI slot = GetComponentInParent<CardSlotUI>();
             if (slot != null && slot.isOpponentSlot) return;
 
-            if (CardPreviewManager.Instance != null)
-            {
-                CardPreviewManager.Instance.ShowCardPreview(this);
-            }
+            // CardPreviewManager disabled - to be reimplemented
+            // if (CardPreviewManager.Instance != null)
+            // {
+            //     CardPreviewManager.Instance.ShowCardPreview(this);
+            // }
         }
 
         void OnMouseExit()
         {
-            if (CardPreviewManager.Instance != null)
-            {
-                CardPreviewManager.Instance.HidePreview();
-            }
+            // CardPreviewManager disabled - to be reimplemented
+            // if (CardPreviewManager.Instance != null)
+            // {
+            //     CardPreviewManager.Instance.HidePreview();
+            // }
         }
 
         void OnMouseDown()
@@ -111,35 +115,11 @@ namespace VortexTCG.Scripts.MatchScene
             
             if (faceDown) return;
 
-            if (PhaseManager.Instance == null)
-            {
-                Debug.LogWarning("[Card] PhaseManager.Instance est null");
-                return;
-            }
-
-            CardSlot slot = GetComponentInParent<CardSlot>();
-            if (PhaseManager.Instance.CurrentPhase == GamePhase.ATTACK)
-            {
-                if (slot != null && !slot.isOpponentSlot)
-                {
-                    if (AttackManager.Instance != null)
-                    {
-                        AttackManager.Instance.HandleCardClicked(this);
-                        return;
-                    }
-                }
-            }
-
-            if (PhaseManager.Instance.CurrentPhase == GamePhase.DEFENSE)
-            {
-                if (DefenseManager.Instance != null)
-                {
-                    DefenseManager.Instance.HandleCardClicked(this);
-                    return;
-                }
-            }
-            if (HandManager.Instance != null)
-                HandManager.Instance.SelectCard(this);
+            // Déclencher événement générique de click
+            MatchEvents.FireCardClicked(this);
+            
+            // Aussi déclencher sélection pour la main (le service/UI décidera)
+            MatchEvents.FireCardSelected(this);
         }
 
 
@@ -259,23 +239,19 @@ namespace VortexTCG.Scripts.MatchScene
                 selectionBaseScale = transform.localScale;
                 transform.localScale = selectionBaseScale * selectedScaleMultiplier;
 
-                bool canShowAttackVisuals = false;
-                if (PhaseManager.Instance != null && PhaseManager.Instance.CurrentPhase == GamePhase.ATTACK)
+                // Afficher visuels d'attaque si en phase ATTACK et sur plateau joueur
+                PhaseService phaseService = PhaseService.Instance;
+                if (phaseService != null && phaseService.CurrentPhase == GamePhase.ATTACK)
                 {
-                    CardSlot slot = GetComponentInParent<CardSlot>();
-                    if (slot != null && AttackManager.Instance != null && AttackManager.Instance.IsP1BoardSlot(slot))
+                    CardSlotUI slot = GetComponentInParent<CardSlotUI>();
+                    if (slot != null && !slot.isOpponentSlot)
                     {
-                        canShowAttackVisuals = true;
+                        if (AttackOutline != null)
+                            AttackOutline.SetActive(true);
+
+                        if (AttackOrder != null)
+                            AttackOrder.SetActive(true);
                     }
-                }
-
-                if (canShowAttackVisuals)
-                {
-                    if (AttackOutline != null)
-                        AttackOutline.SetActive(true);
-
-                    if (AttackOrder != null)
-                        AttackOrder.SetActive(true);
                 }
             }
             else

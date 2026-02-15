@@ -10,12 +10,12 @@ namespace VortexTCG.Scripts.MatchScene
     public class OpponentAutoSetup : MonoBehaviour
     {
         [Header("Prefabs & Parents")] [SerializeField]
-        private Card cardPrefab;
+        private CardUI cardPrefab;
 
         [SerializeField] private Transform p2HandParent;
 
         [Header("P2 Board Slots")] [SerializeField]
-        private List<CardSlot> p2BoardSlots = new List<CardSlot>();
+        private List<CardSlotUI> p2BoardSlots = new List<CardSlotUI>();
 
         private const int MaxHandSize = 7;
 
@@ -55,7 +55,7 @@ namespace VortexTCG.Scripts.MatchScene
                 }
             }
 
-            foreach (CardSlot slot in p2BoardSlots)
+            foreach (CardSlotUI slot in p2BoardSlots)
             {
                 if (slot == null) continue;
                 if (slot.CurrentCard != null)
@@ -69,7 +69,7 @@ namespace VortexTCG.Scripts.MatchScene
 
             for (int i = 0; i < cappedHandSize; i++)
             {
-                Card handCard = Instantiate(cardPrefab, p2HandParent ? p2HandParent : transform);
+                CardUI handCard = Instantiate(cardPrefab, p2HandParent ? p2HandParent : transform);
                 ApplyRandomData(handCard, i);
             }
 
@@ -80,10 +80,10 @@ namespace VortexTCG.Scripts.MatchScene
 
             for (int i = 0; i < boardCards; i++)
             {
-                CardSlot slot = p2BoardSlots[slotIndices[i]];
+                CardSlotUI slot = p2BoardSlots[slotIndices[i]];
                 if (slot == null) continue;
 
-                Card card = Instantiate(cardPrefab);
+                CardUI card = Instantiate(cardPrefab);
                 ApplyRandomData(card, i + 1000);
 
                 slot.PlaceCard(card);
@@ -111,7 +111,7 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
 
-        private void ApplyRandomData(Card card, int seedOffset)
+        private void ApplyRandomData(CardUI card, int seedOffset)
         {
             if (card == null) return;
             Random.InitState(System.Environment.TickCount + seedOffset);

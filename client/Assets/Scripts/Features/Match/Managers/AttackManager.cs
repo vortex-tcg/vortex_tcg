@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using VortexTCG.Scripts.DTOs;
+using VortexTCG.Scripts.Features.Match.Services;
 
 namespace VortexTCG.Scripts.MatchScene
 {
@@ -10,10 +11,10 @@ namespace VortexTCG.Scripts.MatchScene
         public static AttackManager Instance { get; private set; }
 
         [Header("Player 1 Cards on Board")]
-        [SerializeField] private List<CardSlot> P1BoardSlots = new List<CardSlot>();
+        [SerializeField] private List<CardSlotUI> P1BoardSlots = new List<CardSlotUI>();
 
-        private readonly Dictionary<int, Card> boardCardsById = new Dictionary<int, Card>();
-        private readonly List<Card> selectedCards = new List<Card>();
+        private readonly Dictionary<int, CardUI> boardCardsById = new Dictionary<int, CardUI>();
+        private readonly List<CardUI> selectedCards = new List<CardUI>();
 
         private void Awake()
         {
@@ -22,11 +23,11 @@ namespace VortexTCG.Scripts.MatchScene
 
         private void Start()
         {
-            if (PhaseManager.Instance != null)
+            if (PhaseService.Instance != null)
             {
-                PhaseManager.Instance.OnEnterAttack += OnEnterAttackPhase;
-                PhaseManager.Instance.OnEnterDefense += OnEnterDefensePhase;
-                PhaseManager.Instance.OnEnterStandBy += OnEndDefensePhase;
+                PhaseService.Instance.OnEnterAttack += OnEnterAttackPhase;
+                PhaseService.Instance.OnEnterDefense += OnEnterDefensePhase;
+                PhaseService.Instance.OnEnterStandBy += OnEndDefensePhase;
             }
             if (SignalRClient.Instance != null)
                 SignalRClient.Instance.OnAttackEngage += ApplyAttackStateFromServer;
@@ -36,11 +37,11 @@ namespace VortexTCG.Scripts.MatchScene
 
         private void OnDestroy()
         {
-            if (PhaseManager.Instance != null)
+            if (PhaseService.Instance != null)
             {
-                PhaseManager.Instance.OnEnterAttack -= OnEnterAttackPhase;
-                PhaseManager.Instance.OnEnterDefense -= OnEnterDefensePhase;
-                PhaseManager.Instance.OnEnterStandBy -= OnEndDefensePhase;
+                PhaseService.Instance.OnEnterAttack -= OnEnterAttackPhase;
+                PhaseService.Instance.OnEnterDefense -= OnEnterDefensePhase;
+                PhaseService.Instance.OnEnterStandBy -= OnEndDefensePhase;
             }
 
             if (SignalRClient.Instance != null)
@@ -53,7 +54,7 @@ namespace VortexTCG.Scripts.MatchScene
 
             for (int i = 0; i < P1BoardSlots.Count; i++)
             {
-                CardSlot slot = P1BoardSlots[i];
+                CardSlotUI slot = P1BoardSlots[i];
                 if (slot == null) continue;
                 if (slot.CurrentCard == null) continue;
 
@@ -65,7 +66,7 @@ namespace VortexTCG.Scripts.MatchScene
         private void OnEnterDefensePhase() { /* optionnel */ }
         private void OnEndDefensePhase() => ClearSelections();
 
-        public void RegisterCard(Card card)
+        public void RegisterCard(CardUI card)
         {
             if (card == null) return;
 
@@ -84,17 +85,17 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
 
-        public bool IsP1BoardSlot(CardSlot slot)
+        public bool IsP1BoardSlot(CardSlotUI slot)
             => slot != null && P1BoardSlots != null && P1BoardSlots.Contains(slot);
 
-        public bool IsCardOnP1Board(Card card)
+        public bool IsCardOnP1Board(CardUI card)
         {
             if (card == null) return false;
-            CardSlot slot = card.GetComponentInParent<CardSlot>();
+            CardSlotUI slot = card.GetComponentInParent<CardSlotUI>();
             return IsP1BoardSlot(slot);
         }
 
-        public async void HandleCardClicked(Card card)
+        public async void HandleCardClicked(CardUI card)
         {
             if (card == null)
             {
@@ -102,16 +103,16 @@ namespace VortexTCG.Scripts.MatchScene
                 return;
             }
 
-            if (PhaseManager.Instance == null)
+            if (PhaseService.Instance == null)
             {
-                Debug.LogWarning("[AttackManager] HandleCardClicked: PhaseManager.Instance is NULL");
+                Debug.LogWarning("[AttackManager] HandleCardClicked: PhaseService.Instance is NULL");
                 return;
             }
 
             Debug.Log($"[AttackManager] Click card name='{card.name}' cardId='{card.cardId}' " +
-                      $"phase={PhaseManager.Instance.CurrentPhase} onP1Board={IsCardOnP1Board(card)}");
+                      $"phase={PhaseService.Instance.CurrentPhase} onP1Board={IsCardOnP1Board(card)}");
 
-            if (PhaseManager.Instance.CurrentPhase != GamePhase.ATTACK)
+            if (PhaseService.Instance.CurrentPhase != GamePhase.ATTACK)
             {
                 Debug.LogWarning("[AttackManager] Not in ATTACK phase -> ignore click");
                 return;
@@ -152,7 +153,7 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
 
-        private void ToggleCard(Card card)
+        private void ToggleCard(CardUI card)
         {
             if (selectedCards.Contains(card))
                 DeselectCard(card);
@@ -162,13 +163,13 @@ namespace VortexTCG.Scripts.MatchScene
             UpdateAttackOrderLabels();
         }
 
-        private void SelectCard(Card card)
+        private void SelectCard(CardUI card)
         {
             selectedCards.Add(card);
             card.SetSelected(true);
         }
 
-        private void DeselectCard(Card card)
+        private void DeselectCard(CardUI card)
         {
             selectedCards.Remove(card);
             card.SetSelected(false);
@@ -179,7 +180,7 @@ namespace VortexTCG.Scripts.MatchScene
         {
             for (int i = 0; i < selectedCards.Count; i++)
             {
-                Card c = selectedCards[i];
+                CardUI c = selectedCards[i];
                 if (c == null) continue;
                 c.ShowAttackOrder(i + 1);
             }
@@ -189,7 +190,7 @@ namespace VortexTCG.Scripts.MatchScene
         {
             for (int i = 0; i < selectedCards.Count; i++)
             {
-                Card c = selectedCards[i];
+                CardUI c = selectedCards[i];
                 if (c == null) continue;
                 c.SetSelected(false);
                 c.ClearAttackOrder();
@@ -211,7 +212,7 @@ namespace VortexTCG.Scripts.MatchScene
             for (int i = 0; i < attackIds.Count; i++)
             {
                 int cardId = attackIds[i];
-                Card card = FindOrRegisterBoardCardById(cardId);
+                CardUI card = FindOrRegisterBoardCardById(cardId);
                 if (card == null) continue;
 
                 selectedCards.Add(card);
@@ -220,16 +221,16 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
         
-        private Card FindOrRegisterBoardCardById(int id)
+        private CardUI FindOrRegisterBoardCardById(int id)
         {
-            if (boardCardsById.TryGetValue(id, out Card found) && found != null)
+            if (boardCardsById.TryGetValue(id, out CardUI found) && found != null)
                 return found;
 
             if (P1BoardSlots != null)
             {
                 for (int i = 0; i < P1BoardSlots.Count; i++)
                 {
-                    CardSlot slot = P1BoardSlots[i];
+                    CardSlotUI slot = P1BoardSlots[i];
                     if (slot == null) continue;
                     if (slot.CurrentCard == null) continue;
 

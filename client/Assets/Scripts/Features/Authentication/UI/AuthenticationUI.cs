@@ -150,7 +150,7 @@ public class LoginScript : MonoBehaviour
         isSubmitting = true;
         UpdateLoginButtonState();
         HideError();
-        
+
         if (ConfigLoader.Load() == null || string.IsNullOrEmpty(ConfigLoader.Load().apiBaseUrl))
         {
             ShowError("Configuration API manquante.");
@@ -164,7 +164,7 @@ public class LoginScript : MonoBehaviour
 
         eventBus.Publish(new LoginRequestedEvent(email, password));
 
-        yield return authService.Login(email, password, cfg.apiBaseUrl);
+        yield return authService.Login(email, password, ConfigLoader.Load().apiBaseUrl);
 
         isSubmitting = false;
         UpdateLoginButtonState();

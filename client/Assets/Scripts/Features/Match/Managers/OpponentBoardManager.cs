@@ -10,12 +10,12 @@ namespace VortexTCG.Scripts.MatchScene
         public static OpponentBoardManager Instance { get; private set; }
 
         [Header("Slots ennemis (P2 = ADVERSAIRE)")]
-        [SerializeField] private CardSlot[] enemySlots;
+        [SerializeField] private CardSlotUI[] enemySlots;
 
         [Header("Prefab carte (affichage adversaire)")]
-        [SerializeField] private Card cardPrefab;
+        [SerializeField] private CardUI cardPrefab;
 
-        private readonly Dictionary<int, Card> opponentCardsById = new Dictionary<int, Card>();
+        private readonly Dictionary<int, CardUI> opponentCardsById = new Dictionary<int, CardUI>();
         private List<int> lastOpponentAttackIds;
         private DefenseDataResponseDto lastOpponentDefenseState;
 
@@ -52,7 +52,7 @@ namespace VortexTCG.Scripts.MatchScene
                 return;
             }
 
-            CardSlot slot = enemySlots[location];
+            CardSlotUI slot = enemySlots[location];
             if (slot == null)
             {
                 Debug.LogError("[OpponentBoardManager] slot NULL at index " + location);
@@ -75,7 +75,7 @@ namespace VortexTCG.Scripts.MatchScene
                 return;
             }
 
-            Card c = Instantiate(cardPrefab, slot.transform, false);
+            CardUI c = Instantiate(cardPrefab, slot.transform, false);
             c.name = "EnemyCard_" + (playedCard != null ? playedCard.GameCardId.ToString() : "NULL");
 
             if (playedCard != null)
@@ -119,7 +119,7 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 for (int i = 0; i < enemySlots.Length; i++)
                 {
-                    CardSlot s = enemySlots[i];
+                    CardSlotUI s = enemySlots[i];
                     if (s == null) continue;
 
                     if (s.CurrentCard != null)
@@ -155,7 +155,7 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 int id = attackIds[i];
 
-                if (opponentCardsById.TryGetValue(id, out Card card) && card != null)
+                if (opponentCardsById.TryGetValue(id, out CardUI card) && card != null)
                 {
                     card.SetOpponentAttacking(true);
                     found++;
@@ -189,7 +189,7 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 int id = data.AttackCardsId[i];
 
-                if (opponentCardsById.TryGetValue(id, out Card card) && card != null)
+                if (opponentCardsById.TryGetValue(id, out CardUI card) && card != null)
                 {
                     card.SetOpponentAttacking(true);
                     found++;
@@ -213,7 +213,7 @@ namespace VortexTCG.Scripts.MatchScene
 
             for (int i = 0; i < enemySlots.Length; i++)
             {
-                CardSlot s = enemySlots[i];
+                CardSlotUI s = enemySlots[i];
                 if (s == null) continue;
                 if (s.CurrentCard == null) continue;
 
@@ -235,7 +235,7 @@ namespace VortexTCG.Scripts.MatchScene
 
             for (int i = 0; i < enemySlots.Length; i++)
             {
-                CardSlot s = enemySlots[i];
+                CardSlotUI s = enemySlots[i];
                 if (s == null)
                 {
                     sb.AppendLine("  [" + i + "] NULL");
@@ -257,7 +257,7 @@ namespace VortexTCG.Scripts.MatchScene
             if (dto == null) return;
 
             int id = dto.GameCardId;
-            if (!opponentCardsById.TryGetValue(id, out Card card) || card == null)
+            if (!opponentCardsById.TryGetValue(id, out CardUI card) || card == null)
             {
                 Debug.LogWarning("[OpponentBoardManager] UpdateOpponentCardSnapshot: card not found id=" + id);
                 return;
@@ -279,12 +279,12 @@ namespace VortexTCG.Scripts.MatchScene
 
         public void RemoveOpponentCard(int gameCardId)
         {
-            if (!opponentCardsById.TryGetValue(gameCardId, out Card card) || card == null)
+            if (!opponentCardsById.TryGetValue(gameCardId, out CardUI card) || card == null)
             {
                 Debug.LogWarning("[OpponentBoardManager] RemoveOpponentCard: card not found id=" + gameCardId);
                 return;
             }
-            CardSlot slot = card.GetComponentInParent<CardSlot>();
+            CardSlotUI slot = card.GetComponentInParent<CardSlotUI>();
             if (slot != null && slot.CurrentCard == card)
                 slot.CurrentCard = null;
 

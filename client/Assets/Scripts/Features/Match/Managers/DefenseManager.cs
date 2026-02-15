@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using VortexTCG.Scripts.DTOs;
+using VortexTCG.Scripts.Features.Match.Services;
 
 namespace VortexTCG.Scripts.MatchScene
 {
@@ -10,13 +11,13 @@ namespace VortexTCG.Scripts.MatchScene
     {
         public static DefenseManager Instance { get; private set; }
 
-        [SerializeField] private List<CardSlot> P1BoardSlots = new List<CardSlot>();
-        [SerializeField] private List<CardSlot> P2BoardSlots = new List<CardSlot>();
+        [SerializeField] private List<CardSlotUI> P1BoardSlots = new List<CardSlotUI>();
+        [SerializeField] private List<CardSlotUI> P2BoardSlots = new List<CardSlotUI>();
 
-        private readonly Dictionary<int, Card> boardCardsById = new Dictionary<int, Card>();
-        private readonly Dictionary<Card, Card> defenseAssignments = new Dictionary<Card, Card>();
+        private readonly Dictionary<int, CardUI> boardCardsById = new Dictionary<int, CardUI>();
+        private readonly Dictionary<CardUI, CardUI> defenseAssignments = new Dictionary<CardUI, CardUI>();
 
-        private Card currentDefender;
+        private CardUI currentDefender;
 
         private void Awake()
         {
@@ -25,11 +26,11 @@ namespace VortexTCG.Scripts.MatchScene
 
         private void Start()
         {
-            if (PhaseManager.Instance != null)
+            if (PhaseService.Instance != null)
             {
-                PhaseManager.Instance.OnEnterDefense += OnEnterDefense;
-                PhaseManager.Instance.OnEnterStandBy += OnExitDefense;
-                PhaseManager.Instance.OnEnterAttack += OnExitDefense;
+                PhaseService.Instance.OnEnterDefense += OnEnterDefense;
+                PhaseService.Instance.OnEnterStandBy += OnExitDefense;
+                PhaseService.Instance.OnEnterAttack += OnExitDefense;
             }
 
             RegisterExistingCardsFromSlots();
@@ -39,11 +40,11 @@ namespace VortexTCG.Scripts.MatchScene
 
         private void OnDestroy()
         {
-            if (PhaseManager.Instance != null)
+            if (PhaseService.Instance != null)
             {
-                PhaseManager.Instance.OnEnterDefense -= OnEnterDefense;
-                PhaseManager.Instance.OnEnterStandBy -= OnExitDefense;
-                PhaseManager.Instance.OnEnterAttack -= OnExitDefense;
+                PhaseService.Instance.OnEnterDefense -= OnEnterDefense;
+                PhaseService.Instance.OnEnterStandBy -= OnExitDefense;
+                PhaseService.Instance.OnEnterAttack -= OnExitDefense;
             }
 
             if (SignalRClient.Instance != null)
@@ -66,7 +67,7 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 for (int i = 0; i < P1BoardSlots.Count; i++)
                 {
-                    CardSlot slot = P1BoardSlots[i];
+                    CardSlotUI slot = P1BoardSlots[i];
                     if (slot == null) continue;
                     if (slot.CurrentCard == null) continue;
                     RegisterCard(slot.CurrentCard);
@@ -77,7 +78,7 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 for (int i = 0; i < P2BoardSlots.Count; i++)
                 {
-                    CardSlot slot = P2BoardSlots[i];
+                    CardSlotUI slot = P2BoardSlots[i];
                     if (slot == null) continue;
                     if (slot.CurrentCard == null) continue;
                     RegisterCard(slot.CurrentCard);
@@ -85,7 +86,7 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
 
-        public void RegisterCard(Card card)
+        public void RegisterCard(CardUI card)
         {
             if (card == null) return;
 
@@ -95,37 +96,37 @@ namespace VortexTCG.Scripts.MatchScene
             boardCardsById[id] = card;
         }
 
-        public bool IsP1BoardSlot(CardSlot slot)
+        public bool IsP1BoardSlot(CardSlotUI slot)
         {
             return slot != null && P1BoardSlots != null && P1BoardSlots.Contains(slot);
         }
 
-        public bool IsP2BoardSlot(CardSlot slot)
+        public bool IsP2BoardSlot(CardSlotUI slot)
         {
             return slot != null && P2BoardSlots != null && P2BoardSlots.Contains(slot);
         }
 
-        public bool IsCardOnP1Board(Card card)
+        public bool IsCardOnP1Board(CardUI card)
         {
             if (card == null) return false;
-            CardSlot slot = card.GetComponentInParent<CardSlot>();
+            CardSlotUI slot = card.GetComponentInParent<CardSlotUI>();
             return IsP1BoardSlot(slot);
         }
 
-        public bool IsCardOnP2Board(Card card)
+        public bool IsCardOnP2Board(CardUI card)
         {
             if (card == null) return false;
-            CardSlot slot = card.GetComponentInParent<CardSlot>();
+            CardSlotUI slot = card.GetComponentInParent<CardSlotUI>();
             return IsP2BoardSlot(slot);
         }
 
-        public void HandleCardClicked(Card card)
+        public void HandleCardClicked(CardUI card)
         {
             if (card == null) return;
-            if (PhaseManager.Instance == null) return;
-            if (PhaseManager.Instance.CurrentPhase != GamePhase.DEFENSE) return;
+            if (PhaseService.Instance == null) return;
+            if (PhaseService.Instance.CurrentPhase != GamePhase.DEFENSE) return;
 
-            CardSlot slot = card.GetComponentInParent<CardSlot>();
+            CardSlotUI slot = card.GetComponentInParent<CardSlotUI>();
             if (slot == null) return;
             if (IsP1BoardSlot(slot))
             {
@@ -139,7 +140,7 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
 
-        private void SelectDefender(Card defender)
+        private void SelectDefender(CardUI defender)
         {
             if (defender == null) return;
             if (currentDefender == defender) return;
@@ -151,7 +152,7 @@ namespace VortexTCG.Scripts.MatchScene
             currentDefender.SetDefenseSelected(true);
         }
 
-        private async Task TryAssignDefenseAndSend(Card targetAttacker)
+        private async Task TryAssignDefenseAndSend(CardUI targetAttacker)
         {
             if (currentDefender == null) return;
             if (targetAttacker == null) return;
@@ -194,8 +195,8 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 DefenseCardDataDto pair = dto.DefenseCards[i];
 
-                Card defenderCard = FindBoardCardById(pair.cardId);
-                Card attackerCard = FindBoardCardById(pair.opponentCardId);
+                CardUI defenderCard = FindBoardCardById(pair.cardId);
+                CardUI attackerCard = FindBoardCardById(pair.opponentCardId);
 
                 if (defenderCard == null) continue;
                 if (attackerCard == null) continue;
@@ -207,15 +208,15 @@ namespace VortexTCG.Scripts.MatchScene
             currentDefender = null;
         }
 
-        private Card FindBoardCardById(int id)
+        private CardUI FindBoardCardById(int id)
         {
-            if (boardCardsById.TryGetValue(id, out Card found) && found != null)
+            if (boardCardsById.TryGetValue(id, out CardUI found) && found != null)
                 return found;
             if (P1BoardSlots != null)
             {
                 for (int i = 0; i < P1BoardSlots.Count; i++)
                 {
-                    CardSlot slot = P1BoardSlots[i];
+                    CardSlotUI slot = P1BoardSlots[i];
                     if (slot == null) continue;
                     if (slot.CurrentCard == null) continue;
 
@@ -231,7 +232,7 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 for (int i = 0; i < P2BoardSlots.Count; i++)
                 {
-                    CardSlot slot = P2BoardSlots[i];
+                    CardSlotUI slot = P2BoardSlots[i];
                     if (slot == null) continue;
                     if (slot.CurrentCard == null) continue;
 
@@ -254,7 +255,7 @@ namespace VortexTCG.Scripts.MatchScene
                 currentDefender = null;
             }
 
-            foreach (KeyValuePair<Card, Card> kvp in defenseAssignments)
+            foreach (KeyValuePair<CardUI, CardUI> kvp in defenseAssignments)
             {
                 if (kvp.Key != null)
                     kvp.Key.SetDefenseSelected(false);
