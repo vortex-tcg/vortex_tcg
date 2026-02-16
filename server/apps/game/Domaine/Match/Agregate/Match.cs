@@ -1,7 +1,12 @@
-﻿namespace game.Domaine.Match.Entity;
+﻿using game.Domaine.Match.Agregate;
 
-using ValueObject;
+namespace game.Domaine.Match.Entity;
 
+using System;
+using System.Collections.Generic;
+using game.Domaine.Interface;
+using game.Domaine.Match.Service;
+using game.Domaine.Match.ValueObject;
 
 public sealed class Match
 {
@@ -12,20 +17,42 @@ public sealed class Match
 
     public bool IsFinished { get; private set; }
 
+    private readonly List<IEvent> _events = new List<IEvent>();
+
     public Match(Player p1, Player p2)
     {
         Player1 = p1;
         Player2 = p2;
     }
 
+    public void InitMatch()
+    {
+        IsFinished = false;
+
+        MatchInitData initData = InitMatchService.Init(this);
+
+        _events.Add(new DomainEvent(MatchEvent.MATCH_INIT, initData));
+    }
+
+    public IReadOnlyList<IEvent> PullEvents()
+    {
+        if (_events.Count == 0)
+        {
+            return Array.Empty<IEvent>();
+        }
+
+        IEvent[] batch = _events.ToArray();
+        _events.Clear();
+        return batch;
+    }
+
     public bool HasUser(UserId userId)
-        => Player1.UserId.Equals(userId) || Player2.UserId.Equals(userId);
+    {
+        return Player1.UserId.Equals(userId) || Player2.UserId.Equals(userId);
+    }
 
     public void Start()
     {
-        // TODO: état de tour, mana, etc.
         IsFinished = false;
     }
-
-    public void Finish() => IsFinished = true;
 }
