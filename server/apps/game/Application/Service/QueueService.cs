@@ -28,119 +28,123 @@ public class QueueService
             }
 
             MatchFoundData data = ev.GetData<MatchFoundData>();
+            await HandleMatchFoundAsync(rm, data, ct);
+        }
+    }
 
-            Match match = await rm.CreateMatchAsync(data.players, ct);
+    private static async Task HandleMatchFoundAsync(RoomManager rm, MatchFoundData data, CancellationToken ct)
+    {
+        Match match = await rm.CreateMatchAsync(data.players, ct);
 
-            match.InitMatch();
+        match.InitMatch();
 
-            IReadOnlyList<IEvent> matchEvents = match.PullEvents();
+        IReadOnlyList<IEvent> matchEvents = match.PullEvents();
 
-            IEvent? initEvent = null;
-            foreach (IEvent me in matchEvents)
+        IEvent? initEvent = null;
+        foreach (IEvent me in matchEvents)
+        {
+            if (me.Name == MatchEvent.MATCH_INIT)
             {
-                if (me.Name == MatchEvent.MATCH_INIT)
+                initEvent = me;
+                break;
+            }
+        }
+
+        if (initEvent == null)
+        {
+            return;
+        }
+
+        MatchInitData init = initEvent.GetData<MatchInitData>();
+
+        UserId p1 = data.players[0].userId;
+        UserId p2 = data.players[1].userId;
+
+        int p1Gold = match.Player1.Champion.Gold.Value;
+        int p2Gold = match.Player2.Champion.Gold.Value;
+
+        int p1Secondary = match.Player1.Champion.SecondaryCurrency.Value;
+        int p2Secondary = match.Player2.Champion.SecondaryCurrency.Value;
+
+        string secondaryName = match.Player1.Champion.SecondaryCurrencyName.Value;
+
+        List<MatchInitCardDto> p1Cards = new List<MatchInitCardDto>(init.Player1DrawnCards.Count);
+        foreach (GameCardDto c in init.Player1DrawnCards)
+        {
+            p1Cards.Add(MatchInitDtoMapper.ToCardDto(c));
+        }
+
+        List<MatchInitCardDto> p2Cards = new List<MatchInitCardDto>(init.Player2DrawnCards.Count);
+        foreach (GameCardDto c in init.Player2DrawnCards)
+        {
+            p2Cards.Add(MatchInitDtoMapper.ToCardDto(c));
+        }
+
+        MatchInitChampionDto p1Champ = MatchInitDtoMapper.ToChampionDto(match.Player1.Champion);
+        MatchInitChampionDto p2Champ = MatchInitDtoMapper.ToChampionDto(match.Player2.Champion);
+
+        responseDTO<MatchInitUserDto, MatchInitUserDto> payload =
+            new responseDTO<MatchInitUserDto, MatchInitUserDto>
+            {
+                userId = (Guid)p1,
+                opponentId = (Guid)p2,
+                success = true,
+                code = ResponseCode.MATCH_FOUND,
+
+                data = new MatchInitUserDto
                 {
-                    initEvent = me;
-                    break;
-                }
-            }
+                    matchId = init.MatchId,
+                    opponentHandSize = init.Player2DrawnCards.Count,
 
-            if (initEvent == null)
-            {
-                continue;
-            }
-
-            MatchInitData init = initEvent.GetData<MatchInitData>();
-
-            UserId p1 = data.players[0].userId;
-            UserId p2 = data.players[1].userId;
-
-            int p1Gold = match.Player1.Champion.Gold.Value;
-            int p2Gold = match.Player2.Champion.Gold.Value;
-
-            int p1Secondary = match.Player1.Champion.SecondaryCurrency.Value;
-            int p2Secondary = match.Player2.Champion.SecondaryCurrency.Value;
-
-            string secondaryName = match.Player1.Champion.SecondaryCurrencyName.Value;
-
-            List<MatchInitCardDto> p1Cards = new List<MatchInitCardDto>(init.Player1DrawnCards.Count);
-            foreach (GameCardDto c in init.Player1DrawnCards)
-            {
-                p1Cards.Add(MatchInitDtoMapper.ToCardDto(c));
-            }
-
-            List<MatchInitCardDto> p2Cards = new List<MatchInitCardDto>(init.Player2DrawnCards.Count);
-            foreach (GameCardDto c in init.Player2DrawnCards)
-            {
-                p2Cards.Add(MatchInitDtoMapper.ToCardDto(c));
-            }
-
-            MatchInitChampionDto p1Champ = MatchInitDtoMapper.ToChampionDto(match.Player1.Champion);
-            MatchInitChampionDto p2Champ = MatchInitDtoMapper.ToChampionDto(match.Player2.Champion);
-
-            responseDTO<MatchInitUserDto, MatchInitUserDto> payload =
-                new responseDTO<MatchInitUserDto, MatchInitUserDto>
-                {
-                    userId = (Guid)p1,
-                    opponentId = (Guid)p2,
-                    success = true,
-                    code = ResponseCode.MATCH_FOUND,
-
-                    data = new MatchInitUserDto
+                    self = new MatchInitSideDto
                     {
-                        matchId = init.MatchId,
-                        opponentHandSize = init.Player2DrawnCards.Count,
-
-                        self = new MatchInitSideDto
-                        {
-                            position = init.Player1Position,
-                            champion = p1Champ,
-                            gold = p1Gold,
-                            secondaryCurrencyName = secondaryName,
-                            secondaryCurrency = p1Secondary,
-                            drawnCards = p1Cards
-                        },
-
-                        opponent = new MatchInitSideDto
-                        {
-                            position = init.Player2Position,
-                            champion = p2Champ,
-                            gold = p2Gold,
-                            secondaryCurrencyName = secondaryName,
-                            secondaryCurrency = p2Secondary,
-                            drawnCards = Array.Empty<MatchInitCardDto>() // pas la main adverse
-                        }
+                        position = init.Player1Position,
+                        champion = p1Champ,
+                        gold = p1Gold,
+                        secondaryCurrencyName = secondaryName,
+                        secondaryCurrency = p1Secondary,
+                        drawnCards = p1Cards
                     },
 
-                    opponentData = new MatchInitUserDto
+                    opponent = new MatchInitSideDto
                     {
-                        matchId = init.MatchId,
-                        opponentHandSize = init.Player1DrawnCards.Count,
-
-                        self = new MatchInitSideDto
-                        {
-                            position = init.Player2Position,
-                            champion = p2Champ,
-                            gold = p2Gold,
-                            secondaryCurrencyName = secondaryName,
-                            secondaryCurrency = p2Secondary,
-                            drawnCards = p2Cards
-                        },
-
-                        opponent = new MatchInitSideDto
-                        {
-                            position = init.Player1Position,
-                            champion = p1Champ,
-                            gold = p1Gold,
-                            secondaryCurrencyName = secondaryName,
-                            secondaryCurrency = p1Secondary,
-                            drawnCards = Array.Empty<MatchInitCardDto>()
-                        }
+                        position = init.Player2Position,
+                        champion = p2Champ,
+                        gold = p2Gold,
+                        secondaryCurrencyName = secondaryName,
+                        secondaryCurrency = p2Secondary,
+                        drawnCards = Array.Empty<MatchInitCardDto>()
                     }
-                };
+                },
 
-            await CallManager.Instance.CallAsync(payload, ct);
-        }
+                opponentData = new MatchInitUserDto
+                {
+                    matchId = init.MatchId,
+                    opponentHandSize = init.Player1DrawnCards.Count,
+
+                    self = new MatchInitSideDto
+                    {
+                        position = init.Player2Position,
+                        champion = p2Champ,
+                        gold = p2Gold,
+                        secondaryCurrencyName = secondaryName,
+                        secondaryCurrency = p2Secondary,
+                        drawnCards = p2Cards
+                    },
+
+                    opponent = new MatchInitSideDto
+                    {
+                        position = init.Player1Position,
+                        champion = p1Champ,
+                        gold = p1Gold,
+                        secondaryCurrencyName = secondaryName,
+                        secondaryCurrency = p1Secondary,
+                        drawnCards = Array.Empty<MatchInitCardDto>()
+                    }
+                }
+            };
+
+        await CallManager.Instance.CallAsync(payload, ct);
     }
 
     public static Task LeaveQueueAsync(UserId userId, CancellationToken ct = default)
