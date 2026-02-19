@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using VortexTCG.Scripts.DTOs;
 using VortexTCG.Scripts.Features.Match.Events;
+using VortexTCG.Scripts.Features.Match.Services;
 
 namespace VortexTCG.Scripts.Features.Match.UI
 {
@@ -20,8 +21,12 @@ namespace VortexTCG.Scripts.Features.Match.UI
         private VisualElement placementIcon;
         private VisualElement attackIcon;
         private VisualElement defenseIcon;
-        private VisualElement endTurnIcon;
         private Button endPhaseButton;
+        
+        private VisualElement standbyElement;
+        private VisualElement attackElement;
+        private VisualElement defenseElement;
+        private VisualElement endElement;
 
         private GamePhase _currentPhase = GamePhase.PLACEMENT;
 
@@ -72,12 +77,15 @@ namespace VortexTCG.Scripts.Features.Match.UI
             }
 
             VisualElement root = uiDoc.rootVisualElement;
-            
-            // Récupérer les éléments d'icônes
-            placementIcon = root.Q<VisualElement>("Placement");
-            attackIcon = root.Q<VisualElement>("Attack");
-            defenseIcon = root.Q<VisualElement>("Defense");
-            endTurnIcon = root.Q<VisualElement>("EndTurn");
+
+            placementIcon = root.Q<VisualElement>("StandbyIcon");
+            attackIcon = root.Q<VisualElement>("AttackIcon");
+            defenseIcon = root.Q<VisualElement>("DefenseIcon");
+
+            standbyElement = root.Q<VisualElement>("Standby");
+            attackElement = root.Q<VisualElement>("Attack");
+            defenseElement = root.Q<VisualElement>("Defense");
+            endElement = root.Q<VisualElement>("End");
 
             // Récupérer et binder le bouton EndPhase
             endPhaseButton = root.Q<Button>("EndPhaseButton");
@@ -92,7 +100,16 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 Debug.LogWarning("[PhaseUI] EndPhaseButton not found in UI");
             }
 
+            // Initialiser la phase depuis PhaseService (source de vérité)
+            PhaseService phaseService = PhaseService.Instance;
+            if (phaseService != null)
+            {
+                _currentPhase = phaseService.CurrentPhase;
+                Debug.Log($"[PhaseUI] Initialized phase from PhaseService: {_currentPhase}");
+            }
+
             UpdateIcons(_currentPhase);
+            UpdateButtons(_currentPhase);
         }
 
         // ========== EVENT HANDLERS ==========
@@ -101,6 +118,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             _currentPhase = result.CurrentPhase;
             UpdateIcons(_currentPhase);
+            UpdateButtons(_currentPhase);
             UpdateButtonLabel(_currentPhase);
             Debug.Log($"[PhaseUI] Game started - Phase: {_currentPhase}");
         }
@@ -109,6 +127,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             _currentPhase = result.CurrentPhase;
             UpdateIcons(_currentPhase);
+            UpdateButtons(_currentPhase);
             UpdateButtonLabel(_currentPhase);
             Debug.Log($"[PhaseUI] Phase changed - New phase: {_currentPhase}");
         }
@@ -140,7 +159,14 @@ namespace VortexTCG.Scripts.Features.Match.UI
             SetHighlight(placementIcon, phase == GamePhase.PLACEMENT);
             SetHighlight(attackIcon, phase == GamePhase.ATTACK);
             SetHighlight(defenseIcon, phase == GamePhase.DEFENSE);
-            SetHighlight(endTurnIcon, phase == GamePhase.END_TURN);
+        }
+
+        private void UpdateButtons(GamePhase phase)
+        {
+            SetHighlight(standbyElement, phase == GamePhase.END_TURN);
+            SetHighlight(attackElement, phase == GamePhase.ATTACK);
+            SetHighlight(defenseElement, phase == GamePhase.DEFENSE);
+            SetHighlight(endElement, phase == GamePhase.PLACEMENT);
         }
 
         private void UpdateButtonLabel(GamePhase phase)

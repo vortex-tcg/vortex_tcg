@@ -11,7 +11,28 @@ namespace VortexTCG.Scripts.Features.Match.Services
     /// </summary>
     public class PhaseService : MonoBehaviour
     {
-        public static PhaseService Instance { get; private set; }
+        private static PhaseService _instance;
+
+        public static PhaseService Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    // Try to find existing PhaseService in scene
+                    _instance = FindFirstObjectByType<PhaseService>();
+                    
+                    // If not found, create it dynamically
+                    if (_instance == null)
+                    {
+                        GameObject phaseServiceObject = new GameObject("PhaseService");
+                        _instance = phaseServiceObject.AddComponent<PhaseService>();
+                        Debug.Log("[PhaseService] ✅ PhaseService auto-created as it was missing from scene");
+                    }
+                }
+                return _instance;
+            }
+        }
 
         public GamePhase CurrentPhase { get; private set; } = GamePhase.PLACEMENT;
 
@@ -35,12 +56,12 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
         private void Awake()
         {
-            if (Instance != null && Instance != this)
+            if (_instance != null && _instance != this)
             {
                 Destroy(gameObject);
                 return;
             }
-            Instance = this;
+            _instance = this;
         }
 
         private void OnEnable()

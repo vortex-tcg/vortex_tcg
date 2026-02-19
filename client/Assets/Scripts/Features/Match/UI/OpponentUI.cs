@@ -16,7 +16,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         [Header("Opponent Hand")]
         [SerializeField] private Transform _opponentHandRoot;
-        [SerializeField] private CardUI _faceDownCardPrefab;
+        [SerializeField] private CardUI _cardPrefab;
         [SerializeField] protected List<Transform> _opponentHandSlots = new();
 
         [Header("Opponent Board")]
@@ -223,9 +223,9 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         public void AddFaceDownCards(int count)
         {
-            if (_faceDownCardPrefab == null)
+            if (_cardPrefab == null)
             {
-                Debug.LogError("[OpponentUI] ❌ Prefab face cachée non assigné.");
+                Debug.LogError("[OpponentUI] ❌ Prefab carte non assigné.");
                 return;
             }
 
@@ -246,13 +246,16 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
                     Debug.Log($"[OpponentUI] Création carte adversaire {i + 1} dans slot '{slot.name}'");
                     
-                    CardUI faceDown = Instantiate(_faceDownCardPrefab, slot);
+                    CardUI faceDown = Instantiate(_cardPrefab, slot);
                     faceDown.gameObject.name = $"OpponentCard_{i}";
+                    
+                    // ✅ Mark card as face-down (hidden in opponent's hand)
+                    faceDown.SetFaceDown(true);
                     
                     // Positionner la carte sur le slot
                     faceDown.transform.localPosition = Vector3.zero;
-                    faceDown.transform.localRotation = Quaternion.identity;
                     faceDown.transform.localScale = Vector3.one;
+                    // ⚠️ Don't reset rotation - SetFaceDown() already sets it!
                     
                     Debug.Log($"[OpponentUI] ✅ Carte adversaire {i}: pos={faceDown.transform.localPosition}, parent={faceDown.transform.parent.name}");
                     
@@ -266,8 +269,12 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 Debug.LogWarning("[OpponentUI] ⚠️ Aucun slot configuré, fallback sur _opponentHandRoot");
                 for (int i = 0; i < count; i++)
                 {
-                    CardUI faceDown = Instantiate(_faceDownCardPrefab, _opponentHandRoot);
+                    CardUI faceDown = Instantiate(_cardPrefab, _opponentHandRoot);
                     faceDown.gameObject.name = $"FaceDownCard_{_opponentHandCards.Count}";
+                    
+                    // ✅ Mark card as face-down
+                    faceDown.SetFaceDown(true);
+                    
                     _opponentHandCards.Add(faceDown);
                 }
                 Debug.Log($"[OpponentUI] Added {count} face-down cards. Total: {_opponentHandCards.Count}");
@@ -348,14 +355,14 @@ namespace VortexTCG.Scripts.Features.Match.UI
             }
 
             // Instantiate prefab properly
-            if (_faceDownCardPrefab == null)
+            if (_cardPrefab == null)
             {
-                Debug.LogError("[OpponentUI] ❌ _faceDownCardPrefab is NULL!");
+                Debug.LogError("[OpponentUI] ❌ _cardPrefab is NULL!");
                 return;
             }
 
-            Debug.Log($"[OpponentUI] Creating card from prefab: {_faceDownCardPrefab.name}");
-            CardUI card = Instantiate(_faceDownCardPrefab, slot.transform, false);
+            Debug.Log($"[OpponentUI] Creating card from prefab: {_cardPrefab.name}");
+            CardUI card = Instantiate(_cardPrefab, slot.transform, false);
             card.name = $"OpponentCard_{cardDto.GameCardId}";
             
             // Apply card data
@@ -368,6 +375,9 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 cardDto.Description ?? "",
                 ""
             );
+
+            card.SetFaceDown(false);
+            Debug.Log($"[OpponentUI] ✅ Card set to face-up (visible on board)");
 
             // Place the card in the slot
             Debug.Log($"[OpponentUI] Calling slot.PlaceCard()");

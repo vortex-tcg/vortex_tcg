@@ -34,6 +34,7 @@ namespace VortexTCG.Scripts.MatchScene
         [Header("Selection")] [SerializeField] private GameObject AttackOutline;
         [SerializeField] private GameObject DefenseOutline;
         [SerializeField] private GameObject AttackOrder;
+        [SerializeField] private GameObject SelectedEffect;
         [SerializeField] private float selectedScaleMultiplier = 1.08f;
         private bool isSelected;
         private Vector3 selectionBaseScale;
@@ -248,6 +249,13 @@ namespace VortexTCG.Scripts.MatchScene
                 selectionBaseScale = transform.localScale;
                 transform.localScale = selectionBaseScale * selectedScaleMultiplier;
 
+                // Activer le SelectedEffect
+                if (SelectedEffect != null)
+                {
+                    SelectedEffect.SetActive(true);
+                    Debug.Log($"[Card] SelectedEffect activated for '{cardName}'");
+                }
+
                 // Afficher visuels d'attaque si en phase ATTACK et sur plateau joueur
                 PhaseService phaseService = PhaseService.Instance;
                 if (phaseService != null && phaseService.CurrentPhase == GamePhase.ATTACK)
@@ -266,6 +274,13 @@ namespace VortexTCG.Scripts.MatchScene
             else
             {
                 transform.localScale = selectionBaseScale;
+
+                // Désactiver le SelectedEffect
+                if (SelectedEffect != null)
+                {
+                    SelectedEffect.SetActive(false);
+                    Debug.Log($"[Card] SelectedEffect deactivated for '{cardName}'");
+                }
 
                 if (AttackOutline != null)
                     AttackOutline.SetActive(false);
@@ -338,7 +353,8 @@ namespace VortexTCG.Scripts.MatchScene
         public void SetFaceDown(bool value)
         {
             faceDown = value;
-            transform.localRotation = value ? Quaternion.Euler(0f, 180f, 0f) : Quaternion.identity;
+            // ✅ Rotate around Z axis to flip the card
+            transform.localRotation = value ? Quaternion.Euler(0f, 0f, 180f) : Quaternion.identity;
             Collider col = GetComponent<Collider>();
             if (col != null) col.enabled = !value;
         }
