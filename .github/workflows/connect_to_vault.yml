@@ -1,0 +1,16 @@
+name: Get secrets
+on: [workflow_dispatch]
+
+jobs:
+  connect-to-vault:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get secrets
+        uses: hashicorp/vault-action@3
+        with:
+          url: ${{ secrets.VAULT_URL }}
+          method: token
+          token: ${{ secrets.VAULT_TOKEN }}
+          secrets: |
+            secret/ test | TEST_SECRET
+          run: echo $TEST_SECRET
