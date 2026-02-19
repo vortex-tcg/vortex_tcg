@@ -12,7 +12,18 @@ jobs:
           method: token
           token: ${{ secrets.VAULT_TOKEN }}
           secrets: |
-            secret/data/test test | TEST_SECRET
+            aws/data/EC2_HOST | EC2_HOST
 
-      - name: Use secret
-        run: echo $TEST_SECRET
+      - name: try to connect EC2
+        script:
+          # 1. Install vault CLI if not available
+          - apt-get install -y vault
+
+          # 2. Generate temp SSH keypair
+          - ssh-keygen -t rsa -f /tmp/pipeline_key -N ""
+
+          # 3. Sign the public key with Vault
+          - vault write -field=signed_key ssh/sign/pipeline-role public_key=@/tmp/pipeline_key.pub > /tmp/pipeline_key-cert.pub
+
+          # 4. Try to SSH into the EC2
+          - ssh -o StrictHostKeyChecking=no -i /tmp/pipeline_key -i /tmp/pipeline_key-cert.pub ubuntu@$EC2_HOST "echo 'SSH works!'"
