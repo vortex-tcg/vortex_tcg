@@ -94,11 +94,6 @@ jobs:
             mkdir -p ../traefik/dynamic
             mkdir -p ./letsencrypt
 
-            if [ ! -f ../traefik/dynamic/tls.yml ]; then
-              echo "📝 Creating empty tls.yml..."
-              touch ../traefik/dynamic/tls.yml
-            fi
-
             if [ ! -f ./letsencrypt/acme.json ]; then
               echo "📝 Creating acme.json..."
               touch ./letsencrypt/acme.json
