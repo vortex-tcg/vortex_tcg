@@ -12,7 +12,7 @@ jobs:
           method: token
           token: ${{ secrets.VAULT_TOKEN }}
           secrets: |
-            secret/data/ test | TEST_SECRET
+            secret/data/test test | TEST_SECRET
 
       - name: Use secret
         run: echo $TEST_SECRET
