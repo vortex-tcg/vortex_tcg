@@ -3,6 +3,7 @@ using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using System;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace VortexTCG.DataAccess.Seeds
 {
@@ -17,17 +18,29 @@ namespace VortexTCG.DataAccess.Seeds
             _db = db;
         }
 
+        private static void StampNew(AuditableEntity e, DateTime utc, string actor)
+        {
+            e.CreatedAtUtc = utc;
+            e.CreatedBy = actor;
+            e.UpdatedAtUtc = utc;
+            e.UpdatedBy = actor;
+        }
+
+        private static void StampUpdate(AuditableEntity e, DateTime utc, string actor)
+        {
+            e.UpdatedAtUtc = utc;
+            e.UpdatedBy = actor;
+        }
+
         public void Seed()
         {
-            // Vérifie si la table Users est vide
-            if (_db.Users.Any())
-                return;
+            DateTime utc = DateTime.UtcNow;
+            string actor = "Seeder";
 
-            var utcDate = DateTime.UtcNow;
-
-            // Ajoute les utilisateurs
-            _db.Users.AddRange(
-                new User
+            User john = _db.Users.SingleOrDefault(u => u.Username == "Superman");
+            if (john == null)
+            {
+                john = new User
                 {
                     Id = Guid.NewGuid(),
                     FirstName = "John",
@@ -39,16 +52,17 @@ namespace VortexTCG.DataAccess.Seeds
                     Language = "fr",
                     Role = Role.USER,
                     Status = UserStatus.DISCONNECTED,
-
-                    RankId = null,        // null pour éviter violation FK
-                    CollectionId = null,  // null pour éviter violation FK
-
-                    CreatedAtUtc = utcDate,
-                    CreatedBy = SeederName,
-                    UpdatedAtUtc = utcDate,
-                    UpdatedBy = SeederName,
-                },
-                new User
+                    RankId = null,
+                    CollectionId = null
+                };
+                StampNew(john, utc, actor);
+                _db.Users.Add(john);
+            }
+            
+            User jane = _db.Users.SingleOrDefault(u => u.Username == "Batman");
+            if (jane == null)
+            {
+                jane = new User
                 {
                     Id = Guid.NewGuid(),
                     FirstName = "Jane",
@@ -60,18 +74,43 @@ namespace VortexTCG.DataAccess.Seeds
                     Language = "en",
                     Role = Role.USER,
                     Status = UserStatus.DISCONNECTED,
-
                     RankId = null,
-                    CollectionId = null,
+                    CollectionId = null
+                };
+                StampNew(jane, utc, actor);
+                _db.Users.Add(jane);
+            }
 
-                    CreatedAtUtc = utcDate,
-                    CreatedBy = "Seeder",
-                    UpdatedAtUtc = utcDate,
-                    UpdatedBy = "Seeder",
-                }
-            );
+            if (john.CollectionId == null || !_db.Set<Collection>().Any(c => c.Id == john.CollectionId.Value))
+            {
+                Collection c = new Collection
+                {
+                    Id = Guid.NewGuid(),
+                    User = john,
+                    Cards = new List<CollectionCard>(),
+                    Champions = new List<CollectionChampion>()
+                };
+                StampNew(c, utc, actor);
+                _db.Set<Collection>().Add(c);
+                john.CollectionId = c.Id;
+                StampUpdate(john, utc, actor);
+            }
 
-            // Sauvegarde en base
+            if (jane.CollectionId == null || !_db.Set<Collection>().Any(c => c.Id == jane.CollectionId.Value))
+            {
+                Collection c = new Collection
+                {
+                    Id = Guid.NewGuid(),
+                    User = jane,
+                    Cards = new List<CollectionCard>(),
+                    Champions = new List<CollectionChampion>()
+                };
+                StampNew(c, utc, actor);
+                _db.Set<Collection>().Add(c);
+                jane.CollectionId = c.Id;
+                StampUpdate(jane, utc, actor);
+            }
+
             _db.SaveChanges();
         }
     }

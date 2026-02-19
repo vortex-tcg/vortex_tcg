@@ -1,0 +1,20 @@
+http:
+  routers:
+    vault:
+      rule: "Host(`vault.vortex-tcg.online`)"
+      service: vault-service
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: le
+
+  services:
+    vault-service:
+      loadBalancer:
+        servers:
+          - url: "https://host.docker.internal:8200"
+        serversTransport: insecureTransport
+
+  serversTransports:
+    insecureTransport:
+      insecureSkipVerify: true # certificat gen with vault in the server
