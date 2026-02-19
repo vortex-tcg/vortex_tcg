@@ -8,7 +8,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
 {
     /// <summary>
     /// Gestionnaire UI combiné de l'adversaire
-    /// Remplace OpponentHandManager et OpponentBoardManager en utilisant MatchEvents
+    /// Remplace OpponentHandManager et OpponentBoardService en utilisant MatchEvents
     /// </summary>
     public class OpponentUI : MonoBehaviour
     {
@@ -74,13 +74,68 @@ namespace VortexTCG.Scripts.Features.Match.UI
             }
         }
 
+        /// <summary>
+        /// Cherche automatiquement les slots du board adversaire
+        /// Si des slots sont déjà assignés, ne fait rien
+        /// </summary>
+        private void FindAndAssignOpponentBoardSlots()
+        {
+            // Si les slots sont déjà assignés manuellement dans l'inspecteur, ne pas chercher
+            if (_opponentBoardSlots.Count > 0)
+            {
+                Debug.Log($"[OpponentUI] ✅ {_opponentBoardSlots.Count} board slots assignés manuellement");
+                return;
+            }
+            
+            // Sinon, cherche automatiquement P2BoardSlot1 à P2BoardSlot7
+            _opponentBoardSlots.Clear();
+            Transform parent = transform;
+            Debug.Log($"[OpponentUI] Searching for board slots under: {parent.name}");
+            
+            for (int i = 1; i <= 7; i++)
+            {
+                Transform slot = parent.Find($"P2BoardSlot{i}");
+                Debug.Log($"[OpponentUI] Looking for P2BoardSlot{i}: {(slot != null ? "✅ FOUND" : "❌ NOT FOUND")}");
+                
+                if (slot != null)
+                {
+                    CardSlotUI cardSlot = slot.GetComponent<CardSlotUI>();
+                    if (cardSlot != null)
+                    {
+                        _opponentBoardSlots.Add(cardSlot);
+                        
+                        // ✅ IMPORTANT: Mark this slot as opponent slot!
+                        cardSlot.isOpponentSlot = true;
+                        Debug.Log($"[OpponentUI] ✅ BoardSlot P2BoardSlot{i} trouvé (CardSlotUI component: OK, isOpponentSlot marked TRUE)");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[OpponentUI] ⚠️ P2BoardSlot{i} found but NO CardSlotUI component!");
+                    }
+                }
+            }
+            
+            if (_opponentBoardSlots.Count > 0)
+            {
+                Debug.Log($"[OpponentUI] ✅ {_opponentBoardSlots.Count} board slots trouvés automatiquement");
+            }
+            else
+            {
+                Debug.LogError("[OpponentUI] ❌ Aucun board slot trouvé! Assignez les manuellement ou créez P2BoardSlot1-7");
+            }
+        }
+
         private void OnEnable()
         {
             Debug.Log("[OpponentUI] OnEnable - Inscription aux événements");
+            
+            // Auto-detect board slots if not assigned
+            FindAndAssignOpponentBoardSlots();
+            
             MatchEvents.OnGameStarted += HandleGameStarted;
             MatchEvents.OnOpponentCardsDrawn += HandleOpponentCardsDrawn;
             MatchEvents.OnOpponentCardPlayed += HandleOpponentCardPlayed;
-            Debug.Log("[OpponentUI] ✅ Événements MatchEvents enregistrés");
+            Debug.Log($"[OpponentUI] ✅ OnOpponentCardPlayed subscribed - Instance={(Instance != null ? Instance.name : "NULL")}");
 
             // Fallback: s'enregistrer directement auprès de SignalRClient
             SignalRClient client = SignalRClient.Instance;
@@ -128,11 +183,30 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         private void HandleOpponentCardPlayed(PlayCardOpponentResultDto result)
         {
+            Debug.Log($"[OpponentUI] ========== HandleOpponentCardPlayed CALLED ==========");
+            Debug.Log($"[OpponentUI] Instance={(Instance != null ? Instance.name : "NULL")}");
+            Debug.Log($"[OpponentUI] Result: {(result != null ? "NOT NULL" : "NULL")}");
+            
+            if (result == null)
+            {
+                Debug.LogError("[OpponentUI] ❌ Result is NULL!");
+                return;
+            }
+            
+            Debug.Log($"[OpponentUI] Result.location={result.location}, PlayedCard={(result.PlayedCard != null ? "NOT NULL" : "NULL")}");
+            if (result.PlayedCard != null)
+                Debug.Log($"[OpponentUI] - PlayedCard.GameCardId={result.PlayedCard.GameCardId}, Name={result.PlayedCard.Name}");
+            
             RemoveOneCardFromHand();
             
             if (result?.location >= 0 && result.PlayedCard != null)
             {
+                Debug.Log($"[OpponentUI] ✅ Calling PlaceCardOnBoard(location={result.location})");
                 PlaceCardOnBoard(result.location, result.PlayedCard);
+            }
+            else
+            {
+                Debug.LogWarning($"[OpponentUI] ⚠️ Cannot place card: location={result?.location}, playedCard={(result?.PlayedCard != null)}");
             }
         }
 
@@ -212,7 +286,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
             Destroy(card.gameObject);
             _opponentHandCards.RemoveAt(0);
 
-            Debug.Log($"[OpponentUIManager] Removed 1 card from opponent hand. Total: {_opponentHandCards.Count}");
+            Debug.Log($"[OpponentUI] Removed 1 card from opponent hand. Total: {_opponentHandCards.Count}");
         }
 
         // ========== BOARD METHODS ==========
@@ -234,25 +308,80 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         public void PlaceCardOnBoard(int slotIndex, GameCardDto cardDto)
         {
+            Debug.Log($"[OpponentUI] ========== PlaceCardOnBoard ==========");
+            Debug.Log($"[OpponentUI] slotIndex={slotIndex}, cardDto={(cardDto != null ? cardDto.GameCardId : "NULL")}");
+            Debug.Log($"[OpponentUI] _opponentBoardSlots.Count={_opponentBoardSlots.Count}");
+            
             if (slotIndex < 0 || slotIndex >= _opponentBoardSlots.Count)
             {
-                Debug.LogError($"[OpponentUIManager] Invalid slot index: {slotIndex}");
+                Debug.LogError($"[OpponentUI] ❌ Invalid slot index: {slotIndex} (range: 0-{_opponentBoardSlots.Count - 1})");
+                return;
+            }
+
+            if (cardDto == null)
+            {
+                Debug.LogError($"[OpponentUI] ❌ cardDto is NULL at slot {slotIndex}");
                 return;
             }
 
             CardSlotUI slot = _opponentBoardSlots[slotIndex];
-            if (slot == null) return;
+            Debug.Log($"[OpponentUI] slot at index {slotIndex}: {(slot != null ? "NOT NULL" : "NULL")}");
+            
+            if (slot == null)
+            {
+                Debug.LogError($"[OpponentUI] ❌ slot is NULL at index {slotIndex}");
+                return;
+            }
 
-            // Créer et placer la carte
-            CardUI card = new CardUI(); // À implémenter selon votre CardUI.cs
+            // ✅ Check if this is actually an opponent slot!
+            Debug.Log($"[OpponentUI] Using slot: name={slot.gameObject.name}, isOpponentSlot={slot.isOpponentSlot}, slotIndex={slot.slotIndex}");
+            
+            if (!slot.isOpponentSlot)
+            {
+                Debug.LogError($"[OpponentUI] ❌ ERROR: Trying to place opponent card on a PLAYER slot! This is not an opponent board slot!");
+            }
+
+            if (slot.CurrentCard != null)
+            {
+                Debug.LogWarning($"[OpponentUI] ⚠️ Slot {slotIndex} already has a card! Destroying it first");
+                Destroy(slot.CurrentCard.gameObject);
+            }
+
+            // Instantiate prefab properly
+            if (_faceDownCardPrefab == null)
+            {
+                Debug.LogError("[OpponentUI] ❌ _faceDownCardPrefab is NULL!");
+                return;
+            }
+
+            Debug.Log($"[OpponentUI] Creating card from prefab: {_faceDownCardPrefab.name}");
+            CardUI card = Instantiate(_faceDownCardPrefab, slot.transform, false);
+            card.name = $"OpponentCard_{cardDto.GameCardId}";
+            
+            // Apply card data
+            card.ApplyDTO(
+                cardDto.GameCardId.ToString(),
+                cardDto.Name,
+                cardDto.Hp,
+                cardDto.Attack,
+                cardDto.Cost,
+                cardDto.Description ?? "",
+                ""
+            );
+
+            // Place the card in the slot
+            Debug.Log($"[OpponentUI] Calling slot.PlaceCard()");
             slot.PlaceCard(card);
 
             if (int.TryParse(cardDto.GameCardId.ToString(), out int id))
             {
                 _opponentBoardCards[id] = card;
+                Debug.Log($"[OpponentUI] ✅ Card {cardDto.Name} placed at slot {slotIndex}");
             }
-
-            Debug.Log($"[OpponentUIManager] Placed card at slot {slotIndex}");
+            else
+            {
+                Debug.LogError($"[OpponentUI] ❌ Could not parse gameCardId: {cardDto.GameCardId}");
+            }
         }
     }
 }

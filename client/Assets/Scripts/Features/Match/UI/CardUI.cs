@@ -93,25 +93,32 @@ namespace VortexTCG.Scripts.MatchScene
             CardSlotUI slot = GetComponentInParent<CardSlotUI>();
             if (slot != null && slot.isOpponentSlot) return;
 
-            // CardPreviewManager disabled - to be reimplemented
-            // if (CardPreviewManager.Instance != null)
+            // CardPreviewUI disabled - to be reimplemented
+            // if (CardPreviewUI.Instance != null)
             // {
-            //     CardPreviewManager.Instance.ShowCardPreview(this);
+            //     CardPreviewUI.Instance.ShowCardPreview(this);
             // }
         }
 
         void OnMouseExit()
         {
-            // CardPreviewManager disabled - to be reimplemented
-            // if (CardPreviewManager.Instance != null)
+            // CardPreviewUI disabled - to be reimplemented
+            // if (CardPreviewUI.Instance != null)
             // {
-            //     CardPreviewManager.Instance.HidePreview();
+            //     CardPreviewUI.Instance.HidePreview();
             // }
         }
 
         void OnMouseDown()
         {
-            Debug.Log($"[Card] OnMouseDown sur {cardName}, faceDown={faceDown}");
+            // Prevent ANY interaction if card has no valid data
+            if (string.IsNullOrEmpty(cardName) || string.IsNullOrEmpty(cardId))
+            {
+                Debug.LogWarning($"[Card] ❌ BLOCKING click on invalid card - GameObject={gameObject.name}, cardName='{cardName}', cardId='{cardId}'");
+                return;
+            }
+            
+            Debug.Log($"[Card] OnMouseDown sur '{cardName}' (ID={cardId}), faceDown={faceDown}");
             
             if (faceDown) return;
 
@@ -228,6 +235,8 @@ namespace VortexTCG.Scripts.MatchScene
                 DefenseOutline.SetActive(false);
         }
 
+
+        public bool IsSelected => isSelected;
 
         public void SetSelected(bool selected)
         {

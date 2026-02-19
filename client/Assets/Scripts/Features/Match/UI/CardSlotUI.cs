@@ -7,60 +7,105 @@ namespace VortexTCG.Scripts.MatchScene
 {
     public class CardSlotUI : MonoBehaviour
     {
-        [Header("Index board 0..4")]
+        [Header("Index")]
         public int slotIndex = 0;
 
         [Header("Slot options")]
         public bool isOpponentSlot = false;
         public CardUI CurrentCard;
-        public float targetHeight = 1.0f;
 
         public bool CanAccept(CardUI card) => CurrentCard == null;
 
         private void OnMouseDown()
         {
-            if (isOpponentSlot) return;
+            if (isOpponentSlot)
+            {
+                Debug.Log($"[CardSlot] CLICK ignored - opponent slot");
+                return;
+            }
 
-            Debug.Log($"[CardSlot] CLICK slotIndex={slotIndex}");
+            Debug.Log($"[CardSlot] ✅ CLICK slotIndex={slotIndex}");
 
             // Déclencher événement pour demander le jeu de carte
             // Les services gèreront la validation et l'appel serveur
             CardUI selectedCard = HandUI.Instance?.SelectedCard;
+            
+            Debug.Log($"[CardSlot] HandUI.Instance={(HandUI.Instance != null ? "EXISTS" : "NULL")}");
+            Debug.Log($"[CardSlot] SelectedCard={(selectedCard != null ? selectedCard.cardName : "NULL")}");
+            Debug.Log($"[CardSlot] CurrentCard={(CurrentCard != null ? CurrentCard.cardName : "NULL")}");
+            Debug.Log($"[CardSlot] CanAccept={CanAccept(selectedCard)}");
+            
             if (selectedCard != null && CanAccept(selectedCard))
             {
+                Debug.Log($"[CardSlot] ✅✅✅ Firing CardPlayRequested for card '{selectedCard.cardName}' to slot {slotIndex}");
                 MatchEvents.FireCardPlayRequested(selectedCard, this);
+            }
+            else
+            {
+                if (selectedCard == null)
+                    Debug.LogWarning($"[CardSlot] ❌ Cannot play - No card selected in hand");
+                else
+                    Debug.LogWarning($"[CardSlot] ❌ Cannot play - Slot already occupied or cannot accept");
             }
         }
 
+        /// <summary>
+        /// Pose une carte sur ce slot du board
+        /// Condition: la carte doit être sélectionnée et les conditions doivent être remplies
+        /// Déplace physiquement la carte du slot de la main vers ce slot du board
+        /// </summary>
         public void PlaceCard(CardUI card)
         {
             if (card == null) return;
 
-            CurrentCard = card;
-            Transform t = card.transform;
-            t.SetParent(transform, false);
-            t.localPosition = Vector3.zero;
-            t.localRotation = Quaternion.identity;
-            t.localScale = Vector3.one;
-            t.localPosition = new Vector3(0f, 1f, 0f);
+            Debug.Log($"[CardSlotUI.PlaceCard] ✅ Posing card '{card.cardName}' on slot {slotIndex}");
 
-            // Ajuster la position Y du collider à 200
-            Collider col = card.GetComponent<Collider>();
-            if (col != null)
+            // Vérifier que le slot est vide
+            if (CurrentCard != null)
             {
-                if (col is BoxCollider boxCol)
-                {
-                    boxCol.center = new Vector3(boxCol.center.x, 200f, boxCol.center.z);
-                    Debug.Log($"[CardSlot] Collider center ajusté à Y=200 pour {card.cardName}");
-                }
+                Debug.LogWarning($"[CardSlotUI.PlaceCard] ❌ Slot {slotIndex} already occupied!");
+                return;
             }
+
+            // Marquer la carte comme placée
+            CurrentCard = card;
+            
+            // Déplacer la carte du slot de la main vers ce slot du board
+            Transform cardTransform = card.transform;
+            cardTransform.SetParent(transform, false);  // Changement du parent (du slot main au slot board)
+            cardTransform.localPosition = Vector3.zero;
+            cardTransform.localRotation = Quaternion.identity;
+            cardTransform.localScale = Vector3.one;
+
+            Debug.Log($"[CardSlotUI.PlaceCard] ✅ Card '{card.cardName}' moved to slot {slotIndex}");
 
             // Enregistrer la carte auprès du service d'attaque si c'est un slot joueur
-            AttackService attackService = AttackService.Instance;
-            if (attackService != null && !isOpponentSlot)
+            if (!isOpponentSlot)
             {
-                attackService.RegisterCard(card);
+                AttackService attackService = AttackUI.Instance?.AttackService;
+                if (attackService != null)
+                {
+                    attackService.RegisterCard(card);
+                    Debug.Log($"[CardSlotUI.PlaceCard] ✅ Card registered with AttackService");
+                }
             }
+        }
+
+        /// <summary>
+        /// Remplace une carte déjà placée par une autre
+        /// </summary>
+        public void ReplaceCard(CardUI newCard)
+        {
+            if (newCard == null) return;
+
+            // Supprimer la carte actuelle si elle existe
+            if (CurrentCard != null)
+            {
+                Destroy(CurrentCard.gameObject);
+            }
+
+            // Placer la nouvelle carte
+            PlaceCard(newCard);
         }
 
         public void ClearSlot()

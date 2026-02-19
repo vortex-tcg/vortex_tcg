@@ -37,7 +37,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         private void OnEnable()
         {
-            Debug.Log("[PhaseUIManager] OnEnable");
+            Debug.Log("[PhaseUI] OnEnable");
 
             // Bind UI Toolkit elements
             BindUIElements();
@@ -67,7 +67,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
             if (uiDoc == null)
             {
-                Debug.LogError("[PhaseUIManager] UIDocument not found");
+                Debug.LogError("[PhaseUI] UIDocument not found");
                 return;
             }
 
@@ -85,11 +85,11 @@ namespace VortexTCG.Scripts.Features.Match.UI
             {
                 endPhaseButton.clicked -= HandleEndPhaseButtonClicked;
                 endPhaseButton.clicked += HandleEndPhaseButtonClicked;
-                Debug.Log("[PhaseUIManager] EndPhaseButton bound");
+                Debug.Log("[PhaseUI] EndPhaseButton bound");
             }
             else
             {
-                Debug.LogWarning("[PhaseUIManager] EndPhaseButton not found in UI");
+                Debug.LogWarning("[PhaseUI] EndPhaseButton not found in UI");
             }
 
             UpdateIcons(_currentPhase);
@@ -101,19 +101,35 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             _currentPhase = result.CurrentPhase;
             UpdateIcons(_currentPhase);
-            Debug.Log($"[PhaseUIManager] Game started - Phase: {_currentPhase}");
+            UpdateButtonLabel(_currentPhase);
+            Debug.Log($"[PhaseUI] Game started - Phase: {_currentPhase}");
         }
 
         private void HandlePhaseChanged(PhaseChangeResultDTO result)
         {
             _currentPhase = result.CurrentPhase;
             UpdateIcons(_currentPhase);
-            Debug.Log($"[PhaseUIManager] Phase changed - New phase: {_currentPhase}");
+            UpdateButtonLabel(_currentPhase);
+            Debug.Log($"[PhaseUI] Phase changed - New phase: {_currentPhase}");
         }
 
         private void HandleEndPhaseButtonClicked()
         {
-            Debug.Log("[PhaseUIManager] End Phase button clicked - requesting phase change");
+            Debug.Log("[PhaseUI] End Phase button clicked - requesting phase change");
+            
+            // Call server to change phase
+            SignalRClient client = SignalRClient.Instance;
+            if (client != null && client.IsConnected)
+            {
+                _ = client.ChangePhase();
+                Debug.Log("[PhaseUI] ✅ ChangePhase request sent to server");
+            }
+            else
+            {
+                Debug.LogWarning("[PhaseUI] ❌ Cannot change phase - SignalRClient not connected");
+            }
+            
+            // Also fire event for any local listeners
             MatchEvents.FirePhaseChangeRequested();
         }
 
@@ -125,6 +141,22 @@ namespace VortexTCG.Scripts.Features.Match.UI
             SetHighlight(attackIcon, phase == GamePhase.ATTACK);
             SetHighlight(defenseIcon, phase == GamePhase.DEFENSE);
             SetHighlight(endTurnIcon, phase == GamePhase.END_TURN);
+        }
+
+        private void UpdateButtonLabel(GamePhase phase)
+        {
+            if (endPhaseButton == null) return;
+
+            string label = phase switch
+            {
+                GamePhase.PLACEMENT => "End Placement",
+                GamePhase.ATTACK => "End Attack",
+                GamePhase.DEFENSE => "End Defense",
+                GamePhase.END_TURN => "End Turn",
+                _ => "Next Phase"
+            };
+
+            endPhaseButton.text = label;
         }
 
         private static void SetHighlight(VisualElement icon, bool active)

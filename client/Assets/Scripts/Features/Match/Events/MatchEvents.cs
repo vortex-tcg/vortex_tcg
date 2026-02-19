@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 using VortexTCG.Scripts.DTOs;
 using VortexTCG.Scripts.MatchScene;
 
@@ -84,8 +85,18 @@ namespace VortexTCG.Scripts.Features.Match.Events
         public static void FirePlayerCardsDrawn(DrawResultForPlayerDto result) => OnPlayerCardsDrawn?.Invoke(result);
         public static void FireOpponentCardsDrawn(DrawResultForOpponentDto result) => OnOpponentCardsDrawn?.Invoke(result);
 
-        public static void FirePlayerCardPlayed(PlayCardPlayerResultDto result) => OnPlayerCardPlayed?.Invoke(result);
-        public static void FireOpponentCardPlayed(PlayCardOpponentResultDto result) => OnOpponentCardPlayed?.Invoke(result);
+        public static void FirePlayerCardPlayed(PlayCardPlayerResultDto result)
+        {
+            Debug.Log($"[MatchEvents] 📢 FirePlayerCardPlayed invoked - subscribers: {OnPlayerCardPlayed?.GetInvocationList().Length ?? 0}");
+            OnPlayerCardPlayed?.Invoke(result);
+        }
+
+        public static void FireOpponentCardPlayed(PlayCardOpponentResultDto result)
+        {
+            Debug.Log($"[MatchEvents] 📢 FireOpponentCardPlayed invoked - subscribers: {OnOpponentCardPlayed?.GetInvocationList().Length ?? 0}");
+            OnOpponentCardPlayed?.Invoke(result);
+        }
+
         public static void FirePendingPlayCancelled(string reason) => OnPendingPlayCancelled?.Invoke(reason);
 
         public static void FirePlayerAttackEngaged(AttackResponseDto dto) => OnPlayerAttackEngaged?.Invoke(dto);

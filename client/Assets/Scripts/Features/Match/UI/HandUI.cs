@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using VortexTCG.Scripts.DTOs;
 using VortexTCG.Scripts.Features.Match.Events;
+using VortexTCG.Scripts.Features.Match.Services;
 using VortexTCG.Scripts.MatchScene;
 
 namespace VortexTCG.Scripts.Features.Match.UI
@@ -16,11 +16,12 @@ namespace VortexTCG.Scripts.Features.Match.UI
     public class HandUI : MonoBehaviour
     {
         public static HandUI Instance { get; private set; }
+        public HandService HandService { get; private set; }
+        
         public CardUI CardPrefab => _cardPrefab;
         public Transform HandRoot => _handRoot;
         public List<CardUI> HandCards => _handCards;
         protected List<Transform> HandSlots => _handSlots;
-        protected const int MaxHandSize = 7;
 
         [Header("Hand Spawn")]
         [SerializeField] private CardUI _cardPrefab;
@@ -30,29 +31,56 @@ namespace VortexTCG.Scripts.Features.Match.UI
         [HideInInspector] public CardUI SelectedCard;
 
         protected readonly List<CardUI> _handCards = new();
-        private bool _playRequestInFlight;
-        private CardUI _pendingCard;
-        private CardSlotUI _pendingSlot;
-        private CancellationTokenSource _pendingTimeoutCts;
 
-        public bool HasPendingPlay => _playRequestInFlight;
+        public bool HasPendingPlay => HandService?.HasPendingPlay ?? false;
 
         private void Awake()
         {
+            Debug.Log($"[HandUI] ✅✅✅ AWAKE CALLED - Instance currently={(Instance != null ? Instance.name : "NULL")}");
+            
             if (Instance != null && Instance != this)
             {
+                Debug.LogWarning($"[HandUI] ❌ Duplicate HandUI detected! Disabling this={gameObject.name}, keeping Instance={Instance.gameObject.name}");
                 enabled = false;
                 return;
             }
+            
             Instance = this;
+            HandService = new HandService();
+            
+            Debug.Log($"[HandUI] ✅ Instance SET to {gameObject.name}");
             Debug.Log("[HandUI] Awake - FindAndAssignHandSlots");
             FindAndAssignHandSlots();
             Debug.Log($"[HandUI] Awake - Slots trouvés: {_handSlots.Count}, CardPrefab: {(_cardPrefab != null ? _cardPrefab.name : "NULL")}");
+            
+            // Subscribe to service events
+            HandService.OnPlayCancelled += HandleServicePlayCancelled;
+            HandService.OnPlayConfirmed += HandleServicePlayConfirmed;
         }
 
         private void OnEnable()
         {
-            Debug.Log("[HandUI] OnEnable appelé");
+            Debug.Log($"[HandUI] OnEnable appelé - Instance={(Instance != null ? Instance.name : "NULL")}, this={gameObject.name}");
+            
+            // Safety check: ensure Instance is set (in case Awake order issues)
+            if (Instance == null && enabled)
+            {
+                Debug.LogWarning($"[HandUI] ⚠️ Instance was NULL in OnEnable! Setting it now to {gameObject.name}");
+                Instance = this;
+                if (HandService == null)
+                {
+                    HandService = new HandService();
+                }
+            }
+            
+            // Always subscribe to service events (in case they were not subscribed in Awake)
+            if (HandService != null)
+            {
+                HandService.OnPlayCancelled += HandleServicePlayCancelled;
+                HandService.OnPlayConfirmed += HandleServicePlayConfirmed;
+                Debug.Log("[HandUI] ✅ HandService events subscribed in OnEnable");
+            }
+            
             OnEnableEvents();
         }
 
@@ -100,6 +128,13 @@ namespace VortexTCG.Scripts.Features.Match.UI
             {
                 client.OnCardsDrawn -= HandleSignalRCardsDrawn;
             }
+            
+            // Unsubscribe from service events
+            if (HandService != null)
+            {
+                HandService.OnPlayCancelled -= HandleServicePlayCancelled;
+                HandService.OnPlayConfirmed -= HandleServicePlayConfirmed;
+            }
         }
 
         /// <summary>
@@ -140,21 +175,37 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         protected void HandleGameStarted(PhaseChangeResultDTO result)
         {
-            Debug.Log("[HandUI] HandleGameStarted appelé - Clearing hand");
+            Debug.Log("[HandUI] ✅✅✅ HandleGameStarted appelé - Clearing hand and requesting initial cards");
             ClearHand();
+            
+            // Request initial cards from server
+            SignalRClient client = SignalRClient.Instance;
+            if (client != null && client.IsConnected)
+            {
+                Debug.Log("[HandUI] ✅ SignalRClient is connected, requesting 5 cards...");
+                _ = client.DrawInitialCards(5);
+            }
+            else
+            {
+                Debug.LogError("[HandUI] ❌ Cannot draw initial cards - SignalRClient not connected");
+            }
         }
 
         protected void HandleCardsDrawn(DrawResultForPlayerDto result)
         {
-            Debug.Log($"[HandUI] HandleCardsDrawn appelé - Cards: {result?.DrawnCards?.Count ?? 0}");
+            Debug.Log($"[HandUI] ✅✅✅ HandleCardsDrawn appelé - Cards: {result?.DrawnCards?.Count ?? 0}");
             if (result?.DrawnCards != null && result.DrawnCards.Count > 0)
             {
-                Debug.Log($"[HandUI] Appel de AddCards avec {result.DrawnCards.Count} cartes");
+                Debug.Log($"[HandUI] ✅ Appel de AddCards avec {result.DrawnCards.Count} cartes");
+                foreach (var dto in result.DrawnCards)
+                {
+                    Debug.Log($"[HandUI] - Carte reçue: ID={dto.GameCardId}, Name='{dto.Name}', HP={dto.Hp}, ATK={dto.Attack}");
+                }
                 AddCards(result.DrawnCards);
             }
             else
             {
-                Debug.LogWarning("[HandUI] HandleCardsDrawn: Aucune carte dans result");
+                Debug.LogError("[HandUI] ❌ HandleCardsDrawn: Aucune carte dans result OU result NULL");
             }
         }
 
@@ -163,7 +214,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
         /// </summary>
         protected void HandleSignalRCardsDrawn(DrawResultForPlayerDto result)
         {
-            Debug.Log("[HandUI] 🔥 HandleSignalRCardsDrawn (fallback direct) - Cartes reçues");
+            Debug.Log("[HandUI] 🔥🔥🔥 HandleSignalRCardsDrawn (fallback direct) - Cartes reçues");
             Debug.Log($"[HandUI] Result: {(result != null ? "NOT NULL" : "NULL")}");
             Debug.Log($"[HandUI] DrawnCards: {(result?.DrawnCards != null ? result.DrawnCards.Count : "NULL")}");
             HandleCardsDrawn(result);
@@ -171,12 +222,23 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         private void HandleCardSelected(CardUI card)
         {
-            if (card == null) return;
+            if (card == null)
+            {
+                Debug.LogWarning("[HandUI] HandleCardSelected: card is NULL");
+                return;
+            }
+            
+            Debug.Log($"[HandUI] ✅✅✅ HandleCardSelected: '{card.cardName}' (ID={card.cardId})");
+            
             if (SelectedCard != null)
+            {
+                Debug.Log($"[HandUI] Deselecting previous card: '{SelectedCard.cardName}'");
                 SelectedCard.SetSelected(false);
+            }
 
             SelectedCard = card;
             SelectedCard.SetSelected(true);
+            Debug.Log($"[HandUI] ✅ SelectedCard is now: '{SelectedCard.cardName}'");
         }
 
         private void HandleCardDeselected()
@@ -190,30 +252,63 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         private void HandleCardPlayRequested(CardUI card, CardSlotUI slot)
         {
-            RequestPlayCard(card, slot);
+            Debug.Log($"[HandUI] ========== CardPlayRequested ==========");
+            Debug.Log($"[HandUI] Card: {(card != null ? card.cardName : "NULL")} (ID: {(card != null ? card.cardId : "NULL")})");
+            Debug.Log($"[HandUI] Slot: {(slot != null ? slot.slotIndex : -1)}");
+            _ = RequestPlayCard(card, slot);
         }
 
         protected void HandleServerStatus(string message)
         {
-            if (string.IsNullOrWhiteSpace(message)) return;
-            if (!HasPendingPlay) return;
-
-            if (message.Contains("Can't play", StringComparison.OrdinalIgnoreCase) ||
-                message.Contains("play the card", StringComparison.OrdinalIgnoreCase))
+            Debug.Log($"[HandUI] HandleServerStatus: '{message}'");
+            
+            if (HandService != null && HandService.ShouldCancelOnServerError(message))
             {
-                CancelPendingPlay("Hub error: " + message);
+                Debug.LogWarning($"[HandUI] Cancelling pending play due to server error: {message}");
+                HandService.CancelPendingPlay("Hub error: " + message);
+                
+                // Deselect card after server error
+                if (SelectedCard != null)
+                {
+                    SelectedCard.SetSelected(false);
+                    SelectedCard = null;
+                }
             }
         }
 
         protected void HandleCardPlayResult(PlayCardPlayerResultDto result)
         {
-            if (result == null) return;
-            ConfirmPlayFromServer(result.PlayedCard?.GameCardId ?? -1, result.location, result.canPlayed);
+            Debug.Log($"[HandUI] HandleCardPlayResult called - Result is {(result != null ? "NOT NULL" : "NULL")}");
+            if (result == null) 
+            {
+                Debug.LogError("[HandUI] ❌ PlayCardPlayerResultDto is NULL!");
+                return;
+            }
+            
+            Debug.Log($"[HandUI] Result.PlayedCard: {(result.PlayedCard != null ? "NOT NULL" : "NULL")}");
+            if (result.PlayedCard != null)
+                Debug.Log($"[HandUI] - GameCardId={result.PlayedCard.GameCardId}, Name={result.PlayedCard.Name}");
+            
+            Debug.Log($"[HandUI] Result.Champion: {(result.Champion != null ? "NOT NULL" : "NULL")}");
+            Debug.Log($"[HandUI] Result.location={result.location}, canPlayed={result.canPlayed}");
+            
+            // Use pending card ID since we know which card we played
+            int gameCardId = -1;
+            if (HandService?.PendingCard != null && int.TryParse(HandService.PendingCard.cardId, out int id))
+            {
+                gameCardId = id;
+            }
+            
+            HandService?.ConfirmPlayFromServer(
+                gameCardId, 
+                result.location, 
+                result.canPlayed
+            );
         }
 
         protected void HandlePendingPlayCancelled(string reason)
         {
-            CancelPendingPlay(reason);
+            HandService?.CancelPendingPlay(reason);
         }
 
         // ========== PUBLIC METHODS ==========
@@ -251,27 +346,57 @@ namespace VortexTCG.Scripts.Features.Match.UI
             if (_handSlots != null && _handSlots.Count > 0)
             {
                 Debug.Log($"[HandUI] ✅ Utilisation de {_handSlots.Count} slots pour les cartes");
-                int cardIndex = 0;
+                
+                // Créer une liste des slots disponibles (vides)
+                List<int> availableSlotIndices = new List<int>();
+                for (int i = 0; i < _handSlots.Count; i++)
+                {
+                    Transform slotTransform = _handSlots[i];
+                    if (slotTransform == null) continue;
+                    
+                    CardSlotUI cardSlot = slotTransform.GetComponent<CardSlotUI>();
+                    if (cardSlot == null) 
+                    {
+                        Debug.LogWarning($"[HandUI] ⚠️ Slot {i} ({slotTransform.name}) has NO CardSlotUI component!");
+                        continue;
+                    }
+                    
+                    // Vérifier si le slot est vide
+                    if (cardSlot.CurrentCard == null)
+                    {
+                        availableSlotIndices.Add(i);
+                        Debug.Log($"[HandUI] Slot {i} ({slotTransform.name}) is available");
+                    }
+                    else
+                    {
+                        Debug.Log($"[HandUI] Slot {i} ({slotTransform.name}) already has card: {cardSlot.CurrentCard.cardName}");
+                    }
+                }
+                
+                Debug.Log($"[HandUI] Found {availableSlotIndices.Count} available slots");
+                
+                int cardsAdded = 0;
                 foreach (DrawnCardDto dto in drawnCards)
                 {
-                    if (cardIndex >= _handSlots.Count || cardIndex >= MaxHandSize)
+                    if (cardsAdded >= HandService.MaxHandSize)
                     {
-                        Debug.LogWarning($"[HandUI] Plus de slots disponibles. CardIndex: {cardIndex}, SlotCount: {_handSlots.Count}");
+                        Debug.LogWarning($"[HandUI] Main pleine. MaxHandSize atteint: {HandService.MaxHandSize}");
                         break;
                     }
 
-                    Transform slot = _handSlots[cardIndex];
-                    if (slot == null)
+                    if (cardsAdded >= availableSlotIndices.Count)
                     {
-                        Debug.LogError($"[HandUI] ❌ Slot {cardIndex} est NULL!");
-                        cardIndex++;
-                        continue;
+                        Debug.LogWarning($"[HandUI] ❌ Plus de slots disponibles ! (cardsAdded={cardsAdded}, availableSlots={availableSlotIndices.Count})");
+                        break;
                     }
 
-                    Debug.Log($"[HandUI] Création carte {cardIndex + 1}: '{dto.Name}' dans slot '{slot.name}'");
+                    int slotIndex = availableSlotIndices[cardsAdded];
+                    Transform slot = _handSlots[slotIndex];
+
+                    Debug.Log($"[HandUI] Création carte {cardsAdded + 1}: '{dto.Name}' dans slot {slotIndex} ({slot.name})");
                     
                     CardUI card = Instantiate(_cardPrefab, slot);
-                    card.gameObject.name = $"Card_{dto.Name}_{cardIndex}";
+                    card.gameObject.name = $"Card_{dto.Name}_{slotIndex}";
                     
                     Debug.Log($"[HandUI] Carte instantiée '{card.gameObject.name}', parent: {card.transform.parent.name}");
                     
@@ -290,13 +415,26 @@ namespace VortexTCG.Scripts.Features.Match.UI
                     card.transform.localRotation = Quaternion.identity;
                     card.transform.localScale = Vector3.one;
                     
-                    Debug.Log($"[HandUI] ✅ Carte {cardIndex}: pos={card.transform.localPosition}, active={card.gameObject.activeSelf}");
+                    Debug.Log($"[HandUI] ✅ Carte {cardsAdded}: pos={card.transform.localPosition}, active={card.gameObject.activeSelf}");
 
                     EnsureCollider(card);
                     _handCards.Add(card);
-                    cardIndex++;
+                    
+                    // ✅ IMPORTANT: Télécharger le slot et appeler PlaceCard pour le tracker
+                    CardSlotUI cardSlot = slot.GetComponent<CardSlotUI>();
+                    if (cardSlot != null)
+                    {
+                        cardSlot.PlaceCard(card);
+                        Debug.Log($"[HandUI] ✅ PlaceCard() appelé sur slot {slotIndex}, CurrentCard now: {cardSlot.CurrentCard?.cardName}");
+                    }
+                    else
+                    {
+                        Debug.LogError($"[HandUI] ❌ CardSlotUI NON FOUND sur slot {slotIndex}!");
+                    }
+                    
+                    cardsAdded++;
                 }
-                Debug.Log($"[HandUI] ✅ {cardIndex} cartes ajoutées avec succès");
+                Debug.Log($"[HandUI] ✅ {cardsAdded} cartes ajoutées avec succès");
             }
             else if (_handRoot != null)
             {
@@ -304,7 +442,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 Debug.LogWarning("[HandUI] ⚠️ Aucun slot configuré, fallback sur _handRoot");
                 foreach (DrawnCardDto dto in drawnCards)
                 {
-                    if (_handCards.Count >= MaxHandSize) break;
+                    if (_handCards.Count >= HandService.MaxHandSize) break;
 
                     CardUI card = Instantiate(_cardPrefab, _handRoot);
                     card.ApplyDTO(
@@ -339,24 +477,81 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         public async Task RequestPlaySelectedCard(CardSlotUI slot)
         {
-            if (SelectedCard != null)
-                await RequestPlayCard(SelectedCard, slot);
+            if (SelectedCard != null && HandService != null)
+            {
+                SignalRClient client = SignalRClient.Instance;
+                await HandService.RequestPlayCard(SelectedCard, slot, client);
+            }
         }
 
-        public void CancelPendingPlay(string reason)
+        // ========== SERVICE EVENT HANDLERS ==========
+        
+        private void HandleServicePlayCancelled(string reason)
         {
-            if (!_playRequestInFlight) return;
-
-            _playRequestInFlight = false;
-            _pendingCard = null;
-            _pendingSlot = null;
-
-            CancelPendingTimeout();
-
+            // UI reaction to play cancellation
             if (SelectedCard != null)
                 SelectedCard.SetSelected(false);
-
-            Debug.Log($"[HandUIManager] PendingPlay cancelled: {reason}");
+        }
+        
+        private void HandleServicePlayConfirmed(int gameCardId, int location, bool canPlayed)
+        {
+            Debug.Log($"[HandUI] HandleServicePlayConfirmed: gameCardId={gameCardId}, location={location}, canPlayed={canPlayed}");
+            
+            // UI reaction to server confirmation
+            if (canPlayed)
+            {
+                CardUI pendingCard = HandService.PendingCard;
+                CardSlotUI pendingSlot = HandService.PendingSlot;
+                
+                Debug.Log($"[HandUI] PendingCard: {(pendingCard != null ? pendingCard.cardName : "NULL")}");
+                Debug.Log($"[HandUI] PendingSlot: {(pendingSlot != null ? $"slot {pendingSlot.slotIndex}" : "NULL")}");
+                
+                if (pendingCard == null)
+                {
+                    Debug.LogError("[HandUI] ❌ PendingCard is NULL!");
+                    return;
+                }
+                
+                if (pendingSlot == null)
+                {
+                    Debug.LogError("[HandUI] ❌ PendingSlot is NULL!");
+                    return;
+                }
+                
+                if (!int.TryParse(pendingCard.cardId, out int id))
+                {
+                    Debug.LogError($"[HandUI] ❌ Cannot parse cardId '{pendingCard.cardId}' to int");
+                    return;
+                }
+                
+                Debug.Log($"[HandUI] Parsed cardId={id}, comparing with gameCardId={gameCardId}");
+                
+                if (id != gameCardId)
+                {
+                    Debug.LogError($"[HandUI] ❌ CardId mismatch! pending={id} vs server={gameCardId}");
+                    return;
+                }
+                
+                Debug.Log($"[HandUI] ✅ Server confirmed play for card '{pendingCard.cardName}' at slot {location}");
+                
+                // Deselect and remove from hand
+                pendingCard.SetSelected(false);
+                _handCards.Remove(pendingCard);
+                if (SelectedCard == pendingCard)
+                    SelectedCard = null;
+                
+                // Place card in the slot (moves it visually)
+                Debug.Log($"[HandUI] Calling PlaceCard for '{pendingCard.cardName}' in slot {pendingSlot.slotIndex}");
+                pendingSlot.PlaceCard(pendingCard);
+                Debug.Log($"[HandUI] ✅ Card '{pendingCard.cardName}' placed in slot {pendingSlot.slotIndex}");
+            }
+            else
+            {
+                Debug.LogWarning($"[HandUI] ❌ Server rejected card play (canPlayed=false)");
+                CardUI pendingCard = HandService.PendingCard;
+                if (pendingCard != null)
+                    pendingCard.SetSelected(false);
+            }
         }
 
         // ========== PRIVATE METHODS ==========
@@ -369,6 +564,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
             }
             _handCards.Clear();
             SelectedCard = null;
+            HandService?.Reset();
         }
 
         protected void EnsureCollider(CardUI card)
@@ -381,103 +577,21 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         private async Task RequestPlayCard(CardUI card, CardSlotUI slot)
         {
-            if (_playRequestInFlight)
+            Debug.Log($"[HandUI] RequestPlayCard called - card={card?.cardName}, slot={slot?.slotIndex}");
+            if (HandService == null) 
             {
-                Debug.Log("[HandUIManager] RequestPlayCard STOP: already in flight");
+                Debug.LogError("[HandUI] ❌ HandService is NULL!");
                 return;
             }
-
-            if (card == null || slot == null) return;
-
+            
+            Debug.Log("[HandUI] ✅ HandService exists, about to call RequestPlayCard");
+            
             SignalRClient client = SignalRClient.Instance;
-            if (client == null || !client.IsConnected)
-            {
-                Debug.LogWarning("[HandUIManager] SignalRClient pas connecté.");
-                return;
-            }
-
-            if (!int.TryParse(card.cardId, out int gameCardId))
-            {
-                Debug.LogError("[HandUIManager] card.cardId pas un int: " + card.cardId);
-                return;
-            }
-
-            _playRequestInFlight = true;
-            _pendingCard = card;
-            _pendingSlot = slot;
-
-            Debug.Log($"[HandUIManager] RequestPlayCard -> PlayCard(gameCardId={gameCardId}, loc={slot.slotIndex})");
-            StartPendingTimeout(2500);
-
-            try
-            {
-                await client.PlayCard(gameCardId, slot.slotIndex);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError("[HandUIManager] PlayCard invoke failed: " + ex);
-                CancelPendingPlay("Invoke exception");
-            }
-        }
-
-        private void ConfirmPlayFromServer(int gameCardId, int location, bool canPlayed)
-        {
-            if (!_playRequestInFlight)
-            {
-                Debug.LogWarning($"[HandUIManager] ConfirmPlayFromServer called but no pending play!");
-                return;
-            }
-
-            CancelPendingTimeout();
-
-            if (canPlayed)
-            {
-                if (_pendingCard != null && int.TryParse(_pendingCard.cardId, out int id) && id == gameCardId)
-                {
-                    Destroy(_pendingCard.gameObject);
-                    _handCards.Remove(_pendingCard);
-                }
-            }
-            else
-            {
-                if (_pendingCard != null)
-                    _pendingCard.SetSelected(false);
-            }
-
-            _playRequestInFlight = false;
-            _pendingCard = null;
-            _pendingSlot = null;
-        }
-
-        private void StartPendingTimeout(int delayMs)
-        {
-            CancelPendingTimeout();
-            _pendingTimeoutCts = new CancellationTokenSource();
-            _ = PendingTimeoutTask(_pendingTimeoutCts.Token, delayMs);
-        }
-
-        private void CancelPendingTimeout()
-        {
-            _pendingTimeoutCts?.Cancel();
-            _pendingTimeoutCts?.Dispose();
-            _pendingTimeoutCts = null;
-        }
-
-        private async Task PendingTimeoutTask(CancellationToken ct, int delayMs)
-        {
-            try
-            {
-                await Task.Delay(delayMs, ct);
-                if (!ct.IsCancellationRequested && _playRequestInFlight)
-                {
-                    Debug.LogWarning("[HandUIManager] Pending play timeout!");
-                    CancelPendingPlay("Timeout");
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                // Annulation normale
-            }
+            Debug.Log($"[HandUI] SignalRClient: {(client != null ? "EXISTS" : "NULL")}");
+            
+            Debug.Log("[HandUI] 🔄 Calling HandService.RequestPlayCard()...");
+            await HandService.RequestPlayCard(card, slot, client);
+            Debug.Log("[HandUI] ✅ HandService.RequestPlayCard() completed");
         }
     }
 }

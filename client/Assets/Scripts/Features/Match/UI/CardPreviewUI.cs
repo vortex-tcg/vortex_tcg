@@ -3,9 +3,9 @@ using UnityEngine.UIElements;
 
 namespace VortexTCG.Scripts.MatchScene
 {
-    public class CardPreviewManager : MonoBehaviour
+    public class CardPreviewUI : MonoBehaviour
     {
-        public static CardPreviewManager Instance { get; private set; }
+        public static CardPreviewUI Instance { get; private set; }
 
         [SerializeField] private UIDocument uiDocument;
 
@@ -33,7 +33,7 @@ namespace VortexTCG.Scripts.MatchScene
 
             if (uiDocument == null)
             {
-                Debug.LogError("[CardPreviewManager] UIDocument non assigné.");
+                Debug.LogError("[CardPreviewUI] UIDocument non assigné.");
                 return;
             }
 
@@ -51,7 +51,7 @@ namespace VortexTCG.Scripts.MatchScene
 
             if (cardPreviewContainer == null)
             {
-                Debug.LogError("[CardPreviewManager] CardPreview introuvable dans la hiérarchie UI.");
+                Debug.LogError("[CardPreviewUI] CardPreview introuvable dans la hiérarchie UI.");
                 return;
             }
 
@@ -64,7 +64,7 @@ namespace VortexTCG.Scripts.MatchScene
             defLabel = cardPreviewContainer.Q<Label>("DEF");
             illustration = cardPreviewContainer.Q<VisualElement>("Illustration");
 
-            Debug.Log($"[CardPreviewManager] Labels found - Name:{nameLabel!=null}, ATK:{atkLabel!=null}, DEF:{defLabel!=null}");
+            Debug.Log($"[CardPreviewUI] Labels found - Name:{nameLabel!=null}, ATK:{atkLabel!=null}, DEF:{defLabel!=null}");
 
             HidePreview();
         }
@@ -73,11 +73,11 @@ namespace VortexTCG.Scripts.MatchScene
         {
             if (card == null || cardPreviewContainer == null)
             {
-                Debug.LogWarning("[CardPreviewManager] Cannot show preview - card or container null");
+                Debug.LogWarning("[CardPreviewUI] Cannot show preview - card or container null");
                 return;
             }
 
-            Debug.Log($"[CardPreviewManager] Showing preview for: {card.cardName}");
+            Debug.Log($"[CardPreviewUI] Showing preview for: {card.cardName}");
 
             if (nameLabel != null) nameLabel.text = card.cardName;
             if (loreLabel != null) loreLabel.text = card.description;

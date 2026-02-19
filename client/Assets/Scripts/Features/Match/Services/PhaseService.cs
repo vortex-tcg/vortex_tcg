@@ -89,7 +89,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         }
 
         /// <summary>
-        /// Demande un changement de phase (envoyé au serveur via MatchController)
+        /// Demande un changement de phase (envoyé au serveur via MatchService)
         /// </summary>
         public void RequestPhaseChange(GamePhase targetPhase)
         {

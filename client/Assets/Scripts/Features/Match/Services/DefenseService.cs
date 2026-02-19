@@ -1,201 +1,201 @@
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using VortexTCG.Scripts.DTOs;
-using VortexTCG.Scripts.Features.Match.Events;
 using VortexTCG.Scripts.MatchScene;
 
 namespace VortexTCG.Scripts.Features.Match.Services
 {
     /// <summary>
-    /// Service de gestion de la logique de défense
-    /// Remplace DefenseManager en utilisant MatchEvents
+    /// Logique métier pure pour la gestion de la défense
+    /// N'a pas de dépendance UI
     /// </summary>
-    public class DefenseService : MonoBehaviour
+    public class DefenseService
     {
-        public static DefenseService Instance { get; private set; }
+        private readonly Dictionary<int, CardUI> boardCardsById;
+        private readonly Dictionary<CardUI, CardUI> defenseAssignments;
+        private readonly List<CardSlotUI> p1BoardSlots;
+        private readonly List<CardSlotUI> p2BoardSlots;
+        private CardUI currentDefender;
 
-        [SerializeField] private List<CardSlotUI> _playerBoardSlots = new();
-        [SerializeField] private List<CardSlotUI> _opponentBoardSlots = new();
-
-        private readonly Dictionary<int, CardUI> _boardCardsById = new();
-        private readonly Dictionary<CardUI, CardUI> _defenseAssignments = new();
-
-        private CardUI _currentDefender;
-
-        private void Awake()
+        public DefenseService(List<CardSlotUI> p1BoardSlots, List<CardSlotUI> p2BoardSlots)
         {
-            if (Instance != null && Instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Instance = this;
-        }
-
-        private void OnEnable()
-        {
-            MatchEvents.OnPhaseChanged += HandlePhaseChanged;
-            MatchEvents.OnPlayerDefenseEngaged += HandleDefenseEngaged;
-            MatchEvents.OnPlayerAttackEngaged += HandleAttackEngaged;
-            MatchEvents.OnCardClicked += HandleCardClicked;
-        }
-
-        private void OnDisable()
-        {
-            MatchEvents.OnPhaseChanged -= HandlePhaseChanged;
-            MatchEvents.OnPlayerDefenseEngaged -= HandleDefenseEngaged;
-            MatchEvents.OnPlayerAttackEngaged -= HandleAttackEngaged;
-            MatchEvents.OnCardClicked -= HandleCardClicked;
-        }
-
-        private void HandlePhaseChanged(VortexTCG.Scripts.DTOs.PhaseChangeResultDTO result)
-        {
-            if (result.CurrentPhase == GamePhase.DEFENSE)
-            {
-                OnEnterDefensePhase();
-            }
-            else
-            {
-                ClearAllDefense();
-            }
-        }
-
-        private void HandleAttackEngaged(AttackResponseDto dto)
-        {
-            OnEnterDefensePhase();
-        }
-
-        // ========== DEFENSE PHASE ==========
-
-        private void OnEnterDefensePhase()
-        {
-            ClearAllDefense();
-            RegisterExistingCardsFromSlots();
-            Debug.Log("[DefenseService] Entered DEFENSE phase");
-        }
-
-        public void RegisterExistingCardsFromSlots()
-        {
-            if (_playerBoardSlots != null)
-            {
-                for (int i = 0; i < _playerBoardSlots.Count; i++)
-                {
-                    CardSlotUI slot = _playerBoardSlots[i];
-                    if (slot?.CurrentCard != null)
-                    {
-                        RegisterCard(slot.CurrentCard);
-                    }
-                }
-            }
-
-            if (_opponentBoardSlots != null)
-            {
-                for (int i = 0; i < _opponentBoardSlots.Count; i++)
-                {
-                    CardSlotUI slot = _opponentBoardSlots[i];
-                    if (slot?.CurrentCard != null)
-                    {
-                        RegisterCard(slot.CurrentCard);
-                    }
-                }
-            }
+            this.p1BoardSlots = p1BoardSlots;
+            this.p2BoardSlots = p2BoardSlots;
+            this.boardCardsById = new Dictionary<int, CardUI>();
+            this.defenseAssignments = new Dictionary<CardUI, CardUI>();
+            this.currentDefender = null;
         }
 
         public void RegisterCard(CardUI card)
         {
             if (card == null) return;
-
-            if (!int.TryParse(card.cardId, out int id))
-                return;
-
-            _boardCardsById[id] = card;
-            Debug.Log($"[DefenseService] Registered card {id}");
+            if (!int.TryParse(card.cardId, out int id)) return;
+            boardCardsById[id] = card;
         }
 
-        // ========== DEFENSE ASSIGNMENT ==========
+        public bool IsP1BoardSlot(CardSlotUI slot) => slot != null && p1BoardSlots != null && p1BoardSlots.Contains(slot);
 
-        public bool IsPlayerBoardSlot(CardSlotUI slot)
+        public bool IsP2BoardSlot(CardSlotUI slot) => slot != null && p2BoardSlots != null && p2BoardSlots.Contains(slot);
+
+        public bool IsCardOnP1Board(CardUI card)
         {
-            return slot != null && _playerBoardSlots != null && _playerBoardSlots.Contains(slot);
+            if (card == null) return false;
+            CardSlotUI slot = card.GetComponentInParent<CardSlotUI>();
+            return IsP1BoardSlot(slot);
         }
 
-        public bool IsOpponentBoardSlot(CardSlotUI slot)
+        public bool IsCardOnP2Board(CardUI card)
         {
-            return slot != null && _opponentBoardSlots != null && _opponentBoardSlots.Contains(slot);
+            if (card == null) return false;
+            CardSlotUI slot = card.GetComponentInParent<CardSlotUI>();
+            return IsP2BoardSlot(slot);
         }
 
-        public bool CanDefend(CardUI attacker, CardUI defender)
+        public void SelectDefender(CardUI defender)
         {
-            if (attacker == null || defender == null) return false;
-            if (attacker == defender) return false;
-            if (!IsPlayerBoardSlot(defender.GetComponentInParent<CardSlotUI>())) return false;
+            if (defender == null) return;
+            if (currentDefender == defender) return;
 
-            return true;
+            if (currentDefender != null)
+                currentDefender.SetDefenseSelected(false);
+
+            currentDefender = defender;
+            currentDefender.SetDefenseSelected(true);
         }
 
-        public void AssignDefense(CardUI attacker, CardUI defender)
+        public async Task TryAssignDefenseAndSend(CardUI targetAttacker)
         {
-            if (!CanDefend(attacker, defender)) return;
+            if (currentDefender == null) return;
+            if (targetAttacker == null) return;
+            if (!targetAttacker.IsAttackingOutlineActive()) return;
 
-            _defenseAssignments[attacker] = defender;
-            // SetAsDefending disabled - method not available on CardUI
-            // defender.SetAsDefending(true);
+            if (!int.TryParse(currentDefender.cardId, out int defenderId)) return;
+            if (!int.TryParse(targetAttacker.cardId, out int attackerId)) return;
 
-            Debug.Log($"[DefenseService] Assigned defense: attacker={attacker.cardId} defender={defender.cardId}");
-        }
+            SignalRClient client = SignalRClient.Instance;
+            if (client == null) return;
 
-        public void UnassignDefense(CardUI attacker)
-        {
-            if (!_defenseAssignments.TryGetValue(attacker, out CardUI defender))
-                return;
+            if (defenseAssignments.ContainsKey(currentDefender))
+                defenseAssignments.Remove(currentDefender);
 
-            _defenseAssignments.Remove(attacker);
-            if (defender != null)
+            defenseAssignments[currentDefender] = targetAttacker;
+
+            try
             {
-                // SetAsDefending disabled - method not available on CardUI
-                // defender.SetAsDefending(false);
+                await client.HandleDefensePos(defenderId, attackerId);
+            }
+            catch (Exception)
+            {
+                if (defenseAssignments.ContainsKey(currentDefender) && defenseAssignments[currentDefender] == targetAttacker)
+                    defenseAssignments.Remove(currentDefender);
+            }
+        }
+
+        public void ApplyDefenseStateFromServer(DefenseDataResponseDto dto)
+        {
+            ClearAllDefense();
+
+            if (dto == null) return;
+            if (dto.DefenseCards == null) return;
+
+            for (int i = 0; i < dto.DefenseCards.Count; i++)
+            {
+                DefenseCardDataDto pair = dto.DefenseCards[i];
+                CardUI defenderCard = FindBoardCardById(pair.cardId);
+                CardUI attackerCard = FindBoardCardById(pair.opponentCardId);
+
+                if (defenderCard == null) continue;
+                if (attackerCard == null) continue;
+
+                defenderCard.SetDefenseSelected(true);
+                defenseAssignments[defenderCard] = attackerCard;
             }
 
-            Debug.Log($"[DefenseService] Unassigned defense for attacker={attacker.cardId}");
+            currentDefender = null;
         }
 
         public void ClearAllDefense()
         {
-            foreach (var kvp in _defenseAssignments)
+            if (currentDefender != null)
             {
-                if (kvp.Value != null)
+                currentDefender.SetDefenseSelected(false);
+                currentDefender = null;
+            }
+
+            foreach (KeyValuePair<CardUI, CardUI> kvp in defenseAssignments)
+            {
+                if (kvp.Key != null)
+                    kvp.Key.SetDefenseSelected(false);
+            }
+
+            defenseAssignments.Clear();
+        }
+
+        public void RegisterExistingCardsFromSlots()
+        {
+            if (p1BoardSlots != null)
+            {
+                for (int i = 0; i < p1BoardSlots.Count; i++)
                 {
-                    // SetAsDefending disabled - method not available on CardUI
-                    // kvp.Value.SetAsDefending(false);
+                    CardSlotUI slot = p1BoardSlots[i];
+                    if (slot == null) continue;
+                    if (slot.CurrentCard == null) continue;
+                    RegisterCard(slot.CurrentCard);
                 }
             }
-            _defenseAssignments.Clear();
-            _currentDefender = null;
-        }
 
-        // ========== EVENT HANDLERS ==========
-
-        private void HandleDefenseEngaged(DefenseDataResponseDto dto)
-        {
-            // À implémenter selon votre logique de défense
-            Debug.Log($"[DefenseService] Defense engaged from server");
-        }
-
-        public void HandleCardClicked(CardUI card)
-        {
-            // Vérifier si c'est en phase DEFENSE
-            PhaseService phaseService = PhaseService.Instance;
-            if (phaseService == null || phaseService.CurrentPhase != GamePhase.DEFENSE)
-                return;
-
-            if (card == null)
+            if (p2BoardSlots != null)
             {
-                Debug.LogWarning("[DefenseService] HandleCardClicked: card is NULL");
-                return;
+                for (int i = 0; i < p2BoardSlots.Count; i++)
+                {
+                    CardSlotUI slot = p2BoardSlots[i];
+                    if (slot == null) continue;
+                    if (slot.CurrentCard == null) continue;
+                    RegisterCard(slot.CurrentCard);
+                }
+            }
+        }
+
+        private CardUI FindBoardCardById(int id)
+        {
+            if (boardCardsById.TryGetValue(id, out CardUI found) && found != null)
+                return found;
+
+            if (p1BoardSlots != null)
+            {
+                for (int i = 0; i < p1BoardSlots.Count; i++)
+                {
+                    CardSlotUI slot = p1BoardSlots[i];
+                    if (slot == null) continue;
+                    if (slot.CurrentCard == null) continue;
+
+                    if (int.TryParse(slot.CurrentCard.cardId, out int cid) && cid == id)
+                    {
+                        RegisterCard(slot.CurrentCard);
+                        return slot.CurrentCard;
+                    }
+                }
             }
 
-            // Logique de défense à implémenter selon vos besoins
-            Debug.Log($"[DefenseService] Card clicked in DEFENSE phase: {card.cardName}");
+            if (p2BoardSlots != null)
+            {
+                for (int i = 0; i < p2BoardSlots.Count; i++)
+                {
+                    CardSlotUI slot = p2BoardSlots[i];
+                    if (slot == null) continue;
+                    if (slot.CurrentCard == null) continue;
+
+                    if (int.TryParse(slot.CurrentCard.cardId, out int cid) && cid == id)
+                    {
+                        RegisterCard(slot.CurrentCard);
+                        return slot.CurrentCard;
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }

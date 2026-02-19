@@ -67,7 +67,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
             if (_graveCardPrefab == null || _graveyardRoot == null)
             {
-                Debug.LogError("[GraveyardUIManager] Prefab ou Root non assigné.");
+                Debug.LogError("[GraveyardUI] Prefab ou Root non assigné.");
                 return;
             }
 
@@ -86,7 +86,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 _graveCards.Add(card);
             }
 
-            Debug.Log($"[GraveyardUIManager] Added {cards.Count} cards to graveyard. Total: {_graveCards.Count}");
+            Debug.Log($"[GraveyardUI] Added {cards.Count} cards to graveyard. Total: {_graveCards.Count}");
         }
     }
 }

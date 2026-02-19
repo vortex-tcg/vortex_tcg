@@ -179,6 +179,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 835679978}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 835679979}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &1584922 stripped
 Transform:
@@ -237,16 +240,75 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot2
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1737039046195383164, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 67817865}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 67817866}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &67817863 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
   m_PrefabInstance: {fileID: 67817862}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &67817864 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+  m_PrefabInstance: {fileID: 67817862}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &67817865
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 67817864}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slotIndex: 2
+  isOpponentSlot: 0
+  CurrentCard: {fileID: 0}
+--- !u!114 &67817866
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 67817864}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1 &68313134 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
@@ -322,6 +384,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 891603988}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 891603989}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &153462705 stripped
 Transform:
@@ -388,6 +453,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1368125944}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1368125945}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &156278053 stripped
 Transform:
@@ -403,6 +471,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 199839230}
+  - component: {fileID: 199839232}
+  - component: {fileID: 199839231}
   m_Layer: 0
   m_Name: P1CardSlots
   m_TagString: Untagged
@@ -425,12 +495,57 @@ Transform:
   m_Children:
   - {fileID: 1134066717}
   - {fileID: 522927987}
-  - {fileID: 249732032}
   - {fileID: 67817863}
+  - {fileID: 249732032}
   - {fileID: 691473917}
   - {fileID: 1754697509}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &199839231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 199839229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 733f5101838b82847be2eb7a69811edd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  P1BoardSlots:
+  - {fileID: 1134066719}
+  - {fileID: 522927989}
+  - {fileID: 67817865}
+  - {fileID: 249732034}
+  - {fileID: 691473919}
+  - {fileID: 1754697511}
+  P2BoardSlots:
+  - {fileID: 1059498130}
+  - {fileID: 1909179012}
+  - {fileID: 1486313203}
+  - {fileID: 835679978}
+  - {fileID: 1368125944}
+  - {fileID: 1885882910}
+--- !u!114 &199839232
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 199839229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d682743a936ab2a4e9940f5cba9a19f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  P1BoardSlots:
+  - {fileID: 1134066719}
+  - {fileID: 522927989}
+  - {fileID: 67817865}
+  - {fileID: 249732034}
+  - {fileID: 691473919}
+  - {fileID: 1754697511}
 --- !u!1001 &216541200
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -491,6 +606,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 742318116}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 742318117}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &216541201 stripped
 Transform:
@@ -557,6 +675,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1909179012}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1909179013}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &220998532 stripped
 Transform:
@@ -623,6 +744,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1552452907}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1552452908}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &230076503 stripped
 Transform:
@@ -681,16 +805,75 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot3
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1737039046195383164, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 249732034}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 249732035}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &249732032 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
   m_PrefabInstance: {fileID: 249732031}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &249732033 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+  m_PrefabInstance: {fileID: 249732031}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &249732034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 249732033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slotIndex: 3
+  isOpponentSlot: 0
+  CurrentCard: {fileID: 0}
+--- !u!114 &249732035
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 249732033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1 &264149735 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
@@ -727,10 +910,10 @@ Transform:
   m_Children:
   - {fileID: 1059498129}
   - {fileID: 220998532}
-  - {fileID: 1584922}
   - {fileID: 1080745406}
-  - {fileID: 1885882909}
+  - {fileID: 1584922}
   - {fileID: 156278053}
+  - {fileID: 1885882909}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &306224239
@@ -793,6 +976,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 363677467}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 363677468}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &306224240 stripped
 Transform:
@@ -859,6 +1045,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 343755112}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 343755113}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &343755108 stripped
 Transform:
@@ -880,7 +1069,38 @@ MonoBehaviour:
   slotIndex: 0
   isOpponentSlot: 0
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &343755113
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 68313134}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1001 &347979653
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -958,7 +1178,38 @@ MonoBehaviour:
   slotIndex: 0
   isOpponentSlot: 0
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &363677468
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 363677463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1001 &461632685
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1019,6 +1270,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1803225864}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1803225865}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &461632686 stripped
 Transform:
@@ -1077,16 +1331,75 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot1
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1737039046195383164, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 522927989}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 522927990}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &522927987 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
   m_PrefabInstance: {fileID: 522927986}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &522927988 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+  m_PrefabInstance: {fileID: 522927986}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &522927989
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 522927988}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slotIndex: 1
+  isOpponentSlot: 0
+  CurrentCard: {fileID: 0}
+--- !u!114 &522927990
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 522927988}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1 &620190789 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
@@ -1144,16 +1457,75 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot4
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1737039046195383164, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 691473919}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 691473920}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &691473917 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
   m_PrefabInstance: {fileID: 691473916}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &691473918 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+  m_PrefabInstance: {fileID: 691473916}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &691473919
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 691473918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slotIndex: 4
+  isOpponentSlot: 0
+  CurrentCard: {fileID: 0}
+--- !u!114 &691473920
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 691473918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1 &737667414 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
@@ -1179,7 +1551,38 @@ MonoBehaviour:
   slotIndex: 0
   isOpponentSlot: 0
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &742318117
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 742318112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1 &776513355
 GameObject:
   m_ObjectHideFlags: 0
@@ -1198,7 +1601,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &776513356
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1245,6 +1648,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7880caa4f8419348b5a83d71209979e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  uiDocument: {fileID: 776513356}
 --- !u!114 &776513360
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1254,7 +1658,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 776513355}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ab0790f2c5596064ea29bb51401eb567, type: 3}
+  m_Script: {fileID: 11500000, guid: 20ef258325c7f0744adf2dc0daf08d5d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   uiDocument: {fileID: 776513356}
@@ -1318,6 +1722,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 824804808}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 824804809}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &824804804 stripped
 Transform:
@@ -1339,7 +1746,38 @@ MonoBehaviour:
   slotIndex: 0
   isOpponentSlot: 0
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &824804809
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 126780326}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1 &835679977 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
@@ -1357,10 +1795,41 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  slotIndex: 0
-  isOpponentSlot: 0
+  slotIndex: 3
+  isOpponentSlot: 1
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &835679979
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 835679977}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1001 &889923923
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1421,6 +1890,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 889923928}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 889923929}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &889923924 stripped
 Transform:
@@ -1442,7 +1914,38 @@ MonoBehaviour:
   slotIndex: 0
   isOpponentSlot: 0
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &889923929
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 264149735}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1 &891603984 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
@@ -1463,7 +1966,38 @@ MonoBehaviour:
   slotIndex: 0
   isOpponentSlot: 0
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &891603989
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 891603984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1001 &931078889
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1524,6 +2058,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 931078894}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 931078895}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &931078890 stripped
 Transform:
@@ -1545,7 +2082,38 @@ MonoBehaviour:
   slotIndex: 0
   isOpponentSlot: 0
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &931078895
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 89977187}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1 &967252606
 GameObject:
   m_ObjectHideFlags: 0
@@ -1674,6 +2242,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1059498130}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1059498131}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &1059498129 stripped
 Transform:
@@ -1693,9 +2264,40 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slotIndex: 0
-  isOpponentSlot: 0
+  isOpponentSlot: 1
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &1059498131
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 737667414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1001 &1076761479
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1813,6 +2415,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1486313203}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1486313204}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &1080745406 stripped
 Transform:
@@ -1871,16 +2476,75 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1737039046195383164, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1134066719}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1134066720}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &1134066717 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
   m_PrefabInstance: {fileID: 1134066716}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1134066718 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+  m_PrefabInstance: {fileID: 1134066716}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1134066719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1134066718}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slotIndex: 0
+  isOpponentSlot: 0
+  CurrentCard: {fileID: 0}
+--- !u!114 &1134066720
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1134066718}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1 &1218190133
 GameObject:
   m_ObjectHideFlags: 0
@@ -1965,10 +2629,41 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  slotIndex: 0
-  isOpponentSlot: 0
+  slotIndex: 4
+  isOpponentSlot: 1
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &1368125945
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1368125943}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1 &1410990565 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
@@ -1996,10 +2691,41 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  slotIndex: 0
-  isOpponentSlot: 0
+  slotIndex: 2
+  isOpponentSlot: 1
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &1486313204
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1486313202}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1 &1552452903 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
@@ -2020,7 +2746,38 @@ MonoBehaviour:
   slotIndex: 0
   isOpponentSlot: 0
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &1552452908
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1552452903}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1001 &1558615408
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2081,6 +2838,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1558615413}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1558615414}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &1558615409 stripped
 Transform:
@@ -2102,7 +2862,38 @@ MonoBehaviour:
   slotIndex: 0
   isOpponentSlot: 0
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &1558615414
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1341779503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1 &1615186287
 GameObject:
   m_ObjectHideFlags: 0
@@ -2166,12 +2957,11 @@ MonoBehaviour:
   - {fileID: 931078890}
   _opponentBoardSlots:
   - {fileID: 1059498130}
-  - {fileID: 343755112}
-  - {fileID: 363677467}
-  - {fileID: 1558615413}
-  - {fileID: 1795709455}
-  - {fileID: 2011053245}
-  - {fileID: 931078894}
+  - {fileID: 1909179012}
+  - {fileID: 1486313203}
+  - {fileID: 835679978}
+  - {fileID: 1368125944}
+  - {fileID: 1885882910}
 --- !u!1001 &1632684625
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2289,6 +3079,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1795709455}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1795709456}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &1682992534 stripped
 Transform:
@@ -2347,16 +3140,75 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot5
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1737039046195383164, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1754697511}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1754697512}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &1754697509 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
   m_PrefabInstance: {fileID: 1754697508}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1754697510 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+  m_PrefabInstance: {fileID: 1754697508}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1754697511
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1754697510}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slotIndex: 5
+  isOpponentSlot: 0
+  CurrentCard: {fileID: 0}
+--- !u!114 &1754697512
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1754697510}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1 &1795709451 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
@@ -2377,7 +3229,38 @@ MonoBehaviour:
   slotIndex: 0
   isOpponentSlot: 0
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &1795709456
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1795709451}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1 &1803225860 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
@@ -2398,7 +3281,38 @@ MonoBehaviour:
   slotIndex: 0
   isOpponentSlot: 0
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &1803225865
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1803225860}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1 &1833318994
 GameObject:
   m_ObjectHideFlags: 0
@@ -2605,14 +3519,16 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot5
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 1737039046195383164, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+    m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1885882910}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1885882911}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &1885882909 stripped
 Transform:
@@ -2631,10 +3547,41 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  slotIndex: 0
-  isOpponentSlot: 0
+  slotIndex: 5
+  isOpponentSlot: 1
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &1885882911
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1883249493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1 &1909179011 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
@@ -2652,10 +3599,41 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0da42b36ee200e7469ac25939ef7c445, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  slotIndex: 0
-  isOpponentSlot: 0
+  slotIndex: 1
+  isOpponentSlot: 1
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &1909179013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1909179011}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1001 &1940300476
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2716,6 +3694,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1940300481}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1940300482}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &1940300477 stripped
 Transform:
@@ -2737,7 +3718,38 @@ MonoBehaviour:
   slotIndex: 0
   isOpponentSlot: 0
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &1940300482
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1410990565}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1001 &1946076882
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2798,6 +3810,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1946076887}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1946076888}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &1946076883 stripped
 Transform:
@@ -2819,7 +3834,38 @@ MonoBehaviour:
   slotIndex: 0
   isOpponentSlot: 0
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &1946076888
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 620190789}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1001 &2011053240
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2880,6 +3926,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2011053245}
+    - targetCorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2011053246}
   m_SourcePrefab: {fileID: 100100000, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
 --- !u!4 &2011053241 stripped
 Transform:
@@ -2901,7 +3950,38 @@ MonoBehaviour:
   slotIndex: 0
   isOpponentSlot: 0
   CurrentCard: {fileID: 0}
-  targetHeight: 1
+--- !u!114 &2011053246
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1448637060}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6afaac0a4344e942bef1bcb63ba5863, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardId: 
+  cardName: 
+  hp: 0
+  attack: 0
+  cost: 0
+  VisualRoot: {fileID: 0}
+  UIRoot: {fileID: 0}
+  description: 
+  imageUrl: 
+  nameText: {fileID: 0}
+  costText: {fileID: 0}
+  atkText: {fileID: 0}
+  hpText: {fileID: 0}
+  descriptionText: {fileID: 0}
+  faceDown: 0
+  attackOrderText: {fileID: 0}
+  AttackOutline: {fileID: 0}
+  DefenseOutline: {fileID: 0}
+  AttackOrder: {fileID: 0}
+  selectedScaleMultiplier: 1.08
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
