@@ -1,0 +1,11 @@
+- name: Get secrets
+  uses: hashicorp/vault-action@3
+  with:
+    url: ${{ secrets.VAULT_URL }}
+    method: token
+    token: ${{ secrets.VAULT_TOKEN }}
+    secrets: |
+      secret/ test | TEST_SECRET
+
+- name: Use
+  run: echo $TEST_SECRET
