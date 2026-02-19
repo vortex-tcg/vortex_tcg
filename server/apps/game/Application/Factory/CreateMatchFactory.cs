@@ -1,4 +1,5 @@
 ﻿using game.Domaine.Match.Agregate;
+using game.Domaine.Match.Interface;
 using game.Infrastructure.DTO;
 
 namespace game.Application.Factory;
@@ -26,8 +27,9 @@ public sealed class CreateMatchFactory
 
         (Player player1, int nextId1) = await GeneratePlayerAsync(p1, globalGameCardId, ct);
         (Player player2, int nextId2) = await GeneratePlayerAsync(p2, nextId1, ct);
+        IPhase initialPhase = new StandByPhase();
 
-        Match match = new Match(player1, player2);
+        Match match = new Match(player1, player2,initialPhase);
 
         Random rng = Random.Shared;
         player1.Deck.Shuffle(rng);
