@@ -12,7 +12,7 @@ jobs:
           method: token
           token: ${{ secrets.VAULT_TOKEN }}
           secrets: |
-            aws/data/EC2_HOST | EC2_HOST
+            aws/data/EC2_HOST EC2_HOST | EC2_HOST
 
       - name: try to connect EC2
         run: |
