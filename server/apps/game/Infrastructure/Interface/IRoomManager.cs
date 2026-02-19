@@ -1,4 +1,5 @@
 ﻿using game.Domaine.Interface;
+using game.Domaine.Match.Agregate;
 using game.Domaine.Match.Entity;
 using game.Domaine.Match.ValueObject;
 using game.Domaine.Matchmaking.Interface;

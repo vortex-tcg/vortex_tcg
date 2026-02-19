@@ -5,6 +5,7 @@ using game.Domaine.Matchmaking.Interface;
 using game.Infrastructure.Interface;
 using game.Application.Factory;
 using game.Domaine.Interface;
+using game.Domaine.Match.Agregate;
 
 namespace game.Infrastructure.Manager;
 

@@ -6,7 +6,7 @@ namespace game.Domaine.Match.Service;
 
 public static class InitMatchService
 {
-    public static MatchInitData Init(Entity.Match match)
+    public static MatchInitData Init(Agregate.Match match)
     {
         Random rng = new Random();
 
