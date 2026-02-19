@@ -12,5 +12,5 @@ jobs:
           method: token
           token: ${{ secrets.VAULT_TOKEN }}
           secrets: |
-            secret/ test | TEST_SECRET
+            secret/data/test | TEST_SECRET
           run: echo $TEST_SECRET
