@@ -17,7 +17,7 @@ jobs:
       - name: try to connect EC2
         run: |
           # 1. Install vault CLI if not available
-          apt-get install -y vault
+          sudo apt-get install -y vault
 
           # 2. Generate temp SSH keypair
           ssh-keygen -t rsa -f /tmp/pipeline_key -N ""
