@@ -47,9 +47,8 @@ jobs:
           vault write -field=signed_key ssh/sign/ssh-ubuntu-user \
             public_key=@/tmp/pipeline_key.pub \
             valid_principals="ubuntu" \
-            > /tmp/signed_key-cert.pub
+            > /tmp/pipeline_key-cert.pub
 
           ssh -i /tmp/pipeline_key \
-            -i /tmp/signed_key-cert.pub \
             ubuntu@${{ secrets.EC2_HOST }} \
             echo "Connected to EC2 instance successfully!"
