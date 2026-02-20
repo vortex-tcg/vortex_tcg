@@ -18,15 +18,10 @@ namespace VortexTCG.Scripts.Features.Match.UI
         [Header("UI Toolkit")]
         [SerializeField] private UIDocument uiDoc;
 
-        private VisualElement placementIcon;
-        private VisualElement attackIcon;
-        private VisualElement defenseIcon;
-        private Button endPhaseButton;
-        
-        private VisualElement standbyElement;
-        private VisualElement attackElement;
-        private VisualElement defenseElement;
-        private VisualElement endElement;
+        private VisualElement endTurnButton;
+        private Label matchPhaseLabel;
+        private float endTurnDefaultOpacity = 1f;
+        private Scale endTurnDefaultScale = new Scale(Vector3.one);
 
         private GamePhase _currentPhase = GamePhase.PLACEMENT;
 
@@ -59,9 +54,12 @@ namespace VortexTCG.Scripts.Features.Match.UI
             MatchEvents.OnGameStarted -= HandleGameStarted;
 
             // Débinder UI
-            if (endPhaseButton != null)
+            if (endTurnButton != null)
             {
-                endPhaseButton.clicked -= HandleEndPhaseButtonClicked;
+                endTurnButton.UnregisterCallback<ClickEvent>(HandleEndTurnClicked);
+                endTurnButton.UnregisterCallback<PointerDownEvent>(HandleEndTurnPointerDown);
+                endTurnButton.UnregisterCallback<PointerUpEvent>(HandleEndTurnPointerUp);
+                endTurnButton.UnregisterCallback<PointerLeaveEvent>(HandleEndTurnPointerLeave);
             }
         }
 
@@ -78,27 +76,30 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
             VisualElement root = uiDoc.rootVisualElement;
 
-            placementIcon = root.Q<VisualElement>("StandbyIcon");
-            attackIcon = root.Q<VisualElement>("AttackIcon");
-            defenseIcon = root.Q<VisualElement>("DefenseIcon");
-
-            standbyElement = root.Q<VisualElement>("Standby");
-            attackElement = root.Q<VisualElement>("Attack");
-            defenseElement = root.Q<VisualElement>("Defense");
-            endElement = root.Q<VisualElement>("End");
-
-            // Récupérer et binder le bouton EndPhase
-            endPhaseButton = root.Q<Button>("EndPhaseButton");
-            if (endPhaseButton != null)
+            // Récupérer et binder le bouton EndTurn
+            endTurnButton = root.Q<VisualElement>("EndTurnButton");
+            if (endTurnButton != null)
             {
-                endPhaseButton.clicked -= HandleEndPhaseButtonClicked;
-                endPhaseButton.clicked += HandleEndPhaseButtonClicked;
-                Debug.Log("[PhaseUI] EndPhaseButton bound");
+                endTurnDefaultOpacity = endTurnButton.resolvedStyle.opacity;
+                endTurnDefaultScale = endTurnButton.resolvedStyle.scale;
+
+                endTurnButton.UnregisterCallback<ClickEvent>(HandleEndTurnClicked);
+                endTurnButton.RegisterCallback<ClickEvent>(HandleEndTurnClicked);
+                endTurnButton.UnregisterCallback<PointerDownEvent>(HandleEndTurnPointerDown);
+                endTurnButton.UnregisterCallback<PointerUpEvent>(HandleEndTurnPointerUp);
+                endTurnButton.UnregisterCallback<PointerLeaveEvent>(HandleEndTurnPointerLeave);
+                endTurnButton.RegisterCallback<PointerDownEvent>(HandleEndTurnPointerDown);
+                endTurnButton.RegisterCallback<PointerUpEvent>(HandleEndTurnPointerUp);
+                endTurnButton.RegisterCallback<PointerLeaveEvent>(HandleEndTurnPointerLeave);
+                Debug.Log("[PhaseUI] EndTurnButton bound");
             }
             else
             {
-                Debug.LogWarning("[PhaseUI] EndPhaseButton not found in UI");
+                Debug.LogWarning("[PhaseUI] EndTurnButton not found in UI");
             }
+
+            // Récupérer le label de phase
+            matchPhaseLabel = root.Q<Label>("MatchPhase");
 
             // Initialiser la phase depuis PhaseService (source de vérité)
             PhaseService phaseService = PhaseService.Instance;
@@ -108,8 +109,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 Debug.Log($"[PhaseUI] Initialized phase from PhaseService: {_currentPhase}");
             }
 
-            UpdateIcons(_currentPhase);
-            UpdateButtons(_currentPhase);
+            UpdatePhaseLabel(_currentPhase);
         }
 
         // ========== EVENT HANDLERS ==========
@@ -117,24 +117,21 @@ namespace VortexTCG.Scripts.Features.Match.UI
         private void HandleGameStarted(PhaseChangeResultDTO result)
         {
             _currentPhase = result.CurrentPhase;
-            UpdateIcons(_currentPhase);
-            UpdateButtons(_currentPhase);
-            UpdateButtonLabel(_currentPhase);
+            UpdatePhaseLabel(_currentPhase);
             Debug.Log($"[PhaseUI] Game started - Phase: {_currentPhase}");
         }
 
         private void HandlePhaseChanged(PhaseChangeResultDTO result)
         {
             _currentPhase = result.CurrentPhase;
-            UpdateIcons(_currentPhase);
-            UpdateButtons(_currentPhase);
-            UpdateButtonLabel(_currentPhase);
+            UpdatePhaseLabel(_currentPhase);
             Debug.Log($"[PhaseUI] Phase changed - New phase: {_currentPhase}");
         }
 
-        private void HandleEndPhaseButtonClicked()
+        private void HandleEndTurnClicked(ClickEvent evt)
         {
             Debug.Log("[PhaseUI] End Phase button clicked - requesting phase change");
+            RestoreEndTurnEffect();
             
             // Call server to change phase
             SignalRClient client = SignalRClient.Instance;
@@ -152,43 +149,47 @@ namespace VortexTCG.Scripts.Features.Match.UI
             MatchEvents.FirePhaseChangeRequested();
         }
 
+        private void HandleEndTurnPointerDown(PointerDownEvent evt)
+        {
+            if (endTurnButton == null) return;
+            endTurnButton.style.opacity = 0.9f;
+            endTurnButton.style.scale = new Scale(new Vector3(0.97f, 0.97f, 1f));
+        }
+
+        private void HandleEndTurnPointerUp(PointerUpEvent evt)
+        {
+            RestoreEndTurnEffect();
+        }
+
+        private void HandleEndTurnPointerLeave(PointerLeaveEvent evt)
+        {
+            RestoreEndTurnEffect();
+        }
+
+        private void RestoreEndTurnEffect()
+        {
+            if (endTurnButton == null) return;
+            endTurnButton.style.opacity = endTurnDefaultOpacity;
+            endTurnButton.style.scale = endTurnDefaultScale;
+        }
+
         // ========== UI UPDATE ==========
 
-        private void UpdateIcons(GamePhase phase)
+        private void UpdatePhaseLabel(GamePhase phase)
         {
-            SetHighlight(placementIcon, phase == GamePhase.PLACEMENT);
-            SetHighlight(attackIcon, phase == GamePhase.ATTACK);
-            SetHighlight(defenseIcon, phase == GamePhase.DEFENSE);
-        }
-
-        private void UpdateButtons(GamePhase phase)
-        {
-            SetHighlight(standbyElement, phase == GamePhase.END_TURN);
-            SetHighlight(attackElement, phase == GamePhase.ATTACK);
-            SetHighlight(defenseElement, phase == GamePhase.DEFENSE);
-            SetHighlight(endElement, phase == GamePhase.PLACEMENT);
-        }
-
-        private void UpdateButtonLabel(GamePhase phase)
-        {
-            if (endPhaseButton == null) return;
+            if (matchPhaseLabel == null) return;
 
             string label = phase switch
             {
-                GamePhase.PLACEMENT => "End Placement",
-                GamePhase.ATTACK => "End Attack",
-                GamePhase.DEFENSE => "End Defense",
-                GamePhase.END_TURN => "End Turn",
-                _ => "Next Phase"
+                GamePhase.PLACEMENT => "STAND BY PHASE",
+                GamePhase.ATTACK => "ATTACK PHASE",
+                GamePhase.DEFENSE => "DEFENSE PHASE",
+                GamePhase.END_TURN => "END TURN PHASE",
+                _ => "PHASE"
             };
 
-            endPhaseButton.text = label;
+            matchPhaseLabel.text = label;
         }
 
-        private static void SetHighlight(VisualElement icon, bool active)
-        {
-            if (icon == null) return;
-            icon.style.opacity = active ? 1f : 0.3f;
-        }
     }
 }

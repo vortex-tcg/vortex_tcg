@@ -31,6 +31,8 @@ namespace VortexTCG.Scripts.Features.Match.UI
         [HideInInspector] public CardUI SelectedCard;
 
         protected readonly List<CardUI> _handCards = new();
+        private readonly List<DrawnCardDto> _pendingDrawnCards = new();
+        private bool _gameStarted;
 
         public bool HasPendingPlay => HandService?.HasPendingPlay ?? false;
 
@@ -47,6 +49,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
             
             Instance = this;
             HandService = new HandService();
+            _gameStarted = false;
             
             Debug.Log($"[HandUI] ✅ Instance SET to {gameObject.name}");
             Debug.Log("[HandUI] Awake - FindAndAssignHandSlots");
@@ -175,19 +178,15 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         protected void HandleGameStarted(PhaseChangeResultDTO result)
         {
-            Debug.Log("[HandUI] ✅✅✅ HandleGameStarted appelé - Clearing hand and requesting initial cards");
+            Debug.Log("[HandUI] ✅✅✅ HandleGameStarted appelé - Clearing hand and waiting for CardsDrawn");
+            _gameStarted = true;
             ClearHand();
-            
-            // Request initial cards from server
-            SignalRClient client = SignalRClient.Instance;
-            if (client != null && client.IsConnected)
+
+            if (_pendingDrawnCards.Count > 0)
             {
-                Debug.Log("[HandUI] ✅ SignalRClient is connected, requesting 5 cards...");
-                _ = client.DrawInitialCards(5);
-            }
-            else
-            {
-                Debug.LogError("[HandUI] ❌ Cannot draw initial cards - SignalRClient not connected");
+                Debug.Log($"[HandUI] ✅ Applying buffered cards: {_pendingDrawnCards.Count}");
+                AddCards(_pendingDrawnCards);
+                _pendingDrawnCards.Clear();
             }
         }
 
@@ -196,6 +195,14 @@ namespace VortexTCG.Scripts.Features.Match.UI
             Debug.Log($"[HandUI] ✅✅✅ HandleCardsDrawn appelé - Cards: {result?.DrawnCards?.Count ?? 0}");
             if (result?.DrawnCards != null && result.DrawnCards.Count > 0)
             {
+                if (!_gameStarted)
+                {
+                    Debug.LogWarning("[HandUI] Game not started yet - buffering drawn cards");
+                    _pendingDrawnCards.Clear();
+                    _pendingDrawnCards.AddRange(result.DrawnCards);
+                    return;
+                }
+
                 Debug.Log($"[HandUI] ✅ Appel de AddCards avec {result.DrawnCards.Count} cartes");
                 foreach (var dto in result.DrawnCards)
                 {
@@ -558,9 +565,21 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         private void ClearHand()
         {
+            if (_handSlots != null && _handSlots.Count > 0)
+            {
+                foreach (Transform slot in _handSlots)
+                {
+                    if (slot == null) continue;
+                    CardSlotUI cardSlot = slot.GetComponent<CardSlotUI>();
+                    if (cardSlot != null)
+                        cardSlot.ClearSlot();
+                }
+            }
+
             foreach (CardUI card in _handCards)
             {
-                Destroy(card.gameObject);
+                if (card != null)
+                    Destroy(card.gameObject);
             }
             _handCards.Clear();
             SelectedCard = null;

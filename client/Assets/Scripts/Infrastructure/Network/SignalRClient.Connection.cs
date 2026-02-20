@@ -34,6 +34,8 @@ public partial class SignalRClient
                 pos = p;
             Debug.Log($"[SignalRClient] Matched key={key} pos={pos} networkRefNull={(networkRef == null)}");
 
+            _playerPosition = pos;
+
             networkRef?.SetMatch(key, pos);
             OnMatched?.Invoke(key);
             OnLog?.Invoke($"Match trouvé ! Salle: {key} (pos={pos})");
@@ -69,6 +71,7 @@ public partial class SignalRClient
         {
             Debug.Log($"[SignalRClient] ✅ GameStarted reçu - phase={r.CurrentPhase}");
             OnGameStarted?.Invoke(r);
+            MatchEvents.FireGameStarted(r);
             OnLog?.Invoke($"GameStarted: phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct}");
         }));
 
@@ -76,6 +79,7 @@ public partial class SignalRClient
         {
             Debug.Log($"[SignalRClient] ✅ PhaseChanged reçu - phase={r.CurrentPhase}");
             OnPhaseChanged?.Invoke(r);
+            MatchEvents.FirePhaseChanged(r);
             OnLog?.Invoke($"PhaseChanged: phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct} auto={r.AutoChanged}");
         }));
 
@@ -128,6 +132,7 @@ public partial class SignalRClient
             }
 
             OnCardsDrawn?.Invoke(r);
+            MatchEvents.FirePlayerCardsDrawn(r);
             Debug.Log($"[SignalRClient] ✅ OnCardsDrawn event invoked, subscribers={OnCardsDrawn?.GetInvocationList().Length ?? 0}");
         }));
 
@@ -135,6 +140,7 @@ public partial class SignalRClient
         {
             Debug.Log("[SignalRClient] OpponentCardsDrawn reçu - Invoking OnOpponentCardsDrawn");
             OnOpponentCardsDrawn?.Invoke(r);
+            MatchEvents.FireOpponentCardsDrawn(r);
             OnLog?.Invoke($"OpponentCardsDrawn reçu: {r?.CardsDrawnCount ?? 0} cartes");
             Debug.Log("[SignalRClient] ✅ OnOpponentCardsDrawn event invoked");
         }));

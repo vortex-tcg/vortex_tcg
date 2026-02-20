@@ -88,13 +88,13 @@ public partial class SignalRClient
     public async Task DrawInitialCards(int amount = 5)
     {
         RequireConnectedOrThrow();
-        if (networkRef == null)
+        int playerPosition = networkRef != null ? networkRef.PlayerPosition : _playerPosition;
+        if (playerPosition < 0)
         {
-            Debug.LogError("[SignalRClient] ❌ DrawInitialCards: networkRef is NULL!");
+            Debug.LogError("[SignalRClient] ❌ DrawInitialCards: player position unknown (networkRef NULL)");
             return;
         }
-        
-        int playerPosition = networkRef.PlayerPosition;
+
         Debug.Log($"[SignalRClient] ✅✅✅ DrawInitialCards for local player (pos={playerPosition}, amount={amount})");
         await DrawCards(playerPosition, amount);
     }

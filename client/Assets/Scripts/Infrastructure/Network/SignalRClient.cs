@@ -32,6 +32,7 @@ public partial class SignalRClient : MonoBehaviour
     private string _currentKeyOrCode;
     private string _mode;
     private bool _startGameRequested;
+    private int _playerPosition = -1;
 
     public event Action<BattlesDataDto, bool> OnBattleResolution;
     public event Action<string> OnStatus;
