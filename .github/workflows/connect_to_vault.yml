@@ -16,6 +16,8 @@ jobs:
 
       - name: try to connect EC2
         run: |
+          export VAULT_ADDR=${{ secrets.VAULT_URL }}
+
           sudo apt-get update
           sudo apt-get install -y gpg
 
