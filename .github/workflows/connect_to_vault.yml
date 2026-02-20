@@ -49,6 +49,11 @@ jobs:
             valid_principals="ubuntu" \
             > /tmp/pipeline_key-cert.pub
 
-          ssh -i /tmp/pipeline_key \
-            ubuntu@${{ secrets.EC2_HOST }} \
-            echo "Connected to EC2 instance successfully!"
+      - name: Get secrets
+        uses: hashicorp/vault-action@v2
+        with:
+          url: ${{ secrets.VAULT_URL }}
+          method: token
+          token: ${{ secrets.VAULT_TOKEN }}
+          secrets: |
+            aws/EC2_HOST EC2_HOST | EC2_HOST
