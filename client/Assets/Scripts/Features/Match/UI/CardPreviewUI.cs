@@ -9,15 +9,13 @@ namespace VortexTCG.Scripts.MatchScene
 
         [SerializeField] private UIDocument uiDocument;
 
-        private VisualElement cardPreviewContainer;
-        private Label nameLabel;
-        private Label loreLabel;
-        private Label effectNameLabel;
-        private Label effectDescLabel;
-        private Label atkLabel;
-        private Label costLabel;
-        private Label defLabel;
-        private VisualElement illustration;
+        private VisualElement cardInformationsPreview;
+        private Label cardNameLabel;
+        private Label cardLoreLabel;
+        private Label cardAttackLabel;
+        private Label cardAttackPointsLabel;
+        private Label cardHealthPointsLabel;
+        private Label cardDefensePointsLabel;
 
         private void Awake()
         {
@@ -38,60 +36,107 @@ namespace VortexTCG.Scripts.MatchScene
             }
 
             VisualElement root = uiDocument.rootVisualElement;
+            VisualElement cardPreviewSide = root.Q<VisualElement>("CardPreviewSide");
             
-            VisualElement leftSide = root.Q<VisualElement>("LeftSide");
-            if (leftSide != null)
+            if (cardPreviewSide == null)
             {
-                VisualElement previewParent = leftSide.Q<VisualElement>("CardPreview");
-                if (previewParent != null)
-                {
-                    cardPreviewContainer = previewParent.Q<VisualElement>("CardPreview");
-                }
-            }
-
-            if (cardPreviewContainer == null)
-            {
-                Debug.LogError("[CardPreviewUI] CardPreview introuvable dans la hiérarchie UI.");
+                Debug.LogError("[CardPreviewUI] CardPreviewSide introuvable.");
                 return;
             }
 
-            nameLabel = cardPreviewContainer.Q<Label>("Name");
-            loreLabel = cardPreviewContainer.Q<Label>("Lore");
-            effectNameLabel = cardPreviewContainer.Q<Label>("EffectName");
-            effectDescLabel = cardPreviewContainer.Q<Label>("EffectDesc");
-            atkLabel = cardPreviewContainer.Q<Label>("ATK");
-            costLabel = cardPreviewContainer.Q<Label>("COST");
-            defLabel = cardPreviewContainer.Q<Label>("DEF");
-            illustration = cardPreviewContainer.Q<VisualElement>("Illustration");
+            cardInformationsPreview = cardPreviewSide.Q<VisualElement>("CardInformationsPreview");
+            
+            if (cardInformationsPreview == null)
+            {
+                Debug.LogError("[CardPreviewUI] CardInformationsPreview introuvable.");
+                return;
+            }
 
-            Debug.Log($"[CardPreviewUI] Labels found - Name:{nameLabel!=null}, ATK:{atkLabel!=null}, DEF:{defLabel!=null}");
+            // Récupérer les labels simples
+            cardNameLabel = cardInformationsPreview.Q<Label>("CardName");
+            cardLoreLabel = cardInformationsPreview.Q<Label>("CardLore");
+            cardAttackLabel = cardInformationsPreview.Q<Label>("CardAttack");
+
+            // Récupérer les valeurs de points (2e label de chaque section)
+            VisualElement dataSection = cardInformationsPreview.Q<VisualElement>("Data");
+            if (dataSection != null)
+            {
+                // Attack Points - chercher le label avec le texte "20" (2e enfant)
+                VisualElement attackPointsContainer = dataSection.Q<VisualElement>("CardAttackPoints");
+                if (attackPointsContainer != null)
+                {
+                    var labels = attackPointsContainer.Query<Label>().ToList();
+                    if (labels.Count >= 2)
+                        cardAttackPointsLabel = labels[1]; // 2e label
+                }
+
+                // Health Points
+                VisualElement healthPointsContainer = dataSection.Q<VisualElement>("CardHealthPoints");
+                if (healthPointsContainer != null)
+                {
+                    var labels = healthPointsContainer.Query<Label>().ToList();
+                    if (labels.Count >= 2)
+                        cardHealthPointsLabel = labels[1]; // 2e label
+                }
+
+                // Defense Points
+                VisualElement defensePointsContainer = dataSection.Q<VisualElement>("CardDefensePoints");
+                if (defensePointsContainer != null)
+                {
+                    var labels = defensePointsContainer.Query<Label>().ToList();
+                    if (labels.Count >= 2)
+                        cardDefensePointsLabel = labels[1]; // 2e label
+                }
+            }
+
+            Debug.Log($"[CardPreviewUI] Initialisation complète - Name:{cardNameLabel!=null}, Lore:{cardLoreLabel!=null}, Attack:{cardAttackLabel!=null}, ATKPoints:{cardAttackPointsLabel!=null}, HPPoints:{cardHealthPointsLabel!=null}, DEFPoints:{cardDefensePointsLabel!=null}");
 
             HidePreview();
         }
 
         public void ShowCardPreview(CardUI card)
         {
-            if (card == null || cardPreviewContainer == null)
+            if (card == null)
             {
-                Debug.LogWarning("[CardPreviewUI] Cannot show preview - card or container null");
+                Debug.LogWarning("[CardPreviewUI] Tentative d'affichage avec une carte null");
                 return;
             }
 
-            Debug.Log($"[CardPreviewUI] Showing preview for: {card.cardName}");
+            if (cardInformationsPreview == null)
+            {
+                Debug.LogWarning("[CardPreviewUI] CardInformationsPreview non initialisé");
+                return;
+            }
 
-            if (nameLabel != null) nameLabel.text = card.cardName;
-            if (loreLabel != null) loreLabel.text = card.description;
-            if (atkLabel != null) atkLabel.text = card.attack.ToString();
-            if (costLabel != null) costLabel.text = card.cost.ToString();
-            if (defLabel != null) defLabel.text = card.hp.ToString();
+            Debug.Log($"[CardPreviewUI] Affichage de la preview: {card.cardName} (ATK:{card.attack}, HP:{card.hp}, COST:{card.cost})");
 
-            cardPreviewContainer.style.display = DisplayStyle.Flex;
+            // Mettre à jour les textes
+            if (cardNameLabel != null) 
+                cardNameLabel.text = card.cardName;
+            
+            if (cardLoreLabel != null) 
+                cardLoreLabel.text = card.description;
+            
+            if (cardAttackLabel != null) 
+                cardAttackLabel.text = card.description; // ou une description de compétence si disponible
+            
+            if (cardAttackPointsLabel != null) 
+                cardAttackPointsLabel.text = card.attack.ToString();
+            
+            if (cardHealthPointsLabel != null) 
+                cardHealthPointsLabel.text = card.hp.ToString();
+            
+            if (cardDefensePointsLabel != null) 
+                cardDefensePointsLabel.text = card.cost.ToString();
+
+            // Afficher le conteneur
+            cardInformationsPreview.style.display = DisplayStyle.Flex;
         }
 
         public void HidePreview()
         {
-            if (cardPreviewContainer != null)
-                cardPreviewContainer.style.display = DisplayStyle.None;
+            if (cardInformationsPreview != null)
+                cardInformationsPreview.style.display = DisplayStyle.None;
         }
     }
 }

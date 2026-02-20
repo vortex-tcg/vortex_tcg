@@ -94,20 +94,18 @@ namespace VortexTCG.Scripts.MatchScene
             CardSlotUI slot = GetComponentInParent<CardSlotUI>();
             if (slot != null && slot.isOpponentSlot) return;
 
-            // CardPreviewUI disabled - to be reimplemented
-            // if (CardPreviewUI.Instance != null)
-            // {
-            //     CardPreviewUI.Instance.ShowCardPreview(this);
-            // }
+            if (CardPreviewUI.Instance != null)
+            {
+                CardPreviewUI.Instance.ShowCardPreview(this);
+            }
         }
 
         void OnMouseExit()
         {
-            // CardPreviewUI disabled - to be reimplemented
-            // if (CardPreviewUI.Instance != null)
-            // {
-            //     CardPreviewUI.Instance.HidePreview();
-            // }
+            if (CardPreviewUI.Instance != null)
+            {
+                CardPreviewUI.Instance.HidePreview();
+            }
         }
 
         void OnMouseDown()
@@ -128,51 +126,6 @@ namespace VortexTCG.Scripts.MatchScene
             
             // Aussi déclencher sélection pour la main (le service/UI décidera)
             MatchEvents.FireCardSelected(this);
-        }
-
-
-
-        void MockData()
-        {
-            if (string.IsNullOrEmpty(cardId))
-                cardId = System.Guid.NewGuid().ToString();
-
-            int randomCard = Random.Range(0, 4);
-            switch (randomCard)
-            {
-                case 0:
-                    cardName = "Guerrier";
-                    hp = 10;
-                    attack = 5;
-                    cost = 3;
-                    description = "Un guerrier courageux et résistant.";
-                    imageUrl = "https://example.com/images/guerrier.png";
-                    break;
-                case 1:
-                    cardName = "Mage";
-                    hp = 6;
-                    attack = 8;
-                    cost = 4;
-                    description = "Un mage puissant maîtrisant les sorts.";
-                    imageUrl = "https://example.com/images/mage.png";
-                    break;
-                case 2:
-                    cardName = "Soigneur";
-                    hp = 5;
-                    attack = 2;
-                    cost = 2;
-                    description = "Soigne les alliés pendant le combat.";
-                    imageUrl = "https://example.com/images/soigneur.png";
-                    break;
-                case 3:
-                    cardName = "Archer";
-                    hp = 7;
-                    attack = 6;
-                    cost = 3;
-                    description = "Un archer agile et précis.";
-                    imageUrl = "https://example.com/images/archer.png";
-                    break;
-            }
         }
 
         public void ApplyDTO(string id, string name, int hp, int attack, int cost, string desc, string imgUrl)
