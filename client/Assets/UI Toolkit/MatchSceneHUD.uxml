@@ -1,23 +1,23 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <ui:VisualElement name="Container" style="flex-grow: 1; flex-direction: row;">
         <ui:VisualElement name="CardPreviewSide" style="flex-grow: 1; flex-direction: column; background-color: rgba(0, 0, 0, 0.75); width: 1px; max-width: 350px; justify-content: flex-start; max-height: initial; flex-wrap: wrap-reverse; align-items: center; background-image: resource(&apos;GUI/CardPreviewBackgroundGUI&apos;);">
-            <ui:VisualElement style="flex-grow: 1; background-image: resource(&apos;GUI/CardPlaceholder&apos;); width: 350px; height: 300px;" />
-            <ui:VisualElement name="CardInformationsPreview" style="flex-grow: 1; margin-top: 10px; margin-right: 10px; margin-bottom: 10px; margin-left: 10px;">
-                <ui:Label text="Dark Magician" name="CardName" style="color: rgb(255, 255, 255); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-ExtraBold&apos;); -unity-text-align: upper-left; font-size: 27px; margin-top: 10px;" />
-                <ui:Label text="The ultimate wizard in terms of attack and defense" name="CardLore" style="color: rgb(255, 255, 255); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-Light&apos;); -unity-text-align: upper-left; font-size: 22px; margin-top: 10px; flex-wrap: wrap-reverse; white-space: normal; -unity-font-style: italic;" />
-                <ui:Label text="[Fireball] Cast a fireball that makes 3 damages" name="CardAttack" enable-rich-text="true" style="color: rgb(255, 255, 255); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-Light&apos;); -unity-text-align: upper-left; font-size: 22px; margin-top: 10px; flex-wrap: wrap-reverse; white-space: normal;" />
-                <ui:VisualElement name="Data" style="flex-grow: 1; flex-direction: row; align-items: flex-end; justify-content: space-evenly; border-bottom-width: 10px;">
+            <ui:VisualElement name="CardInformationsPreview" style="flex-grow: 1; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; height: 350px; display: flex;">
+                <ui:VisualElement name="Illustration" style="flex-grow: 1; background-image: resource(&apos;GUI/CardPlaceholder&apos;); width: 350px; height: 300px; display: flex;" />
+                <ui:Label text="Dark Magician" name="CardName" style="color: rgb(255, 255, 255); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-ExtraBold&apos;); -unity-text-align: upper-left; font-size: 27px; margin-top: 10px; border-left-width: 10px; border-right-width: 10px;" />
+                <ui:Label text="The ultimate wizard in terms of attack and defense" name="CardLore" style="color: rgb(255, 255, 255); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-Light&apos;); -unity-text-align: upper-left; font-size: 22px; margin-top: 10px; flex-wrap: wrap-reverse; white-space: normal; -unity-font-style: italic; border-left-width: 10px; border-right-width: 10px;" />
+                <ui:Label text="[Fireball] Cast a fireball that makes 3 damages" name="CardAttack" enable-rich-text="true" style="color: rgb(255, 255, 255); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-Light&apos;); -unity-text-align: upper-left; font-size: 22px; margin-top: 10px; flex-wrap: wrap-reverse; white-space: normal; border-left-width: 10px; border-right-width: 10px;" />
+                <ui:VisualElement name="Data" style="flex-grow: 1; flex-direction: row; align-items: flex-end; justify-content: space-evenly; border-bottom-width: 20px; display: flex;">
                     <ui:VisualElement name="CardAttackPoints" style="flex-grow: 1; color: rgb(255, 255, 255); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-Bold&apos;); align-items: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-left-color: rgba(255, 255, 255, 0.39); border-right-color: rgba(255, 255, 255, 0.39); border-top-color: rgba(255, 255, 255, 0.39); border-bottom-color: rgba(255, 255, 255, 0.39); border-top-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; border-bottom-left-radius: 5px; width: 90px; max-width: 90px;">
-                        <ui:Label text="ATK" name="Points" />
-                        <ui:Label text="20" style="font-size: 22px;" />
+                        <ui:Label text="ATK" name="ATKLabel" />
+                        <ui:Label text="20" name="ATKPoints" style="font-size: 22px;" />
                     </ui:VisualElement>
                     <ui:VisualElement name="CardHealthPoints" style="flex-grow: 1; color: rgb(255, 255, 255); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-Bold&apos;); align-items: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-left-color: rgba(255, 255, 255, 0.39); border-right-color: rgba(255, 255, 255, 0.39); border-top-color: rgba(255, 255, 255, 0.39); border-bottom-color: rgba(255, 255, 255, 0.39); border-top-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; border-bottom-left-radius: 5px; width: 90px; max-width: 90px;">
-                        <ui:Label text="HP" />
-                        <ui:Label text="20" name="Points" style="font-size: 22px;" />
+                        <ui:Label text="HP" name="HPLabel" />
+                        <ui:Label text="20" name="HPPoints" style="font-size: 22px;" />
                     </ui:VisualElement>
                     <ui:VisualElement name="CardDefensePoints" style="flex-grow: 1; color: rgb(255, 255, 255); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-Bold&apos;); align-items: center; border-left-color: rgba(255, 255, 255, 0.39); border-right-color: rgba(255, 255, 255, 0.39); border-top-color: rgba(255, 255, 255, 0.39); border-bottom-color: rgba(255, 255, 255, 0.39); border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; border-bottom-left-radius: 5px; width: 90px; max-width: 90px; height: auto;">
-                        <ui:Label text="DEF" />
-                        <ui:Label text="20" name="Points" style="font-size: 22px;" />
+                        <ui:Label text="DEF" name="DEFLabel" />
+                        <ui:Label text="20" name="DEFPoints" style="font-size: 22px;" />
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>

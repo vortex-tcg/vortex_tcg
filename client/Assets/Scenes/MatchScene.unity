@@ -1835,7 +1835,7 @@ MonoBehaviour:
   cardId: 
   cardName: 
   hp: 0
-  attack: 0
+  attack: 5
   cost: 0
   VisualRoot: {fileID: 0}
   UIRoot: {fileID: 0}

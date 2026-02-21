@@ -10,12 +10,13 @@ namespace VortexTCG.Scripts.MatchScene
         [SerializeField] private UIDocument uiDocument;
 
         private VisualElement cardInformationsPreview;
+        private VisualElement dataSection;
         private Label cardNameLabel;
         private Label cardLoreLabel;
         private Label cardAttackLabel;
-        private Label cardAttackPointsLabel;
-        private Label cardHealthPointsLabel;
-        private Label cardDefensePointsLabel;
+        private Label attackPoints;
+        private Label healthPoints;
+        private Label defensePoints;
 
         private void Awake()
         {
@@ -29,108 +30,65 @@ namespace VortexTCG.Scripts.MatchScene
             if (uiDocument == null)
                 uiDocument = GetComponent<UIDocument>();
 
-            if (uiDocument == null)
-            {
-                Debug.LogError("[CardPreviewUI] UIDocument non assigné.");
-                return;
-            }
-
             VisualElement root = uiDocument.rootVisualElement;
-            VisualElement cardPreviewSide = root.Q<VisualElement>("CardPreviewSide");
-            
-            if (cardPreviewSide == null)
-            {
-                Debug.LogError("[CardPreviewUI] CardPreviewSide introuvable.");
-                return;
-            }
 
-            cardInformationsPreview = cardPreviewSide.Q<VisualElement>("CardInformationsPreview");
-            
-            if (cardInformationsPreview == null)
-            {
-                Debug.LogError("[CardPreviewUI] CardInformationsPreview introuvable.");
-                return;
-            }
-
-            // Récupérer les labels simples
+            cardInformationsPreview = root.Q<VisualElement>("CardInformationsPreview");
             cardNameLabel = cardInformationsPreview.Q<Label>("CardName");
             cardLoreLabel = cardInformationsPreview.Q<Label>("CardLore");
             cardAttackLabel = cardInformationsPreview.Q<Label>("CardAttack");
-
-            // Récupérer les valeurs de points (2e label de chaque section)
-            VisualElement dataSection = cardInformationsPreview.Q<VisualElement>("Data");
-            if (dataSection != null)
-            {
-                // Attack Points - chercher le label avec le texte "20" (2e enfant)
-                VisualElement attackPointsContainer = dataSection.Q<VisualElement>("CardAttackPoints");
-                if (attackPointsContainer != null)
-                {
-                    var labels = attackPointsContainer.Query<Label>().ToList();
-                    if (labels.Count >= 2)
-                        cardAttackPointsLabel = labels[1]; // 2e label
-                }
-
-                // Health Points
-                VisualElement healthPointsContainer = dataSection.Q<VisualElement>("CardHealthPoints");
-                if (healthPointsContainer != null)
-                {
-                    var labels = healthPointsContainer.Query<Label>().ToList();
-                    if (labels.Count >= 2)
-                        cardHealthPointsLabel = labels[1]; // 2e label
-                }
-
-                // Defense Points
-                VisualElement defensePointsContainer = dataSection.Q<VisualElement>("CardDefensePoints");
-                if (defensePointsContainer != null)
-                {
-                    var labels = defensePointsContainer.Query<Label>().ToList();
-                    if (labels.Count >= 2)
-                        cardDefensePointsLabel = labels[1]; // 2e label
-                }
-            }
-
-            Debug.Log($"[CardPreviewUI] Initialisation complète - Name:{cardNameLabel!=null}, Lore:{cardLoreLabel!=null}, Attack:{cardAttackLabel!=null}, ATKPoints:{cardAttackPointsLabel!=null}, HPPoints:{cardHealthPointsLabel!=null}, DEFPoints:{cardDefensePointsLabel!=null}");
+            dataSection = cardInformationsPreview.Q<VisualElement>("Data");
+            
+            VisualElement attackPointsContainer = dataSection?.Q<VisualElement>("CardAttackPoints");
+            VisualElement healthPointsContainer = dataSection?.Q<VisualElement>("CardHealthPoints");
+            VisualElement defensePointsContainer = dataSection?.Q<VisualElement>("CardDefensePoints");
+            
+            attackPoints = attackPointsContainer?.Q<Label>("ATKPoints");
+            healthPoints = healthPointsContainer?.Q<Label>("HPPoints");
+            defensePoints = defensePointsContainer?.Q<Label>("DEFPoints");
 
             HidePreview();
         }
 
         public void ShowCardPreview(CardUI card)
         {
-            if (card == null)
+            if (string.IsNullOrEmpty(card.cardName))
             {
-                Debug.LogWarning("[CardPreviewUI] Tentative d'affichage avec une carte null");
+                HidePreview();
                 return;
             }
 
-            if (cardInformationsPreview == null)
-            {
-                Debug.LogWarning("[CardPreviewUI] CardInformationsPreview non initialisé");
-                return;
-            }
-
-            Debug.Log($"[CardPreviewUI] Affichage de la preview: {card.cardName} (ATK:{card.attack}, HP:{card.hp}, COST:{card.cost})");
-
-            // Mettre à jour les textes
+            if (cardInformationsPreview != null)
+                cardInformationsPreview.style.display = DisplayStyle.Flex;
+            
             if (cardNameLabel != null) 
+            {
+                cardNameLabel.style.display = DisplayStyle.Flex;
                 cardNameLabel.text = card.cardName;
+            }
             
             if (cardLoreLabel != null) 
+            {
+                cardLoreLabel.style.display = DisplayStyle.Flex;
                 cardLoreLabel.text = card.description;
+            }
             
             if (cardAttackLabel != null) 
-                cardAttackLabel.text = card.description; // ou une description de compétence si disponible
+            {
+                cardAttackLabel.style.display = DisplayStyle.Flex;
+                cardAttackLabel.text = card.attack.ToString();
+            }
             
-            if (cardAttackPointsLabel != null) 
-                cardAttackPointsLabel.text = card.attack.ToString();
+            if (dataSection != null)
+            {
+                dataSection.style.display = DisplayStyle.Flex;
+                
+                if (attackPoints != null) 
+                    attackPoints.text = card.attack.ToString();
+                
+                if (healthPoints != null) 
+                    healthPoints.text = card.hp.ToString();
             
-            if (cardHealthPointsLabel != null) 
-                cardHealthPointsLabel.text = card.hp.ToString();
-            
-            if (cardDefensePointsLabel != null) 
-                cardDefensePointsLabel.text = card.cost.ToString();
-
-            // Afficher le conteneur
-            cardInformationsPreview.style.display = DisplayStyle.Flex;
+            }
         }
 
         public void HidePreview()

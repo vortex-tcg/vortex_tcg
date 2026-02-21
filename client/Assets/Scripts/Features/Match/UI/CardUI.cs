@@ -92,7 +92,6 @@ namespace VortexTCG.Scripts.MatchScene
             if (faceDown) return;
 
             CardSlotUI slot = GetComponentInParent<CardSlotUI>();
-            if (slot != null && slot.isOpponentSlot) return;
 
             if (CardPreviewUI.Instance != null)
             {

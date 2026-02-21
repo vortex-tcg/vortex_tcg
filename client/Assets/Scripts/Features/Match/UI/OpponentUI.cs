@@ -24,6 +24,9 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         private readonly List<CardUI> _opponentHandCards = new();
         private readonly Dictionary<int, CardUI> _opponentBoardCards = new();
+        
+        private bool _gameStarted = false;
+        private int _pendingCardsCount = 0;
 
         private void Awake()
         {
@@ -162,13 +165,33 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         private void HandleGameStarted(PhaseChangeResultDTO result)
         {
+            Debug.Log("[OpponentUI] ✅✅✅ HandleGameStarted appelé - Clearing hand and waiting for CardsDrawn");
+            _gameStarted = true;
             ResetHand();
             ResetBoard();
+            
+            // Appliquer les cartes en attente si elles sont arrivées avant le début du jeu
+            if (_pendingCardsCount > 0)
+            {
+                Debug.Log($"[OpponentUI] ✅ Applying buffered cards: {_pendingCardsCount}");
+                AddFaceDownCards(_pendingCardsCount);
+                _pendingCardsCount = 0;
+            }
         }
 
         private void HandleOpponentCardsDrawn(DrawResultForOpponentDto result)
         {
             int count = result?.CardsDrawnCount ?? 0;
+            Debug.Log($"[OpponentUI] ✅✅✅ HandleOpponentCardsDrawn appelé - Cards: {count}, GameStarted: {_gameStarted}");
+            
+            if (!_gameStarted)
+            {
+                // Le jeu n'a pas encore démarré, stocker les cartes pour plus tard
+                Debug.Log($"[OpponentUI] 📦 Buffering {count} opponent cards until game starts");
+                _pendingCardsCount += count;
+                return;
+            }
+            
             AddFaceDownCards(count);
         }
 

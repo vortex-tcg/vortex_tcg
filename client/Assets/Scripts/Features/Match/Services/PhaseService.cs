@@ -64,6 +64,14 @@ namespace VortexTCG.Scripts.Features.Match.Services
             _instance = this;
         }
 
+        private void OnDestroy()
+        {
+            if (_instance == this)
+            {
+                _instance = null;
+            }
+        }
+
         private void OnEnable()
         {
             // Écoute les événements de changement de phase depuis le serveur
