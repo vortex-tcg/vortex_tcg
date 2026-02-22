@@ -10,10 +10,6 @@ using VortexTCG.Scripts.MatchScene;
 
 namespace VortexTCG.Scripts.Features.Match.Services
 {
-    /// <summary>
-    /// Legacy MatchService - Keeps only complex battle/attack/defense logic for Phase 2 migration
-    /// Simple events (draw, play, phase) are now handled by MatchService → MatchEvents → UI components
-    /// </summary>
     public class MatchService : MonoBehaviour
     {
         [SerializeField] private CardSlotUI[] _localSlots; 
@@ -31,7 +27,6 @@ namespace VortexTCG.Scripts.Features.Match.Services
                 return;
             }
 
-            // Subscribe only to complex events not yet migrated to UI components
             client.OnGameStarted += HandleGameStartedMinimal;
             client.OnAttackEngage += HandleAttackEngage;
             client.OnOpponentAttackEngage += HandleOpponentAttackEngage;

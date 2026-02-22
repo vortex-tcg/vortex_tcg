@@ -6,10 +6,6 @@ using VortexTCG.Scripts.MatchScene;
 
 namespace VortexTCG.Scripts.Features.Match.Services
 {
-    /// <summary>
-    /// Logique métier pure pour la gestion du board adverse
-    /// N'a pas de dépendance UI (pas de instantiation de GameObject)
-    /// </summary>
     public class OpponentBoardService
     {
         private readonly Dictionary<int, CardUI> opponentCardsById;

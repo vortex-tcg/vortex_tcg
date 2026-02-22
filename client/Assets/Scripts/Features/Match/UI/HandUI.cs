@@ -53,10 +53,8 @@ namespace VortexTCG.Scripts.Features.Match.UI
             
             Debug.Log($"[HandUI] ✅ Instance SET to {gameObject.name}");
             Debug.Log("[HandUI] Awake - FindAndAssignHandSlots");
-            FindAndAssignHandSlots();
             Debug.Log($"[HandUI] Awake - Slots trouvés: {_handSlots.Count}, CardPrefab: {(_cardPrefab != null ? _cardPrefab.name : "NULL")}");
             
-            // Subscribe to service events
             HandService.OnPlayCancelled += HandleServicePlayCancelled;
             HandService.OnPlayConfirmed += HandleServicePlayConfirmed;
         }
@@ -65,7 +63,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             Debug.Log($"[HandUI] OnEnable appelé - Instance={(Instance != null ? Instance.name : "NULL")}, this={gameObject.name}");
             
-            // Safety check: ensure Instance is set (in case Awake order issues)
             if (Instance == null && enabled)
             {
                 Debug.LogWarning($"[HandUI] ⚠️ Instance was NULL in OnEnable! Setting it now to {gameObject.name}");
@@ -76,7 +73,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 }
             }
             
-            // Always subscribe to service events (in case they were not subscribed in Awake)
             if (HandService != null)
             {
                 HandService.OnPlayCancelled += HandleServicePlayCancelled;
@@ -117,29 +113,23 @@ namespace VortexTCG.Scripts.Features.Match.UI
             MatchEvents.OnPlayerCardPlayed -= HandleCardPlayResult;
             MatchEvents.OnPendingPlayCancelled -= HandlePendingPlayCancelled;
             
-            // Unsubscribe from service events
             if (HandService != null)
-            {
                 HandService.OnPlayCancelled -= HandleServicePlayCancelled;
                 HandService.OnPlayConfirmed -= HandleServicePlayConfirmed;
             }
-        }
-
+        
         /// <summary>
         /// Cherche automatiquement les slots enfants de la main
         /// Si des slots sont déjà assignés, ne fait rien
         /// </summary>
         protected virtual void FindAndAssignHandSlots()
         {
-            // Si les slots sont déjà assignés manuellement dans l'inspecteur, ne pas chercher
             if (_handSlots.Count > 0)
             {
                 Debug.Log($"[HandUI] ✅ {_handSlots.Count} slots assignés manuellement");
                 return;
             }
             
-            // Sinon, cherche automatiquement P1HandSlot1 à P1HandSlot7
-            _handSlots.Clear();
             Transform parent = transform;
             for (int i = 1; i <= 7; i++)
             {
@@ -248,7 +238,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 Debug.LogWarning($"[HandUI] Cancelling pending play due to server error: {message}");
                 HandService.CancelPendingPlay("Hub error: " + message);
                 
-                // Deselect card after server error
+
                 if (SelectedCard != null)
                 {
                     SelectedCard.SetSelected(false);
@@ -273,12 +263,9 @@ namespace VortexTCG.Scripts.Features.Match.UI
             Debug.Log($"[HandUI] Result.Champion: {(result.Champion != null ? "NOT NULL" : "NULL")}");
             Debug.Log($"[HandUI] Result.location={result.location}, canPlayed={result.canPlayed}");
             
-            // Use pending card ID since we know which card we played
             int gameCardId = -1;
             if (HandService?.PendingCard != null && int.TryParse(HandService.PendingCard.cardId, out int id))
-            {
                 gameCardId = id;
-            }
             
             HandService?.ConfirmPlayFromServer(
                 gameCardId, 
@@ -291,8 +278,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             HandService?.CancelPendingPlay(reason);
         }
-
-        // ========== PUBLIC METHODS ==========
 
         public void SetHand(List<DrawnCardDto> drawnCards)
         {
@@ -323,12 +308,10 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
             Debug.Log($"[HandUI] État: Slots={_handSlots.Count}, HandRoot={(_handRoot != null ? _handRoot.name : "NULL")}, CardPrefab={_cardPrefab.name}");
 
-            // Utiliser les slots pré-définis si disponibles
             if (_handSlots != null && _handSlots.Count > 0)
             {
                 Debug.Log($"[HandUI] ✅ Utilisation de {_handSlots.Count} slots pour les cartes");
                 
-                // Créer une liste des slots disponibles (vides)
                 List<int> availableSlotIndices = new List<int>();
                 for (int i = 0; i < _handSlots.Count; i++)
                 {
@@ -341,8 +324,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
                         Debug.LogWarning($"[HandUI] ⚠️ Slot {i} ({slotTransform.name}) has NO CardSlotUI component!");
                         continue;
                     }
-                    
-                    // Vérifier si le slot est vide
                     if (cardSlot.CurrentCard == null)
                     {
                         availableSlotIndices.Add(i);
@@ -391,7 +372,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
                         ""
                     );
 
-                    // Positionner la carte sur le slot
+
                     card.transform.localPosition = Vector3.zero;
                     card.transform.localRotation = Quaternion.identity;
                     card.transform.localScale = Vector3.one;
@@ -401,7 +382,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
                     EnsureCollider(card);
                     _handCards.Add(card);
                     
-                    // ✅ IMPORTANT: Télécharger le slot et appeler PlaceCard pour le tracker
+
                     CardSlotUI cardSlot = slot.GetComponent<CardSlotUI>();
                     if (cardSlot != null)
                     {
@@ -419,8 +400,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
             }
             else if (_handRoot != null)
             {
-                // Fallback: utiliser _handRoot si aucun slot n'est configuré
-                Debug.LogWarning("[HandUI] ⚠️ Aucun slot configuré, fallback sur _handRoot");
+
                 foreach (DrawnCardDto dto in drawnCards)
                 {
                     if (_handCards.Count >= HandService.MaxHandSize) break;
@@ -465,11 +445,8 @@ namespace VortexTCG.Scripts.Features.Match.UI
             }
         }
 
-        // ========== SERVICE EVENT HANDLERS ==========
-        
         private void HandleServicePlayCancelled(string reason)
         {
-            // UI reaction to play cancellation
             if (SelectedCard != null)
                 SelectedCard.SetSelected(false);
         }
@@ -478,7 +455,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             Debug.Log($"[HandUI] HandleServicePlayConfirmed: gameCardId={gameCardId}, location={location}, canPlayed={canPlayed}");
             
-            // UI reaction to server confirmation
             if (canPlayed)
             {
                 CardUI pendingCard = HandService.PendingCard;
@@ -515,13 +491,11 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 
                 Debug.Log($"[HandUI] ✅ Server confirmed play for card '{pendingCard.cardName}' at slot {location}");
                 
-                // Deselect and remove from hand
                 pendingCard.SetSelected(false);
                 _handCards.Remove(pendingCard);
                 if (SelectedCard == pendingCard)
                     SelectedCard = null;
                 
-                // Place card in the slot (moves it visually)
                 Debug.Log($"[HandUI] Calling PlaceCard for '{pendingCard.cardName}' in slot {pendingSlot.slotIndex}");
                 pendingSlot.PlaceCard(pendingCard);
                 Debug.Log($"[HandUI] ✅ Card '{pendingCard.cardName}' placed in slot {pendingSlot.slotIndex}");
@@ -535,9 +509,12 @@ namespace VortexTCG.Scripts.Features.Match.UI
             }
         }
 
-        // ========== PRIVATE METHODS ==========
+        public void ClearHand()
+        {
+            ResetHand();
+        }
 
-        private void ClearHand()
+        public void ResetHand()
         {
             if (_handSlots != null && _handSlots.Count > 0)
             {

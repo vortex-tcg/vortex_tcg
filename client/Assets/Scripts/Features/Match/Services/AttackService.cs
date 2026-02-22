@@ -6,10 +6,6 @@ using VortexTCG.Scripts.MatchScene;
 
 namespace VortexTCG.Scripts.Features.Match.Services
 {
-    /// <summary>
-    /// Logique métier pure pour la gestion des attaques
-    /// N'a pas de dépendance UI
-    /// </summary>
     public class AttackService
     {
         private readonly Dictionary<int, CardUI> boardCardsById;

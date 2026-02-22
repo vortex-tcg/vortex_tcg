@@ -47,14 +47,12 @@ namespace VortexTCG.Scripts.Features.Match.UI
         /// </summary>
         private void FindAndAssignOpponentHandSlots()
         {
-            // Si les slots sont déjà assignés manuellement dans l'inspecteur, ne pas chercher
             if (_opponentHandSlots.Count > 0)
             {
                 Debug.Log($"[OpponentUI] ✅ {_opponentHandSlots.Count} slots assignés manuellement");
                 return;
             }
             
-            // Sinon, cherche automatiquement P2HandSlot1 à P2HandSlot7
             _opponentHandSlots.Clear();
             Transform parent = transform;
             for (int i = 1; i <= 7; i++)
@@ -83,14 +81,12 @@ namespace VortexTCG.Scripts.Features.Match.UI
         /// </summary>
         private void FindAndAssignOpponentBoardSlots()
         {
-            // Si les slots sont déjà assignés manuellement dans l'inspecteur, ne pas chercher
             if (_opponentBoardSlots.Count > 0)
             {
                 Debug.Log($"[OpponentUI] ✅ {_opponentBoardSlots.Count} board slots assignés manuellement");
                 return;
             }
             
-            // Sinon, cherche automatiquement P2BoardSlot1 à P2BoardSlot7
             _opponentBoardSlots.Clear();
             Transform parent = transform;
             Debug.Log($"[OpponentUI] Searching for board slots under: {parent.name}");
@@ -107,9 +103,8 @@ namespace VortexTCG.Scripts.Features.Match.UI
                     {
                         _opponentBoardSlots.Add(cardSlot);
                         
-                        // ✅ IMPORTANT: Mark this slot as opponent slot!
                         cardSlot.isOpponentSlot = true;
-                        Debug.Log($"[OpponentUI] ✅ BoardSlot P2BoardSlot{i} trouvé (CardSlotUI component: OK, isOpponentSlot marked TRUE)");
+                        
                     }
                     else
                     {
@@ -133,7 +128,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
             Debug.Log("[OpponentUI] OnEnable - Inscription aux événements");
             
             // Auto-detect board slots if not assigned
-            FindAndAssignOpponentBoardSlots();
             
             MatchEvents.OnGameStarted += HandleGameStarted;
             MatchEvents.OnOpponentCardsDrawn += HandleOpponentCardsDrawn;
@@ -155,7 +149,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
             ResetHand();
             ResetBoard();
             
-            // Appliquer les cartes en attente si elles sont arrivées avant le début du jeu
             if (_pendingCardsCount > 0)
             {
                 Debug.Log($"[OpponentUI] ✅ Applying buffered cards: {_pendingCardsCount}");
@@ -172,7 +165,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
             if (!_gameStarted)
             {
                 // Le jeu n'a pas encore démarré, stocker les cartes pour plus tard
-                Debug.Log($"[OpponentUI] 📦 Buffering {count} opponent cards until game starts");
                 _pendingCardsCount += count;
                 return;
             }
@@ -230,7 +222,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
             Debug.Log($"[OpponentUI] AddFaceDownCards appelé - {count} cartes à ajouter, Slots={_opponentHandSlots.Count}");
 
-            // Utiliser les slots pré-définis si disponibles
             if (_opponentHandSlots != null && _opponentHandSlots.Count > 0)
             {
                 Debug.Log($"[OpponentUI] ✅ Utilisation de {_opponentHandSlots.Count} slots adversaire");
@@ -248,14 +239,11 @@ namespace VortexTCG.Scripts.Features.Match.UI
                     CardUI faceDown = Instantiate(_cardPrefab, slot);
                     faceDown.gameObject.name = $"OpponentCard_{i}";
                     
-                    // ✅ Mark card as face-down (hidden in opponent's hand)
+                    faceDown.SetFaceDown(true);
                     faceDown.SetFaceDown(true);
                     
-                    // Positionner la carte sur le slot
                     faceDown.transform.localPosition = Vector3.zero;
                     faceDown.transform.localScale = Vector3.one;
-                    // ⚠️ Don't reset rotation - SetFaceDown() already sets it!
-                    
                     Debug.Log($"[OpponentUI] ✅ Carte adversaire {i}: pos={faceDown.transform.localPosition}, parent={faceDown.transform.parent.name}");
                     
                     _opponentHandCards.Add(faceDown);
@@ -264,19 +252,16 @@ namespace VortexTCG.Scripts.Features.Match.UI
             }
             else if (_opponentHandRoot != null)
             {
-                // Fallback: utiliser _opponentHandRoot si aucun slot n'est configuré
                 Debug.LogWarning("[OpponentUI] ⚠️ Aucun slot configuré, fallback sur _opponentHandRoot");
                 for (int i = 0; i < count; i++)
                 {
                     CardUI faceDown = Instantiate(_cardPrefab, _opponentHandRoot);
-                    faceDown.gameObject.name = $"FaceDownCard_{_opponentHandCards.Count}";
                     
-                    // ✅ Mark card as face-down
                     faceDown.SetFaceDown(true);
                     
                     _opponentHandCards.Add(faceDown);
                 }
-                Debug.Log($"[OpponentUI] Added {count} face-down cards. Total: {_opponentHandCards.Count}");
+                Debug.Log($"[OpponentUI] ✅ {count} cartes adversaire (fallback) ajoutées. Total: {_opponentHandCards.Count}");
             }
             else
             {
@@ -339,9 +324,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 return;
             }
 
-            // ✅ Check if this is actually an opponent slot!
             Debug.Log($"[OpponentUI] Using slot: name={slot.gameObject.name}, isOpponentSlot={slot.isOpponentSlot}, slotIndex={slot.slotIndex}");
-            
             if (!slot.isOpponentSlot)
             {
                 Debug.LogError($"[OpponentUI] ❌ ERROR: Trying to place opponent card on a PLAYER slot! This is not an opponent board slot!");
@@ -352,8 +335,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 Debug.LogWarning($"[OpponentUI] ⚠️ Slot {slotIndex} already has a card! Destroying it first");
                 Destroy(slot.CurrentCard.gameObject);
             }
-
-            // Instantiate prefab properly
+            
             if (_cardPrefab == null)
             {
                 Debug.LogError("[OpponentUI] ❌ _cardPrefab is NULL!");
@@ -379,7 +361,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
             Debug.Log($"[OpponentUI] ✅ Card set to face-up (visible on board)");
 
             // Place the card in the slot
-            Debug.Log($"[OpponentUI] Calling slot.PlaceCard()");
             slot.PlaceCard(card);
 
             if (int.TryParse(cardDto.GameCardId.ToString(), out int id))

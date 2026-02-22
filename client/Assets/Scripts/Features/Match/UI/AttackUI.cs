@@ -59,7 +59,7 @@ namespace VortexTCG.Scripts.MatchScene
         }
 
         private void OnEnterAttackPhase() => attackLogic.ClearSelections();
-        private void OnEnterDefensePhase() { /* optionnel */ }
+        private void OnEnterDefensePhase() { }
         private void OnEndDefensePhase() => attackLogic.ClearSelections();
 
         public void RegisterCard(CardUI card) => attackLogic.RegisterCard(card);
@@ -125,7 +125,6 @@ namespace VortexTCG.Scripts.MatchScene
             }
             catch (Exception ex)
             {
-                // rollback
                 ToggleCard(card);
                 Debug.LogError($"[AttackUI] Hub call HandleAttackPos FAILED cardId={cardIdInt} ex={ex}");
             }
@@ -133,7 +132,6 @@ namespace VortexTCG.Scripts.MatchScene
 
         private void ToggleCard(CardUI card)
         {
-            // Logique simple : on utilise l'état du card lui-même
             if (card.IsSelected)
                 DeselectCard(card);
             else

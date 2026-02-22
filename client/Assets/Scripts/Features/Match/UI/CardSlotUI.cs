@@ -25,9 +25,6 @@ namespace VortexTCG.Scripts.MatchScene
             }
 
             Debug.Log($"[CardSlot] ✅ CLICK slotIndex={slotIndex}");
-
-            // Déclencher événement pour demander le jeu de carte
-            // Les services gèreront la validation et l'appel serveur
             CardUI selectedCard = HandUI.Instance?.SelectedCard;
             
             Debug.Log($"[CardSlot] HandUI.Instance={(HandUI.Instance != null ? "EXISTS" : "NULL")}");
@@ -59,18 +56,14 @@ namespace VortexTCG.Scripts.MatchScene
             if (card == null) return;
 
             Debug.Log($"[CardSlotUI.PlaceCard] ✅ Posing card '{card.cardName}' on slot {slotIndex}");
-
-            // Vérifier que le slot est vide
             if (CurrentCard != null)
             {
                 Debug.LogWarning($"[CardSlotUI.PlaceCard] ❌ Slot {slotIndex} already occupied!");
                 return;
             }
 
-            // Marquer la carte comme placée
             CurrentCard = card;
             
-            // Déplacer la carte du slot de la main vers ce slot du board
             Transform cardTransform = card.transform;
             cardTransform.SetParent(transform, false);  // Changement du parent (du slot main au slot board)
             cardTransform.localPosition = Vector3.zero;
@@ -78,8 +71,6 @@ namespace VortexTCG.Scripts.MatchScene
             cardTransform.localScale = Vector3.one;
 
             Debug.Log($"[CardSlotUI.PlaceCard] ✅ Card '{card.cardName}' moved to slot {slotIndex}");
-
-            // Enregistrer la carte auprès du service d'attaque si c'est un slot joueur
             if (!isOpponentSlot)
             {
                 AttackService attackService = AttackUI.Instance?.AttackService;
@@ -91,20 +82,14 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
 
-        /// <summary>
-        /// Remplace une carte déjà placée par une autre
-        /// </summary>
         public void ReplaceCard(CardUI newCard)
         {
             if (newCard == null) return;
-
-            // Supprimer la carte actuelle si elle existe
             if (CurrentCard != null)
             {
                 Destroy(CurrentCard.gameObject);
             }
 
-            // Placer la nouvelle carte
             PlaceCard(newCard);
         }
 

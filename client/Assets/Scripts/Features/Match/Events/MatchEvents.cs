@@ -10,7 +10,6 @@ namespace VortexTCG.Scripts.Features.Match.Events
     /// </summary>
     public static class MatchEvents
     {
-        // ========== GAME STATE EVENTS ==========
         
         /// <summary>Jeu démarré, initialisation complète</summary>
         public static event Action<PhaseChangeResultDTO> OnGameStarted;
@@ -21,7 +20,6 @@ namespace VortexTCG.Scripts.Features.Match.Events
         /// <summary>Demande de changement de phase</summary>
         public static event Action OnPhaseChangeRequested;
 
-        // ========== CARD DRAW EVENTS ==========
         
         /// <summary>Cartes piochées pour le joueur</summary>
         public static event Action<DrawResultForPlayerDto> OnPlayerCardsDrawn;
@@ -29,7 +27,6 @@ namespace VortexTCG.Scripts.Features.Match.Events
         /// <summary>Cartes piochées pour l'adversaire (visibilité limitée)</summary>
         public static event Action<DrawResultForOpponentDto> OnOpponentCardsDrawn;
 
-        // ========== CARD PLAY EVENTS ==========
         
         /// <summary>Résultat du jeu d'une carte du joueur</summary>
         public static event Action<PlayCardPlayerResultDto> OnPlayerCardPlayed;
@@ -40,7 +37,6 @@ namespace VortexTCG.Scripts.Features.Match.Events
         /// <summary>Demande d'annulation du jeu pendant en attente</summary>
         public static event Action<string> OnPendingPlayCancelled;
 
-        // ========== BATTLE EVENTS ==========
         
         /// <summary>Engagement en attaque</summary>
         public static event Action<AttackResponseDto> OnPlayerAttackEngaged;
@@ -57,7 +53,6 @@ namespace VortexTCG.Scripts.Features.Match.Events
         /// <summary>Résolution d'une bataille</summary>
         public static event Action<BattlesDataDto, bool> OnBattleResolution;
 
-        // ========== UI INTERACTION EVENTS ==========
         
         /// <summary>Carte sélectionnée en main</summary>
         public static event Action<CardUI> OnCardSelected;
@@ -71,12 +66,9 @@ namespace VortexTCG.Scripts.Features.Match.Events
         /// <summary>Carte cliquée (peut être main ou plateau)</summary>
         public static event Action<CardUI> OnCardClicked;
 
-        // ========== SOCKET/SERVER EVENTS ==========
         
         /// <summary>Message de statut du serveur</summary>
         public static event Action<string> OnServerStatusMessage;
-
-        // ========== EVENT FIRING METHODS ==========
 
         public static void FireGameStarted(PhaseChangeResultDTO result) => OnGameStarted?.Invoke(result);
         public static void FirePhaseChanged(PhaseChangeResultDTO result) => OnPhaseChanged?.Invoke(result);

@@ -5,10 +5,6 @@ using VortexTCG.Scripts.Features.Match.Events;
 
 namespace VortexTCG.Scripts.Features.Match.Services
 {
-    /// <summary>
-    /// Service de gestion de l'état des phases de jeu
-    /// Gère uniquement la logique métier et broadcast les événements
-    /// </summary>
     public class PhaseService : MonoBehaviour
     {
         private static PhaseService _instance;
@@ -18,7 +14,6 @@ namespace VortexTCG.Scripts.Features.Match.Services
         {
             get
             {
-                // Don't create new instances if we're quitting or scene is unloading
                 if (_isQuitting)
                 {
                     return null;
@@ -26,10 +21,8 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
                 if (_instance == null)
                 {
-                    // Try to find existing PhaseService in scene
                     _instance = FindFirstObjectByType<PhaseService>();
                     
-                    // If not found, create it dynamically (only if not quitting)
                     if (_instance == null && !_isQuitting)
                     {
                         GameObject phaseServiceObject = new GameObject("PhaseService");
@@ -43,30 +36,26 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
         public GamePhase CurrentPhase { get; private set; } = GamePhase.PLACEMENT;
 
-        // Événements de phases
         public event Action OnEnterPlacement;
         public event Action OnEnterAttack;
         public event Action OnEnterDefense;
         public event Action OnEnterEndTurn;
         
-        // Alias pour compatibilité avec ancien code
         public event Action OnEnterStandBy
         {
             add => OnEnterEndTurn += value;
             remove => OnEnterEndTurn -= value;
         }
 
-        // Événement pour demander un changement de phase
         public event Action<GamePhase> OnRequestChangePhase;
 
         private GamePhase _previousPhase;
 
         private void Awake()
         {
-            // Reset quitting flag in case scene is reloaded
             _isQuitting = false;
 
-            if (_instance != null && _instance != this)
+            if (Instance != null && Instance != this)
             {
                 Destroy(gameObject);
                 return;
@@ -90,8 +79,6 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
         private void OnEnable()
         {
-            // Écoute les événements de changement de phase depuis le serveur
-            MatchEvents.OnPhaseChanged += HandlePhaseChanged;
             MatchEvents.OnGameStarted += HandleGameStarted;
         }
 
@@ -112,10 +99,6 @@ namespace VortexTCG.Scripts.Features.Match.Services
             Debug.Log($"[PhaseService] Phase changed to: {result.CurrentPhase}");
             ApplyServerPhase(result.CurrentPhase);
         }
-
-        /// <summary>
-        /// Applique une phase reçue du serveur
-        /// </summary>
         public void ApplyServerPhase(GamePhase newPhase)
         {
             if (CurrentPhase == newPhase)
@@ -129,13 +112,9 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
             Debug.Log($"[PhaseService] Phase transition: {_previousPhase} -> {CurrentPhase}");
 
-            // Déclenche l'événement approprié
             InvokePhaseEvent(newPhase);
         }
 
-        /// <summary>
-        /// Demande un changement de phase (envoyé au serveur via MatchService)
-        /// </summary>
         public void RequestPhaseChange(GamePhase targetPhase)
         {
             Debug.Log($"[PhaseService] Requesting phase change to: {targetPhase}");
@@ -172,9 +151,6 @@ namespace VortexTCG.Scripts.Features.Match.Services
             }
         }
 
-        /// <summary>
-        /// Réinitialise le service (utile pour les tests)
-        /// </summary>
         public void ResetPhase()
         {
             CurrentPhase = GamePhase.PLACEMENT;

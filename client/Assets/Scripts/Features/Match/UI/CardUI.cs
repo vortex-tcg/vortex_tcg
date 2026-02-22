@@ -46,27 +46,8 @@ namespace VortexTCG.Scripts.MatchScene
             Collider col = GetComponent<Collider>();
             if (col == null)
             {
-                Debug.LogWarning($"[Card] {gameObject.name} n'a PAS de Collider ! Ajout d'un BoxCollider.");
                 BoxCollider bc = gameObject.AddComponent<BoxCollider>();
                 bc.size = new Vector3(2f, 3f, 0.1f);
-            }
-            else
-            {
-                Debug.Log($"[Card] {gameObject.name} a un Collider: {col.GetType().Name}, enabled={col.enabled}, isTrigger={col.isTrigger}");
-                if (col is BoxCollider box)
-                {
-                    Debug.Log($"[Card] BoxCollider size: {box.size}, center: {box.center}");
-                }
-            }
-
-            Camera cam = Camera.main;
-            if (cam != null)
-            {
-                Debug.Log($"[Card] Camera.main trouvée: {cam.name}, tag={cam.tag}");
-            }
-            else
-            {
-                Debug.LogError("[Card] Camera.main est NULL ! OnMouseDown ne fonctionnera pas.");
             }
 
             if (AttackOrder != null && attackOrderText == null)
@@ -109,21 +90,16 @@ namespace VortexTCG.Scripts.MatchScene
 
         void OnMouseDown()
         {
-            // Prevent ANY interaction if card has no valid data
             if (string.IsNullOrEmpty(cardName) || string.IsNullOrEmpty(cardId))
             {
-                Debug.LogWarning($"[Card] ❌ BLOCKING click on invalid card - GameObject={gameObject.name}, cardName='{cardName}', cardId='{cardId}'");
                 return;
             }
             
-            Debug.Log($"[Card] OnMouseDown sur '{cardName}' (ID={cardId}), faceDown={faceDown}");
             
             if (faceDown) return;
 
-            // Déclencher événement générique de click
             MatchEvents.FireCardClicked(this);
             
-            // Aussi déclencher sélection pour la main (le service/UI décidera)
             MatchEvents.FireCardSelected(this);
         }
 
@@ -141,7 +117,6 @@ namespace VortexTCG.Scripts.MatchScene
 
         public void RefreshUI()
         {
-            Debug.Log($"[Card] RefreshUI nameText={(nameText!=null)} costText={(costText!=null)} atkText={(atkText!=null)} hpText={(hpText!=null)} descText={(descriptionText!=null)}");
 
             if (nameText != null) nameText.text = cardName;
             if (costText != null) costText.text = cost.ToString();
@@ -164,13 +139,9 @@ namespace VortexTCG.Scripts.MatchScene
                 attackOrderText.enabled = true;
                 attackOrderText.ForceMeshUpdate();
             }
-            else
-            {
-                Debug.LogError($"[Card] ShowAttackOrder({order}) - attackOrderText est NULL!");
-            }
 
-            Debug.Log(
-                $"[Card] ShowAttackOrder({order}) - AttackOrder={AttackOrder?.activeSelf}, AttackOrder.activeInHierarchy={AttackOrder?.activeInHierarchy}");
+            if (AttackOrder != null)
+                AttackOrder.SetActive(true);
         }
 
         public void ClearAttackOrder()
@@ -201,14 +172,11 @@ namespace VortexTCG.Scripts.MatchScene
                 selectionBaseScale = transform.localScale;
                 transform.localScale = selectionBaseScale * selectedScaleMultiplier;
 
-                // Activer le SelectedEffect
                 if (SelectedEffect != null)
                 {
                     SelectedEffect.SetActive(true);
-                    Debug.Log($"[Card] SelectedEffect activated for '{cardName}'");
                 }
 
-                // Afficher visuels d'attaque si en phase ATTACK et sur plateau joueur
                 PhaseService phaseService = PhaseService.Instance;
                 if (phaseService != null && phaseService.CurrentPhase == GamePhase.ATTACK)
                 {
@@ -227,11 +195,9 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 transform.localScale = selectionBaseScale;
 
-                // Désactiver le SelectedEffect
                 if (SelectedEffect != null)
                 {
                     SelectedEffect.SetActive(false);
-                    Debug.Log($"[Card] SelectedEffect deactivated for '{cardName}'");
                 }
 
                 if (AttackOutline != null)
@@ -255,7 +221,6 @@ namespace VortexTCG.Scripts.MatchScene
 
         public void SetOpponentAttacking(bool active)
         {
-            Debug.Log("Je try d'attack !!!!");
             EnsureAttackOutlineRef();
             if (AttackOutline == null) return;
             AttackOutline.SetActive(active);
@@ -305,7 +270,6 @@ namespace VortexTCG.Scripts.MatchScene
         public void SetFaceDown(bool value)
         {
             faceDown = value;
-            // ✅ Rotate around Z axis to flip the card
             transform.localRotation = value ? Quaternion.Euler(0f, 0f, 180f) : Quaternion.identity;
             Collider col = GetComponent<Collider>();
             if (col != null) col.enabled = !value;

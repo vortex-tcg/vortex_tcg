@@ -41,21 +41,17 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             Debug.Log("[PhaseUI] OnEnable");
 
-            // Bind UI Toolkit elements
             BindUIElements();
 
-            // S'abonner aux événements
             MatchEvents.OnPhaseChanged += HandlePhaseChanged;
             MatchEvents.OnGameStarted += HandleGameStarted;
         }
 
         private void OnDisable()
         {
-            // Se désabonner
             MatchEvents.OnPhaseChanged -= HandlePhaseChanged;
             MatchEvents.OnGameStarted -= HandleGameStarted;
 
-            // Débinder UI
             if (endTurnButton != null)
             {
                 endTurnButton.UnregisterCallback<ClickEvent>(HandleEndTurnClicked);
@@ -78,7 +74,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
             VisualElement root = uiDoc.rootVisualElement;
 
-            // Récupérer et binder le bouton EndTurn
             endTurnButton = root.Q<VisualElement>("EndTurnButton");
             if (endTurnButton != null)
             {
@@ -100,17 +95,14 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 Debug.LogWarning("[PhaseUI] EndTurnButton not found in UI");
             }
 
-            // Récupérer le label de phase
             matchPhaseLabel = root.Q<Label>("MatchPhase");
 
-            // Récupérer le label du timer (à ajouter dans votre UXML si pas encore présent)
             timerLabel = root.Q<Label>("TimerLabel");
             if (timerLabel == null)
             {
                 Debug.LogWarning("[PhaseUI] TimerLabel not found in UI");
             }
 
-            // Initialiser la phase depuis PhaseService (source de vérité)
             PhaseService phaseService = PhaseService.Instance;
             if (phaseService != null)
             {
@@ -121,7 +113,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
             UpdatePhaseLabel(_currentPhase);
         }
 
-        // ========== EVENT HANDLERS ==========
 
         private void HandleGameStarted(PhaseChangeResultDTO result)
         {
@@ -144,7 +135,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
             Debug.Log("[PhaseUI] End Phase button clicked - requesting phase change");
             RestoreEndTurnEffect();
             
-            // Call server to change phase
             SignalRClient client = SignalRClient.Instance;
             if (client != null && client.IsConnected)
             {
@@ -155,9 +145,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
             {
                 Debug.LogWarning("[PhaseUI] ❌ Cannot change phase - SignalRClient not connected");
             }
-            
-            // Also fire event for any local listeners
-            MatchEvents.FirePhaseChangeRequested();
         }
 
         private void HandleEndTurnPointerDown(PointerDownEvent evt)
@@ -183,8 +170,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
             endTurnButton.style.opacity = endTurnDefaultOpacity;
             endTurnButton.style.scale = endTurnDefaultScale;
         }
-
-        // ========== UI UPDATE ==========
 
         private void UpdatePhaseLabel(GamePhase phase)
         {
@@ -219,13 +204,11 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 return;
             }
 
-            // Calculer le temps restant en comparant avec l'heure actuelle
             long currentTimeMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             long remainingMs = _timerEndTime.Value - currentTimeMs;
 
             if (remainingMs <= 0)
             {
-                timerLabel.text = "00:00";
                 timerLabel.style.color = new StyleColor(Color.red);
             }
             else
@@ -236,14 +219,13 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 
                 timerLabel.text = $"{minutes:D2}:{seconds:D2}";
 
-                // Changer la couleur en fonction du temps restant
                 if (totalSeconds <= 10)
                 {
                     timerLabel.style.color = new StyleColor(Color.red);
                 }
                 else if (totalSeconds <= 30)
                 {
-                    timerLabel.style.color = new StyleColor(new Color(1f, 0.65f, 0f)); // Orange
+                    timerLabel.style.color = new StyleColor(new Color(1f, 0.5f, 0f));
                 }
                 else
                 {
