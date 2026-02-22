@@ -113,7 +113,7 @@ namespace VortexTCG.Scripts.MatchScene
             Debug.Log($"[AttackUI] -> calling Hub HandleAttackPos(cardId={cardIdInt})");
             ToggleCard(card);
 
-            SendAttackToServer(client, cardIdInt, card);
+            _ = SendAttackToServer(client, cardIdInt, card);
         }
 
         private async Task SendAttackToServer(SignalRClient client, int cardIdInt, CardUI card)

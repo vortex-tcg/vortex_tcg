@@ -20,10 +20,12 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         private VisualElement endTurnButton;
         private Label matchPhaseLabel;
+        private Label timerLabel; // Nouveau label pour afficher le timer
         private float endTurnDefaultOpacity = 1f;
         private Scale endTurnDefaultScale = new Scale(Vector3.one);
 
         private GamePhase _currentPhase = GamePhase.PLACEMENT;
+        private long? _timerEndTime; // Timestamp de fin du timer (Unix ms)
 
         private void Awake()
         {
@@ -101,6 +103,13 @@ namespace VortexTCG.Scripts.Features.Match.UI
             // Récupérer le label de phase
             matchPhaseLabel = root.Q<Label>("MatchPhase");
 
+            // Récupérer le label du timer (à ajouter dans votre UXML si pas encore présent)
+            timerLabel = root.Q<Label>("TimerLabel");
+            if (timerLabel == null)
+            {
+                Debug.LogWarning("[PhaseUI] TimerLabel not found in UI");
+            }
+
             // Initialiser la phase depuis PhaseService (source de vérité)
             PhaseService phaseService = PhaseService.Instance;
             if (phaseService != null)
@@ -117,15 +126,17 @@ namespace VortexTCG.Scripts.Features.Match.UI
         private void HandleGameStarted(PhaseChangeResultDTO result)
         {
             _currentPhase = result.CurrentPhase;
+            _timerEndTime = result.TimerEndTime;
             UpdatePhaseLabel(_currentPhase);
-            Debug.Log($"[PhaseUI] Game started - Phase: {_currentPhase}");
+            Debug.Log($"[PhaseUI] Game started - Phase: {_currentPhase}, TimerEndTime: {_timerEndTime}");
         }
 
         private void HandlePhaseChanged(PhaseChangeResultDTO result)
         {
             _currentPhase = result.CurrentPhase;
+            _timerEndTime = result.TimerEndTime;
             UpdatePhaseLabel(_currentPhase);
-            Debug.Log($"[PhaseUI] Phase changed - New phase: {_currentPhase}");
+            Debug.Log($"[PhaseUI] Phase changed - New phase: {_currentPhase}, TimerEndTime: {_timerEndTime}");
         }
 
         private void HandleEndTurnClicked(ClickEvent evt)
@@ -189,6 +200,56 @@ namespace VortexTCG.Scripts.Features.Match.UI
             };
 
             matchPhaseLabel.text = label;
+        }
+
+        // ========== TIMER ==========
+
+        private void Update()
+        {
+            UpdateTimerDisplay();
+        }
+
+        private void UpdateTimerDisplay()
+        {
+            if (timerLabel == null) return;
+
+            if (_timerEndTime == null)
+            {
+                timerLabel.text = "";
+                return;
+            }
+
+            // Calculer le temps restant en comparant avec l'heure actuelle
+            long currentTimeMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            long remainingMs = _timerEndTime.Value - currentTimeMs;
+
+            if (remainingMs <= 0)
+            {
+                timerLabel.text = "00:00";
+                timerLabel.style.color = new StyleColor(Color.red);
+            }
+            else
+            {
+                int totalSeconds = Mathf.CeilToInt(remainingMs / 1000f);
+                int minutes = totalSeconds / 60;
+                int seconds = totalSeconds % 60;
+                
+                timerLabel.text = $"{minutes:D2}:{seconds:D2}";
+
+                // Changer la couleur en fonction du temps restant
+                if (totalSeconds <= 10)
+                {
+                    timerLabel.style.color = new StyleColor(Color.red);
+                }
+                else if (totalSeconds <= 30)
+                {
+                    timerLabel.style.color = new StyleColor(new Color(1f, 0.65f, 0f)); // Orange
+                }
+                else
+                {
+                    timerLabel.style.color = new StyleColor(Color.white);
+                }
+            }
         }
 
     }

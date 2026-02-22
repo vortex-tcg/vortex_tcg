@@ -318,9 +318,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         		return;
 		    if (_localSlots == null || _localSlots.Length == 0)
     		{
-        		_localSlots = FindObjectsOfType<CardSlotUI>(true)
-            		.Where(s => s != null && !s.isOpponentSlot)
-            		.OrderBy(s => s.slotIndex)
+        	_localSlots = FindObjectsByType<CardSlotUI>(FindObjectsInactive.Include, FindObjectsSortMode.None)
             		.ToArray();
     		}
 

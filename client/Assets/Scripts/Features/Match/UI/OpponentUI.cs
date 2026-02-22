@@ -139,14 +139,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
             MatchEvents.OnOpponentCardsDrawn += HandleOpponentCardsDrawn;
             MatchEvents.OnOpponentCardPlayed += HandleOpponentCardPlayed;
             Debug.Log($"[OpponentUI] ✅ OnOpponentCardPlayed subscribed - Instance={(Instance != null ? Instance.name : "NULL")}");
-
-            // Fallback: s'enregistrer directement auprès de SignalRClient
-            SignalRClient client = SignalRClient.Instance;
-            if (client != null)
-            {
-                Debug.Log("[OpponentUI] SignalRClient trouvé, s'enregistrer directement pour OpponentCardsDrawn");
-                client.OnOpponentCardsDrawn += HandleSignalROpponentCardsDrawn;
-            }
         }
 
         private void OnDisable()
@@ -154,13 +146,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
             MatchEvents.OnGameStarted -= HandleGameStarted;
             MatchEvents.OnOpponentCardsDrawn -= HandleOpponentCardsDrawn;
             MatchEvents.OnOpponentCardPlayed -= HandleOpponentCardPlayed;
-
-            // Fallback: se désinscrire de SignalRClient
-            SignalRClient client = SignalRClient.Instance;
-            if (client != null)
-            {
-                client.OnOpponentCardsDrawn -= HandleSignalROpponentCardsDrawn;
-            }
         }
 
         private void HandleGameStarted(PhaseChangeResultDTO result)
@@ -193,15 +178,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
             }
             
             AddFaceDownCards(count);
-        }
-
-        /// <summary>
-        /// Fallback direct de SignalRClient si MatchService n'existe pas
-        /// </summary>
-        private void HandleSignalROpponentCardsDrawn(DrawResultForOpponentDto result)
-        {
-            Debug.Log("[OpponentUI] 🔥 HandleSignalROpponentCardsDrawn (fallback direct) - Cartes adversaire reçues");
-            HandleOpponentCardsDrawn(result);
         }
 
         private void HandleOpponentCardPlayed(PlayCardOpponentResultDto result)

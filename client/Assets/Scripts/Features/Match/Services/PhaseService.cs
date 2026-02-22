@@ -12,18 +12,25 @@ namespace VortexTCG.Scripts.Features.Match.Services
     public class PhaseService : MonoBehaviour
     {
         private static PhaseService _instance;
+        private static bool _isQuitting = false;
 
         public static PhaseService Instance
         {
             get
             {
+                // Don't create new instances if we're quitting or scene is unloading
+                if (_isQuitting)
+                {
+                    return null;
+                }
+
                 if (_instance == null)
                 {
                     // Try to find existing PhaseService in scene
                     _instance = FindFirstObjectByType<PhaseService>();
                     
-                    // If not found, create it dynamically
-                    if (_instance == null)
+                    // If not found, create it dynamically (only if not quitting)
+                    if (_instance == null && !_isQuitting)
                     {
                         GameObject phaseServiceObject = new GameObject("PhaseService");
                         _instance = phaseServiceObject.AddComponent<PhaseService>();
@@ -56,6 +63,9 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
         private void Awake()
         {
+            // Reset quitting flag in case scene is reloaded
+            _isQuitting = false;
+
             if (_instance != null && _instance != this)
             {
                 Destroy(gameObject);
@@ -69,7 +79,13 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (_instance == this)
             {
                 _instance = null;
+                _isQuitting = true;
             }
+        }
+
+        private void OnApplicationQuit()
+        {
+            _isQuitting = true;
         }
 
         private void OnEnable()

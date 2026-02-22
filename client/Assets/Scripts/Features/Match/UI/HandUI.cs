@@ -99,14 +99,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
             MatchEvents.OnPlayerCardPlayed += HandleCardPlayResult;
             MatchEvents.OnPendingPlayCancelled += HandlePendingPlayCancelled;
             Debug.Log("[HandUI] ✅ Tous les événements enregistrés");
-
-            // Fallback: s'enregistrer directement auprès de SignalRClient
-            SignalRClient client = SignalRClient.Instance;
-            if (client != null)
-            {
-                Debug.Log("[HandUI] SignalRClient trouvé, s'enregistrer directement pour CardsDrawn");
-                client.OnCardsDrawn += HandleSignalRCardsDrawn;
-            }
         }
 
         private void OnDisable()
@@ -124,13 +116,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
             MatchEvents.OnServerStatusMessage -= HandleServerStatus;
             MatchEvents.OnPlayerCardPlayed -= HandleCardPlayResult;
             MatchEvents.OnPendingPlayCancelled -= HandlePendingPlayCancelled;
-
-            // Unsubscribe from SignalRClient fallback
-            SignalRClient client = SignalRClient.Instance;
-            if (client != null)
-            {
-                client.OnCardsDrawn -= HandleSignalRCardsDrawn;
-            }
             
             // Unsubscribe from service events
             if (HandService != null)
@@ -214,17 +199,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
             {
                 Debug.LogError("[HandUI] ❌ HandleCardsDrawn: Aucune carte dans result OU result NULL");
             }
-        }
-
-        /// <summary>
-        /// Fallback direct de SignalRClient si MatchService n'existe pas
-        /// </summary>
-        protected void HandleSignalRCardsDrawn(DrawResultForPlayerDto result)
-        {
-            Debug.Log("[HandUI] 🔥🔥🔥 HandleSignalRCardsDrawn (fallback direct) - Cartes reçues");
-            Debug.Log($"[HandUI] Result: {(result != null ? "NOT NULL" : "NULL")}");
-            Debug.Log($"[HandUI] DrawnCards: {(result?.DrawnCards != null ? result.DrawnCards.Count : "NULL")}");
-            HandleCardsDrawn(result);
         }
 
         private void HandleCardSelected(CardUI card)

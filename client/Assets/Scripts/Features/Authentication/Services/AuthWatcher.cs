@@ -28,7 +28,7 @@ public class AuthWatcher : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         if (jwtStore == null)
-            jwtStore = Resources.Load<JwtStore>("JwtStore") ?? FindObjectOfType<JwtStore>();
+            jwtStore = Resources.Load<JwtStore>("JwtStore") ?? FindFirstObjectByType<JwtStore>();
         
         SceneManager.activeSceneChanged += OnSceneChanged;
     }
