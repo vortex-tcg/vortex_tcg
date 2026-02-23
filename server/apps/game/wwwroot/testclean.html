@@ -5,12 +5,13 @@
     <title>Vortex – Test Queue & Match</title>
     <style>
         body{font-family:sans-serif;max-width:860px;margin:24px auto;padding:0 12px}
-        #log{border:1px solid #999;height:260px;overflow:auto;padding:8px;border-radius:10px;white-space:pre-wrap}
+        #log{border:1px solid #999;height:320px;overflow:auto;padding:8px;border-radius:10px;white-space:pre-wrap}
         input,button{padding:6px 10px;margin:4px}
         .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
         .muted{opacity:.7}
         .ok{color:#1b7f1b}
         .bad{color:#b3261e}
+        code{background:rgba(0,0,0,.06);padding:2px 6px;border-radius:6px}
     </style>
 </head>
 <body>
@@ -44,6 +45,27 @@
     puis clique JoinQueue dans les deux.
 </p>
 
+<hr/>
+
+<div class="row">
+    <strong>4) Actions Match</strong>
+    <span class="muted">MatchId auto: <code id="matchIdLabel">-</code></span>
+</div>
+
+<div class="row">
+    <strong>PlayCard</strong>
+    <label>GameCardId: <input id="gameCardId" type="number" value="1" style="width:120px"/></label>
+    <label>BoardPosition: <input id="boardPos" type="number" value="0" style="width:120px"/></label>
+    <button id="playCardBtn" disabled>PlayCard</button>
+</div>
+
+<div class="row">
+    <strong>ChangePhase</strong>
+    <button id="changePhaseBtn" disabled>NextPhase</button>
+    <span class="muted">(le back calcule la prochaine phase)</span>
+</div>
+
+
 <div id="log"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8/dist/browser/signalr.min.js"></script>
@@ -60,10 +82,21 @@
     const joinQueueBtn = document.getElementById("joinQueueBtn");
     const leaveQueueBtn = document.getElementById("leaveQueueBtn");
 
+    const matchIdLabel = document.getElementById("matchIdLabel");
+
+    const gameCardIdInput = document.getElementById("gameCardId");
+    const boardPosInput = document.getElementById("boardPos");
+    const playCardBtn = document.getElementById("playCardBtn");
+
+    const nextPhaseTypeInput = document.getElementById("nextPhaseType");
+    const changePhaseBtn = document.getElementById("changePhaseBtn");
+
     const logDiv = document.getElementById("log");
 
     let jwtToken = "";
     let connection = null;
+
+    let lastMatchId = ""; // rempli quand on reçoit matchFound
 
     function append(msg) {
         const t = new Date().toLocaleTimeString();
@@ -110,6 +143,11 @@
     // 2) CONNECT HUB
     connectBtn.onclick = async () => {
         try {
+            if (connection && connection.state === signalR.HubConnectionState.Connected) {
+                append("⚠️ Déjà connecté, ignore Connect.");
+                return;
+            }
+
             setStatus(connStatus, "Connexion au hub...", null);
 
             // IMPORTANT: cible le port exposé côté host (8008)
@@ -126,7 +164,7 @@
             connection.onreconnected(() => append("✅ reconnected"));
             connection.onclose(() => append("⚠️ connection closed"));
 
-            // Events côté serveur
+            // Event "Connected" envoyé par OnConnectedAsync
             connection.on("Connected", (connectionId) => {
                 append("✅ Connected event: " + connectionId);
                 setStatus(connStatus, "Connecté (" + connectionId + ")", true);
@@ -134,20 +172,62 @@
                 leaveQueueBtn.disabled = false;
             });
 
-            // Ton CallManager envoie matchFound
+            // MATCH FOUND (CallManager -> matchFound)
             connection.on("matchFound", (payload) => {
                 append("🎮 MATCH FOUND !");
                 append(JSON.stringify(payload, null, 2));
+
+                // Essaie de récupérer un matchId depuis le payload.
+                // Chez toi ça peut être payload.data.matchId ou payload.matchId selon ton DTO envoyé par CallManager.
+                const mid =
+                    payload?.matchId ||
+                    payload?.data?.matchId ||
+                    payload?.self?.matchId ||
+                    payload?.data?.self?.matchId ||
+                    payload?.opponentData?.matchId ||
+                    "";
+
+                if (mid) {
+                    lastMatchId = mid;
+                    matchIdLabel.textContent = mid;
+                    append("✅ matchId capturé: " + mid);
+                } else {
+                    append("⚠️ matchId introuvable dans payload matchFound (regarde le JSON).");
+                }
+
+                playCardBtn.disabled = false;
+                changePhaseBtn.disabled = false;
             });
 
-            // Erreurs
+            // --- PlayCard events ---
+            connection.on("successPoseCarte", (payload) => {
+                append("✅ successPoseCarte (player)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
+            connection.on("opponentPoseCarte", (payload) => {
+                append("👀 opponentPoseCarte (opponent)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
+            // --- Phase events ---
+            connection.on("successPhaseChanged", (payload) => {
+                append("✅ successPhaseChanged (player)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
+            connection.on("opponentPhaseChanged", (payload) => {
+                append("👀 opponentPhaseChanged (opponent)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
+            // Erreurs serveur (CallManager -> Error)
             connection.on("Error", (msg) => {
                 append("❌ Error: " + msg);
             });
 
             await connection.start();
 
-            // Ton hub envoie Connected dans OnConnectedAsync
             append("Connexion start() OK.");
             setStatus(connStatus, "Connecté (start OK)", true);
             joinQueueBtn.disabled = false;
@@ -171,7 +251,6 @@
             append("JoinQueue envoyé. Attente adversaire…");
         } catch (e) {
             console.error(e);
-            console.log()
             append("❌ JoinQueue error: " + (e?.message || e));
         }
     };
@@ -187,6 +266,30 @@
             append("❌ LeaveQueue error: " + (e?.message || e));
         }
     };
+    playCardBtn.onclick = async () => {
+        try {
+            const gameCardId = parseInt((gameCardIdInput.value || "0"), 10);
+            const boardPos = parseInt((boardPosInput.value || "0"), 10);
+
+            append(`-> invoke PlayCard(${gameCardId}, ${boardPos})`);
+            await connection.invoke("PlayCard", gameCardId, boardPos);
+            append("PlayCard envoyé.");
+        } catch (e) {
+            console.error(e);
+            append("❌ PlayCard error: " + (e?.message || e));
+        }
+    };
+    changePhaseBtn.onclick = async () => {
+        try {
+            append("-> invoke ChangePhase()");
+            await connection.invoke("ChangePhase");
+            append("ChangePhase envoyé.");
+        } catch (e) {
+            console.error(e);
+            append("❌ ChangePhase error: " + (e?.message || e));
+        }
+    };
+
 </script>
 </body>
 </html>

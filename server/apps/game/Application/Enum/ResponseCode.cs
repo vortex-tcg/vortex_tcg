@@ -6,6 +6,7 @@ public enum ResponseCode
     NotFound = 404,
     SUCCESS_POSE_CARTE = 100,  
     SUCCESS_PHASE_CHANGED = 101,
+    SUCCESS_STANDBY_STARTED = 102,
     CODE_TAKEN = 1001,
     ROOM_FULL = 1002,
     NOT_FOUND = 1003,
