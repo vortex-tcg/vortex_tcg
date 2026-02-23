@@ -35,8 +35,7 @@ public static class DeckDataMapper
                 CardType = (CardType)c.CardType,
 
                 Classes = new CardClasses(c.Classes),
-                States = new CardStates(Array.Empty<CardState>()),
-
+                States = CardStates.Sleeping,
                 ImageUrl = (CardImageUrl)c.Picture
             };
 

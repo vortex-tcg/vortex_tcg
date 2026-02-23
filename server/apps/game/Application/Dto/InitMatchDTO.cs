@@ -1,9 +1,10 @@
 ﻿using game.Domaine.Match.Entity;
+using game.Domaine.Match.ValueObject;
+using CardState = game.Domaine.Match.Entity.CardState;
 
 namespace game.Application.Dto;
 using System;
 using System.Collections.Generic;
-using VortexTCG.Game.Object;
 public sealed class MatchInitUserDto
 {
     public Guid matchId { get; init; }
@@ -64,11 +65,11 @@ public static class MatchInitDtoMapper
             classes.Add(c);
         }
 
-        List<string> states = new List<string>();
-        foreach (CardState s in card.States.Value)
+        List<string> states = new List<string>
         {
-            states.Add(s.ToString());
-        }
+            card.States.Value.ToString()
+        };
+
         return new MatchInitCardDto
         {
             gameCardId = card.GameCardId.Value,
