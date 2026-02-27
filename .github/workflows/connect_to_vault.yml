@@ -54,8 +54,8 @@ jobs:
           method: token
           token: ${{ secrets.VAULT_TOKEN }}
           secrets: |
-            aws/EC2_HOST EC2_HOST | EC2_HOST
-            aws/EC2_USER EC2_USER | EC2_USER
+            aws/data/EC2_HOST EC2_HOST | EC2_HOST
+            aws/data/EC2_USER EC2_USER | EC2_USER
 
   build:
     name: Deploy to EC2
