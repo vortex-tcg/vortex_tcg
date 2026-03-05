@@ -9,6 +9,8 @@ using game.Domaine.Interface;
 public static class MatchEvent
 {
     public const string MATCH_INIT = "MATCH_INIT";
+    public const string PHASE_CHANGED = "PHASE_CHANGED";
+
 }
 
 public sealed class MatchInitData
@@ -64,5 +66,21 @@ public sealed class DomainEvent : IEvent
     public T GetData<T>()
     {
         return (T)_data;
+    }
+    
+    public sealed class PhaseChangedData
+    {
+        public Guid MatchId { get; }
+        public int CurrentPlayerPosition { get; }
+        public int OpponentPlayerPosition { get; }
+        public MatchPhaseType Phase { get; }
+
+        public PhaseChangedData(Guid matchId, int currentPlayerPosition, MatchPhaseType phase)
+        {
+            MatchId = matchId;
+            CurrentPlayerPosition = currentPlayerPosition;
+            OpponentPlayerPosition = currentPlayerPosition == 1 ? 2 : 1;
+            Phase = phase;
+        }
     }
 }

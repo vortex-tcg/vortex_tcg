@@ -151,8 +151,30 @@ public readonly record struct CardClasses
 
     public override string ToString() => $"[{string.Join(",", Value)}]";
 }
-public readonly record struct CardStates
+
+public enum CardState
 {
-    public IReadOnlyList<CardState> Value { get; }
-    public CardStates(IReadOnlyList<CardState> value) => Value = value ?? Array.Empty<CardState>();
+    Sleeping = 0,
+    Active = 1,
+    Attacking = 2,
+    Defending = 3
+}
+public readonly struct CardStates
+{
+    public CardState Value { get; }
+
+    public CardStates(CardState value)
+    {
+        Value = value;
+    }
+    public CardStates(int raw)
+    {
+        Value = (CardState)raw;
+    }
+    public static CardStates Sleeping => new(CardState.Sleeping);
+    public static CardStates Active => new(CardState.Active);
+    public static CardStates Attacking => new(CardState.Attacking);
+    public static CardStates Defending => new(CardState.Defending);
+
+    public override string ToString() => Value.ToString();
 }
