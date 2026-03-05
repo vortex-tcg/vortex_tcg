@@ -6,6 +6,7 @@ using System.Linq;
 using Microsoft.AspNetCore.SignalR.Client;
 using UnityEngine;
 using VortexTCG.Scripts.DTOs;
+using VortexTCG.Scripts.Features.Match.Events;
 
 public partial class SignalRClient
 {
@@ -33,6 +34,8 @@ public partial class SignalRClient
                 pos = p;
             Debug.Log($"[SignalRClient] Matched key={key} pos={pos} networkRefNull={(networkRef == null)}");
 
+            _playerPosition = pos;
+
             networkRef?.SetMatch(key, pos);
             OnMatched?.Invoke(key);
             OnLog?.Invoke($"Match trouvé ! Salle: {key} (pos={pos})");
@@ -48,23 +51,35 @@ public partial class SignalRClient
         {
             Debug.Log("[SignalRClient] PlayCardResult reçu");
             OnPlayCardResult?.Invoke(dto);
+            
+            // Relay to MatchEvents so HandUI can react
+            Debug.Log($"[SignalRClient] ✅ Firing MatchEvents.FirePlayerCardPlayed for card location={dto?.location}");
+            MatchEvents.FirePlayerCardPlayed(dto);
         }));
 
         _conn.On<PlayCardOpponentResultDto>("OpponentPlayCardResult", dto => Enqueue(() =>
         {
             Debug.Log("[SignalRClient] OpponentPlayCardResult reçu");
             OnOpponentPlayCardResult?.Invoke(dto);
+            
+            // Relay to MatchEvents so OpponentUI and OpponentBoardUI can react
+            Debug.Log($"[SignalRClient] ✅ Firing MatchEvents.FireOpponentCardPlayed for card location={dto?.location}");
+            MatchEvents.FireOpponentCardPlayed(dto);
         }));
 
         _conn.On<PhaseChangeResultDTO>("GameStarted", r => Enqueue(() =>
         {
+            Debug.Log($"[SignalRClient] ✅ GameStarted reçu - phase={r.CurrentPhase}");
             OnGameStarted?.Invoke(r);
+            MatchEvents.FireGameStarted(r);
             OnLog?.Invoke($"GameStarted: phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct}");
         }));
 
         _conn.On<PhaseChangeResultDTO>("PhaseChanged", r => Enqueue(() =>
         {
+            Debug.Log($"[SignalRClient] ✅ PhaseChanged reçu - phase={r.CurrentPhase}");
             OnPhaseChanged?.Invoke(r);
+            MatchEvents.FirePhaseChanged(r);
             OnLog?.Invoke($"PhaseChanged: phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct} auto={r.AutoChanged}");
         }));
 
@@ -107,16 +122,27 @@ public partial class SignalRClient
 
         _conn.On<DrawResultForPlayerDto>("CardsDrawn", r => Enqueue(() =>
         {
-            Debug.Log($"[SignalRClient]  CardsDrawn reçu. cards={r?.DrawnCards?.Count ?? -1}");
-            Debug.Log("[RAW CardsDrawn] " + r.ToString());
+            Debug.Log($"[SignalRClient] ✅✅✅ CardsDrawn reçu. cards={r?.DrawnCards?.Count ?? -1}");
+            if (r?.DrawnCards != null)
+            {
+                foreach (var card in r.DrawnCards)
+                {
+                    Debug.Log($"[SignalRClient] - Card: ID={card.GameCardId}, Name='{card.Name}'");
+                }
+            }
 
             OnCardsDrawn?.Invoke(r);
+            MatchEvents.FirePlayerCardsDrawn(r);
+            Debug.Log($"[SignalRClient] ✅ OnCardsDrawn event invoked, subscribers={OnCardsDrawn?.GetInvocationList().Length ?? 0}");
         }));
 
         _conn.On<DrawResultForOpponentDto>("OpponentCardsDrawn", r => Enqueue(() =>
         {
+            Debug.Log("[SignalRClient] OpponentCardsDrawn reçu - Invoking OnOpponentCardsDrawn");
             OnOpponentCardsDrawn?.Invoke(r);
+            MatchEvents.FireOpponentCardsDrawn(r);
             OnLog?.Invoke($"OpponentCardsDrawn reçu: {r?.CardsDrawnCount ?? 0} cartes");
+            Debug.Log("[SignalRClient] ✅ OnOpponentCardsDrawn event invoked");
         }));
 
         _conn.On<string>("Error", msg => Enqueue(() =>
@@ -153,7 +179,7 @@ public partial class SignalRClient
         {
             Debug.Log("[SignalR] Connecting… " + hubUrl);
             await _conn.StartAsync();
-            Debug.Log("[SignalR] Connected.");
+            Debug.Log("[SignalR] Connected. ✅ All handlers registered and ready for events.");
         }
         catch (Exception ex)
         {

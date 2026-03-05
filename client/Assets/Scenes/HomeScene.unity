@@ -193,7 +193,7 @@ MonoBehaviour:
   deckId: d3b07384-d9a1-4d3b-92d8-4f5c6e7a8b9c
   connectHereIfNeeded: 1
   verboseLogs: 1
-  matchSceneName: 3DMatchScene
+  matchSceneName: MatchScene
 --- !u!114 &580204061
 MonoBehaviour:
   m_ObjectHideFlags: 0

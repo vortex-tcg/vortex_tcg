@@ -24,14 +24,9 @@ public static class ConfigLoader
 
     public static AppConfig Load()
     {
-        if (config != null) {
-            #if UNITY_EDITOR
-                return config.dev;
-            #else
-                return config.prod;
-            #endif
-        }
-
+        // Force reload every time for debugging
+        config = null;
+        
         TextAsset configText = Resources.Load<TextAsset>("application-properties");
         if (configText == null)
         {
@@ -40,10 +35,12 @@ public static class ConfigLoader
         }
 
         config = JsonUtility.FromJson<AppConfigs>(configText.text);
-
+        
         #if UNITY_EDITOR
+            Debug.Log("[ConfigLoader] Loaded DEV config: " + config.dev.gameHubUrl);
             return config.dev;
         #else
+            Debug.Log("[ConfigLoader] Loaded PROD config: " + config.prod.gameHubUrl);
             return config.prod;
         #endif
     }
@@ -51,21 +48,31 @@ public static class ConfigLoader
     public static string BuildGameHubUrl(AppConfig cfg)
     {
         if (cfg == null)
+        {
+            Debug.LogWarning("[ConfigLoader] cfg is NULL");
             return null;
+        }
 
         if (!string.IsNullOrWhiteSpace(cfg.gameHubUrl))
+        {
+            Debug.Log($"[ConfigLoader] Using gameHubUrl: {cfg.gameHubUrl}");
             return cfg.gameHubUrl;
+        }
 
-        if (string.IsNullOrWhiteSpace(cfg.apiBaseUrl))
-            return null;
-
+        Debug.LogWarning("[ConfigLoader] gameHubUrl is empty, attempting fallback logic");
+        
         if (string.IsNullOrWhiteSpace(cfg.baseUrl))
+        {
+            Debug.LogError("[ConfigLoader] baseUrl is also empty");
             return null;
+        }
 
-        string baseUrl = cfg.gameHubUrl.TrimEnd('/');
+        string baseUrl = cfg.baseUrl.TrimEnd('/');
         if (baseUrl.EndsWith("/api", StringComparison.OrdinalIgnoreCase))
             baseUrl = baseUrl.Substring(0, baseUrl.Length - 4);
 
-        return baseUrl.TrimEnd('/') + "/hubs/game";
+        string fallbackUrl = baseUrl.TrimEnd('/') + "/hubs/game";
+        Debug.Log($"[ConfigLoader] Using fallback URL: {fallbackUrl}");
+        return fallbackUrl;
     }
 }

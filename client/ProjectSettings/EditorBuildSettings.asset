@@ -12,7 +12,7 @@ EditorBuildSettings:
     path: Assets/Scenes/HomeScene.unity
     guid: 543b3bccfee2a4b4dadd2e425e6459d0
   - enabled: 1
-    path: Assets/Scenes/NavigationComponent.unity
+    path: Assets/Scene/UpperMenuUI.unity
     guid: 6aa82142e7331784da5ef5e61cb1f489
   - enabled: 1
     path: Assets/Scenes/LoadingScene.unity

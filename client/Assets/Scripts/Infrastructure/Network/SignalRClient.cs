@@ -32,6 +32,7 @@ public partial class SignalRClient : MonoBehaviour
     private string _currentKeyOrCode;
     private string _mode;
     private bool _startGameRequested;
+    private int _playerPosition = -1;
 
     public event Action<BattlesDataDto, bool> OnBattleResolution;
     public event Action<string> OnStatus;
@@ -74,8 +75,16 @@ public partial class SignalRClient : MonoBehaviour
 
     private async void Start()
     {
+        Debug.Log($"[SignalRClient] Start() - autoConnectOnStart={autoConnectOnStart}");
         if (autoConnectOnStart)
+        {
+            Debug.Log("[SignalRClient] ✅ Calling ConnectAndIdentify from Start()");
             await ConnectAndIdentify(defaultPlayerName);
+        }
+        else
+        {
+            Debug.Log("[SignalRClient] ⚠️ autoConnectOnStart is FALSE - waiting for external call");
+        }
     }
 
     private async void OnApplicationQuit()
