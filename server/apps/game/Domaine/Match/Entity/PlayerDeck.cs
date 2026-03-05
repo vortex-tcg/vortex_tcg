@@ -31,5 +31,26 @@ public sealed class PlayerDeck
     }
 }
 
-public sealed class Board { }
+public sealed class Board
+{
+    private readonly Dictionary<int, GameCardDto> _slots = new Dictionary<int, GameCardDto>();
+    public int Count => _slots.Count;
+
+    public bool IsSlotFree(int position)
+    {
+        return !_slots.ContainsKey(position);
+    }
+
+    public void Place(int position, GameCardDto card)
+    {   
+        _slots[position] = card;
+    }
+
+    public bool TryGet(int position, out GameCardDto card)
+    {
+        return _slots.TryGetValue(position, out card!);
+    }
+    public IEnumerable<KeyValuePair<int, GameCardDto>> EnumerateSlots()
+        => _slots;
+}
 public sealed class Graveyard { }

@@ -17,7 +17,8 @@ public sealed class StandByPhase : IPhase
     {
         Player current = match.GetCurrentPlayer();
         Player opponent = match.GetOpponentPlayer();
-        current.Champion.Gold = new ChampionGold(current.Champion.BaseGold.Value);
+        current.Champion.BaseGold = new ChampionBaseGold(Math.Min(current.Champion.BaseGold.Value + 1, 10));
+        current.Champion.Gold = new ChampionGold(current.Champion.BaseGold.Value);       
         GameCardDto? drawn = current.Deck.DrawOne();
         if (drawn != null)
         {

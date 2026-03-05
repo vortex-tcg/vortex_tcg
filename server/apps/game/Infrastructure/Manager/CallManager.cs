@@ -13,11 +13,11 @@ public sealed class CallManager : ICallManager
     public static CallManager Instance => _instance.Value;
 
     private readonly IHubContext<GameHubClean> _hubContext;
-
     private static readonly string[][] mapCodesToSignalRCallPlayer =
     {
         new[] { nameof(ResponseCode.SUCCESS_POSE_CARTE), "successPoseCarte" },
         new[] { nameof(ResponseCode.SUCCESS_PHASE_CHANGED), "successPhaseChanged" },
+        new[] { nameof(ResponseCode.SUCCESS_STANDBY_STARTED), "successPhaseChanged" }, 
         new[] { nameof(ResponseCode.MATCH_FOUND), "matchFound" },
     };
 
@@ -25,9 +25,10 @@ public sealed class CallManager : ICallManager
     {
         new[] { nameof(ResponseCode.SUCCESS_POSE_CARTE), "opponentPoseCarte" },
         new[] { nameof(ResponseCode.SUCCESS_PHASE_CHANGED), "opponentPhaseChanged" },
+        new[] { nameof(ResponseCode.SUCCESS_STANDBY_STARTED), "opponentPhaseChanged" }, 
         new[] { nameof(ResponseCode.MATCH_FOUND), "matchFound" },
-
     };
+
 
     private static readonly string[][] mapCodesToMsgError =
     {
