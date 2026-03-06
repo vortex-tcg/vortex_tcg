@@ -48,14 +48,13 @@ jobs:
 
       - name: Get secrets
         id: vault-step
-        uses: hashicorp/vault-action@v2
-        with:
-          url: ${{ secrets.VAULT_URL }}
-          method: token
-          token: ${{ secrets.VAULT_TOKEN }}
-          kvVersion: 1
-          secrets: |
-            aws/data/EC2_HOST EC2_HOST | EC2_HOST
+        run: |
+          export VAULT_ADDR=${{ secrets.VAULT_URL }}
+          export VAULT_TOKEN=${{ secrets.VAULT_TOKEN }}
+          EC2_HOST=$(vault kv get -field=EC2_HOST aws/EC2_HOST)
+          EC2_USER=$(vault kv get -field=EC2_USER aws/EC2_USER)
+          echo "EC2_HOST=$EC2_HOST" >> $GITHUB_OUTPUT
+          echo "EC2_USER=$EC2_USER" >> $GITHUB_OUTPUT
 
   build:
     name: Deploy to EC2
