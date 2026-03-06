@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       ec2_host: ${{ steps.vault-step.outputs.EC2_HOST }}
-      ec2_user: ${{ steps.vault-step.outputs.EC2_USER }}
+      ec2_user: ubuntu
     steps:
       - name: try to connect EC2
         run: |
@@ -53,9 +53,9 @@ jobs:
           url: ${{ secrets.VAULT_URL }}
           method: token
           token: ${{ secrets.VAULT_TOKEN }}
+          kvVersion: 1
           secrets: |
             aws/data/EC2_HOST EC2_HOST | EC2_HOST
-            aws/data/EC2_USER EC2_USER | EC2_USER
 
   build:
     name: Deploy to EC2
