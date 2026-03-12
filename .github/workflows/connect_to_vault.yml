@@ -12,5 +12,5 @@ jobs:
           method: token
           token: ${{ secrets.VAULT_TOKEN }}
           secrets: |
-            secret/data/aws EC2_HOST | EC2_HOST
-            secret/data/aws EC2_USER | EC2_USER
+            secret/aws EC2_HOST | EC2_HOST
+            secret/aws EC2_USER | EC2_USER
