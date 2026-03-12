@@ -14,10 +14,36 @@ jobs:
           tlsSkipVerify: true
           secrets: |
             aws/data/EC2_HOST EC2_HOST | EC2_HOST ;
-            aws/data/EC2_USER EC2_USER | EC2_USER
+            aws/data/EC2_USER EC2_USER | EC2_USER ;
+            sonar/data/SONARQUBE_PORT SONARQUBE_PORT | SONARQUBE_PORT;
+            db/data/DB_PASSWORD DB_PASSWORD | DB_PASSWORD ;
+            db/data/DB_USERNAME DB_USERNAME | DB_USERNAME ;
+            db/data/DB_NAME DB_NAME | DB_NAME ;
+            db/data/DB_PORT DB_PORT | DB_PORT;
 
       - name: Pull latest code
         run: |
           cd /var/www/vortex_tcg
-          git checkout ${GITHUB_REF#refs/heads/}
+          git checkout ${{ github.ref_name }}
           git pull origin main
+
+      - name: Pull latest docker images
+        run: |
+          docker pull vortextcg/vortex_repository:api
+          docker pull vortextcg/vortex_repository:game
+          docker pull vortextcg/vortex_repository:auth
+          docker pull vortextcg/vortex_repository:migrations
+          docker logout
+
+      - name: Run database migrations
+        run: |
+          cd /var/www/vortex_tcg/server
+          docker pull vortextcg/vortex_repository:migrations
+          docker run --rm \
+            -e DB_HOST=db \
+            -e DB_PORT=${{ env.DB_PORT }} \
+            -e DB_USERNAME=${{ env.DB_USERNAME }} \
+            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            -e DB_NAME=${{ env.DB_NAME }} \
+            --name migrations-$(date +%s) \
+            vortextcg/vortex_repository:migrations
