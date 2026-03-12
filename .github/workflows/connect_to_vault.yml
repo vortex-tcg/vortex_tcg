@@ -53,6 +53,8 @@ jobs:
           export VAULT_TOKEN=${{ secrets.VAULT_TOKEN }}
           EC2_HOST=$(vault kv get -field=EC2_HOST aws/EC2_HOST)
           EC2_USER=$(vault kv get -field=EC2_USER aws/EC2_USER)
+          echo "DEBUG: EC2_HOST=$EC2_HOST"
+          echo "DEBUG: EC2_USER=$EC2_USER"
           echo "EC2_HOST=$EC2_HOST" >> $GITHUB_OUTPUT
           echo "EC2_USER=$EC2_USER" >> $GITHUB_OUTPUT
 
@@ -63,6 +65,11 @@ jobs:
     environment: production
 
     steps:
+      - name: Debug outputs
+        run: |
+          echo "DEBUG: ec2_host=${{ needs.connect-to-vault.outputs.ec2_host }}"
+          echo "DEBUG: ec2_user=${{ needs.connect-to-vault.outputs.ec2_user }}"
+
       - name: Download SSH keys
         uses: actions/download-artifact@v4
         with:
@@ -73,7 +80,7 @@ jobs:
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
           host: ${{ needs.connect-to-vault.outputs.ec2_host }}
-          username: ubuntu
+          username: ${{ needs.connect-to-vault.outputs.ec2_user }}
           key_path: /tmp/pipeline_key
           cert_path: /tmp/pipeline_key-cert.pub
           script: |
