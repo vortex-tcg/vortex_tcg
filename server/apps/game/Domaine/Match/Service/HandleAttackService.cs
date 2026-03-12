@@ -9,7 +9,7 @@ using game.Domaine.Match.ValueObject;
 
 namespace game.Domaine.Match.Service;
 
-public static class HandleAttackPhaseService
+public static class HandleAttackService
 {
     public static AttackOrderUpdatedDto ToggleAttackCard(
         Agregate.Match match,

@@ -35,7 +35,7 @@ public static class AttackService
         if (!current.UserId.Equals(userId))
             throw new InvalidOperationException("Not your turn.");
 
-        HandleAttackPhaseService.ToggleAttackCard(match, userId, position, ct);
+        HandleAttackService.ToggleAttackCard(match, userId, position, ct);
 
         IReadOnlyList<IEvent> events = match.PullEvents();
         if (events.Count == 0) return;
