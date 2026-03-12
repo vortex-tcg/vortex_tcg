@@ -14,8 +14,6 @@ jobs:
           export VAULT_TOKEN=${{ secrets.VAULT_TOKEN }}
 
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
 
           sudo apt-get update
           sudo apt-get install -y gpg
@@ -46,15 +44,21 @@ jobs:
             /tmp/pipeline_key-cert.pub
           retention-days: 1
 
-      - name: Get secrets
+      - name: Get secrets and setup SSH
         id: vault-step
         run: |
           export VAULT_ADDR=${{ secrets.VAULT_URL }}
           export VAULT_TOKEN=${{ secrets.VAULT_TOKEN }}
+
           EC2_HOST=$(vault kv get -field=EC2_HOST aws/EC2_HOST)
           EC2_USER=$(vault kv get -field=EC2_USER aws/EC2_USER)
-          echo "DEBUG: EC2_HOST=$EC2_HOST"
+
+          ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+          echo "DEBUG: EC2_HOST length: ${#EC2_HOST}"
           echo "DEBUG: EC2_USER=$EC2_USER"
+
           echo "EC2_HOST=$EC2_HOST" >> $GITHUB_OUTPUT
           echo "EC2_USER=$EC2_USER" >> $GITHUB_OUTPUT
 
