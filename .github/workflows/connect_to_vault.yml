@@ -8,7 +8,7 @@ jobs:
       - name: Get Vault secrets
         uses: hashicorp/vault-action@v2
         with:
-          url: http://localhost:8200
+          url: https://localhost:8200
           method: token
           token: ${{ secrets.VAULT_TOKEN }}
           secrets: |
