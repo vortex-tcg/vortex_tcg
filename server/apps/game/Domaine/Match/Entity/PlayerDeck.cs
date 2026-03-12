@@ -30,7 +30,6 @@ public sealed class PlayerDeck
         return top;
     }
 }
-
 public sealed class Board
 {
     private readonly Dictionary<int, GameCardDto> _slots = new Dictionary<int, GameCardDto>();
@@ -41,8 +40,13 @@ public sealed class Board
         return !_slots.ContainsKey(position);
     }
 
+    public bool HasCardAtPosition(int position)
+    {
+        return _slots.ContainsKey(position);
+    }
+
     public void Place(int position, GameCardDto card)
-    {   
+    {
         _slots[position] = card;
     }
 
@@ -50,6 +54,12 @@ public sealed class Board
     {
         return _slots.TryGetValue(position, out card!);
     }
+
+    public GameCardDto? GetCardAtPosition(int position)
+    {
+        return _slots.TryGetValue(position, out GameCardDto? card) ? card : null;
+    }
+
     public IEnumerable<KeyValuePair<int, GameCardDto>> EnumerateSlots()
         => _slots;
 }
