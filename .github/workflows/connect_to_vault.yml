@@ -13,5 +13,5 @@ jobs:
           token: ${{ secrets.VAULT_TOKEN }}
           kv-version: 1
           secrets: |
-            aws EC2_HOST | EC2_HOST ;
-            aws EC2_USER | EC2_USER ;
+            secret/data/aws EC2_HOST | EC2_HOST ;
+            secret/data/aws EC2_USER | EC2_USER ;
