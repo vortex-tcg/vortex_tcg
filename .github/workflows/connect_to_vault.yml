@@ -18,6 +18,6 @@ jobs:
 
       - name: Pull latest code
         run: |
-          cd /var/www/vortex-tcg
+          cd /var/www/vortex_tcg
           git checkout ${GITHUB_REF#refs/heads/}
           git pull origin main
