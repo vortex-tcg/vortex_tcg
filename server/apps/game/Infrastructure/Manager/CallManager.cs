@@ -19,6 +19,8 @@ public sealed class CallManager : ICallManager
         new[] { nameof(ResponseCode.SUCCESS_PHASE_CHANGED), "successPhaseChanged" },
         new[] { nameof(ResponseCode.SUCCESS_STANDBY_STARTED), "successPhaseChanged" }, 
         new[] { nameof(ResponseCode.MATCH_FOUND), "matchFound" },
+        new[] { nameof(ResponseCode.SUCCESS_ATTACK_ORDER_UPDATED), "successAttackOrderUpdated" },
+
     };
 
     private static readonly string[][] mapCodesToSignalRCallOpponent =
@@ -27,6 +29,8 @@ public sealed class CallManager : ICallManager
         new[] { nameof(ResponseCode.SUCCESS_PHASE_CHANGED), "opponentPhaseChanged" },
         new[] { nameof(ResponseCode.SUCCESS_STANDBY_STARTED), "opponentPhaseChanged" }, 
         new[] { nameof(ResponseCode.MATCH_FOUND), "matchFound" },
+        new[] { nameof(ResponseCode.SUCCESS_ATTACK_ORDER_UPDATED), "opponentAttackOrderUpdated" },
+
     };
 
 

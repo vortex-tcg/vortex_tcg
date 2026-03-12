@@ -11,7 +11,7 @@ public enum ResponseCode
     ROOM_FULL = 1002,
     NOT_FOUND = 1003,
     MATCH_FOUND = 1000,
-
+    SUCCESS_ATTACK_ORDER_UPDATED = 2001,
     NOT_IN_ROOM = 1101,
     NOT_YOUR_TURN = 1102,
 
