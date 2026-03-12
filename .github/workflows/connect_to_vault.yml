@@ -84,8 +84,8 @@ jobs:
         with:
           host: ${{ needs.connect-to-vault.outputs.ec2_host }}
           username: ${{ needs.connect-to-vault.outputs.ec2_user }}
-          key_path: /tmp/pipeline_key
-          cert_path: /tmp/pipeline_key-cert.pub
+          key_path: /tmp/ssh-keys/pipeline_key
+          cert_path: /tmp/ssh-keys/pipeline_key-cert.pub
           script: |
             cd /var/www/vortex_tcg/
             git pull origin main
