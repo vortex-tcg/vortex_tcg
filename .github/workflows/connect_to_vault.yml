@@ -49,3 +49,10 @@ jobs:
             -e CONNECTION_STRING="${{ env.CONNECTION_STRING }}" \
             --name migrations-$(date +%s) \
             vortextcg/vortex_repository:migrations
+
+      - name: Deploy Stack
+        run: |
+          cd /var/www/vortex_tcg/server
+          docker stack deploy -c docker-compose.prod.yaml --with-registry-auth vortex;
+          docker service update --force vortex_traefik
+          docker container prune -f
