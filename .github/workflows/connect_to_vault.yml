@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       ec2_host: ${{ steps.vault-step.outputs.EC2_HOST }}
-      ec2_user: ubuntu
+      ec2_user: ${{ steps.vault-step.outputs.EC2_USER }}
     steps:
       - name: try to connect EC2
         run: |
@@ -73,7 +73,7 @@ jobs:
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
           host: ${{ needs.connect-to-vault.outputs.ec2_host }}
-          username: ${{ needs.connect-to-vault.outputs.ec2_user }}
+          username: ubuntu
           key_path: /tmp/pipeline_key
           cert_path: /tmp/pipeline_key-cert.pub
           script: |
