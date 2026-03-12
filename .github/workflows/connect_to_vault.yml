@@ -20,6 +20,7 @@ jobs:
             db/data/DB_USERNAME DB_USERNAME | DB_USERNAME ;
             db/data/DB_NAME DB_NAME | DB_NAME ;
             db/data/DB_PORT DB_PORT | DB_PORT;
+            db/data/CONNECTION_STRING CONNECTION_STRING | CONNECTION_STRING;
 
       - name: Pull latest code
         run: |
@@ -45,5 +46,6 @@ jobs:
             -e DB_USERNAME="${{ env.DB_USERNAME }}" \
             -e DB_PASSWORD="${{ env.DB_PASSWORD }}" \
             -e DB_NAME="${{ env.DB_NAME }}" \
+            -e CONNECTION_STRING="${{ env.CONNECTION_STRING }}" \
             --name migrations-$(date +%s) \
             vortextcg/vortex_repository:migrations
