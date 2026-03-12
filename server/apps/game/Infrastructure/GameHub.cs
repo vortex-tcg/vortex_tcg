@@ -36,7 +36,12 @@ public class GameHubClean : Hub
 
     public Task LeaveQueue()
         => QueueService.LeaveQueueAsync(GetAuthenticatedUserId(), Context.ConnectionAborted);
-
+    public Task ToggleAttackCard(int position)
+        => AttackService.ToggleAttackCardAsync(
+            GetAuthenticatedUserId(),
+            position,
+            Context.ConnectionAborted
+        );
     public Task PlayCard(int gameCardId, int boardPosition)
         => PlayCardAppService.PlayCardAsync(
             GetCurrentMatch(),
