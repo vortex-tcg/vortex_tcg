@@ -1,32 +1,16 @@
-name: Get secrets
-on: [workflow_dispatch]
-
-jobs:
-  connect-to-vault:
+connect-to-vault:
     runs-on: ubuntu-latest
     outputs:
       ec2_host: ${{ steps.vault-step.outputs.EC2_HOST }}
       ec2_user: ${{ steps.vault-step.outputs.EC2_USER }}
+      private_key: ${{ steps.vault-step.outputs.PRIVATE_KEY }}
+      signed_cert: ${{ steps.vault-step.outputs.SIGNED_CERT }}
     steps:
-      - name: try to connect EC2
+      - name: Get secrets and generate SSH cert
+        id: vault-step
         run: |
           export VAULT_ADDR=${{ secrets.VAULT_URL }}
           export VAULT_TOKEN=${{ secrets.VAULT_TOKEN }}
-
-          mkdir -p ~/.ssh
-
-          sudo apt-get update
-          sudo apt-get install -y gpg
-
-          wget -O- https://apt.releases.hashicorp.com/gpg | 
-          gpg --dearmor | 
-          sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
-
-          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | 
-          sudo tee /etc/apt/sources.list.d/hashicorp.list
-
-          sudo apt-get update
-          sudo apt-get install -y vault
 
           ssh-keygen -t ed25519 -f /tmp/pipeline_key -N ""
 
@@ -35,60 +19,33 @@ jobs:
             valid_principals="ubuntu" \
             > /tmp/pipeline_key-cert.pub
 
-      - name: Upload SSH keys as artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ssh-keys
-          path: |
-            /tmp/pipeline_key
-            /tmp/pipeline_key-cert.pub
-          retention-days: 1
-
-      - name: Get secrets and setup SSH
-        id: vault-step
-        run: |
-          export VAULT_ADDR=${{ secrets.VAULT_URL }}
-          export VAULT_TOKEN=${{ secrets.VAULT_TOKEN }}
-
           EC2_HOST=$(vault kv get -field=EC2_HOST aws/EC2_HOST)
           EC2_USER=$(vault kv get -field=EC2_USER aws/EC2_USER)
 
-          ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
-
-          echo "DEBUG: EC2_HOST length: ${#EC2_HOST}"
-          echo "DEBUG: EC2_USER=$EC2_USER"
+          PRIVATE_KEY=$(base64 -w 0 /tmp/pipeline_key)
+          SIGNED_CERT=$(base64 -w 0 /tmp/pipeline_key-cert.pub)
 
           echo "EC2_HOST=$EC2_HOST" >> $GITHUB_OUTPUT
           echo "EC2_USER=$EC2_USER" >> $GITHUB_OUTPUT
+          echo "PRIVATE_KEY=$PRIVATE_KEY" >> $GITHUB_OUTPUT
+          echo "SIGNED_CERT=$SIGNED_CERT" >> $GITHUB_OUTPUT
 
   build:
-    name: Deploy to EC2
     runs-on: ubuntu-latest
     needs: connect-to-vault
     environment: production
-
     steps:
-      - name: Download SSH keys
-        uses: actions/download-artifact@v4
-        with:
-          name: ssh-keys
-          path: /tmp/
-
-      - name: List downloaded files
-        run: ls -la /tmp/
-
-      - name: fix permissions
+      - name: Setup SSH and deploy
         run: |
-          chmod 600 /tmp/pipeline_key
+          mkdir -p ~/.ssh
 
-      - name: Pull latest on EC2
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
-        with:
-          host: ${{ needs.connect-to-vault.outputs.ec2_host }}
-          username: ${{ needs.connect-to-vault.outputs.ec2_user }}
-          key_path: /tmp/pipeline_key
-          cert_path: /tmp/pipeline_key-cert.pub
-          script: |
-            cd /var/www/vortex_tcg/
-            git pull origin main
+          echo "${{ needs.connect-to-vault.outputs.private_key }}" | base64 -d > /tmp/pipeline_key
+          echo "${{ needs.connect-to-vault.outputs.signed_cert }}" | base64 -d > /tmp/pipeline_key-cert.pub
+
+          chmod 600 /tmp/pipeline_key
+          ssh-keyscan -H ${{ needs.connect-to-vault.outputs.ec2_host }} >> ~/.ssh/known_hosts
+
+          ssh -i /tmp/pipeline_key \
+              -o CertificateFile=/tmp/pipeline_key-cert.pub \
+              ${{ needs.connect-to-vault.outputs.ec2_user }}@${{ needs.connect-to-vault.outputs.ec2_host }} \
+              "cd /var/www/vortex_tcg && git pull origin main"
