@@ -75,6 +75,9 @@ jobs:
           name: ssh-keys
           path: /tmp/
 
+      - name: List downloaded files
+        run: ls -la /tmp/ssh-keys/
+
       - name: fix permissions
         run: |
           chmod 600 /tmp/pipeline_key
