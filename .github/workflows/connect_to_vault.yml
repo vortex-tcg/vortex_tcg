@@ -11,6 +11,7 @@ jobs:
           url: https://localhost:8200
           method: token
           token: ${{ secrets.VAULT_TOKEN }}
+          tlsSkipVerify: true
           secrets: |
             aws/data/EC2_HOST EC2_HOST | EC2_HOST ;
-            aws/data/EC2_USER EC2_USER | EC2_USER ;
+            aws/data/EC2_USER EC2_USER | EC2_USER
