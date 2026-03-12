@@ -59,7 +59,7 @@ public sealed class AttackHandler
     }
 
     public IReadOnlyList<AttackCard> GetAttacker()
-        => _attackCards.OrderBy(c => c.AttackOrder).ToList();
+        => _attackCards.ToList();
 
     public IReadOnlyList<DefenseCard> GetDefender()
         => _defenseCards.ToList();
@@ -80,6 +80,7 @@ public sealed class AttackHandler
     public void AddDefense(int position, int gameCardId, int attackPosition)
     {
         _defenseCards.RemoveAll(defenseCard => defenseCard.AttackPosition == attackPosition);
+
         _defenseCards.Add(new DefenseCard
         {
             Position = position,
@@ -87,12 +88,12 @@ public sealed class AttackHandler
             AttackPosition = attackPosition
         });
     }
+
     public AttackOrderUpdatedDto FormatAttackResponseDto()
     {
         return new AttackOrderUpdatedDto
         {
             EngagedCards = _attackCards
-                .OrderBy(c => c.AttackOrder)
                 .Select(c => new EngagedCardDto
                 {
                     Position = c.Position,
@@ -105,15 +106,9 @@ public sealed class AttackHandler
 
     private void ReorderAttackCards()
     {
-        List<AttackCard> ordered = _attackCards
-            .OrderBy(c => c.Position)
-            .ToList();
-
-        for (int i = 0; i < ordered.Count; i++)
+        for (int i = 0; i < _attackCards.Count; i++)
         {
-            ordered[i].AttackOrder = i + 1;
+            _attackCards[i].AttackOrder = i + 1;
         }
-
-        _attackCards = ordered;
     }
 }
