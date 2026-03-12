@@ -69,16 +69,15 @@ jobs:
     environment: production
 
     steps:
-      - name: Debug outputs
-        run: |
-          echo "DEBUG: ec2_host=${{ needs.connect-to-vault.outputs.ec2_host }}"
-          echo "DEBUG: ec2_user=${{ needs.connect-to-vault.outputs.ec2_user }}"
-
       - name: Download SSH keys
         uses: actions/download-artifact@v4
         with:
           name: ssh-keys
-          path: /tmp/
+          path: /tmp/ssh-keys/
+
+      - name: fix permissions
+        run: |
+          chmod 600 /tmp/ssh-keys/pipeline_key
 
       - name: Pull latest on EC2
         uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
@@ -88,5 +87,5 @@ jobs:
           key_path: /tmp/pipeline_key
           cert_path: /tmp/pipeline_key-cert.pub
           script: |
-            cd /path/to/your/project
+            cd /var/www/vortex_tcg/
             git pull origin main
