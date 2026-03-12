@@ -11,7 +11,6 @@ jobs:
           url: http://localhost:8200
           method: token
           token: ${{ secrets.VAULT_TOKEN }}
-          kv-version: 1
           secrets: |
-            secret/data/aws EC2_HOST | EC2_HOST ;
-            secret/data/aws EC2_USER | EC2_USER ;
+            aws/data/EC2_HOST EC2_HOST | EC2_HOST ;
+            aws/data/EC2_USER EC2_USER | EC2_USER ;
