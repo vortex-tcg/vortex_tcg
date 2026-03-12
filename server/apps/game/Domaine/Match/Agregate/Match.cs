@@ -17,12 +17,13 @@ public sealed class Match
 
     public Player Player1 { get; }
     public Player Player2 { get; }
+    public AttackHandler AttackHandler { get; } = new();
 
     public bool IsFinished { get; private set; }
     public int CurrentPlayerPosition { get; private set; } = 1;
     public IPhase CurrentPhase { get; private set; } = default!;
     public bool HasPlayedCardThisTurn { get; private set; } = false;
-    public bool HasPendingDefense { get; private set; }
+    public bool HasPendingDefense { get; private set; } 
 
     public void SetPendingDefense(bool value) => HasPendingDefense = value;
 

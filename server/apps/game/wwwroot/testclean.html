@@ -55,7 +55,7 @@
 <div class="row">
     <strong>PlayCard</strong>
     <label>GameCardId: <input id="gameCardId" type="number" value="1" style="width:120px"/></label>
-    <label>BoardPosition: <input id="boardPos" type="number" value="0" style="width:120px"/></label>
+    <label>BoardPosition: <input id="boardPos" type="number" value="1" style="width:120px"/></label>
     <button id="playCardBtn" disabled>PlayCard</button>
 </div>
 
@@ -65,6 +65,12 @@
     <span class="muted">(le back calcule la prochaine phase)</span>
 </div>
 
+<div class="row">
+    <strong>ToggleAttackCard</strong>
+    <label>Position: <input id="attackPos" type="number" value="1" style="width:120px"/></label>
+    <button id="toggleAttackBtn" disabled>ToggleAttackCard</button>
+    <span class="muted">(engage / désengage une carte sur le board)</span>
+</div>
 
 <div id="log"></div>
 
@@ -88,15 +94,16 @@
     const boardPosInput = document.getElementById("boardPos");
     const playCardBtn = document.getElementById("playCardBtn");
 
-    const nextPhaseTypeInput = document.getElementById("nextPhaseType");
     const changePhaseBtn = document.getElementById("changePhaseBtn");
+
+    const attackPosInput = document.getElementById("attackPos");
+    const toggleAttackBtn = document.getElementById("toggleAttackBtn");
 
     const logDiv = document.getElementById("log");
 
     let jwtToken = "";
     let connection = null;
-
-    let lastMatchId = ""; // rempli quand on reçoit matchFound
+    let lastMatchId = "";
 
     function append(msg) {
         const t = new Date().toLocaleTimeString();
@@ -111,7 +118,6 @@
         if (ok === false) el.classList.add("bad");
     }
 
-    // 1) LOGIN
     loginBtn.onclick = async () => {
         try {
             setStatus(loginStatus, "Login...", null);
@@ -140,7 +146,6 @@
         }
     };
 
-    // 2) CONNECT HUB
     connectBtn.onclick = async () => {
         try {
             if (connection && connection.state === signalR.HubConnectionState.Connected) {
@@ -150,7 +155,6 @@
 
             setStatus(connStatus, "Connexion au hub...", null);
 
-            // IMPORTANT: cible le port exposé côté host (8008)
             const hubUrl = "http://localhost:8008/hubs/game";
 
             connection = new signalR.HubConnectionBuilder()
@@ -164,7 +168,6 @@
             connection.onreconnected(() => append("✅ reconnected"));
             connection.onclose(() => append("⚠️ connection closed"));
 
-            // Event "Connected" envoyé par OnConnectedAsync
             connection.on("Connected", (connectionId) => {
                 append("✅ Connected event: " + connectionId);
                 setStatus(connStatus, "Connecté (" + connectionId + ")", true);
@@ -172,13 +175,10 @@
                 leaveQueueBtn.disabled = false;
             });
 
-            // MATCH FOUND (CallManager -> matchFound)
             connection.on("matchFound", (payload) => {
                 append("🎮 MATCH FOUND !");
                 append(JSON.stringify(payload, null, 2));
 
-                // Essaie de récupérer un matchId depuis le payload.
-                // Chez toi ça peut être payload.data.matchId ou payload.matchId selon ton DTO envoyé par CallManager.
                 const mid =
                     payload?.matchId ||
                     payload?.data?.matchId ||
@@ -197,9 +197,9 @@
 
                 playCardBtn.disabled = false;
                 changePhaseBtn.disabled = false;
+                toggleAttackBtn.disabled = false;
             });
 
-            // --- PlayCard events ---
             connection.on("successPoseCarte", (payload) => {
                 append("✅ successPoseCarte (player)");
                 append(JSON.stringify(payload, null, 2));
@@ -210,7 +210,6 @@
                 append(JSON.stringify(payload, null, 2));
             });
 
-            // --- Phase events ---
             connection.on("successPhaseChanged", (payload) => {
                 append("✅ successPhaseChanged (player)");
                 append(JSON.stringify(payload, null, 2));
@@ -221,7 +220,16 @@
                 append(JSON.stringify(payload, null, 2));
             });
 
-            // Erreurs serveur (CallManager -> Error)
+            connection.on("successAttackOrderUpdated", (payload) => {
+                append("⚔️ successAttackOrderUpdated (player)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
+            connection.on("opponentAttackOrderUpdated", (payload) => {
+                append("🛡️ opponentAttackOrderUpdated (opponent)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
             connection.on("Error", (msg) => {
                 append("❌ Error: " + msg);
             });
@@ -240,7 +248,6 @@
         }
     };
 
-    // 3) JOIN QUEUE
     joinQueueBtn.onclick = async () => {
         try {
             const deckId = (deckIdInput.value || "").trim();
@@ -255,7 +262,6 @@
         }
     };
 
-    // 4) LEAVE QUEUE
     leaveQueueBtn.onclick = async () => {
         try {
             append("-> invoke LeaveQueue()");
@@ -266,6 +272,7 @@
             append("❌ LeaveQueue error: " + (e?.message || e));
         }
     };
+
     playCardBtn.onclick = async () => {
         try {
             const gameCardId = parseInt((gameCardIdInput.value || "0"), 10);
@@ -279,6 +286,7 @@
             append("❌ PlayCard error: " + (e?.message || e));
         }
     };
+
     changePhaseBtn.onclick = async () => {
         try {
             append("-> invoke ChangePhase()");
@@ -290,6 +298,18 @@
         }
     };
 
+    toggleAttackBtn.onclick = async () => {
+        try {
+            const position = parseInt((attackPosInput.value || "0"), 10);
+
+            append(`-> invoke ToggleAttackCard(${position})`);
+            await connection.invoke("ToggleAttackCard", position);
+            append("ToggleAttackCard envoyé.");
+        } catch (e) {
+            console.error(e);
+            append("❌ ToggleAttackCard error: " + (e?.message || e));
+        }
+    };
 </script>
 </body>
 </html>
