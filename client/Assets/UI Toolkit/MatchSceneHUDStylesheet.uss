@@ -18,7 +18,8 @@
     border-bottom-left-radius: 10px;
     -unity-font-style: bold;
     -unity-text-align: upper-center;
-    -unity-font-definition: url("project://database/Assets/Fonts/Rubik/static/Rubik-Regular.ttf?fileID=12800000&guid=184e8b0f4c9ba8e4586adc3dea683c32&type=3#Rubik-Regular");
+    -unity-font-definition: url("project://database/Assets/Resources/Fonts/Rubik/static/Rubik-Regular.ttf?fileID=12800000&guid=184e8b0f4c9ba8e4586adc3dea683c32&type=3#Rubik-Regular");
+    background-image: resource('GUI/MenuButton');
 }
 
 .button.active {
@@ -29,7 +30,11 @@
     border-bottom-left-radius: 10px;
     -unity-font-style: bold;
     -unity-text-align: upper-center;
-    -unity-font-definition: url("project://database/Assets/Fonts/Rubik/static/Rubik-SemiBold.ttf?fileID=12800000&guid=5ad93642aed24734095b5155f2a2e16b&type=3#Rubik-SemiBold");
+    -unity-font-definition: url("project://database/Assets/Resources/Fonts/Rubik/static/Rubik-SemiBold.ttf?fileID=12800000&guid=5ad93642aed24734095b5155f2a2e16b&type=3#Rubik-SemiBold");
+}
+
+.button:active {
+    background-image: resource('GUI/MenuButtonPressed');
 }
 
 .bordered {
@@ -84,7 +89,7 @@
     border-top-right-radius: 0%;
     border-bottom-right-radius: 0%;
     border-bottom-left-radius: 0%;
-    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/BPimperial.otf?fileID=12800000&guid=c42f4da103c4b0848b0eec438ab88f19&type=3#BPimperial");
+    -unity-font-definition: url('project://database/Assets/TextMesh%20Pro/Fonts/BPimperial.otf?fileID=12800000&guid=c42f4da103c4b0848b0eec438ab88f19&type=3#BPimperial');
     -unity-text-align: middle-center;
     display: none;
 }
@@ -96,4 +101,16 @@
 }
 
 .small-card {
+}
+
+#unity-text-input {
+    -unity-background-image-tint-color: rgba(255, 255, 255, 0);
+    border-left-color: rgba(255, 255, 255, 0);
+    border-right-color: rgba(255, 255, 255, 0);
+    border-top-color: rgba(255, 255, 255, 0);
+    border-bottom-color: rgba(255, 255, 255, 0);
+    background-color: rgba(255, 255, 255, 0);
+    font-size: 20px;
+    -unity-font-style: normal;
+    -unity-font-definition: resource('Fonts/Rubik/static/Rubik-Italic');
 }
