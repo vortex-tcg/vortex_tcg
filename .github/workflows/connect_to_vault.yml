@@ -15,3 +15,9 @@ jobs:
           secrets: |
             aws/data/EC2_HOST EC2_HOST | EC2_HOST ;
             aws/data/EC2_USER EC2_USER | EC2_USER
+
+      - name: Pull latest code
+        run: |
+          cd /var/www/vortex-tcg
+          git checkout ${GITHUB_REF#refs/heads/}
+          git pull origin main
