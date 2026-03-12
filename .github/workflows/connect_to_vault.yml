@@ -76,7 +76,7 @@ jobs:
           path: /tmp/
 
       - name: List downloaded files
-        run: ls -la /tmp/ssh-keys/
+        run: ls -la /tmp/
 
       - name: fix permissions
         run: |
