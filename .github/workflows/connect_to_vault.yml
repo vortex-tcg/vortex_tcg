@@ -56,3 +56,22 @@ jobs:
           docker stack deploy -c docker-compose.prod.yaml --with-registry-auth vortex;
           docker service update --force vortex_traefik
           docker container prune -f
+
+      - name: Cleanup old docker images
+        run: |
+          docker container prune -f
+          docker image prune -f
+          docker image prune -a -f --filter "until=24h"
+
+      - name: Run SonarQube
+        run: |
+          cd /var/www/vortex_tcg/server
+          docker rm -f sonarqube 2>/dev/null || true
+            docker run -d --name sonarqube \
+              -p ${{ secrets.SONARQUBE_PORT }}:9000 \
+              -e SONAR_WEB_CONTEXT=/sonarqube \
+              -v /var/sonarqube/data:/opt/sonarqube/data \
+              -v /var/sonarqube/logs:/opt/sonarqube/logs \
+              -v /var/sonarqube/extensions:/opt/sonarqube/extensions \
+              --restart always \
+              sonarqube:lts
