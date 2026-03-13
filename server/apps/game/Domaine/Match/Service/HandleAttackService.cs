@@ -35,6 +35,7 @@ public static class HandleAttackService
                     else
                     {
                         match.AttackHandler.AddAttack(position, card.GameCardId);
+                        match.SetPendingDefense(true);
                         card.States = CardStates.Attacking;
                     }
                 }

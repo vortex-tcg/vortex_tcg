@@ -17,5 +17,7 @@ public sealed class EndTurnPhase : IPhase
     public void OnEndPhase(Agregate.Match match, CancellationToken ct = default)
     {
         match.AttackHandler.ResetAttackHandler();
-''    }
+        match.DefenseHandler.ResetDefenseHandler();
+
+    }
 }
