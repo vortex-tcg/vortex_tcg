@@ -72,6 +72,14 @@
     <span class="muted">(engage / désengage une carte sur le board)</span>
 </div>
 
+<div class="row">
+    <strong>ToggleDefenseCard</strong>
+    <label>Defense Position: <input id="defensePos" type="number" value="1" style="width:120px"/></label>
+    <label>Opponent Attack Position: <input id="defenseAttackPos" type="number" value="1" style="width:160px"/></label>
+    <button id="toggleDefenseBtn" disabled>ToggleDefenseCard</button>
+    <span class="muted">(assigne / retire un défenseur sur un attaquant)</span>
+</div>
+
 <div id="log"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8/dist/browser/signalr.min.js"></script>
@@ -98,6 +106,10 @@
 
     const attackPosInput = document.getElementById("attackPos");
     const toggleAttackBtn = document.getElementById("toggleAttackBtn");
+
+    const defensePosInput = document.getElementById("defensePos");
+    const defenseAttackPosInput = document.getElementById("defenseAttackPos");
+    const toggleDefenseBtn = document.getElementById("toggleDefenseBtn");
 
     const logDiv = document.getElementById("log");
 
@@ -198,6 +210,7 @@
                 playCardBtn.disabled = false;
                 changePhaseBtn.disabled = false;
                 toggleAttackBtn.disabled = false;
+                toggleDefenseBtn.disabled = false;
             });
 
             connection.on("successPoseCarte", (payload) => {
@@ -227,6 +240,16 @@
 
             connection.on("opponentAttackOrderUpdated", (payload) => {
                 append("🛡️ opponentAttackOrderUpdated (opponent)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
+            connection.on("successDefenseUpdated", (payload) => {
+                append("🛡️ successDefenseUpdated (player)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
+            connection.on("opponentDefenseUpdated", (payload) => {
+                append("⚔️ opponentDefenseUpdated (opponent)");
                 append(JSON.stringify(payload, null, 2));
             });
 
@@ -308,6 +331,20 @@
         } catch (e) {
             console.error(e);
             append("❌ ToggleAttackCard error: " + (e?.message || e));
+        }
+    };
+
+    toggleDefenseBtn.onclick = async () => {
+        try {
+            const defensePosition = parseInt((defensePosInput.value || "0"), 10);
+            const attackPosition = parseInt((defenseAttackPosInput.value || "0"), 10);
+
+            append(`-> invoke ToggleDefenseCard(${defensePosition}, ${attackPosition})`);
+            await connection.invoke("ToggleDefenseCard", defensePosition, attackPosition);
+            append("ToggleDefenseCard envoyé.");
+        } catch (e) {
+            console.error(e);
+            append("❌ ToggleDefenseCard error: " + (e?.message || e));
         }
     };
 </script>

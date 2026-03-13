@@ -20,6 +20,7 @@ public sealed class CallManager : ICallManager
         new[] { nameof(ResponseCode.SUCCESS_STANDBY_STARTED), "successPhaseChanged" }, 
         new[] { nameof(ResponseCode.MATCH_FOUND), "matchFound" },
         new[] { nameof(ResponseCode.SUCCESS_ATTACK_ORDER_UPDATED), "successAttackOrderUpdated" },
+        new[] { nameof(ResponseCode.SUCCESS_DEFENSE_UPDATED), "successDefenseUpdated" },
 
     };
 
@@ -30,6 +31,7 @@ public sealed class CallManager : ICallManager
         new[] { nameof(ResponseCode.SUCCESS_STANDBY_STARTED), "opponentPhaseChanged" }, 
         new[] { nameof(ResponseCode.MATCH_FOUND), "matchFound" },
         new[] { nameof(ResponseCode.SUCCESS_ATTACK_ORDER_UPDATED), "opponentAttackOrderUpdated" },
+        new[] { nameof(ResponseCode.SUCCESS_DEFENSE_UPDATED), "successDefenseUpdated" },
 
     };
 

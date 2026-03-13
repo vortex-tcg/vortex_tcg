@@ -50,7 +50,13 @@ public class GameHubClean : Hub
             boardPosition,
             Context.ConnectionAborted
         );
-
+    public Task ToggleDefenseCard(int position, int positionOpponentCard)
+        => DefenseService.ToggleDefenseCardAsync(
+            GetAuthenticatedUserId(),
+            position,
+            positionOpponentCard,
+            Context.ConnectionAborted
+        );
     public Task ChangePhase()
         => PhaseService.ChangePhaseAsync(
             GetAuthenticatedUserId(),
