@@ -18,56 +18,31 @@ public static class HandleDefenseService
     int attackPosition,
     CancellationToken ct = default)
 {
-    Console.WriteLine("=== TOGGLE DEFENSE ===");
-    Console.WriteLine($"Phase actuelle: {match.CurrentPhase.Type}");
-    Console.WriteLine($"UserId reçu: {userId.Value}");
-    Console.WriteLine($"DefensePosition: {defensePosition}");
-    Console.WriteLine($"AttackPosition: {attackPosition}");
+   
+    if (match.CurrentPhase.Type == MatchPhaseType.Defense)
+    {
 
-    if (match.CurrentPhase.Type != MatchPhaseType.Defense)
-    {
-        Console.WriteLine("Refus: pas en phase Defense");
-    }
-    else
-    {
         Player currentPlayer = match.GetCurrentPlayer();
-        Console.WriteLine($"CurrentPlayer: {currentPlayer.UserId.Value}");
 
-        if (!currentPlayer.UserId.Equals(userId))
+        if (currentPlayer.UserId.Equals(userId))
         {
-            Console.WriteLine("Refus: userId != currentPlayer.UserId");
-        }
-        else
-        {
+      
             GameCardDto? defenseCard = currentPlayer.Board.GetCardAtPosition(defensePosition);
 
-            if (defenseCard == null)
+            if (defenseCard != null)
             {
-                Console.WriteLine("Refus: aucune carte trouvée à cette position");
-            }
-            else
-            {
-                Console.WriteLine($"Carte trouvée: GameCardId={defenseCard.GameCardId}, State={defenseCard.States.Value}");
+          
 
-                if (!CanBeDefendedWith(defenseCard))
+                if (CanBeDefendedWith(defenseCard))
                 {
-                    Console.WriteLine("Refus: carte non défendable (pas Active)");
-                }
-                else if (!match.AttackHandler.HasAttackAtPosition(attackPosition))
-                {
-                    Console.WriteLine("Refus: aucune attaque sur cette position");
-                }
-                else
-                {
+              
                     if (match.DefenseHandler.IsDefenseEngagedOnAttack(defensePosition, attackPosition))
                     {
-                        Console.WriteLine("Défense déjà engagée -> suppression");
                         match.DefenseHandler.RemoveDefenseByPosition(defensePosition);
                         defenseCard.States = CardStates.Active;
                     }
                     else
                     {
-                        Console.WriteLine("Défense ajoutée");
                         match.DefenseHandler.AddOrReplaceDefense(
                             defensePosition,
                             defenseCard.GameCardId,
@@ -82,7 +57,6 @@ public static class HandleDefenseService
     }
 
     DefenseUpdatedDto dto = match.DefenseHandler.FormatDefenseResponseDto();
-    Console.WriteLine($"Nb défenses engagées: {dto.EngagedCards.Count}");
 
     match.AddEvent(new DomainEvent(
         DefenseEvent.DEFENSE_UPDATED,
