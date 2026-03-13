@@ -39,6 +39,8 @@ services:
         condition: service_completed_successfully
       db:
         condition: service_healthy
+    networks:
+      - vortex-tcg
 
   game:
     build:
@@ -58,6 +60,8 @@ services:
         condition: service_completed_successfully
       db:
         condition: service_healthy
+    networks:
+      - vortex-tcg
 
   api:
     build:
@@ -77,6 +81,8 @@ services:
         condition: service_completed_successfully
       db:
         condition: service_healthy
+    networks:
+      - vortex-tcg
 
   db:
     image: mariadb:latest
@@ -97,6 +103,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - vortex-tcg
 
   adminer:
     image: adminer
@@ -105,6 +113,8 @@ services:
       - "${DB_ADMINER_PORT}:8080"
     environment:
       ADMINER_DEFAULT_SERVER: db
+    networks:
+      - vortex-tcg
 
   sonarqube:
     image: sonarqube:latest
@@ -123,6 +133,12 @@ services:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_extensions:/opt/sonarqube/extensions
       - sonarqube_logs:/opt/sonarqube/logs
+    networks:
+      - vortex-tcg
+
+networks:
+  vortex-tcg:
+    driver: bridge
 
   vault:
     image: hashicorp/vault:latest
