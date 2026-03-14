@@ -7,12 +7,24 @@ http:
         - websecure
       tls:
         certResolver: le
+    sonarqube:
+      rule: "Host(`sonarqube.vortex-tcg.online`)"
+      service: sonar-service
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: le
 
   services:
     vault-service:
       loadBalancer:
         servers:
           - url: "https://host.docker.internal:8200"
+        serversTransport: insecureTransport
+    sonar-service:
+      loadBalancer:
+        servers:
+          - url: "https://host.docker.internal:9000"
         serversTransport: insecureTransport
 
   serversTransports:
