@@ -73,8 +73,11 @@ jobs:
           else
             echo "SonarQube is already running. Skipping startup."
 
+  cleanup:
+    runs-on: self-hosted
+    needs: connect-to-vault
+    steps:
       - name: Cleanup old docker images
-        depends-on: Deploy Stack
         run: |
           docker container prune -f
           docker image prune -f
