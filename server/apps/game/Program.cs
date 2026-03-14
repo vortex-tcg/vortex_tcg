@@ -8,11 +8,16 @@ using Microsoft.EntityFrameworkCore;
 using VortexTCG.DataAccess;
 using VortexTCG.Common.Services;
 using game.Hubs;
-using game.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
+using game.Application.Factory;
+using game.Infrastructure;
+using game.Infrastructure.Interface;
+using game.Infrastructure.Manager;
+using Microsoft.AspNetCore.SignalR;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,9 +37,7 @@ builder.Services.AddCors(options =>
         .AllowCredentials());
 });
 
-// Injections des services applicatifs
-builder.Services.AddSingleton<Matchmaker>();
-builder.Services.AddSingleton<RoomService>();
+
 
 // Logs console
 builder.Logging.ClearProviders();
@@ -43,9 +46,17 @@ builder.Logging.AddConsole();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddRazorPages();
+builder.Services.AddSingleton<CreateMatchFactory>();
+builder.Configuration.AddEnvironmentVariables();
+
 
 var jwtSecret = builder.Configuration["JwtSettings:SecretKey"];
-
+string deckApiBaseUrl = builder.Configuration["DeckApi:BaseUrl"]
+                        ?? throw new InvalidOperationException("Missing DeckApi:BaseUrl in configuration");
+builder.Services.AddHttpClient<IDeckApiClient, DeckApiClientManager>(client =>
+{
+    client.BaseAddress = new Uri(deckApiBaseUrl);
+});
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -87,10 +98,6 @@ builder.Services.AddDbContext<VortexDbContext>(options =>
     options.UseMySql(connectionString, new MariaDbServerVersion(new Version(11, 8, 3)))
 );
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-
-// Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -136,7 +143,7 @@ app.UseCors("Dev");
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHub<GameHub>("/hubs/game").RequireAuthorization();
+app.MapHub<GameHubClean>("/hubs/game").RequireAuthorization();
 app.MapRazorPages();
 
 app.MapGet("/health/db", async (VortexDbContext db) =>
@@ -153,5 +160,10 @@ app.MapGet("/health/db", async (VortexDbContext db) =>
         return Results.Problem($"DB error: {ex.Message}");
     }
 });
-
+{
+    var factory = app.Services.GetRequiredService<CreateMatchFactory>();
+    RoomManager.Configure(factory);
+    var hubContext = app.Services.GetRequiredService<IHubContext<GameHubClean>>();
+    CallManager.Configure(hubContext);
+}
 app.Run();

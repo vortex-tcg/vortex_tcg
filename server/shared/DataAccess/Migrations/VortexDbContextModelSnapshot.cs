@@ -214,8 +214,6 @@ namespace DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Cards");
-
-
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Champion", b =>
@@ -240,7 +238,7 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<Guid>("EffectId")
+                    b.Property<Guid?>("EffectId")
                         .HasColumnType("char(36)");
 
                     b.Property<Guid>("FactionId")
@@ -918,7 +916,7 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("FactionId");
 
-                    b.ToTable("FactionCard");
+                    b.ToTable("FactionCard", (string)null);
                 });
 
             modelBuilder.Entity("VortexTCG.DataAccess.Models.Friend", b =>
@@ -1208,9 +1206,7 @@ namespace DataAccess.Migrations
                 {
                     b.HasOne("VortexTCG.DataAccess.Models.Effect", "Effect")
                         .WithOne("Champion")
-                        .HasForeignKey("VortexTCG.DataAccess.Models.Champion", "EffectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("VortexTCG.DataAccess.Models.Champion", "EffectId");
 
                     b.HasOne("VortexTCG.DataAccess.Models.Faction", "Faction")
                         .WithMany("Champions")

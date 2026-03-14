@@ -1,10 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Amazon.S3;
 using VortexTCG.DataAccess;
 using VortexTCG.DataAccess.Models;
 using VortexTCG.Common.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using VortexTCG.Api.Deck.Interface;
+using VortexTCG.Api.Deck.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,8 +35,12 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddRazorPages();
 builder.Services.AddControllers();
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+builder.Services.AddAWSService<IAmazonS3>();
+builder.Services.AddScoped<IDeckService, DeckService>();
+builder.Services.AddScoped<VortexTCG.Api.Deck.Providers.DeckProvider>();
+builder.Services.AddScoped<DeckService>();
 
-// Configuration DB
 var connectionString = builder.Configuration["CONNECTION_STRING"];
 var useInMemoryDb = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
 
@@ -133,6 +140,7 @@ app.MapGet("/health/db", async (VortexDbContext db) =>
         return Results.Problem($"❌ DB error: {ex.Message}");
     }
 });
+
 
 
 app.Run();
