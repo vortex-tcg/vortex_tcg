@@ -73,7 +73,24 @@ public static class PhaseService
                     await CallManager.Instance.CallAsync(payload, ct);
                     break;
                 }
+                case PhaseEvent.BATTLE_RESOLUTION:
+                {
+                    BattleResolveDTOs d = ev.GetData<BattleResolveDTOs>();
 
+                    responseDTO<BattleResolveDTOs, BattleResolveDTOs> payload =
+                        new responseDTO<BattleResolveDTOs, BattleResolveDTOs>
+                        {
+                            userId = caller,
+                            opponentId = other,
+                            success = true,
+                            code = ResponseCode.SUCCESS_END_PHASE_RESOLVED,
+                            data = d,
+                            opponentData = d
+                        };
+
+                    await CallManager.Instance.CallAsync(payload, ct);
+                    break;
+                }
                 case PhaseEvent.STANDBY_STARTED:
                 {
                     StandByPhaseData d = ev.GetData<StandByPhaseData>();
