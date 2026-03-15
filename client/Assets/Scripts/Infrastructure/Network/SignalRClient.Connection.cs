@@ -47,6 +47,27 @@ public partial class SignalRClient
             }
         }));
 
+        // New backend CallManager route: matchFound (payload is MatchInitUserDto)
+        _conn.On<MatchInitUserDto>("matchFound", dto => Enqueue(() =>
+        {
+            string key = dto.matchId.ToString();
+            int pos = dto.self?.position ?? 0;
+            Debug.Log($"[SignalRClient] matchFound matchId={key} pos={pos}");
+
+            _currentKeyOrCode = key;
+            _playerPosition = pos;
+
+            networkRef?.SetMatch(key, pos);
+            OnMatched?.Invoke(key);
+            OnLog?.Invoke($"Match trouvé ! matchId: {key} (pos={pos})");
+            if (pos == 1 && !_startGameRequested)
+            {
+                _startGameRequested = true;
+                _ = SafeInvoke("StartGame");
+                OnLog?.Invoke("[SignalR] pos=1 -> StartGame()");
+            }
+        }));
+
         _conn.On<PlayCardPlayerResultDto>("PlayCardResult", dto => Enqueue(() =>
         {
             Debug.Log("[SignalRClient] PlayCardResult reçu");
@@ -81,6 +102,25 @@ public partial class SignalRClient
             OnPhaseChanged?.Invoke(r);
             MatchEvents.FirePhaseChanged(r);
             OnLog?.Invoke($"PhaseChanged: phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct} auto={r.AutoChanged}");
+        }));
+
+        // CallManager-based routes
+        _conn.On<PhaseChangedDto>("successPhaseChanged", dto => Enqueue(() =>
+        {
+            PhaseChangeResultDTO r = MapPhaseChangedDto(dto);
+            Debug.Log($"[SignalRClient] ✅ successPhaseChanged reçu - phase={r.CurrentPhase}");
+            OnPhaseChanged?.Invoke(r);
+            MatchEvents.FirePhaseChanged(r);
+            OnLog?.Invoke($"successPhaseChanged: phase={r.CurrentPhase}");
+        }));
+
+        _conn.On<PhaseChangedDto>("opponentPhaseChanged", dto => Enqueue(() =>
+        {
+            PhaseChangeResultDTO r = MapPhaseChangedDto(dto);
+            Debug.Log($"[SignalRClient] ✅ opponentPhaseChanged reçu - phase={r.CurrentPhase}");
+            OnPhaseChanged?.Invoke(r);
+            MatchEvents.FirePhaseChanged(r);
+            OnLog?.Invoke($"opponentPhaseChanged: phase={r.CurrentPhase}");
         }));
 
         _conn.On<string, string, string>("ReceiveRoomMessage", (key, from, text) =>
@@ -189,5 +229,28 @@ public partial class SignalRClient
                 Debug.LogError("[SignalR] StartAsync FAILED: " + ex);
             });
         }
+    }
+
+    private static PhaseChangeResultDTO MapPhaseChangedDto(PhaseChangedDto dto)
+    {
+        // Map backend MatchPhaseType -> client GamePhase
+        GamePhase phase = dto.phase switch
+        {
+            1 => GamePhase.PLACEMENT,
+            2 => GamePhase.ATTACK,
+            3 => GamePhase.DEFENSE,
+            4 => GamePhase.END_TURN,
+            _ => GamePhase.PLACEMENT
+        };
+
+        return new PhaseChangeResultDTO
+        {
+            CurrentPhase = phase,
+            ActivePlayerId = Guid.Empty,
+            TurnNumber = 0,
+            AutoChanged = false,
+            AutoChangeReason = string.Empty,
+            CanAct = true
+        };
     }
 }

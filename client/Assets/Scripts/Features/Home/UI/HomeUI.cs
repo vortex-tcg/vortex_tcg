@@ -9,6 +9,7 @@ public class HomeUI : MonoBehaviour
     [SerializeField] private string inviteFriendButtonName = "PlayWithFriendsButton";
     [SerializeField] private string statusTextName = "StatusText";
     [SerializeField] private string searchingPanelName = "SearchingPanel";
+    [SerializeField] private string deckIdInputName = "DeckIdInput";
 
     [SerializeField] private NetworkRef networkRef;
     [SerializeField] private string deckId = "d3b07384-d9a1-4d3b-92d8-4f5c6e7a8b9c";
@@ -16,10 +17,13 @@ public class HomeUI : MonoBehaviour
     [SerializeField] private bool verboseLogs = true;
     [SerializeField] private string matchSceneName = "MatchScene";
 
+    private const string DeckIdKey = "SelectedDeckId";
+
     private Button searchOpponentButton;
     private Button inviteFriendButton;
     private Label statusText;
     private VisualElement searchingPanel;
+    private TextField deckIdInput;
 
     private HomeService service;
     private HomeState state;
@@ -52,6 +56,7 @@ public class HomeUI : MonoBehaviour
         inviteFriendButton = root.Q<Button>(inviteFriendButtonName);
         statusText = root.Q<Label>(statusTextName);
         searchingPanel = root.Q<VisualElement>(searchingPanelName);
+        deckIdInput = root.Q<TextField>(deckIdInputName);
 
         if (searchOpponentButton != null)
             searchOpponentButton.clicked += OnClickSearchOpponent;
@@ -62,6 +67,11 @@ public class HomeUI : MonoBehaviour
             inviteFriendButton.clicked += OnClickInviteFriend;
         else
             Debug.LogWarning($"Bouton '{inviteFriendButtonName}' introuvable dans l'UXML.");
+
+        if (deckIdInput != null)
+            deckIdInput.value = PlayerPrefs.GetString(DeckIdKey, deckId);
+        else
+            Debug.LogWarning($"Champ '{deckIdInputName}' introuvable dans l'UXML.");
 
         SetVisible(searchingPanel, false);
     }
@@ -74,7 +84,8 @@ public class HomeUI : MonoBehaviour
 
     private void InitializeState()
     {
-        state = new HomeState(deckId);
+        string initialDeckId = deckIdInput != null ? deckIdInput.value : deckId;
+        state = new HomeState(initialDeckId);
     }
 
     private void SubscribeToEvents()
@@ -115,12 +126,19 @@ public class HomeUI : MonoBehaviour
 
     private async void OnClickSearchOpponent()
     {
+        if (deckIdInput != null)
+            state?.SetDeckId(deckIdInput.value);
+
+        // Save the selected deck id
+        if (state != null)
+            PlayerPrefs.SetString(DeckIdKey, state.DeckId);
+
         SetButtonsEnabled(false);
         state?.SetSearching(true);
         SetVisible(searchingPanel, true);
 
-        if (service != null)
-            await service.SearchOpponent(deckId);
+        if (service != null && state != null)
+            await service.SearchOpponent(state.DeckId);
 
         state?.SetSearching(false);
         SetButtonsEnabled(true);
