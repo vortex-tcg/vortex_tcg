@@ -12,9 +12,9 @@ public static class ChangePhaseService
 
         PhaseFlowService.NextStep step = PhaseFlowService.ComputeNext(match);
         actual.OnEndPhase(match, ct);
-        match.SetCurrentPlayerPosition(step.NextCurrentPlayerPosition);
         match.SetPhase(step.NextPhase);
         step.NextPhase.OnStartPhase(match, ct);
+        match.SetCurrentPlayerPosition(step.NextCurrentPlayerPosition);
         match.AddEvent(new DomainEvent(
             MatchEvent.PHASE_CHANGED,
             new DomainEvent.PhaseChangedData(

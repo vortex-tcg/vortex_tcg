@@ -30,7 +30,6 @@ public readonly record struct ChampionHp
     public int Value { get; }
     public ChampionHp(int value)
     {
-        if (value < 0) throw new ArgumentException("ChampionHp can't be negative.", nameof(value));
         Value = value;
     }
     public static implicit operator int(ChampionHp x) => x.Value;

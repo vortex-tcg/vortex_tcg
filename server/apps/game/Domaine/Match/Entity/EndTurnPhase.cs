@@ -1,4 +1,5 @@
-﻿using game.Domaine.Match.Interface;
+﻿using game.Domaine.Match.DTO;
+using game.Domaine.Match.Interface;
 using game.Domaine.Match.Service;
 
 namespace game.Domaine.Match.Entity;
@@ -9,7 +10,7 @@ public sealed class EndTurnPhase : IPhase
 
     public void OnStartPhase(Agregate.Match match, CancellationToken ct = default)
     {
-        EndTurnService.Apply(match);
+        BattleResolveDTOs resolution = ResolveEndPhaseService.Apply(match);
 
         
     }
