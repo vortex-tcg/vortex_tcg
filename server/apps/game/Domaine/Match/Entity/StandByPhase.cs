@@ -25,14 +25,16 @@ public sealed class StandByPhase : IPhase
             current.Hand.Add(drawn);
         }
 
+        GameCardDtoData? drawnCardData = GameCardMapper.ToData(drawn);
+
         StandByPhaseData data = new StandByPhaseData(
-            match.MatchId.Value, 
+            match.MatchId.Value,
             current.UserId,
             current.Champion.Gold.Value,
             opponent.Champion.Gold.Value,
             current.Hand.Count,
             opponent.Hand.Count,
-            drawn
+            drawnCardData
         );
 
         match.AddEvent(new DomainEvent(PhaseEvent.STANDBY_STARTED, data));
