@@ -62,9 +62,6 @@ public readonly record struct CardHpValue
 
     public CardHpValue(int value)
     {
-        if (value < 0)
-            throw new ArgumentException("Hp can't be negative.", nameof(value));
-
         Value = value;
     }
 

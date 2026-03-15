@@ -12,7 +12,7 @@ public sealed class StandByPhaseData
     public int PlayerHandCount { get; }
     public int OpponentHandCount { get; }
 
-    public GameCardDto? DrawnCard { get; }
+    public GameCardDtoData? DrawnCard { get; }
 
     public StandByPhaseData(
         Guid matchId,
@@ -21,7 +21,7 @@ public sealed class StandByPhaseData
         int opponentGold,
         int playerHandCount,
         int opponentHandCount,
-        GameCardDto? drawnCard
+        GameCardDtoData? drawnCard
     )
     {
         MatchId = matchId;

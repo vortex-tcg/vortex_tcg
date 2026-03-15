@@ -15,7 +15,7 @@
     </style>
 </head>
 <body>
-<h1>SignalR – Queue & Match (GameHubClean)</h1>
+<h1>SignalR – Queue & Match (GameHubClean) uwu</h1>
 
 <div class="row">
     <strong>1) Login</strong>
@@ -186,7 +186,15 @@
                 joinQueueBtn.disabled = false;
                 leaveQueueBtn.disabled = false;
             });
+            connection.on("successEndPhaseResolved", (payload) => {
+                append("💥 successEndPhaseResolved (player)");
+                append(JSON.stringify(payload, null, 2));
+            });
 
+            connection.on("opponentEndPhaseResolved", (payload) => {
+                append("💥 opponentEndPhaseResolved (opponent)");
+                append(JSON.stringify(payload, null, 2));
+            });
             connection.on("matchFound", (payload) => {
                 append("🎮 MATCH FOUND !");
                 append(JSON.stringify(payload, null, 2));
