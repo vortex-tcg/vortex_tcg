@@ -59,8 +59,41 @@ public sealed class Board
     {
         return _slots.TryGetValue(position, out GameCardDto? card) ? card : null;
     }
+    public bool RemoveCardAtPosition(int position)
+    {
+        return _slots.Remove(position);
+    }
+
+    public GameCardDto? TakeCardAtPosition(int position)
+    {
+        GameCardDto? card = GetCardAtPosition(position);
+
+        if (card == null)
+        {
+            return null;
+        }
+
+        _slots.Remove(position);
+        return card;
+    }
 
     public IEnumerable<KeyValuePair<int, GameCardDto>> EnumerateSlots()
         => _slots;
 }
-public sealed class Graveyard { }
+
+public sealed class Graveyard
+{
+    private readonly List<GameCardDto> _cards = new List<GameCardDto>();
+
+    public int Count => _cards.Count;
+
+    public void Add(GameCardDto card)
+    {
+        _cards.Add(card);
+    }
+
+    public IReadOnlyList<GameCardDto> GetCards()
+    {
+        return _cards.ToList();
+    }
+}
