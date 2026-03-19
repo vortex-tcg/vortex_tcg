@@ -55,7 +55,15 @@ public sealed class RoomManager : IRoomManager
 
         return match;
     }
+    public void RemoveMatch(Match match)
+    {
+        if (match == null) return;
 
+        lock (_matches)
+        {
+            _matches.Remove(match);
+        }
+    }
     public Match? GetMatchByUserId(UserId userId)
     {
         lock (_matches)

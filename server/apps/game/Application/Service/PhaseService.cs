@@ -91,6 +91,25 @@ public static class PhaseService
                     await CallManager.Instance.CallAsync(payload, ct);
                     break;
                 }
+                case MatchEvent.MATCH_ENDED:
+                {
+                    MatchEndedData d = ev.GetData<MatchEndedData>();
+
+                    responseDTO<MatchEndedData, MatchEndedData> payload =
+                        new responseDTO<MatchEndedData, MatchEndedData>
+                        {
+                            userId = caller,
+                            opponentId = other,
+                            success = true,
+                            code = ResponseCode.SUCCESS_MATCH_ENDED,
+                            data = d,
+                            opponentData = d
+                        };
+
+                    await CallManager.Instance.CallAsync(payload, ct);
+                    RoomManager.Instance.RemoveMatch(match);
+                    break;
+                }
                 case PhaseEvent.STANDBY_STARTED:
                 {
                     StandByPhaseData d = ev.GetData<StandByPhaseData>();
