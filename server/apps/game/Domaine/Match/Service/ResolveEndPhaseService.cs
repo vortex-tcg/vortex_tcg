@@ -68,7 +68,7 @@ public static class ResolveEndPhaseService
 
         if (defense == null)
         {
-            ResolveDirectChampionAttack(
+            ResolveDirectChampionAttack(match,
                 defendingPlayer,
                 attack.Position,
                 attackerCard,
@@ -81,7 +81,7 @@ public static class ResolveEndPhaseService
 
         if (defenderCard == null)
         {
-            ResolveDirectChampionAttack(
+            ResolveDirectChampionAttack(match,
                 defendingPlayer,
                 attack.Position,
                 attackerCard,
@@ -139,7 +139,7 @@ public static class ResolveEndPhaseService
     }
 
     private static void ResolveDirectChampionAttack(
-        Player defendingPlayer,
+        Match match,        Player defendingPlayer,
         int attackerPosition,
         GameCardDto attackerCard,
         BattleResolveDTOs result)
@@ -148,6 +148,8 @@ public static class ResolveEndPhaseService
         int championRemainingHp = defendingPlayer.Champion.Hp.Value - damage;
 
         defendingPlayer.Champion.Hp = new ChampionHp(championRemainingHp);
+
+        new ChampionDeathService().CheckChampionDeath(match, defendingPlayer);
 
         DirectChampionDamageDto dto = new DirectChampionDamageDto
         {
