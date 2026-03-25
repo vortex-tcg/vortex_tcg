@@ -18,7 +18,7 @@ namespace VortexTCG.Game.Utils
                 Description = new string(Enumerable.Repeat(chars, 50).Select(s => s[random.Next(s.Length)]).ToArray()),
                 Hp = random.Next(10),
                 Attack = random.Next(10),
-                Cost = random.Next(10),
+                Cost = 0,
                 CardType = CardType.GUARD,
                 Class = ["guerrier"]
             };
