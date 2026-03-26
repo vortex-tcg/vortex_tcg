@@ -26,25 +26,43 @@ public partial class SignalRClient
             OnLog?.Invoke("Connecté au hub.");
         }));
         _conn.On("Waiting", () => Enqueue(() => OnStatus?.Invoke("En attente d'un adversaire...")));
-        _conn.On<string, JsonElement>("Matched", (key, payload) => Enqueue(() =>
+        _conn.On<MatchInitUserDto>("matchFound", dto => Enqueue(() =>
         {
-            _currentKeyOrCode = key;
-            int pos = 0;
-            if (payload.TryGetProperty("position", out JsonElement posEl) && posEl.TryGetInt32(out int p))
-                pos = p;
-            Debug.Log($"[SignalRClient] Matched key={key} pos={pos} networkRefNull={(networkRef == null)}");
+            string key = dto.MatchId.ToString();
+            int pos = dto.Self.Position;
+            Debug.Log($"[SignalRClient] matchFound key={key} pos={pos} networkRefNull={(networkRef == null)}");
 
+            _currentKeyOrCode = key;
             _playerPosition = pos;
+            _initialDrawnCards = dto.Self.DrawnCards?.ToList() ?? new List<MatchInitCardDto>();
+            _opponentHandSize = dto.OpponentHandSize;
+            _playerChampion = dto.Self.Champion;
+            _playerGold = dto.Self.Gold;
+            _secondaryCurrencyName = dto.Self.SecondaryCurrencyName;
+            _playerSecondaryCurrency = dto.Self.SecondaryCurrency;
+            _opponentChampion = dto.Opponent.Champion;
+            _opponentGold = dto.Opponent.Gold;
+            _opponentSecondaryCurrencyName = dto.Opponent.SecondaryCurrencyName;
+            _opponentSecondaryCurrency = dto.Opponent.SecondaryCurrency;
 
             networkRef?.SetMatch(key, pos);
             OnMatched?.Invoke(key);
-            OnLog?.Invoke($"Match trouvé ! Salle: {key} (pos={pos})");
-            if (pos == 1 && !_startGameRequested)
+            OnLog?.Invoke($"Match trouvé ! Salle: {key} (pos={pos}) - Cartes initiales: {_initialDrawnCards.Count}");
+            
+            // Manually trigger GameStarted with initial phase since server may not send it immediately
+            var initialPhaseDto = new PhaseChangeResultDTO
             {
-                _startGameRequested = true;
-                _ = SafeInvoke("StartGame");
-                OnLog?.Invoke("[SignalR] pos=1 -> StartGame()");
-            }
+                CurrentPhase = GamePhase.PLACEMENT,
+                ActivePlayerId = Guid.Empty, // Will be set by actual GameStarted if received
+                TurnNumber = 0,
+                AutoChanged = false,
+                AutoChangeReason = null,
+                CanAct = pos == 1, // Player 1 can act first
+                TimerEndTime = null
+            };
+            Debug.Log($"[SignalRClient] ✅ Triggering initial GameStarted - phase={initialPhaseDto.CurrentPhase}");
+            OnGameStarted?.Invoke(initialPhaseDto);
+            MatchEvents.FireGameStarted(initialPhaseDto);
         }));
 
         _conn.On<PlayCardPlayerResultDto>("PlayCardResult", dto => Enqueue(() =>

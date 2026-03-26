@@ -33,6 +33,27 @@ public partial class SignalRClient : MonoBehaviour
     private string _mode;
     private bool _startGameRequested;
     private int _playerPosition = -1;
+    private int _opponentHandSize;
+    private List<MatchInitCardDto> _initialDrawnCards;
+    private MatchInitChampionDto _playerChampion;
+    private int _playerGold;
+    private string _secondaryCurrencyName;
+    private int _playerSecondaryCurrency;
+    private MatchInitChampionDto _opponentChampion;
+    private int _opponentGold;
+    private string _opponentSecondaryCurrencyName;
+    private int _opponentSecondaryCurrency;
+
+    public List<MatchInitCardDto> InitialDrawnCards => _initialDrawnCards;
+    public int OpponentHandSize => _opponentHandSize;
+    public MatchInitChampionDto PlayerChampion => _playerChampion;
+    public int PlayerGold => _playerGold;
+    public string SecondaryCurrencyName => _secondaryCurrencyName;
+    public int PlayerSecondaryCurrency => _playerSecondaryCurrency;
+    public MatchInitChampionDto OpponentChampion => _opponentChampion;
+    public int OpponentGold => _opponentGold;
+    public string OpponentSecondaryCurrencyName => _opponentSecondaryCurrencyName;
+    public int OpponentSecondaryCurrency => _opponentSecondaryCurrency;
 
     public event Action<BattlesDataDto, bool> OnBattleResolution;
     public event Action<string> OnStatus;

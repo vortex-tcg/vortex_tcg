@@ -133,6 +133,15 @@ namespace VortexTCG.Scripts.Features.Match.UI
             MatchEvents.OnOpponentCardsDrawn += HandleOpponentCardsDrawn;
             MatchEvents.OnOpponentCardPlayed += HandleOpponentCardPlayed;
             Debug.Log($"[OpponentUI] ✅ OnOpponentCardPlayed subscribed - Instance={(Instance != null ? Instance.name : "NULL")}");
+
+            // Check if we have opponent hand size from matchFound and game hasn't started yet
+            if (!_gameStarted && SignalRClient.Instance != null && SignalRClient.Instance.OpponentHandSize > 0)
+            {
+                Debug.Log($"[OpponentUI] ✅ Opponent hand size available: {SignalRClient.Instance.OpponentHandSize} - displaying face down cards");
+                ResetHand();
+                AddFaceDownCards(SignalRClient.Instance.OpponentHandSize);
+                _gameStarted = true; // Mark as started since we have the initial hand size
+            }
         }
 
         private void OnDisable()

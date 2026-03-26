@@ -21,6 +21,19 @@ namespace VortexTCG.Scripts.Features.Match.UI
         private VisualElement endTurnButton;
         private Label matchPhaseLabel;
         private Label timerLabel; // Nouveau label pour afficher le timer
+        
+        // Player HUD elements
+        private Label goldLabel;
+        private Label secondaryCurrencyLabel;
+        private Label championNameLabel;
+        private Label championDescriptionLabel;
+        
+        // Opponent HUD elements
+        private Label opponentGoldLabel;
+        private Label opponentSecondaryCurrencyLabel;
+        private Label opponentChampionNameLabel;
+        private Label opponentChampionDescriptionLabel;
+        
         private float endTurnDefaultOpacity = 1f;
         private Scale endTurnDefaultScale = new Scale(Vector3.one);
 
@@ -103,6 +116,21 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 Debug.LogWarning("[PhaseUI] TimerLabel not found in UI");
             }
 
+            // Bind player HUD elements
+            goldLabel = root.Q<Label>("P1Golds");
+            secondaryCurrencyLabel = root.Q<Label>("SecondaryCurrencyLabel");
+            championNameLabel = root.Q<Label>("ChampionNameLabel");
+            championDescriptionLabel = root.Q<Label>("ChampionDescriptionLabel");
+
+            // Bind opponent HUD elements
+            opponentGoldLabel = root.Q<Label>("P2Golds");
+            opponentSecondaryCurrencyLabel = root.Q<Label>("OpponentSecondaryCurrencyLabel");
+            opponentChampionNameLabel = root.Q<Label>("OpponentChampionNameLabel");
+            opponentChampionDescriptionLabel = root.Q<Label>("OpponentChampionDescriptionLabel");
+
+            Debug.Log($"[PhaseUI] Player HUD elements bound - Gold: {(goldLabel != null ? "OK" : "NULL")}, Secondary: {(secondaryCurrencyLabel != null ? "OK" : "NULL")}, Champion: {(championNameLabel != null ? "OK" : "NULL")}");
+            Debug.Log($"[PhaseUI] Opponent HUD elements bound - Gold: {(opponentGoldLabel != null ? "OK" : "NULL")}, Secondary: {(opponentSecondaryCurrencyLabel != null ? "OK" : "NULL")}, Champion: {(opponentChampionNameLabel != null ? "OK" : "NULL")}");
+
             PhaseService phaseService = PhaseService.Instance;
             if (phaseService != null)
             {
@@ -111,6 +139,9 @@ namespace VortexTCG.Scripts.Features.Match.UI
             }
 
             UpdatePhaseLabel(_currentPhase);
+            
+            // Initialize player data
+            InitializePlayerData();
         }
 
 
@@ -231,6 +262,151 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 {
                     timerLabel.style.color = new StyleColor(Color.white);
                 }
+            }
+        }
+
+        // ========== PLAYER HUD ==========
+
+        private void InitializePlayerData()
+        {
+            var client = SignalRClient.Instance;
+            if (client == null)
+            {
+                Debug.LogWarning("[PhaseUI] SignalRClient not available for player data initialization");
+                return;
+            }
+
+            // Initialize player data
+            InitializePlayerHUD(client);
+            
+            // Initialize opponent data
+            InitializeOpponentHUD(client);
+
+            Debug.Log($"[PhaseUI] Player and opponent data initialized");
+        }
+
+        private void InitializePlayerHUD(SignalRClient client)
+        {
+            // Set champion info
+            if (client.PlayerChampion != null)
+            {
+                if (championNameLabel != null)
+                    championNameLabel.text = client.PlayerChampion.Name;
+
+                if (championDescriptionLabel != null)
+                    championDescriptionLabel.text = client.PlayerChampion.Description;
+
+                Debug.Log($"[PhaseUI] Player champion initialized: {client.PlayerChampion.Name}");
+            }
+
+            // Set initial resources
+            UpdatePlayerGoldDisplay(client.PlayerGold);
+            UpdatePlayerSecondaryCurrencyDisplay(client.SecondaryCurrencyName, client.PlayerSecondaryCurrency);
+
+            Debug.Log($"[PhaseUI] Player data initialized - Gold: {client.PlayerGold}, Secondary: {client.PlayerSecondaryCurrency} ({client.SecondaryCurrencyName})");
+        }
+
+        private void InitializeOpponentHUD(SignalRClient client)
+        {
+            // Set champion info
+            if (client.OpponentChampion != null)
+            {
+                if (opponentChampionNameLabel != null)
+                    opponentChampionNameLabel.text = client.OpponentChampion.Name;
+
+                if (opponentChampionDescriptionLabel != null)
+                    opponentChampionDescriptionLabel.text = client.OpponentChampion.Description;
+
+                Debug.Log($"[PhaseUI] Opponent champion initialized: {client.OpponentChampion.Name}");
+            }
+
+            // Set initial resources
+            UpdateOpponentGoldDisplay(client.OpponentGold);
+            UpdateOpponentSecondaryCurrencyDisplay(client.OpponentSecondaryCurrencyName, client.OpponentSecondaryCurrency);
+
+            Debug.Log($"[PhaseUI] Opponent data initialized - Gold: {client.OpponentGold}, Secondary: {client.OpponentSecondaryCurrency} ({client.OpponentSecondaryCurrencyName})");
+        }
+
+        private void UpdateGoldDisplay(int gold)
+        {
+            if (goldLabel != null)
+            {
+                goldLabel.text = $"Gold: {gold}";
+                Debug.Log($"[PhaseUI] Gold updated: {gold}");
+            }
+        }
+
+        private void UpdateSecondaryCurrencyDisplay(string currencyName, int amount)
+        {
+            if (secondaryCurrencyLabel != null)
+            {
+                secondaryCurrencyLabel.text = $"{currencyName}: {amount}";
+                Debug.Log($"[PhaseUI] Secondary currency updated: {currencyName} = {amount}");
+            }
+        }
+
+        private void UpdatePlayerGoldDisplay(int gold)
+        {
+            if (goldLabel != null)
+            {
+                goldLabel.text = $"Gold: {gold}";
+                Debug.Log($"[PhaseUI] Player gold updated: {gold}");
+            }
+        }
+
+        private void UpdatePlayerSecondaryCurrencyDisplay(string currencyName, int amount)
+        {
+            if (secondaryCurrencyLabel != null)
+            {
+                secondaryCurrencyLabel.text = $"{currencyName}: {amount}";
+                Debug.Log($"[PhaseUI] Player secondary currency updated: {currencyName} = {amount}");
+            }
+        }
+
+        private void UpdateOpponentGoldDisplay(int gold)
+        {
+            if (opponentGoldLabel != null)
+            {
+                opponentGoldLabel.text = $"Gold: {gold}";
+                Debug.Log($"[PhaseUI] Opponent gold updated: {gold}");
+            }
+        }
+
+        private void UpdateOpponentSecondaryCurrencyDisplay(string currencyName, int amount)
+        {
+            if (opponentSecondaryCurrencyLabel != null)
+            {
+                opponentSecondaryCurrencyLabel.text = $"{currencyName}: {amount}";
+                Debug.Log($"[PhaseUI] Opponent secondary currency updated: {currencyName} = {amount}");
+            }
+        }
+
+        // Public methods to update from external sources (like server events)
+        public void UpdateGold(int newGold)
+        {
+            UpdatePlayerGoldDisplay(newGold);
+        }
+
+        public void UpdateSecondaryCurrency(int newAmount)
+        {
+            var client = SignalRClient.Instance;
+            if (client != null)
+            {
+                UpdatePlayerSecondaryCurrencyDisplay(client.SecondaryCurrencyName, newAmount);
+            }
+        }
+
+        public void UpdateOpponentGold(int newGold)
+        {
+            UpdateOpponentGoldDisplay(newGold);
+        }
+
+        public void UpdateOpponentSecondaryCurrency(int newAmount)
+        {
+            var client = SignalRClient.Instance;
+            if (client != null)
+            {
+                UpdateOpponentSecondaryCurrencyDisplay(client.OpponentSecondaryCurrencyName, newAmount);
             }
         }
 

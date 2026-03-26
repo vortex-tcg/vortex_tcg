@@ -17,7 +17,7 @@ namespace VortexTCG.Scripts.DTOs
         public Guid ActivePlayerId { get; set; }
         public int TurnNumber { get; set; }
         public bool AutoChanged { get; set; }
-        public string AutoChangeReason { get; set; }
+        public string? AutoChangeReason { get; set; }
         public bool CanAct { get; set; }
         public long? TimerEndTime { get; set; } // Unix timestamp (ms) de fin du timer
     }

@@ -7,7 +7,6 @@ using game.Domaine.Match.Agregate;
 using game.Domaine.Match.Entity;
 using game.Domaine.Match.ValueObject;
 using game.Domaine.Matchmaking;
-using game.DTOs;
 using game.Infrastructure.Manager;
 
 namespace game.Application.Service;
@@ -146,33 +145,7 @@ public class QueueService
             };
 
         await CallManager.Instance.CallAsync(payload, ct);
-
-        // Send GameStarted event directly to both players
-        var gameStartedDto = new PhaseChangeResultDTO
-        {
-            CurrentPhase = GamePhase.PLACEMENT,
-            ActivePlayerId = (Guid)p1,
-            TurnNumber = 0,
-            AutoChanged = false,
-            AutoChangeReason = null,
-            CanAct = true,
-            TimerEndTime = DateTime.UtcNow.AddSeconds(60)
-        };
-
-        await CallManager.SendToUserAsync(p1.ToString(), "GameStarted", gameStartedDto, ct);
-        
-        var gameStartedDtoOpponent = new PhaseChangeResultDTO
-        {
-            CurrentPhase = GamePhase.PLACEMENT,
-            ActivePlayerId = (Guid)p1,
-            TurnNumber = 0,
-            AutoChanged = false,
-            AutoChangeReason = null,
-            CanAct = false,
-            TimerEndTime = DateTime.UtcNow.AddSeconds(60)
-        };
-        
-        await CallManager.SendToUserAsync(p2.ToString(), "GameStarted", gameStartedDtoOpponent, ct);
+    }
 
     public static Task LeaveQueueAsync(UserId userId, CancellationToken ct = default)
     {
