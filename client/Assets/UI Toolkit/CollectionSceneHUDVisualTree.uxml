@@ -1,9 +1,6 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <ui:Template name="Card" src="project://database/Assets/Scripts/UI/Shared/Cards/UXML/Card.uxml?fileID=9197481963319205126&amp;guid=9ef0118a520caa84a9726503e938cae2&amp;type=3#Card" />
     <ui:Template name="Golds" src="project://database/Assets/Scripts/UI/Shared/Golds.uxml?fileID=9197481963319205126&amp;guid=e7234147dc1e8fc4fbfa2ab08894b42a&amp;type=3#Golds" />
-    <ui:Template name="NavigationComponent" src="project://database/Assets/Scripts/UI/Shared/NavigationComponent.uxml?fileID=9197481963319205126&amp;guid=142c228b13f42d44e89e8cedfa0a3cd5&amp;type=3#NavigationComponent" />
-    <Style src="project://database/Assets/UI%20Toolkit/CollectionSceneHUDStylesheet.uss?fileID=7433441132597879392&amp;guid=bdcf1244bf7cc6e4081c4d8388575ee0&amp;type=3#CollectionSceneHUDStylesheet" />
-    <ui:Instance template="NavigationComponent" />
     <ui:VisualElement name="Container" style="flex-grow: 1; flex-direction: row; padding-top: 10px; padding-right: 10px; padding-bottom: 10px; padding-left: 10px;">
         <ui:VisualElement name="MiddleSide" style="flex-grow: 1; width: 1530px; max-width: 1530px; padding-top: 10px; padding-left: 10px; padding-right: 0; min-width: 1530px;">
             <ui:VisualElement name="Searchbar" class="border" style="flex-grow: 1; width: 1510px; height: 50px; max-height: 50px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; white-space: normal; align-items: center; flex-direction: row; justify-content: space-between; border-top-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; border-bottom-left-radius: 10px; -unity-text-align: upper-left;">
