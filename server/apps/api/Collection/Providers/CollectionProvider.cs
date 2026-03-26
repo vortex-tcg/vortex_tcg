@@ -18,6 +18,10 @@ namespace VortexTCG.Api.Collection.Providers
                 .Include(c => c.User)
                 .Include(c => c.Cards)
                     .ThenInclude(cc => cc.Card)
+                        .ThenInclude(card => card.Class)
+                .Include(c => c.Cards)
+                    .ThenInclude(cc => cc.Card)
+                        .ThenInclude(card => card.Factions)
                 .Include(c => c.Champions)
                     .ThenInclude(ch => ch.Champion)
                 .ToListAsync();
@@ -27,6 +31,10 @@ namespace VortexTCG.Api.Collection.Providers
                 .Include(c => c.User)
                 .Include(c => c.Cards)
                     .ThenInclude(cc => cc.Card)
+                        .ThenInclude(card => card.Class)
+                .Include(c => c.Cards)
+                    .ThenInclude(cc => cc.Card)
+                        .ThenInclude(card => card.Factions)
                 .Include(c => c.Champions)
                     .ThenInclude(ch => ch.Champion)
                 .FirstOrDefaultAsync(c => c.Id == id);
@@ -36,11 +44,22 @@ namespace VortexTCG.Api.Collection.Providers
                 .Include(c => c.User)
                 .Include(c => c.Cards)
                     .ThenInclude(cc => cc.Card)
+                        .ThenInclude(card => card.Class)
+                .Include(c => c.Cards)
+                    .ThenInclude(cc => cc.Card)
+                        .ThenInclude(card => card.Factions)
                 .Include(c => c.Champions)
                     .ThenInclude(ch => ch.Champion)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+                .FirstOrDefaultAsync(c => c.User.Id == userId);
+
         public async Task<CollectionModel> AddAsync(CollectionModel collection)
         {
+            if (collection.User != null)
+            {
+                _db.Attach(collection.User);
+                _db.Entry(collection.User).State = EntityState.Unchanged;
+            }
+
             await _db.Collections.AddAsync(collection);
             await _db.SaveChangesAsync();
             return collection;
@@ -48,10 +67,20 @@ namespace VortexTCG.Api.Collection.Providers
 
         public async Task<bool> UpdateAsync(CollectionModel collection)
         {
-            CollectionModel? existing = await _db.Collections.FindAsync(collection.Id);
-            if (existing == null) return false;
+            CollectionModel? existing = await _db.Collections
+                .Include(c => c.User)
+                .FirstOrDefaultAsync(c => c.Id == collection.Id);
 
-            _db.Entry(existing).CurrentValues.SetValues(collection);
+            if (existing == null)
+                return false;
+
+            if (collection.User != null)
+            {
+                _db.Attach(collection.User);
+                _db.Entry(collection.User).State = EntityState.Unchanged;
+                existing.User = collection.User;
+            }
+
             await _db.SaveChangesAsync();
             return true;
         }

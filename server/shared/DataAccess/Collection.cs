@@ -12,7 +12,6 @@ namespace VortexTCG.DataAccess.Models
         public Guid Id { get; set; }
 
         public User User { get; set; } = default!;
-        public Guid UserId { get; set; }
 
         public ICollection<CollectionCard> Cards { get; set; } = default!;
         public ICollection<CollectionChampion> Champions { get; set; } = default!;
