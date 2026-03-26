@@ -56,6 +56,7 @@ namespace VortexTCG.Game.Object
             private int _turnNumber;
             private bool _gameStarted;
             private readonly System.Timers.Timer _timer;
+            private long? _timerEndTime;
             public event Action OnTimeUp;
 
         #endregion
@@ -573,9 +574,11 @@ public DefenseResponseDto HandleDefenseEvent(Guid userId, int cardId, int oppone
             {
                 _timer.Interval = seconds * 1000;
                 _timer.Start();
+                _timerEndTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (seconds * 1000);
             }
             public void StopTimer(){
                 _timer.Stop();
+                _timerEndTime = null;
             }
             private void HandleTimerElapsed(object? sender, ElapsedEventArgs e)
             {
@@ -591,11 +594,14 @@ public DefenseResponseDto HandleDefenseEvent(Guid userId, int cardId, int oppone
             public PhaseChangeResultDTO StartGame()
             {
                 _gameStarted = true;
-                _turnNumber = 1;
+                _turnNumber = 0; // Commence à 0, incrémenté lors du premier retour en PLACEMENT
                 _activePlayerId = _user_1;
                 _currentPhase = GamePhase.PLACEMENT;
 
+                Console.WriteLine($"[StartGame] turnNumber={_turnNumber}, activePlayerId={_activePlayerId}, phase={_currentPhase}");
+                Console.WriteLine($"[StartGame] Drawing 6 cards for player 1");
                 DrawCards(_user_1, 6);
+                Console.WriteLine($"[StartGame] Drawing 5 cards for player 2");
                 DrawCards(_user_2, 5);
 
                 _champion_user_1.SetBaseGold(1);
@@ -609,7 +615,8 @@ public DefenseResponseDto HandleDefenseEvent(Guid userId, int cardId, int oppone
                     TurnNumber = _turnNumber,
                     AutoChanged = false,
                     AutoChangeReason = null,
-                    CanAct = true
+                    CanAct = true,
+                    TimerEndTime = _timerEndTime
                 };
             }
             public PhaseChangeResultDTO GetState()
@@ -621,7 +628,8 @@ public DefenseResponseDto HandleDefenseEvent(Guid userId, int cardId, int oppone
                     TurnNumber = _turnNumber,
                     AutoChanged = false,
                     AutoChangeReason = null,
-                    CanAct = _gameStarted
+                    CanAct = _gameStarted,
+                    TimerEndTime = _timerEndTime
                 };
             }
 
@@ -676,7 +684,9 @@ public DefenseResponseDto HandleDefenseEvent(Guid userId, int cardId, int oppone
                     _activePlayerId == _user_1
                 ) {
                         _turnNumber += 1;
+                        Console.WriteLine($"[AdvancePhase] Incremented turn number to {_turnNumber} (player 1 reached PLACEMENT)");
                 }
+                Console.WriteLine($"[AdvancePhase] Phase changed to {_currentPhase}, turn={_turnNumber}, activePlayer={_activePlayerId}");
                 HandleChangePhaseEvent(isPlayer1);
 
                 return new PhaseChangeResultDTO
@@ -686,7 +696,8 @@ public DefenseResponseDto HandleDefenseEvent(Guid userId, int cardId, int oppone
                     TurnNumber = _turnNumber,
                     AutoChanged = autoChanged,
                     AutoChangeReason = autoChangeReason,
-                    CanAct = CanPlayerActInPhase()
+                    CanAct = CanPlayerActInPhase(),
+                    TimerEndTime = _timerEndTime
                 };
             }
 
@@ -697,7 +708,19 @@ public DefenseResponseDto HandleDefenseEvent(Guid userId, int cardId, int oppone
                     Champion activeChamp = getPlayerChamp(isPlayer1);
                     Board activeBoard = getPlayerBoard(isPlayer1);
 
-                    DrawCards(_activePlayerId, 1);
+                    Console.WriteLine($"[HandleChangePhaseEvent] PLACEMENT: turnNumber={_turnNumber}, activePlayerId={_activePlayerId}, isPlayer1Param={isPlayer1}");
+                    
+                    // Ne jamais piocher pendant le tour 0 ou 1 (cartes déjà distribuées dans StartGame)
+                    if (_turnNumber >= 2)
+                    {
+                        Console.WriteLine($"[HandleChangePhaseEvent] Drawing 1 card for player {_activePlayerId}");
+                        DrawCards(_activePlayerId, 1);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[HandleChangePhaseEvent] NOT drawing (turn {_turnNumber} <= 1)");
+                    }
+                    
                     _attackHandler.ResetAttackHandler();
                     if (activeChamp.GetBaseGold() < 10) {
                         activeChamp.SetBaseGold(activeChamp.GetBaseGold() + 1);
@@ -707,6 +730,8 @@ public DefenseResponseDto HandleDefenseEvent(Guid userId, int cardId, int oppone
                     StartTimer(60);
                     break;
                 case GamePhase.ATTACK:
+                    StopTimer();
+                    StartTimer(60);
                     break;
                 case GamePhase.DEFENSE:
                     StopTimer();
@@ -734,7 +759,8 @@ public DefenseResponseDto HandleDefenseEvent(Guid userId, int cardId, int oppone
                         TurnNumber = _turnNumber,
                         AutoChanged = true,
                         AutoChangeReason = "Timeout - 1 minute écoulée",
-                        CanAct = false
+                        CanAct = false,
+                        TimerEndTime = _timerEndTime
                     };
                 }
 
