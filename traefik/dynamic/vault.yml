@@ -21,11 +21,6 @@ http:
         servers:
           - url: "https://host.docker.internal:8200"
         serversTransport: insecureTransport
-    sonar-service:
-      loadBalancer:
-        servers:
-          - url: "https://host.docker.internal:9000"
-        serversTransport: insecureTransport
 
   serversTransports:
     insecureTransport:
