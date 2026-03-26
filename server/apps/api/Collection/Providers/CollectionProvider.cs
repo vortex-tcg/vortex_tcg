@@ -56,15 +56,23 @@ namespace VortexTCG.Api.Collection.Providers
         {
             if (collection.User != null)
             {
-                _db.Attach(collection.User);
-                _db.Entry(collection.User).State = EntityState.Unchanged;
+                var existingUser = await _db.Users.FindAsync(collection.User.Id);
+
+                if (existingUser != null)
+                {
+                    collection.User = existingUser;
+                }
+                else
+                {
+                    _db.Entry(collection.User).State = EntityState.Detached;
+                    collection.User = null!;
+                }
             }
 
             await _db.Collections.AddAsync(collection);
             await _db.SaveChangesAsync();
             return collection;
         }
-
         public async Task<bool> UpdateAsync(CollectionModel collection)
         {
             CollectionModel? existing = await _db.Collections
@@ -76,9 +84,16 @@ namespace VortexTCG.Api.Collection.Providers
 
             if (collection.User != null)
             {
-                _db.Attach(collection.User);
-                _db.Entry(collection.User).State = EntityState.Unchanged;
-                existing.User = collection.User;
+                var existingUser = await _db.Users.FindAsync(collection.User.Id);
+
+                if (existingUser != null)
+                {
+                    existing.User = existingUser;
+                }
+                else
+                {
+                    existing.User = null!;
+                }
             }
 
             await _db.SaveChangesAsync();
