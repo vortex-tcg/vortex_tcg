@@ -193,6 +193,10 @@ services:
       - "traefik.http.routers.sonarqube.tls=true"
       - "traefik.http.routers.sonarqube.tls.certresolver=le"
       - "traefik.http.services.sonarqube.loadbalancer.server.port=9000"
+    update_config:
+      parallelism: 1
+      delay: 10s
+      order: start-first
     restart_policy:
       condition: on-failure
       delay: 10s
