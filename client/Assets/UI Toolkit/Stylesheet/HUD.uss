@@ -1,0 +1,7 @@
+:root {
+}
+
+.unity-text-field__input {
+    background-color: transparent;
+    border-width: 0;
+}
