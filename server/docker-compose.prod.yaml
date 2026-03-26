@@ -33,7 +33,7 @@ services:
       - "--providers.swarm=true"
       - "--providers.swarm.exposedbydefault=false"
       # Comment for now to check if network is the issue
-      # - "--providers.swarm.network=traefik-network"
+      - "--providers.swarm.network=traefik-network"
       - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
       - "--providers.file.directory=/dynamic"
       - "--providers.file.watch=true"
