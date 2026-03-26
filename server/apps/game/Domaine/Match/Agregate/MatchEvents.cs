@@ -10,6 +10,7 @@ public static class MatchEvent
 {
     public const string MATCH_INIT = "MATCH_INIT";
     public const string PHASE_CHANGED = "PHASE_CHANGED";
+    public const string MATCH_ENDED = "MATCH_ENDED";
 
 }
 
