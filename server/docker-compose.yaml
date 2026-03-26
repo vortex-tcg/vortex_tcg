@@ -136,10 +136,6 @@ services:
     networks:
       - vortex-tcg
 
-networks:
-  vortex-tcg:
-    driver: bridge
-
   vault:
     image: hashicorp/vault:latest
     ports:
@@ -148,6 +144,10 @@ networks:
       - vault_data:/vault/data
     environment:
       VAULT_DEV_ROOT_TOKEN_ID: "root"
+
+networks:
+  vortex-tcg:
+    driver: bridge
 
 volumes:
   sonarqube_data:
