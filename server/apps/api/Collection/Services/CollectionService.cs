@@ -36,7 +36,7 @@ namespace VortexTCG.Api.Collection.Services
             CollectionModel entity = new CollectionModel
             {
                 Id = Guid.NewGuid(),
-                UserId = input.UserId,
+                User = new VortexTCG.DataAccess.Models.User { Id = input.UserId },
                 Cards = new List<CollectionCard>(),
                 Champions = new List<CollectionChampion>()
             };
@@ -108,12 +108,15 @@ namespace VortexTCG.Api.Collection.Services
                         Name = cc.Card.Name,
                         Price = cc.Card.Price,
                         Description = cc.Card.Description,
-                        Hp = cc.Card.Hp.HasValue ? cc.Card.Hp.Value : 0,
-                        Attack = cc.Card.Attack.HasValue ? cc.Card.Attack.Value : 0,
+                        Hp = cc.Card.Hp ?? 0,
+                        Attack = cc.Card.Attack ?? 0,
                         Cost = cc.Card.Cost,
                         Extension = cc.Card.Extension.ToString(),
                         CardType = cc.Card.CardType.ToString(),
-                        Class = cc.Card.Class?.Select(x => x.Class.ToString()).ToList() ?? new List<string>(),
+                        Class = cc.Card.Class?
+                            .Where(x => x.Class != null)
+                            .Select(x => x.Class.ToString())
+                            .ToList() ?? new List<string>(),
                         Factions = cc.Card.Factions?.Select(x => x.FactionId).ToList() ?? new List<Guid>()
                     },
                     OwnData = new List<UserCollectionCardOwnDto>
@@ -179,7 +182,7 @@ namespace VortexTCG.Api.Collection.Services
                 };
             }
 
-            collection.UserId = input.UserId;
+            collection.User = new VortexTCG.DataAccess.Models.User { Id = input.UserId };
             bool success = await _provider.UpdateAsync(collection);
 
             if (!success)
