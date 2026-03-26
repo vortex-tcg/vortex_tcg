@@ -36,7 +36,7 @@ namespace VortexTCG.Api.Collection.Services
             CollectionModel entity = new CollectionModel
             {
                 Id = Guid.NewGuid(),
-                User = new DataAccess.Models.User { Id = input.UserId },
+                UserId = input.UserId,
                 Cards = new List<CollectionCard>(),
                 Champions = new List<CollectionChampion>()
             };
@@ -179,8 +179,7 @@ namespace VortexTCG.Api.Collection.Services
                 };
             }
 
-            collection.User = new DataAccess.Models.User { Id = input.UserId };
-
+            collection.UserId = input.UserId;
             bool success = await _provider.UpdateAsync(collection);
 
             if (!success)

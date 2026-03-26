@@ -38,8 +38,7 @@ namespace VortexTCG.Api.Collection.Providers
                     .ThenInclude(cc => cc.Card)
                 .Include(c => c.Champions)
                     .ThenInclude(ch => ch.Champion)
-                .FirstOrDefaultAsync(c => c.User.Id == userId);
-
+                .FirstOrDefaultAsync(c => c.UserId == userId);
         public async Task<CollectionModel> AddAsync(CollectionModel collection)
         {
             await _db.Collections.AddAsync(collection);
