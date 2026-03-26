@@ -55,9 +55,13 @@ public sealed class CallManager : ICallManager
         _instance.Value._setHubContext(hubContext);
     }
 
-    private void _setHubContext(IHubContext<GameHubClean> hubContext)
+    public static async Task SendToUserAsync(string userId, string eventName, object data, CancellationToken ct = default)
     {
-        typeof(CallManager)
+        if (_instance.Value._hubContext == null)
+            throw new InvalidOperationException("CallManager is not configured. Call CallManager.Configure(...) at startup.");
+
+        await _instance.Value._hubContext.Clients.User(userId).SendAsync(eventName, data, ct);
+    }
             .GetField("_hubContext", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
             ?.SetValue(this, hubContext);
     }

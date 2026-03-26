@@ -147,36 +147,32 @@ public class QueueService
 
         await CallManager.Instance.CallAsync(payload, ct);
 
-        // Send GameStarted event to both players
-        var gameStartedPayload = new responseDTO<PhaseChangeResultDTO, PhaseChangeResultDTO>
+        // Send GameStarted event directly to both players
+        var gameStartedDto = new PhaseChangeResultDTO
         {
-            userId = (Guid)p1,
-            opponentId = (Guid)p2,
-            success = true,
-            code = ResponseCode.SUCCESS_PHASE_CHANGED,
-            data = new PhaseChangeResultDTO
-            {
-                CurrentPhase = GamePhase.PLACEMENT,
-                ActivePlayerId = (Guid)p1,
-                TurnNumber = 0,
-                AutoChanged = false,
-                AutoChangeReason = null,
-                CanAct = true,
-                TimerEndTime = DateTime.UtcNow.AddSeconds(60)
-            },
-            opponentData = new PhaseChangeResultDTO
-            {
-                CurrentPhase = GamePhase.PLACEMENT,
-                ActivePlayerId = (Guid)p1,
-                TurnNumber = 0,
-                AutoChanged = false,
-                AutoChangeReason = null,
-                CanAct = false,
-                TimerEndTime = DateTime.UtcNow.AddSeconds(60)
-            }
+            CurrentPhase = GamePhase.PLACEMENT,
+            ActivePlayerId = (Guid)p1,
+            TurnNumber = 0,
+            AutoChanged = false,
+            AutoChangeReason = null,
+            CanAct = true,
+            TimerEndTime = DateTime.UtcNow.AddSeconds(60)
         };
 
-        await CallManager.Instance.CallAsync(gameStartedPayload, ct);
+        await CallManager.SendToUserAsync(p1.ToString(), "GameStarted", gameStartedDto, ct);
+        
+        var gameStartedDtoOpponent = new PhaseChangeResultDTO
+        {
+            CurrentPhase = GamePhase.PLACEMENT,
+            ActivePlayerId = (Guid)p1,
+            TurnNumber = 0,
+            AutoChanged = false,
+            AutoChangeReason = null,
+            CanAct = false,
+            TimerEndTime = DateTime.UtcNow.AddSeconds(60)
+        };
+        
+        await CallManager.SendToUserAsync(p2.ToString(), "GameStarted", gameStartedDtoOpponent, ct);
 
     public static Task LeaveQueueAsync(UserId userId, CancellationToken ct = default)
     {
