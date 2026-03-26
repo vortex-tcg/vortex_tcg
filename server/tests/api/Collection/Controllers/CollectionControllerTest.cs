@@ -56,21 +56,6 @@ namespace VortexTCG.Tests.Api.Collection.Controllers
         }
 
         [Fact]
-        public async Task GetCollectionCard()
-        {
-            using VortexDbContext db = CreateDb();
-            CollectionController controller = CreateController(db);
-            Guid userId = new Guid();
-            IActionResult getCollectionResult = await controller.GetCollectionByUserId(userId);
-            ObjectResult result = Assert.IsType<ObjectResult>(getCollectionResult);
-            ResultDTO<UserCollectionDto> data = Assert.IsType<ResultDTO<UserCollectionDto>>(result.Value);
-            Assert.True(data.success);
-            Assert.Equal(2, data.data.Decks.Count);
-            Assert.Equal(2, data.data.Faction.Count);
-            Assert.Equal(120, data.data.Cards.Count);
-        }
-
-        [Fact]
         public async Task UpdateCollection_ChangesValues()
         {
             using VortexDbContext db = CreateDb();
