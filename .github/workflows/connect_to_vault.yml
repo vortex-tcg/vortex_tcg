@@ -57,23 +57,6 @@ jobs:
           docker service update --force vortex_traefik
           docker container prune -f
 
-      - name: Run SonarQube
-        run: |
-          if [ ! "$(docker ps -q -f name=sonarqube)" ]; then
-            cd /var/www/vortex_tcg/server
-            docker rm -f sonarqube 2>/dev/null || true
-            docker run -d --name sonarqube \
-              -p ${{ secrets.SONARQUBE_PORT }}:9000 \
-              -e SONAR_WEB_CONTEXT=/sonarqube \
-              -v /var/sonarqube/data:/opt/sonarqube/data \
-              -v /var/sonarqube/logs:/opt/sonarqube/logs \
-              -v /var/sonarqube/extensions:/opt/sonarqube/extensions \
-              --restart always \
-              sonarqube:lts
-          else
-            echo "SonarQube is already running. Skipping startup."
-          fi
-
   cleanup:
     runs-on: self-hosted
     needs: connect-to-vault
