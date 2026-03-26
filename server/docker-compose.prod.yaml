@@ -175,6 +175,29 @@ services:
           cpus: "0.25"
           memory: 256M
 
+  sonarqube:
+  image: sonarqube:lts
+  networks:
+    - traefik-network
+  volumes:
+    - /var/sonarqube/data:/opt/sonarqube/data
+    - /var/sonarqube/logs:/opt/sonarqube/logs
+    - /var/sonarqube/extensions:/opt/sonarqube/extensions
+  deploy:
+    mode: replicated
+    replicas: 1
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonarqube.rule=Host(`sonarqube.vortex-tcg.online`)"
+      - "traefik.http.routers.sonarqube.entrypoints=websecure"
+      - "traefik.http.routers.sonarqube.tls=true"
+      - "traefik.http.routers.sonarqube.tls.certresolver=le"
+      - "traefik.http.services.sonarqube.loadbalancer.server.port=9000"
+    restart_policy:
+      condition: on-failure
+      delay: 10s
+      max_attempts: 3
+
 networks:
   traefik-network:
     driver: overlay
