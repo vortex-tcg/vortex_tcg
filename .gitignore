@@ -106,6 +106,7 @@ secrets.json
 # Terraform
 # ===========================
 .terraform/
+darwin_arm64/
 *.tfstate
 *.tfstate.backup
 crash.log
