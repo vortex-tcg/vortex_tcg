@@ -10,9 +10,6 @@ services:
     volumes:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_logs:/opt/sonarqube/logs
-    secrets:
-      - sonar_db_user
-      - sonar_db_password
     networks:
       - sonarqube_internal
       - vortex_traefik-network
@@ -44,9 +41,6 @@ services:
       POSTGRES_DB: sonar
     volumes:
       - sonarqube_db:/var/lib/postgresql/data
-    secrets:
-      - sonar_db_user
-      - sonar_db_password
     networks:
       - sonarqube_internal
     deploy:
@@ -54,12 +48,6 @@ services:
       placement:
         constraints:
           - node.role == manager
-
-secrets:
-  sonar_db_user:
-    external: true
-  sonar_db_password:
-    external: true
 
 volumes:
   sonarqube_data:
