@@ -16,6 +16,12 @@ jobs:
             sonar/data/SONARQUBE_USER SONARQUBE_USER | SONARQUBE_USER;
             sonar/data/SONARQUBE_PASSWORD SONARQUBE_PASSWORD | SONARQUBE_PASSWORD;
 
+      - name: Pull latest code
+        run: |
+          cd /var/www/vortex_tcg
+          git checkout ${{ github.ref_name }}
+          git pull origin main
+
       - name: Deploy SonarQube Stack
         run: |
           cd /var/www/vortex_tcg/infra/sonarqube
