@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using VortexTCG.Api.Deck.DTOs;
 using VortexTCG.Api.Deck.Interface;
-using VortexTCG.Api.Deck.Services;
 using VortexTCG.Common.Services;
 
 namespace VortexTCG.Api.Deck.Controllers
@@ -17,13 +15,12 @@ namespace VortexTCG.Api.Deck.Controllers
             _deckService = deckService;
         }
 
-        [HttpGet("{deckId}")]
-        public async Task<IActionResult> GetDeckById(string deckId)
-        => toActionResult(_deckService.GetDeckById(deckId));
-        
-
         [HttpGet("getDeckData/{deckId:guid}")]
         public async Task<IActionResult> GetDeckData(Guid deckId)
             => toActionResult(await _deckService.GetDeckDataAsync(deckId));
+
+        [HttpGet("user/{userId:guid}")]
+        public async Task<IActionResult> GetDecksByUserId(Guid userId)
+            => toActionResult(await _deckService.GetDecksByUserIdAsync(userId));
     }
 }
