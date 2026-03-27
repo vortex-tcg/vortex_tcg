@@ -7,5 +7,6 @@ namespace VortexTCG.Api.Deck.Interface
     {
         Task<ResultDTO<DeckDataDto>> GetDeckDataAsync(Guid deckId);
         Task<ResultDTO<List<DeckDTO>>> GetDecksByUserIdAsync(Guid userId);
+        Task<ResultDTO<bool>> UpdateDeckAsync(Guid deckId, UpdateDeckDto dto);
     }
 }
