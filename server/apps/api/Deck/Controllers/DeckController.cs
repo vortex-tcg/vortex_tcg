@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using VortexTCG.Api.Deck.DTOs;
+using VortexTCG.Api.Deck.Interface;
 using VortexTCG.Api.Deck.Services;
 using VortexTCG.Common.Services;
 
@@ -9,15 +10,20 @@ namespace VortexTCG.Api.Deck.Controllers
     [Route("api/[controller]")]
     public class DeckController : VortexBaseController
     {
-        private readonly DeckService _deckService;
+        private readonly IDeckService _deckService;
 
-        public DeckController()
+        public DeckController(IDeckService deckService)
         {
-            _deckService = new DeckService();
+            _deckService = deckService;
         }
 
         [HttpGet("{deckId}")]
         public async Task<IActionResult> GetDeckById(string deckId)
         => toActionResult(_deckService.GetDeckById(deckId));
+        
+
+        [HttpGet("getDeckData/{deckId:guid}")]
+        public async Task<IActionResult> GetDeckData(Guid deckId)
+            => toActionResult(await _deckService.GetDeckDataAsync(deckId));
     }
 }

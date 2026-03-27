@@ -270,7 +270,7 @@ public class GameHub : Hub
 
         // Envoyer l'état initial aux deux joueurs
         await Clients.Group(code).SendAsync("GameStarted", result);
-    }
+    }   
 
     /// <summary>
     /// Le joueur demande à changer de phase.

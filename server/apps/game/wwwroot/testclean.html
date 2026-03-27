@@ -1,0 +1,360 @@
+﻿<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Vortex – Test Queue & Match</title>
+    <style>
+        body{font-family:sans-serif;max-width:860px;margin:24px auto;padding:0 12px}
+        #log{border:1px solid #999;height:320px;overflow:auto;padding:8px;border-radius:10px;white-space:pre-wrap}
+        input,button{padding:6px 10px;margin:4px}
+        .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+        .muted{opacity:.7}
+        .ok{color:#1b7f1b}
+        .bad{color:#b3261e}
+        code{background:rgba(0,0,0,.06);padding:2px 6px;border-radius:6px}
+    </style>
+</head>
+<body>
+<h1>SignalR – Queue & Match (GameHubClean) uwu</h1>
+
+<div class="row">
+    <strong>1) Login</strong>
+    <label>Email: <input id="loginEmail" value="john.doe@email.com" /></label>
+    <label>Mot de passe: <input id="loginPassword" value="Password123"/></label>
+    <button id="loginBtn">Login</button>
+    <span id="loginStatus" class="muted"></span>
+</div>
+
+<div class="row">
+    <strong>2) Connexion Game</strong>
+    <button id="connectBtn" disabled>Connect</button>
+    <span id="connStatus" class="muted"></span>
+</div>
+
+<hr/>
+
+<div class="row">
+    <strong>3) Matchmaking</strong>
+    <label>DeckId (GUID): <input id="deckId" style="width:360px" value="40640469-62fd-4e43-96ee-e84019949f9d"/></label>
+    <button id="joinQueueBtn" disabled>JoinQueue</button>
+    <button id="leaveQueueBtn" disabled>LeaveQueue</button>
+</div>
+
+<p class="muted">
+    Pour tester un match, ouvre <strong>2 onglets</strong> avec ce fichier et connecte-toi avec <strong>2 comptes différents</strong>,
+    puis clique JoinQueue dans les deux.
+</p>
+
+<hr/>
+
+<div class="row">
+    <strong>4) Actions Match</strong>
+    <span class="muted">MatchId auto: <code id="matchIdLabel">-</code></span>
+</div>
+
+<div class="row">
+    <strong>PlayCard</strong>
+    <label>GameCardId: <input id="gameCardId" type="number" value="1" style="width:120px"/></label>
+    <label>BoardPosition: <input id="boardPos" type="number" value="1" style="width:120px"/></label>
+    <button id="playCardBtn" disabled>PlayCard</button>
+</div>
+
+<div class="row">
+    <strong>ChangePhase</strong>
+    <button id="changePhaseBtn" disabled>NextPhase</button>
+    <span class="muted">(le back calcule la prochaine phase)</span>
+</div>
+
+<div class="row">
+    <strong>ToggleAttackCard</strong>
+    <label>Position: <input id="attackPos" type="number" value="1" style="width:120px"/></label>
+    <button id="toggleAttackBtn" disabled>ToggleAttackCard</button>
+    <span class="muted">(engage / désengage une carte sur le board)</span>
+</div>
+
+<div class="row">
+    <strong>ToggleDefenseCard</strong>
+    <label>Defense Position: <input id="defensePos" type="number" value="1" style="width:120px"/></label>
+    <label>Opponent Attack Position: <input id="defenseAttackPos" type="number" value="1" style="width:160px"/></label>
+    <button id="toggleDefenseBtn" disabled>ToggleDefenseCard</button>
+    <span class="muted">(assigne / retire un défenseur sur un attaquant)</span>
+</div>
+
+<div id="log"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8/dist/browser/signalr.min.js"></script>
+<script>
+    const loginEmail = document.getElementById("loginEmail");
+    const loginPassword = document.getElementById("loginPassword");
+    const loginBtn = document.getElementById("loginBtn");
+    const loginStatus = document.getElementById("loginStatus");
+
+    const connectBtn = document.getElementById("connectBtn");
+    const connStatus = document.getElementById("connStatus");
+
+    const deckIdInput = document.getElementById("deckId");
+    const joinQueueBtn = document.getElementById("joinQueueBtn");
+    const leaveQueueBtn = document.getElementById("leaveQueueBtn");
+
+    const matchIdLabel = document.getElementById("matchIdLabel");
+
+    const gameCardIdInput = document.getElementById("gameCardId");
+    const boardPosInput = document.getElementById("boardPos");
+    const playCardBtn = document.getElementById("playCardBtn");
+
+    const changePhaseBtn = document.getElementById("changePhaseBtn");
+
+    const attackPosInput = document.getElementById("attackPos");
+    const toggleAttackBtn = document.getElementById("toggleAttackBtn");
+
+    const defensePosInput = document.getElementById("defensePos");
+    const defenseAttackPosInput = document.getElementById("defenseAttackPos");
+    const toggleDefenseBtn = document.getElementById("toggleDefenseBtn");
+
+    const logDiv = document.getElementById("log");
+
+    let jwtToken = "";
+    let connection = null;
+    let lastMatchId = "";
+
+    function append(msg) {
+        const t = new Date().toLocaleTimeString();
+        logDiv.textContent += `[${t}] ${msg}\n`;
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function setStatus(el, text, ok=null) {
+        el.textContent = text;
+        el.classList.remove("ok", "bad");
+        if (ok === true) el.classList.add("ok");
+        if (ok === false) el.classList.add("bad");
+    }
+
+    loginBtn.onclick = async () => {
+        try {
+            setStatus(loginStatus, "Login...", null);
+
+            const res = await fetch("http://localhost:4000/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: loginEmail.value,
+                    password: loginPassword.value
+                })
+            });
+
+            const json = await res.json();
+            jwtToken = json?.data?.token || "";
+            if (!jwtToken) throw new Error("Token introuvable dans la réponse");
+
+            setStatus(loginStatus, "OK (token reçu)", true);
+            connectBtn.disabled = false;
+
+            append("Login OK.");
+        } catch (e) {
+            console.error(e);
+            setStatus(loginStatus, "Login ERROR (voir console)", false);
+            append("❌ Login error: " + (e?.message || e));
+        }
+    };
+
+    connectBtn.onclick = async () => {
+        try {
+            if (connection && connection.state === signalR.HubConnectionState.Connected) {
+                append("⚠️ Déjà connecté, ignore Connect.");
+                return;
+            }
+
+            setStatus(connStatus, "Connexion au hub...", null);
+
+            const hubUrl = "http://localhost:8008/hubs/game";
+
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl(hubUrl, {
+                    accessTokenFactory: () => jwtToken
+                })
+                .withAutomaticReconnect()
+                .build();
+
+            connection.onreconnecting(err => append("… reconnecting " + (err?.message || "")));
+            connection.onreconnected(() => append("✅ reconnected"));
+            connection.onclose(() => append("⚠️ connection closed"));
+
+            connection.on("Connected", (connectionId) => {
+                append("✅ Connected event: " + connectionId);
+                setStatus(connStatus, "Connecté (" + connectionId + ")", true);
+                joinQueueBtn.disabled = false;
+                leaveQueueBtn.disabled = false;
+            });
+            connection.on("successEndPhaseResolved", (payload) => {
+                append("💥 successEndPhaseResolved (player)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
+            connection.on("opponentEndPhaseResolved", (payload) => {
+                append("💥 opponentEndPhaseResolved (opponent)");
+                append(JSON.stringify(payload, null, 2));
+            });
+            connection.on("matchFound", (payload) => {
+                append("🎮 MATCH FOUND !");
+                append(JSON.stringify(payload, null, 2));
+
+                const mid =
+                    payload?.matchId ||
+                    payload?.data?.matchId ||
+                    payload?.self?.matchId ||
+                    payload?.data?.self?.matchId ||
+                    payload?.opponentData?.matchId ||
+                    "";
+
+                if (mid) {
+                    lastMatchId = mid;
+                    matchIdLabel.textContent = mid;
+                    append("✅ matchId capturé: " + mid);
+                } else {
+                    append("⚠️ matchId introuvable dans payload matchFound (regarde le JSON).");
+                }
+
+                playCardBtn.disabled = false;
+                changePhaseBtn.disabled = false;
+                toggleAttackBtn.disabled = false;
+                toggleDefenseBtn.disabled = false;
+            });
+
+            connection.on("successPoseCarte", (payload) => {
+                append("✅ successPoseCarte (player)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
+            connection.on("opponentPoseCarte", (payload) => {
+                append("👀 opponentPoseCarte (opponent)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
+            connection.on("successPhaseChanged", (payload) => {
+                append("✅ successPhaseChanged (player)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
+            connection.on("opponentPhaseChanged", (payload) => {
+                append("👀 opponentPhaseChanged (opponent)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
+            connection.on("successAttackOrderUpdated", (payload) => {
+                append("⚔️ successAttackOrderUpdated (player)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
+            connection.on("opponentAttackOrderUpdated", (payload) => {
+                append("🛡️ opponentAttackOrderUpdated (opponent)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
+            connection.on("successDefenseUpdated", (payload) => {
+                append("🛡️ successDefenseUpdated (player)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
+            connection.on("opponentDefenseUpdated", (payload) => {
+                append("⚔️ opponentDefenseUpdated (opponent)");
+                append(JSON.stringify(payload, null, 2));
+            });
+
+            connection.on("Error", (msg) => {
+                append("❌ Error: " + msg);
+            });
+
+            await connection.start();
+
+            append("Connexion start() OK.");
+            setStatus(connStatus, "Connecté (start OK)", true);
+            joinQueueBtn.disabled = false;
+            leaveQueueBtn.disabled = false;
+
+        } catch (e) {
+            console.error(e);
+            setStatus(connStatus, "Connexion hub ERROR (voir console)", false);
+            append("❌ Hub error: " + (e?.message || e));
+        }
+    };
+
+    joinQueueBtn.onclick = async () => {
+        try {
+            const deckId = (deckIdInput.value || "").trim();
+            if (!deckId) return alert("Entre un DeckId");
+
+            append("-> invoke JoinQueue(" + deckId + ")");
+            await connection.invoke("JoinQueue", deckId);
+            append("JoinQueue envoyé. Attente adversaire…");
+        } catch (e) {
+            console.error(e);
+            append("❌ JoinQueue error: " + (e?.message || e));
+        }
+    };
+
+    leaveQueueBtn.onclick = async () => {
+        try {
+            append("-> invoke LeaveQueue()");
+            await connection.invoke("LeaveQueue");
+            append("LeaveQueue envoyé.");
+        } catch (e) {
+            console.error(e);
+            append("❌ LeaveQueue error: " + (e?.message || e));
+        }
+    };
+
+    playCardBtn.onclick = async () => {
+        try {
+            const gameCardId = parseInt((gameCardIdInput.value || "0"), 10);
+            const boardPos = parseInt((boardPosInput.value || "0"), 10);
+
+            append(`-> invoke PlayCard(${gameCardId}, ${boardPos})`);
+            await connection.invoke("PlayCard", gameCardId, boardPos);
+            append("PlayCard envoyé.");
+        } catch (e) {
+            console.error(e);
+            append("❌ PlayCard error: " + (e?.message || e));
+        }
+    };
+
+    changePhaseBtn.onclick = async () => {
+        try {
+            append("-> invoke ChangePhase()");
+            await connection.invoke("ChangePhase");
+            append("ChangePhase envoyé.");
+        } catch (e) {
+            console.error(e);
+            append("❌ ChangePhase error: " + (e?.message || e));
+        }
+    };
+
+    toggleAttackBtn.onclick = async () => {
+        try {
+            const position = parseInt((attackPosInput.value || "0"), 10);
+
+            append(`-> invoke ToggleAttackCard(${position})`);
+            await connection.invoke("ToggleAttackCard", position);
+            append("ToggleAttackCard envoyé.");
+        } catch (e) {
+            console.error(e);
+            append("❌ ToggleAttackCard error: " + (e?.message || e));
+        }
+    };
+
+    toggleDefenseBtn.onclick = async () => {
+        try {
+            const defensePosition = parseInt((defensePosInput.value || "0"), 10);
+            const attackPosition = parseInt((defenseAttackPosInput.value || "0"), 10);
+
+            append(`-> invoke ToggleDefenseCard(${defensePosition}, ${attackPosition})`);
+            await connection.invoke("ToggleDefenseCard", defensePosition, attackPosition);
+            append("ToggleDefenseCard envoyé.");
+        } catch (e) {
+            console.error(e);
+            append("❌ ToggleDefenseCard error: " + (e?.message || e));
+        }
+    };
+</script>
+</body>
+</html>
