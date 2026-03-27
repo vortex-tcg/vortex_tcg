@@ -1,5 +1,0 @@
-<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <ui:Template name="NavigationComponent" src="project://database/Assets/Scripts/UI/Shared/NavigationComponent.uxml?fileID=9197481963319205126&amp;guid=142c228b13f42d44e89e8cedfa0a3cd5&amp;type=3#NavigationComponent" />
-    <Style src="project://database/Assets/UI%20Toolkit/MatchSceneHUDStylesheet.uss?fileID=7433441132597879392&amp;guid=2177595ec7397e54f8540429d6376417&amp;type=3#MatchSceneHUDStylesheet" />
-    <ui:Instance template="NavigationComponent" name="NavigationComponent" />
-</ui:UXML>
