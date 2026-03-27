@@ -1,0 +1,23 @@
+name: Deploy SonarQube
+on: [workflow_dispatch]
+
+jobs:
+  connect-to-vault:
+    runs-on: self-hosted
+    steps:
+      - name: Get Vault secrets
+        uses: hashicorp/vault-action@v2
+        with:
+          url: https://localhost:8200
+          method: token
+          token: ${{ secrets.VAULT_TOKEN }}
+          tlsSkipVerify: true
+          secrets: |
+            sonar/data/SONARQUBE_PASSWORD SONARQUBE_PASSWORD | SONARQUBE_PASSWORD;
+
+      - name: Deploy SonarQube Stack
+        run: |
+          cd /var/www/vortex_tcg/infra/sonarqube
+          SONARQUBE_USER=$SONARQUBE_USER \
+          SONARQUBE_PASSWORD=$SONARQUBE_PASSWORD \
+          docker stack deploy -c sonarqube-stack.yml sonarqube
