@@ -18,7 +18,34 @@ namespace VortexTCG.Api.Deck.Services
         {
             _deckProvider = deckProvider;
         }
+        public async Task<ResultDTO<bool>> UpdateDeckAsync(Guid deckId, UpdateDeckDto dto)
+        {
+            var deck = await _deckProvider.GetDeckForUpdateAsync(deckId);
 
+            if (deck == null)
+            {
+                return new ResultDTO<bool>
+                {
+                    success = false,
+                    statusCode = 404,
+                    message = "Deck not found",
+                    data = false
+                };
+            }
+
+            deck.Label = dto.Name;
+            deck.ChampionId = dto.ChampionId;
+            deck.FactionId = dto.FactionId;
+
+            await _deckProvider.UpdateDeckAsync(deck, dto.Cards);
+
+            return new ResultDTO<bool>
+            {
+                success = true,
+                statusCode = 200,
+                data = true
+            };
+        }
         public async Task<ResultDTO<List<DeckDTO>>> GetDecksByUserIdAsync(Guid userId)
         {
             var decks = await _deckProvider.GetDecksByUserIdAsync(userId);

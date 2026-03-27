@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using VortexTCG.Api.Deck.DTOs;
 using VortexTCG.DataAccess;
 using DeckModel = VortexTCG.DataAccess.Models.Deck;
 using DeckCardModel = VortexTCG.DataAccess.Models.DeckCard;
@@ -39,7 +40,30 @@ namespace VortexTCG.Api.Deck.Providers
                 ))
                 .ToListAsync();
         }
+        public async Task<DeckModel?> GetDeckForUpdateAsync(Guid deckId)
+        {
+            return await _db.Decks
+                .Include(d => d.DeckCard)
+                .FirstOrDefaultAsync(d => d.Id == deckId);
+        }
 
+        public async Task UpdateDeckAsync(DeckModel deck, List<UpdateDeckCardDto> newCards)
+        {
+            deck.DeckCard.Clear();
+
+            foreach (var card in newCards)
+            {
+                deck.DeckCard.Add(new DeckCardModel
+                {
+                    Id = Guid.NewGuid(),
+                    DeckId = deck.Id,
+                    CardId = card.CollectionCardId,
+                    Quantity = card.Quantity
+                });
+            }
+
+            await _db.SaveChangesAsync();
+        }
         public async Task<List<DeckModel>> GetDecksByUserIdAsync(Guid userId)
         {
             return await _db.Decks
