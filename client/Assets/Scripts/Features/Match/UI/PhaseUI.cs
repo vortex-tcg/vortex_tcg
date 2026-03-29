@@ -331,7 +331,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             if (goldLabel != null)
             {
-                goldLabel.text = $"Gold: {gold}";
+                goldLabel.text = $"{gold}";
                 Debug.Log($"[PhaseUI] Gold updated: {gold}");
             }
         }
@@ -349,7 +349,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             if (goldLabel != null)
             {
-                goldLabel.text = $"Gold: {gold}";
+                goldLabel.text = $"{gold}";
                 Debug.Log($"[PhaseUI] Player gold updated: {gold}");
             }
         }
@@ -367,7 +367,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             if (opponentGoldLabel != null)
             {
-                opponentGoldLabel.text = $"Gold: {gold}";
+                opponentGoldLabel.text = $"{gold}";
                 Debug.Log($"[PhaseUI] Opponent gold updated: {gold}");
             }
         }
