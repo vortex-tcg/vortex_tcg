@@ -303,12 +303,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &68313134 stripped
 GameObject:
@@ -333,6 +339,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1218190134}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -7.1400003
@@ -555,6 +565,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1218190134}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -9.54
@@ -693,6 +707,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1218190134}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.4099998
@@ -869,12 +887,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &264149735 stripped
 GameObject:
@@ -947,6 +971,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1615186288}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -4.78531
@@ -1016,6 +1044,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1615186288}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -7.1400003
@@ -1118,12 +1150,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &347979653
 PrefabInstance:
@@ -1233,12 +1271,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &461632685
 PrefabInstance:
@@ -1248,6 +1292,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1218190134}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 4.82
@@ -1424,12 +1472,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &620190789 stripped
 GameObject:
@@ -1551,12 +1605,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &737667414 stripped
 GameObject:
@@ -1648,12 +1708,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &776513355
 GameObject:
@@ -1721,6 +1787,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiDocument: {fileID: 776513356}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
 --- !u!114 &776513361
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1742,6 +1813,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1218190134}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -4.78531
@@ -1844,12 +1919,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &835679977 stripped
 GameObject:
@@ -1897,12 +1978,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &889923923
 PrefabInstance:
@@ -1912,6 +1999,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1218190134}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.38
@@ -2014,12 +2105,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &891603984 stripped
 GameObject:
@@ -2067,12 +2164,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &931078889
 PrefabInstance:
@@ -2082,6 +2185,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1615186288}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 4.82
@@ -2184,12 +2291,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &967252606
 GameObject:
@@ -2369,12 +2482,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &1076761479
 PrefabInstance:
@@ -2622,12 +2741,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1218190133
 GameObject:
@@ -2742,12 +2867,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1410990565 stripped
 GameObject:
@@ -2805,12 +2936,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1552452903 stripped
 GameObject:
@@ -2858,12 +2995,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &1558615408
 PrefabInstance:
@@ -2873,6 +3016,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1615186288}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.38
@@ -2975,12 +3122,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1615186287
 GameObject:
@@ -3120,6 +3273,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1615186288}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -3296,12 +3453,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1795709451 stripped
 GameObject:
@@ -3349,12 +3512,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1803225860 stripped
 GameObject:
@@ -3402,12 +3571,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1833318994
 GameObject:
@@ -3677,12 +3852,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1909179011 stripped
 GameObject:
@@ -3730,12 +3911,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &1940300476
 PrefabInstance:
@@ -3745,6 +3932,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1615186288}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -9.54
@@ -3847,12 +4038,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &1946076882
 PrefabInstance:
@@ -3862,6 +4059,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1218190134}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -3964,12 +4165,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &2011053240
 PrefabInstance:
@@ -3979,6 +4186,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1615186288}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.4099998
@@ -4081,12 +4292,18 @@ MonoBehaviour:
   atkText: {fileID: 0}
   hpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
+  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
