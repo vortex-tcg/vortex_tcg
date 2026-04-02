@@ -104,5 +104,39 @@ namespace VortexTCG.Scripts.DTOs
     {
         [JsonPropertyName("battles")] public List<BattleDataDto> battles { get; set; } = new();
     } 
+
+    [Serializable]
+    public class EndPhaseCardBattleResultDto
+    {
+        [JsonPropertyName("attackerCardId")] public int AttackerCardId { get; set; }
+        [JsonPropertyName("attackerPosition")] public int AttackerPosition { get; set; }
+        [JsonPropertyName("defenderCardId")] public int DefenderCardId { get; set; }
+        [JsonPropertyName("defenderPosition")] public int DefenderPosition { get; set; }
+        [JsonPropertyName("damageToAttacker")] public int DamageToAttacker { get; set; }
+        [JsonPropertyName("damageToDefender")] public int DamageToDefender { get; set; }
+        [JsonPropertyName("attackerRemainingHp")] public int AttackerRemainingHp { get; set; }
+        [JsonPropertyName("defenderRemainingHp")] public int DefenderRemainingHp { get; set; }
+        [JsonPropertyName("attackerDied")] public bool AttackerDied { get; set; }
+        [JsonPropertyName("defenderDied")] public bool DefenderDied { get; set; }
+    }
+
+    [Serializable]
+    public class EndPhaseDirectChampionDamageDto
+    {
+        [JsonPropertyName("attackerCardId")] public int AttackerCardId { get; set; }
+        [JsonPropertyName("attackerPosition")] public int AttackerPosition { get; set; }
+        [JsonPropertyName("damage")] public int Damage { get; set; }
+        [JsonPropertyName("championRemainingHp")] public int ChampionRemainingHp { get; set; }
+    }
+
+    [Serializable]
+    public class EndPhaseResolutionDto
+    {
+        [JsonPropertyName("battles")] public List<EndPhaseCardBattleResultDto> Battles { get; set; } = new();
+        [JsonPropertyName("directChampionDamages")] public List<EndPhaseDirectChampionDamageDto> DirectChampionDamages { get; set; } = new();
+        [JsonPropertyName("deadCardIds")] public List<int> DeadCardIds { get; set; } = new();
+        [JsonPropertyName("currentPlayerChampionHp")] public int CurrentPlayerChampionHp { get; set; }
+        [JsonPropertyName("opponentPlayerChampionHp")] public int OpponentPlayerChampionHp { get; set; }
+    }
     
 }

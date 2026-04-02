@@ -54,6 +54,7 @@ public partial class SignalRClient : MonoBehaviour
     public int OpponentGold => _opponentGold;
     public string OpponentSecondaryCurrencyName => _opponentSecondaryCurrencyName;
     public int OpponentSecondaryCurrency => _opponentSecondaryCurrency;
+    public int PlayerPosition => _playerPosition;
 
     public event Action<BattlesDataDto, bool> OnBattleResolution;
     public event Action<string> OnStatus;
@@ -62,6 +63,7 @@ public partial class SignalRClient : MonoBehaviour
     public event Action OnOpponentLeft;
     public event Action<PhaseChangeResultDTO> OnGameStarted;
     public event Action<PhaseChangeResultDTO> OnPhaseChanged;
+    public event Action<EndPhaseResolutionDto, bool> OnEndPhaseResolved;
     public event Action<DrawResultForPlayerDto> OnCardsDrawn;
     public event Action<DrawResultForOpponentDto> OnOpponentCardsDrawn;
     public event Action<PlayCardPlayerResultDto> OnPlayCardResult;

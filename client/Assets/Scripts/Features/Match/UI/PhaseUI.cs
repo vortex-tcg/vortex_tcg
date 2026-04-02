@@ -18,7 +18,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
         [Header("UI Toolkit")]
         [SerializeField] private UIDocument uiDoc;
 
-        private VisualElement endTurnButton;
+        private Button endTurnButton;
         private Label matchPhaseLabel;
         private Label timerLabel; // Nouveau label pour afficher le timer
         
@@ -38,7 +38,9 @@ namespace VortexTCG.Scripts.Features.Match.UI
         private Scale endTurnDefaultScale = new Scale(Vector3.one);
 
         private GamePhase _currentPhase = GamePhase.PLACEMENT;
+        private bool _canAct;
         private long? _timerEndTime; // Timestamp de fin du timer (Unix ms)
+        private const int PhaseFallbackDurationSeconds = 60;
 
         private void Awake()
         {
@@ -67,7 +69,8 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
             if (endTurnButton != null)
             {
-                endTurnButton.UnregisterCallback<ClickEvent>(HandleEndTurnClicked);
+                endTurnButton.clicked -= RequestEndTurnChange;
+
                 endTurnButton.UnregisterCallback<PointerDownEvent>(HandleEndTurnPointerDown);
                 endTurnButton.UnregisterCallback<PointerUpEvent>(HandleEndTurnPointerUp);
                 endTurnButton.UnregisterCallback<PointerLeaveEvent>(HandleEndTurnPointerLeave);
@@ -87,21 +90,22 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
             VisualElement root = uiDoc.rootVisualElement;
 
-            endTurnButton = root.Q<VisualElement>("EndTurnButton");
+            endTurnButton = root.Q<Button>("EndTurnButton");
             if (endTurnButton != null)
             {
                 endTurnDefaultOpacity = endTurnButton.resolvedStyle.opacity;
                 endTurnDefaultScale = endTurnButton.resolvedStyle.scale;
+                endTurnButton.clicked -= RequestEndTurnChange;
+                endTurnButton.clicked += RequestEndTurnChange;
 
-                endTurnButton.UnregisterCallback<ClickEvent>(HandleEndTurnClicked);
-                endTurnButton.RegisterCallback<ClickEvent>(HandleEndTurnClicked);
                 endTurnButton.UnregisterCallback<PointerDownEvent>(HandleEndTurnPointerDown);
                 endTurnButton.UnregisterCallback<PointerUpEvent>(HandleEndTurnPointerUp);
                 endTurnButton.UnregisterCallback<PointerLeaveEvent>(HandleEndTurnPointerLeave);
                 endTurnButton.RegisterCallback<PointerDownEvent>(HandleEndTurnPointerDown);
                 endTurnButton.RegisterCallback<PointerUpEvent>(HandleEndTurnPointerUp);
                 endTurnButton.RegisterCallback<PointerLeaveEvent>(HandleEndTurnPointerLeave);
-                Debug.Log("[PhaseUI] EndTurnButton bound");
+                UpdateEndTurnButtonState();
+                Debug.Log($"[PhaseUI] EndTurnButton bound name={endTurnButton.name} enabledSelf={endTurnButton.enabledSelf} visible={endTurnButton.visible} pickingMode={endTurnButton.pickingMode}");
             }
             else
             {
@@ -138,7 +142,16 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 Debug.Log($"[PhaseUI] Initialized phase from PhaseService: {_currentPhase}");
             }
 
+            SignalRClient client = SignalRClient.Instance;
+            if (client != null && client.PlayerPosition > 0)
+            {
+                // Fallback when the initial phase event was fired before this UI subscribed.
+                _canAct = client.PlayerPosition == 1;
+                Debug.Log($"[PhaseUI] Fallback canAct from player position: pos={client.PlayerPosition} canAct={_canAct}");
+            }
+
             UpdatePhaseLabel(_currentPhase);
+            UpdateEndTurnButtonState();
             
             // Initialize player data
             InitializePlayerData();
@@ -148,21 +161,45 @@ namespace VortexTCG.Scripts.Features.Match.UI
         private void HandleGameStarted(PhaseChangeResultDTO result)
         {
             _currentPhase = result.CurrentPhase;
-            _timerEndTime = result.TimerEndTime;
+            _canAct = result.CanAct;
+            SetTimerFromServerOrFallback(result.TimerEndTime);
             UpdatePhaseLabel(_currentPhase);
+            UpdateEndTurnButtonState();
             Debug.Log($"[PhaseUI] Game started - Phase: {_currentPhase}, TimerEndTime: {_timerEndTime}");
         }
 
         private void HandlePhaseChanged(PhaseChangeResultDTO result)
         {
             _currentPhase = result.CurrentPhase;
-            _timerEndTime = result.TimerEndTime;
+            _canAct = result.CanAct;
+            SetTimerFromServerOrFallback(result.TimerEndTime);
             UpdatePhaseLabel(_currentPhase);
+            UpdateEndTurnButtonState();
             Debug.Log($"[PhaseUI] Phase changed - New phase: {_currentPhase}, TimerEndTime: {_timerEndTime}");
         }
 
-        private void HandleEndTurnClicked(ClickEvent evt)
+        private void SetTimerFromServerOrFallback(long? serverTimerEndTime)
         {
+            if (serverTimerEndTime.HasValue)
+            {
+                _timerEndTime = serverTimerEndTime;
+                return;
+            }
+
+            long nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            _timerEndTime = nowMs + (PhaseFallbackDurationSeconds * 1000L);
+            Debug.Log($"[PhaseUI] Server timer missing, using local fallback ({PhaseFallbackDurationSeconds}s) end={_timerEndTime}");
+        }
+
+        private void RequestEndTurnChange()
+        {
+            Debug.Log($"[PhaseUI] RequestEndTurnChange received canAct={_canAct} buttonEnabled={(endTurnButton != null ? endTurnButton.enabledSelf : false)}");
+
+            if (!_canAct)
+            {
+                Debug.LogWarning("[PhaseUI] Local canAct is false, but sending ChangePhase anyway and letting server validate turn ownership");
+            }
+
             Debug.Log("[PhaseUI] End Phase button clicked - requesting phase change");
             RestoreEndTurnEffect();
             
@@ -175,23 +212,26 @@ namespace VortexTCG.Scripts.Features.Match.UI
             else
             {
                 Debug.LogWarning("[PhaseUI] ❌ Cannot change phase - SignalRClient not connected");
-            }
+        }
         }
 
         private void HandleEndTurnPointerDown(PointerDownEvent evt)
         {
             if (endTurnButton == null) return;
+            Debug.Log($"[PhaseUI] PointerDown on EndTurnButton pointerId={evt.pointerId} position={evt.position} canAct={_canAct}");
             endTurnButton.style.opacity = 0.9f;
             endTurnButton.style.scale = new Scale(new Vector3(0.97f, 0.97f, 1f));
         }
 
         private void HandleEndTurnPointerUp(PointerUpEvent evt)
         {
+            Debug.Log($"[PhaseUI] PointerUp on EndTurnButton pointerId={evt.pointerId} position={evt.position} canAct={_canAct}");
             RestoreEndTurnEffect();
         }
 
         private void HandleEndTurnPointerLeave(PointerLeaveEvent evt)
         {
+            Debug.Log($"[PhaseUI] PointerLeave on EndTurnButton pointerId={evt.pointerId} canAct={_canAct}");
             RestoreEndTurnEffect();
         }
 
@@ -200,6 +240,15 @@ namespace VortexTCG.Scripts.Features.Match.UI
             if (endTurnButton == null) return;
             endTurnButton.style.opacity = endTurnDefaultOpacity;
             endTurnButton.style.scale = endTurnDefaultScale;
+        }
+
+        private void UpdateEndTurnButtonState()
+        {
+            if (endTurnButton == null) return;
+
+            endTurnButton.SetEnabled(true);
+            endTurnButton.style.opacity = _canAct ? endTurnDefaultOpacity : 0.75f;
+            Debug.Log($"[PhaseUI] UpdateEndTurnButtonState canAct={_canAct} enabledSelf={endTurnButton.enabledSelf} (forced enabled) opacity={endTurnButton.style.opacity.value}");
         }
 
         private void UpdatePhaseLabel(GamePhase phase)
@@ -231,7 +280,8 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
             if (_timerEndTime == null)
             {
-                timerLabel.text = "";
+                timerLabel.text = $"00:{PhaseFallbackDurationSeconds:D2}";
+                timerLabel.style.color = new StyleColor(Color.white);
                 return;
             }
 
@@ -247,7 +297,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 int totalSeconds = Mathf.CeilToInt(remainingMs / 1000f);
                 int minutes = totalSeconds / 60;
                 int seconds = totalSeconds % 60;
-                
+
                 timerLabel.text = $"{minutes:D2}:{seconds:D2}";
 
                 if (totalSeconds <= 10)
@@ -331,7 +381,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             if (goldLabel != null)
             {
-                goldLabel.text = $"Gold: {gold}";
+                goldLabel.text = $"{gold}";
                 Debug.Log($"[PhaseUI] Gold updated: {gold}");
             }
         }
@@ -349,7 +399,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             if (goldLabel != null)
             {
-                goldLabel.text = $"Gold: {gold}";
+                goldLabel.text = $"{gold}";
                 Debug.Log($"[PhaseUI] Player gold updated: {gold}");
             }
         }
@@ -367,7 +417,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             if (opponentGoldLabel != null)
             {
-                opponentGoldLabel.text = $"Gold: {gold}";
+                opponentGoldLabel.text = $"{gold}";
                 Debug.Log($"[PhaseUI] Opponent gold updated: {gold}");
             }
         }
