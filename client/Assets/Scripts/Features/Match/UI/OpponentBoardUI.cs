@@ -144,6 +144,21 @@ namespace VortexTCG.Scripts.MatchScene
         public void UpdateOpponentCardSnapshot(GameCardDto dto) => boardLogic.UpdateOpponentCardSnapshot(dto);
         public void RemoveOpponentCard(int gameCardId) => boardLogic.RemoveOpponentCard(gameCardId);
 
+        public CardUI GetCardAtSlotIndex(int slotIndex)
+        {
+            if (enemySlots == null)
+                return null;
+
+            for (int i = 0; i < enemySlots.Length; i++)
+            {
+                CardSlotUI slot = enemySlots[i];
+                if (slot != null && slot.slotIndex == slotIndex)
+                    return slot.CurrentCard;
+            }
+
+            return null;
+        }
+
         public bool IsCardOnOpponentBoard(CardUI card)
         {
             if (card == null || enemySlots == null)

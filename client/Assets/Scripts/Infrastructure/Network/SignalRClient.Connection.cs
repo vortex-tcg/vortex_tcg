@@ -85,21 +85,12 @@ public partial class SignalRClient
             MatchEvents.FireOpponentCardPlayed(dto);
         }));
 
-        _conn.On<PhaseChangeResultDTO>("GameStarted", r => Enqueue(() =>
-        {
-            Debug.Log($"[SignalRClient] ✅ GameStarted reçu - phase={r.CurrentPhase}");
-            OnGameStarted?.Invoke(r);
-            MatchEvents.FireGameStarted(r);
-            OnLog?.Invoke($"GameStarted: phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct}");
-        }));
-
-        _conn.On<PhaseChangeResultDTO>("PhaseChanged", r => Enqueue(() =>
-        {
-            Debug.Log($"[SignalRClient] ✅ PhaseChanged reçu - phase={r.CurrentPhase}");
-            OnPhaseChanged?.Invoke(r);
-            MatchEvents.FirePhaseChanged(r);
-            OnLog?.Invoke($"PhaseChanged: phase={r.CurrentPhase} turn={r.TurnNumber} canAct={r.CanAct} auto={r.AutoChanged}");
-        }));
+        _conn.On<JsonElement>("GameStarted", payload => HandlePhaseEvent("GameStarted", payload, true));
+        _conn.On<JsonElement>("PhaseChanged", payload => HandlePhaseEvent("PhaseChanged", payload, false));
+        _conn.On<JsonElement>("successPhaseChanged", payload => HandlePhaseEvent("successPhaseChanged", payload, false));
+        _conn.On<JsonElement>("opponentPhaseChanged", payload => HandlePhaseEvent("opponentPhaseChanged", payload, false));
+        _conn.On<JsonElement>("successEndPhaseResolved", payload => HandleEndPhaseResolved("successEndPhaseResolved", payload, false));
+        _conn.On<JsonElement>("opponentEndPhaseResolved", payload => HandleEndPhaseResolved("opponentEndPhaseResolved", payload, true));
 
         _conn.On<string, string, string>("ReceiveRoomMessage", (key, from, text) =>
             Enqueue(() => OnLog?.Invoke($"{from}: {text}")));
@@ -212,5 +203,298 @@ public partial class SignalRClient
                 Debug.LogError("[SignalR] StartAsync FAILED: " + ex);
             });
         }
+    }
+
+    private void HandlePhaseEvent(string eventName, JsonElement payload, bool isGameStarted)
+    {
+        PhaseChangeResultDTO result = ParsePhaseChangePayload(payload);
+
+        Enqueue(() =>
+        {
+            Debug.Log($"[SignalRClient] ✅ {eventName} reçu - phase={result.CurrentPhase} turn={result.TurnNumber} canAct={result.CanAct}");
+
+            if (isGameStarted)
+            {
+                OnGameStarted?.Invoke(result);
+                MatchEvents.FireGameStarted(result);
+            }
+            else
+            {
+                OnPhaseChanged?.Invoke(result);
+                MatchEvents.FirePhaseChanged(result);
+            }
+
+            OnLog?.Invoke($"{eventName}: phase={result.CurrentPhase} turn={result.TurnNumber} canAct={result.CanAct} auto={result.AutoChanged}");
+        });
+    }
+
+    private void HandleEndPhaseResolved(string eventName, JsonElement payload, bool localIsAttacker)
+    {
+        EndPhaseResolutionDto result = ParseEndPhaseResolutionPayload(payload);
+
+        Enqueue(() =>
+        {
+            Debug.Log($"[SignalRClient] ✅ {eventName} reçu - battles={result.Battles?.Count ?? 0} deadCards={result.DeadCardIds?.Count ?? 0}");
+            OnEndPhaseResolved?.Invoke(result, localIsAttacker);
+            OnLog?.Invoke($"{eventName}: battles={result.Battles?.Count ?? 0} deadCards={result.DeadCardIds?.Count ?? 0} p1Hp={result.CurrentPlayerChampionHp} p2Hp={result.OpponentPlayerChampionHp}");
+        });
+    }
+
+    private PhaseChangeResultDTO ParsePhaseChangePayload(JsonElement payload)
+    {
+        if (payload.ValueKind != JsonValueKind.Object)
+        {
+            return new PhaseChangeResultDTO();
+        }
+
+        if (TryGetPropertyIgnoreCase(payload, "activePlayerResult", out JsonElement activePlayerResult))
+        {
+            return ParsePhaseChangeResult(activePlayerResult);
+        }
+
+        return ParsePhaseChangeResult(payload);
+    }
+
+    private PhaseChangeResultDTO ParsePhaseChangeResult(JsonElement payload)
+    {
+        PhaseChangeResultDTO result = new PhaseChangeResultDTO
+        {
+            CurrentPhase = ReadGamePhase(payload),
+            ActivePlayerId = ReadGuid(payload, "activePlayerId"),
+            TurnNumber = ReadInt(payload, "turnNumber"),
+            AutoChanged = ReadBool(payload, "autoChanged"),
+            AutoChangeReason = ReadString(payload, "autoChangeReason"),
+            TimerEndTime = ReadNullableLong(payload, "timerEndTime")
+        };
+
+        if (TryReadBool(payload, "canAct", out bool canAct))
+        {
+            result.CanAct = canAct;
+        }
+        else if (TryReadInt(payload, "currentPlayerPosition", out int currentPlayerPosition))
+        {
+            _lastServerCurrentPlayerPosition = currentPlayerPosition;
+            int localPlayerPosition = LocalPlayerPosition;
+            result.CanAct = localPlayerPosition > 0 && currentPlayerPosition == localPlayerPosition;
+        }
+
+        return result;
+    }
+
+    private int LocalPlayerPosition => networkRef != null ? networkRef.PlayerPosition : _playerPosition;
+    private int _lastServerCurrentPlayerPosition = -1;
+
+    private static EndPhaseResolutionDto ParseEndPhaseResolutionPayload(JsonElement payload)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<EndPhaseResolutionDto>(payload.GetRawText(), new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }) ?? new EndPhaseResolutionDto();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[SignalRClient] Failed to parse end phase resolution payload: {ex.Message}");
+            return new EndPhaseResolutionDto();
+        }
+    }
+
+    private static bool TryGetPropertyIgnoreCase(JsonElement element, string propertyName, out JsonElement value)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty property in element.EnumerateObject())
+            {
+                if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = property.Value;
+                    return true;
+                }
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
+    private static bool TryReadProperty(JsonElement element, string propertyName, out JsonElement value)
+        => TryGetPropertyIgnoreCase(element, propertyName, out value);
+
+    private static string ReadString(JsonElement element, string propertyName)
+    {
+        if (TryReadProperty(element, propertyName, out JsonElement value) && value.ValueKind == JsonValueKind.String)
+        {
+            return value.GetString();
+        }
+
+        return null;
+    }
+
+    private static bool ReadBool(JsonElement element, string propertyName)
+    {
+        return TryReadBool(element, propertyName, out bool value) && value;
+    }
+
+    private static bool TryReadBool(JsonElement element, string propertyName, out bool value)
+    {
+        if (!TryReadProperty(element, propertyName, out JsonElement property))
+        {
+            value = default;
+            return false;
+        }
+
+        if (property.ValueKind == JsonValueKind.True)
+        {
+            value = true;
+            return true;
+        }
+
+        if (property.ValueKind == JsonValueKind.False)
+        {
+            value = false;
+            return true;
+        }
+
+        if (property.ValueKind == JsonValueKind.String && bool.TryParse(property.GetString(), out bool parsedBool))
+        {
+            value = parsedBool;
+            return true;
+        }
+
+        value = default;
+        return false;
+    }
+
+    private static int ReadInt(JsonElement element, string propertyName)
+    {
+        return TryReadInt(element, propertyName, out int value) ? value : 0;
+    }
+
+    private static bool TryReadInt(JsonElement element, string propertyName, out int value)
+    {
+        if (TryReadProperty(element, propertyName, out JsonElement property))
+        {
+            if (property.ValueKind == JsonValueKind.Number && property.TryGetInt32(out value))
+            {
+                return true;
+            }
+
+            if (property.ValueKind == JsonValueKind.String && int.TryParse(property.GetString(), out value))
+            {
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
+    private static long? ReadNullableLong(JsonElement element, string propertyName)
+    {
+        if (!TryReadProperty(element, propertyName, out JsonElement property))
+        {
+            return null;
+        }
+
+        if (property.ValueKind == JsonValueKind.Null || property.ValueKind == JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        if (property.ValueKind == JsonValueKind.Number && property.TryGetInt64(out long value))
+        {
+            return value;
+        }
+
+        if (property.ValueKind == JsonValueKind.String && long.TryParse(property.GetString(), out long parsedValue))
+        {
+            return parsedValue;
+        }
+
+        return null;
+    }
+
+    private static Guid ReadGuid(JsonElement element, string propertyName)
+    {
+        if (!TryReadProperty(element, propertyName, out JsonElement property))
+        {
+            return Guid.Empty;
+        }
+
+        if (property.ValueKind == JsonValueKind.String && Guid.TryParse(property.GetString(), out Guid value))
+        {
+            return value;
+        }
+
+        return Guid.Empty;
+    }
+
+    private static GamePhase ReadGamePhase(JsonElement element)
+    {
+        if (!TryReadProperty(element, "currentPhase", out JsonElement currentPhase) && !TryReadProperty(element, "phase", out currentPhase))
+        {
+            return GamePhase.PLACEMENT;
+        }
+
+        if (currentPhase.ValueKind == JsonValueKind.Number && currentPhase.TryGetInt32(out int numericPhase) && Enum.IsDefined(typeof(GamePhase), numericPhase))
+        {
+            return (GamePhase)numericPhase;
+        }
+
+        if (currentPhase.ValueKind == JsonValueKind.String)
+        {
+            string rawPhase = currentPhase.GetString();
+            if (TryParseGamePhase(rawPhase, out GamePhase parsedPhase))
+            {
+                return parsedPhase;
+            }
+        }
+
+        return GamePhase.PLACEMENT;
+    }
+
+    private static bool TryParseGamePhase(string rawPhase, out GamePhase phase)
+    {
+        phase = GamePhase.PLACEMENT;
+
+        if (string.IsNullOrWhiteSpace(rawPhase))
+        {
+            return false;
+        }
+
+        string normalizedPhase = rawPhase.Trim();
+
+        if (Enum.TryParse(normalizedPhase, true, out phase))
+        {
+            return true;
+        }
+
+        string loweredPhase = normalizedPhase.ToLowerInvariant();
+        if (loweredPhase == "standby" || loweredPhase == "stand_by" || loweredPhase == "placement")
+        {
+            phase = GamePhase.PLACEMENT;
+            return true;
+        }
+
+        if (loweredPhase == "attack")
+        {
+            phase = GamePhase.ATTACK;
+            return true;
+        }
+
+        if (loweredPhase == "defense")
+        {
+            phase = GamePhase.DEFENSE;
+            return true;
+        }
+
+        if (loweredPhase == "endturn" || loweredPhase == "end_turn" || loweredPhase == "end turn")
+        {
+            phase = GamePhase.END_TURN;
+            return true;
+        }
+
+        return false;
     }
 }
