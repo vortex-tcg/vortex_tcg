@@ -244,9 +244,11 @@ namespace VortexTCG.Scripts.Features.Match.UI
                     }
 
                     Debug.Log($"[OpponentUI] Création carte adversaire {i + 1} dans slot '{slot.name}'");
+                    CardSlotUI cardSlot = slot.GetComponent<CardSlotUI>();
                     
                     CardUI faceDown = Instantiate(_cardPrefab, slot);
                     faceDown.gameObject.name = $"OpponentCard_{i}";
+                    cardSlot?.SetCurrentCard(faceDown);
                     
                     faceDown.SetFaceDown(true);
                     faceDown.SetFaceDown(true);

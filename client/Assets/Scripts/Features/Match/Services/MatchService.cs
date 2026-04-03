@@ -493,7 +493,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
                       " slot=" + (slot != null ? slot.name : "NULL"));
 
             if (slot != null && slot.CurrentCard == card)
-                slot.CurrentCard = null;
+                slot.SetCurrentCard(null);
 
             Destroy(card.gameObject);
 

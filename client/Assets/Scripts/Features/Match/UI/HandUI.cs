@@ -410,11 +410,13 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
                     int slotIndex = availableSlotIndices[cardsAdded];
                     Transform slot = _handSlots[slotIndex];
+                    CardSlotUI cardSlot = slot.GetComponent<CardSlotUI>();
 
                     Debug.Log($"[HandUI] Création carte {cardsAdded + 1}: '{dto.Name}' dans slot {slotIndex} ({slot.name})");
                     
                     CardUI card = Instantiate(_cardPrefab, slot);
                     card.gameObject.name = $"Card_{dto.Name}_{slotIndex}";
+                    cardSlot?.SetCurrentCard(card);
                     
                     Debug.Log($"[HandUI] Carte instantiée '{card.gameObject.name}', parent: {card.transform.parent.name}");
                     
@@ -513,11 +515,13 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
                     int slotIndex = availableSlotIndices[cardsAdded];
                     Transform slot = _handSlots[slotIndex];
+                    CardSlotUI cardSlot = slot.GetComponent<CardSlotUI>();
 
                     Debug.Log($"[HandUI] Création carte {cardsAdded + 1}: '{dto.Name}' dans slot {slotIndex} ({slot.name})");
                     
                     CardUI card = Instantiate(_cardPrefab, slot);
                     card.gameObject.name = $"Card_{dto.Name}_{slotIndex}";
+                    cardSlot?.SetCurrentCard(card);
                     
                     Debug.Log($"[HandUI] Carte instantiée '{card.gameObject.name}', parent: {card.transform.parent.name}");
                     

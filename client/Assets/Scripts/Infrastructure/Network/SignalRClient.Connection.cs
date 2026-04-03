@@ -100,6 +100,8 @@ public partial class SignalRClient
         _conn.On<JsonElement>("opponentPhaseChanged", payload => HandlePhaseEvent("opponentPhaseChanged", payload, false));
         _conn.On<JsonElement>("successEndPhaseResolved", payload => HandleEndPhaseResolved("successEndPhaseResolved", payload, false));
         _conn.On<JsonElement>("opponentEndPhaseResolved", payload => HandleEndPhaseResolved("opponentEndPhaseResolved", payload, true));
+        _conn.On<JsonElement>("successAttackOrderUpdated", payload => HandleAttackOrderUpdated("successAttackOrderUpdated", payload, false));
+        _conn.On<JsonElement>("opponentAttackOrderUpdated", payload => HandleAttackOrderUpdated("opponentAttackOrderUpdated", payload, true));
 
         _conn.On<string, string, string>("ReceiveRoomMessage", (key, from, text) =>
             Enqueue(() => OnLog?.Invoke($"{from}: {text}")));
@@ -256,6 +258,95 @@ public partial class SignalRClient
             OnEndPhaseResolved?.Invoke(result, localIsAttacker);
             OnLog?.Invoke($"{eventName}: battles={result.Battles?.Count ?? 0} deadCards={result.DeadCardIds?.Count ?? 0} p1Hp={result.CurrentPlayerChampionHp} p2Hp={result.OpponentPlayerChampionHp}");
         });
+    }
+
+    private void HandleAttackOrderUpdated(string eventName, JsonElement payload, bool isOpponentEvent)
+    {
+        List<int> orderedAttackCardIds = ParseAttackOrderCardIds(payload);
+
+        Enqueue(() =>
+        {
+            Debug.Log($"[SignalRClient] {eventName} received cards=[{string.Join(",", orderedAttackCardIds)}] opponentEvent={isOpponentEvent}");
+
+            if (isOpponentEvent)
+            {
+                OnOpponentAttackEngage?.Invoke(orderedAttackCardIds);
+            }
+            else
+            {
+                OnAttackEngage?.Invoke(orderedAttackCardIds);
+            }
+        });
+    }
+
+    private static List<int> ParseAttackOrderCardIds(JsonElement payload)
+    {
+        var ids = new List<int>();
+
+        if (!TryGetPropertyInsensitive(payload, "engagedCards", out JsonElement engagedCards) ||
+            engagedCards.ValueKind != JsonValueKind.Array)
+        {
+            // Legacy contract fallback: attackCardsId = [int]
+            if (TryGetPropertyInsensitive(payload, "attackCardsId", out JsonElement attackCardsId) &&
+                attackCardsId.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement idEl in attackCardsId.EnumerateArray())
+                {
+                    if (idEl.TryGetInt32(out int legacyId))
+                        ids.Add(legacyId);
+                }
+            }
+
+            return ids;
+        }
+
+        var entries = new List<(int attackOrder, int gameCardId)>();
+        foreach (JsonElement engaged in engagedCards.EnumerateArray())
+        {
+            if (!TryGetPropertyInsensitive(engaged, "gameCardId", out JsonElement gameCardIdEl) ||
+                !gameCardIdEl.TryGetInt32(out int gameCardId))
+            {
+                continue;
+            }
+
+            int attackOrder = int.MaxValue;
+            if (TryGetPropertyInsensitive(engaged, "attackOrder", out JsonElement attackOrderEl) &&
+                attackOrderEl.TryGetInt32(out int parsedOrder))
+            {
+                attackOrder = parsedOrder;
+            }
+
+            entries.Add((attackOrder, gameCardId));
+        }
+
+        foreach (var item in entries.OrderBy(e => e.attackOrder).ThenBy(e => e.gameCardId))
+        {
+            ids.Add(item.gameCardId);
+        }
+
+        return ids;
+    }
+
+    private static bool TryGetPropertyInsensitive(JsonElement element, string propertyName, out JsonElement value)
+    {
+        value = default;
+
+        if (element.ValueKind != JsonValueKind.Object)
+            return false;
+
+        if (element.TryGetProperty(propertyName, out value))
+            return true;
+
+        foreach (JsonProperty prop in element.EnumerateObject())
+        {
+            if (string.Equals(prop.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+            {
+                value = prop.Value;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void HandleSuccessPoseCarte(JsonElement payload)

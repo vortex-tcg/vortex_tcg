@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 580204058}
   - component: {fileID: 580204060}
   - component: {fileID: 580204061}
+  - component: {fileID: 580204062}
   m_Layer: 5
   m_Name: HUD
   m_TagString: Untagged
@@ -208,6 +209,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   uiDocument: {fileID: 580204058}
   menuParams: {fileID: 0}
+--- !u!114 &580204062
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 580204056}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59b7c238a5b2078409e6d4a08bf05864, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 580204058}
+  buttonName: PlayButton
+  buttonNames:
+  - ProfileButton
+  - CollectionButton
+  - ShopButton
+  - QuitButton
+  pressedVisibleDuration: 0.08
+  debugLogs: 0
+  normalBackground: {fileID: 2800000, guid: 2d2d0b8ccfc3b394eb94f07ddab2dc3a, type: 3}
+  pressedBackground: {fileID: 2800000, guid: 29c6b53755cb1704680e3f47c24f9e81, type: 3}
 --- !u!1 &689827792
 GameObject:
   m_ObjectHideFlags: 0
