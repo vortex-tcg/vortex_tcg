@@ -4,7 +4,7 @@ namespace VortexTCG.Scripts.DTOs
 {
     public enum GamePhase
     {
-        PLACEMENT = 1,
+        STAND_BY = 1,
         ATTACK = 2,
         DEFENSE = 3,
         END_TURN = 4

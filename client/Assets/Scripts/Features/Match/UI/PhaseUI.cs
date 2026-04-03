@@ -37,7 +37,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
         private float endTurnDefaultOpacity = 1f;
         private Scale endTurnDefaultScale = new Scale(Vector3.one);
 
-        private GamePhase _currentPhase = GamePhase.PLACEMENT;
+        private GamePhase _currentPhase = GamePhase.STAND_BY;
         private bool _canAct;
         private long? _timerEndTime; // Timestamp de fin du timer (Unix ms)
         private const int PhaseFallbackDurationSeconds = 60;
@@ -257,7 +257,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
             string label = phase switch
             {
-                GamePhase.PLACEMENT => "STAND BY PHASE",
+                GamePhase.STAND_BY => "STAND BY PHASE",
                 GamePhase.ATTACK => "ATTACK PHASE",
                 GamePhase.DEFENSE => "DEFENSE PHASE",
                 GamePhase.END_TURN => "END TURN PHASE",

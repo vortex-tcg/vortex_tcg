@@ -205,7 +205,7 @@ public partial class SignalRClient : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogException(ex);
-            OnStatus?.Invoke($"Invoke {method} a échoué.");
+            OnStatus?.Invoke($"Invoke {method} a échoué: {ex.Message}");
         }
     }
 }

@@ -34,7 +34,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             }
         }
 
-        public GamePhase CurrentPhase { get; private set; } = GamePhase.PLACEMENT;
+        public GamePhase CurrentPhase { get; private set; } = GamePhase.STAND_BY;
 
         // The current turn number reported by the server (1-based)
         public int CurrentTurn { get; private set; } = 0;
@@ -153,7 +153,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         {
             switch (phase)
             {
-                case GamePhase.PLACEMENT:
+                case GamePhase.STAND_BY:
                     OnEnterPlacement?.Invoke();
                     Debug.Log("[PhaseService] Invoked OnEnterPlacement");
                     break;
@@ -181,12 +181,12 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
         public void ResetPhase()
         {
-            CurrentPhase = GamePhase.PLACEMENT;
-            _previousPhase = GamePhase.PLACEMENT;
+            CurrentPhase = GamePhase.STAND_BY;
+            _previousPhase = GamePhase.STAND_BY;
             CurrentTurn = 0;
             // also clear any sleeping state left over
             SleepManager.WakeAll();
-            Debug.Log("[PhaseService] Phase reset to PLACEMENT");
+            Debug.Log("[PhaseService] Phase reset to STAND_BY");
         }
     }
 }
