@@ -1875,6 +1875,8 @@ GameObject:
   - component: {fileID: 776513356}
   - component: {fileID: 776513360}
   - component: {fileID: 776513361}
+  - component: {fileID: 776513362}
+  - component: {fileID: 776513363}
   m_Layer: 5
   m_Name: HUD
   m_TagString: Untagged
@@ -1947,6 +1949,38 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiDoc: {fileID: 776513356}
+--- !u!114 &776513362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 776513355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0feb2a82edd3144b991c3838bccd27d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 1471669114}
+  startHidden: 1
+--- !u!114 &776513363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 776513355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59b7c238a5b2078409e6d4a08bf05864, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 776513356}
+  buttonName: EndTurnButton
+  pressedVisibleDuration: 0.08
+  debugLogs: 0
+  normalBackground: {fileID: 2800000, guid: 6b44f130c75fded4cb8e4dc99614633e, type: 3}
+  pressedBackground: {fileID: 2800000, guid: 76b4720ae5bd59b4a8dd6a465b8cad05, type: 3}
 --- !u!1001 &824804803
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3032,6 +3066,93 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
   m_PrefabInstance: {fileID: 2011053240}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1471669114
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1471669118}
+  - component: {fileID: 1471669117}
+  - component: {fileID: 1471669119}
+  - component: {fileID: 1471669120}
+  m_Layer: 5
+  m_Name: Menu HUD
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1471669117
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1471669114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_PanelSettings: {fileID: 11400000, guid: 6b8f574547f18cc4682f6730d2676290, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: 8733b7c209e05e443ad2825e785b441f, type: 3}
+  m_SortingOrder: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+--- !u!4 &1471669118
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1471669114}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1471669119
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1471669114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 768b186b4ebdf1d4794fcb5e10f34f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 1471669117}
+  quitButtonName: QuitButton
+  loadHomeAfterSurrender: 1
+  homeSceneName: HomeScene
+--- !u!114 &1471669120
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1471669114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59b7c238a5b2078409e6d4a08bf05864, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 1471669117}
+  buttonName: QuitButton
+  pressedVisibleDuration: 0.08
+  debugLogs: 0
+  normalBackground: {fileID: 2800000, guid: 2d2d0b8ccfc3b394eb94f07ddab2dc3a, type: 3}
+  pressedBackground: {fileID: 2800000, guid: 29c6b53755cb1704680e3f47c24f9e81, type: 3}
 --- !u!1 &1486313202 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
@@ -4565,3 +4686,4 @@ SceneRoots:
   - {fileID: 738405642}
   - {fileID: 776513357}
   - {fileID: 494557510}
+  - {fileID: 1471669118}

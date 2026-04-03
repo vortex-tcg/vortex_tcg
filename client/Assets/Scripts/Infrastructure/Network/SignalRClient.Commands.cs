@@ -78,6 +78,13 @@ public partial class SignalRClient
         await SafeInvoke("ChangePhase");
     }
 
+    public async Task Surrender()
+    {
+        RequireConnectedOrThrow();
+        Debug.Log("[SignalRClient] -> Surrender()");
+        await SafeInvoke("Surrender");
+    }
+
     public async Task DrawCards(int playerPosition, int amount)
     {
         RequireConnectedOrThrow();
