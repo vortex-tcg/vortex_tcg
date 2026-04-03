@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:client/Assets/Resources/GUI/AuthenticationButton.png.meta
 guid: 34f32bbc84682ab4aa66b90e2b2dfc0c
+========
+guid: f9249abc16a7a884999c5eec219235ae
+>>>>>>>> dev:client/Assets/Resources/GUI/AuthenticationInput.png.meta
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
