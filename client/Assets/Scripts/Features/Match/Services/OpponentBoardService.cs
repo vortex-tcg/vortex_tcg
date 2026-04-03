@@ -53,7 +53,18 @@ namespace VortexTCG.Scripts.Features.Match.Services
             {
                 int id = attackIds[i];
 
-                if (opponentCardsById.TryGetValue(id, out CardUI card) && card != null)
+                if ((!opponentCardsById.TryGetValue(id, out CardUI card) || card == null) && OpponentBoardUI.Instance != null)
+                {
+                    CardUI recovered = OpponentBoardUI.Instance.FindOpponentCardByGameCardId(id);
+                    if (recovered != null)
+                    {
+                        opponentCardsById[id] = recovered;
+                        card = recovered;
+                        Debug.Log("[OpponentBoardService] Recovered opponent card from board for id=" + id);
+                    }
+                }
+
+                if (card != null)
                 {
                     card.SetSelected(true);
                     card.SetAttackedThisPhase(true);
@@ -90,7 +101,18 @@ namespace VortexTCG.Scripts.Features.Match.Services
             {
                 int id = data.AttackCardsId[i];
 
-                if (opponentCardsById.TryGetValue(id, out CardUI card) && card != null)
+                if ((!opponentCardsById.TryGetValue(id, out CardUI card) || card == null) && OpponentBoardUI.Instance != null)
+                {
+                    CardUI recovered = OpponentBoardUI.Instance.FindOpponentCardByGameCardId(id);
+                    if (recovered != null)
+                    {
+                        opponentCardsById[id] = recovered;
+                        card = recovered;
+                        Debug.Log("[OpponentBoardService] Recovered opponent defense card from board for id=" + id);
+                    }
+                }
+
+                if (card != null)
                 {
                     card.SetOpponentAttacking(true);
                     card.SetSelected(true);

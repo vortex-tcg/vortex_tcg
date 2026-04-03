@@ -132,7 +132,7 @@ namespace VortexTCG.Scripts.MatchScene
                         Destroy(s.CurrentCard.gameObject);
                     }
 
-                    s.CurrentCard = null;
+                    s.SetCurrentCard(null);
                 }
             }
 
@@ -153,6 +153,24 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 CardSlotUI slot = enemySlots[i];
                 if (slot != null && slot.slotIndex == slotIndex)
+                    return slot.CurrentCard;
+            }
+
+            return null;
+        }
+
+        public CardUI FindOpponentCardByGameCardId(int gameCardId)
+        {
+            if (enemySlots == null)
+                return null;
+
+            for (int i = 0; i < enemySlots.Length; i++)
+            {
+                CardSlotUI slot = enemySlots[i];
+                if (slot == null || slot.CurrentCard == null)
+                    continue;
+
+                if (int.TryParse(slot.CurrentCard.cardId, out int id) && id == gameCardId)
                     return slot.CurrentCard;
             }
 

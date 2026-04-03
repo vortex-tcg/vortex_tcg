@@ -302,6 +302,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -886,6 +887,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -1258,6 +1260,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -1379,6 +1382,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -1613,6 +1617,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -1746,6 +1751,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -1849,6 +1855,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -1977,6 +1984,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   uiDocument: {fileID: 776513356}
   buttonName: EndTurnButton
+  buttonNames: []
   pressedVisibleDuration: 0.08
   debugLogs: 0
   normalBackground: {fileID: 2800000, guid: 6b44f130c75fded4cb8e4dc99614633e, type: 3}
@@ -2094,6 +2102,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -2153,6 +2162,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -2280,6 +2290,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -2339,6 +2350,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -2466,6 +2478,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -2657,6 +2670,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -2916,6 +2930,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -3042,6 +3057,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -3084,7 +3100,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1471669117
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3149,6 +3165,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   uiDocument: {fileID: 1471669117}
   buttonName: QuitButton
+  buttonNames: []
   pressedVisibleDuration: 0.08
   debugLogs: 0
   normalBackground: {fileID: 2800000, guid: 2d2d0b8ccfc3b394eb94f07ddab2dc3a, type: 3}
@@ -3198,6 +3215,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -3366,6 +3384,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -3493,6 +3512,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -3824,6 +3844,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -3883,6 +3904,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -3942,6 +3964,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -4223,6 +4246,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -4282,6 +4306,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -4409,6 +4434,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -4536,6 +4562,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
@@ -4663,6 +4690,7 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
   costColor: {fileID: 0}
   costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}

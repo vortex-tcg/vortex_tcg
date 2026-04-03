@@ -20,6 +20,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         private Button endTurnButton;
         private Label matchPhaseLabel;
+        private Label turnStatusLabel;
         private Label timerLabel; // Nouveau label pour afficher le timer
         
         // Player HUD elements
@@ -113,6 +114,29 @@ namespace VortexTCG.Scripts.Features.Match.UI
             }
 
             matchPhaseLabel = root.Q<Label>("MatchPhase");
+            turnStatusLabel = root.Q<Label>("TurnStatus") ?? root.Q<Label>("TurnStatusLabel");
+
+            if (turnStatusLabel == null && matchPhaseLabel != null)
+            {
+                turnStatusLabel = new Label("En attente...")
+                {
+                    name = "TurnStatus"
+                };
+
+                turnStatusLabel.style.height = 28;
+                turnStatusLabel.style.fontSize = 18;
+                turnStatusLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+                turnStatusLabel.style.color = new StyleColor(Color.white);
+                turnStatusLabel.style.marginTop = 2;
+                turnStatusLabel.style.marginBottom = 2;
+
+                VisualElement phaseParent = matchPhaseLabel.parent;
+                if (phaseParent != null)
+                {
+                    int phaseIndex = phaseParent.IndexOf(matchPhaseLabel);
+                    phaseParent.Insert(phaseIndex + 1, turnStatusLabel);
+                }
+            }
 
             timerLabel = root.Q<Label>("TimerLabel");
             if (timerLabel == null)
@@ -151,6 +175,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
             }
 
             UpdatePhaseLabel(_currentPhase);
+            UpdateTurnStatusLabel();
             UpdateEndTurnButtonState();
             
             // Initialize player data
@@ -164,6 +189,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
             _canAct = result.CanAct;
             SetTimerFromServerOrFallback(result.TimerEndTime);
             UpdatePhaseLabel(_currentPhase);
+            UpdateTurnStatusLabel();
             UpdateEndTurnButtonState();
             Debug.Log($"[PhaseUI] Game started - Phase: {_currentPhase}, TimerEndTime: {_timerEndTime}");
         }
@@ -174,8 +200,20 @@ namespace VortexTCG.Scripts.Features.Match.UI
             _canAct = result.CanAct;
             SetTimerFromServerOrFallback(result.TimerEndTime);
             UpdatePhaseLabel(_currentPhase);
+            UpdateTurnStatusLabel();
             UpdateEndTurnButtonState();
             Debug.Log($"[PhaseUI] Phase changed - New phase: {_currentPhase}, TimerEndTime: {_timerEndTime}");
+        }
+
+        private void UpdateTurnStatusLabel()
+        {
+            if (turnStatusLabel == null)
+                return;
+
+            turnStatusLabel.text = _canAct ? "TON TOUR" : "TOUR ADVERSE";
+            turnStatusLabel.style.color = _canAct
+                ? new StyleColor(new Color(0.3176f, 0.5569f, 0.9490f))
+                : new StyleColor(new Color(0.9333f, 0.2157f, 0.2549f));
         }
 
         private void SetTimerFromServerOrFallback(long? serverTimerEndTime)

@@ -112,6 +112,12 @@ public partial class SignalRClient
         await _conn.InvokeAsync("HandleAttackPos", cardId);
     }
 
+    public async Task ToggleAttackCard(int position)
+    {
+        RequireConnectedOrThrow();
+        await SafeInvoke("ToggleAttackCard", position);
+    }
+
     public async Task HandleDefensePos(int cardId, int opponentCardId)
     {
         if (_conn == null) return;
