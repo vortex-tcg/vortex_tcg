@@ -6,6 +6,7 @@ using game.Domaine.Match.Entity;
 using game.Domaine.Match.Service;
 using game.Domaine.Match.ValueObject;
 using game.Infrastructure.Manager;
+using SurrenderService = game.Application.Service.SurrenderService;
 
 namespace game.Infrastructure;
 public class GameHubClean : Hub
@@ -26,7 +27,11 @@ public class GameHubClean : Hub
         await Clients.Caller.SendAsync("Connected", Context.ConnectionId);
         await base.OnConnectedAsync();
     }
-    
+    public Task Surrender()
+        => SurrenderService.SurrenderAsync(
+            GetAuthenticatedUserId(),
+            Context.ConnectionAborted
+        );
     public Task JoinQueue(Guid deckId)
         => QueueService.JoinQueueAsync(
             GetAuthenticatedUserId(),
