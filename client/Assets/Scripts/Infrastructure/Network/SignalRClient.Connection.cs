@@ -35,6 +35,11 @@ public partial class SignalRClient
             _currentKeyOrCode = key;
             _playerPosition = pos;
             _initialDrawnCards = dto.Self.DrawnCards?.ToList() ?? new List<MatchInitCardDto>();
+            Debug.Log($"[SignalRClient] matchFound - Initial drawn cards count: {_initialDrawnCards.Count}");
+            for (int i = 0; i < _initialDrawnCards.Count; i++)
+            {
+                Debug.Log($"[SignalRClient]   Card {i}: GameCardId={_initialDrawnCards[i].GameCardId}, Name={_initialDrawnCards[i].Name}");
+            }
             _opponentHandSize = dto.OpponentHandSize;
             _playerChampion = dto.Self.Champion;
             _playerGold = dto.Self.Gold;
@@ -52,7 +57,7 @@ public partial class SignalRClient
             // Manually trigger GameStarted with initial phase since server may not send it immediately
             var initialPhaseDto = new PhaseChangeResultDTO
             {
-                CurrentPhase = GamePhase.PLACEMENT,
+                CurrentPhase = GamePhase.STAND_BY,
                 ActivePlayerId = Guid.Empty, // Will be set by actual GameStarted if received
                 TurnNumber = 0,
                 AutoChanged = false,
@@ -84,6 +89,10 @@ public partial class SignalRClient
             Debug.Log($"[SignalRClient] ✅ Firing MatchEvents.FireOpponentCardPlayed for card location={dto?.location}");
             MatchEvents.FireOpponentCardPlayed(dto);
         }));
+
+        // New backend contract (CallManager mappings)
+        _conn.On<JsonElement>("successPoseCarte", payload => HandleSuccessPoseCarte(payload));
+        _conn.On<JsonElement>("opponentPoseCarte", payload => HandleOpponentPoseCarte(payload));
 
         _conn.On<JsonElement>("GameStarted", payload => HandlePhaseEvent("GameStarted", payload, true));
         _conn.On<JsonElement>("PhaseChanged", payload => HandlePhaseEvent("PhaseChanged", payload, false));
@@ -132,6 +141,15 @@ public partial class SignalRClient
         _conn.On<DrawResultForPlayerDto>("CardsDrawn", r => Enqueue(() =>
         {
             Debug.Log($"[SignalRClient] ✅✅✅ CardsDrawn reçu. cards={r?.DrawnCards?.Count ?? -1}");
+            string localUserId = ResolveLocalUserIdFromJwt();
+            if (!string.IsNullOrWhiteSpace(localUserId) &&
+                !string.IsNullOrWhiteSpace(r?.PlayerId) &&
+                !string.Equals(localUserId, r.PlayerId, StringComparison.OrdinalIgnoreCase))
+            {
+                Debug.LogWarning($"[SignalRClient] Ignoring CardsDrawn for non-local player. local={localUserId} payload={r.PlayerId}");
+                return;
+            }
+
             if (r?.DrawnCards != null)
             {
                 foreach (var card in r.DrawnCards)
@@ -238,6 +256,90 @@ public partial class SignalRClient
             OnEndPhaseResolved?.Invoke(result, localIsAttacker);
             OnLog?.Invoke($"{eventName}: battles={result.Battles?.Count ?? 0} deadCards={result.DeadCardIds?.Count ?? 0} p1Hp={result.CurrentPlayerChampionHp} p2Hp={result.OpponentPlayerChampionHp}");
         });
+    }
+
+    private void HandleSuccessPoseCarte(JsonElement payload)
+    {
+        PlayCardSignalDto signal = ParsePlayCardSignalPayload(payload);
+
+        Enqueue(() =>
+        {
+            _playerGold = signal.Self?.Gold ?? _playerGold;
+            _opponentGold = signal.Opponent?.Gold ?? _opponentGold;
+
+            int location = signal.Self?.Position ?? -1;
+            int gameCardId = signal.Self?.GameCardId ?? -1;
+
+            PlayCardPlayerResultDto result = new PlayCardPlayerResultDto
+            {
+                location = location,
+                canPlayed = true,
+                PlayedCard = gameCardId > 0 ? new GameCardDto { GameCardId = gameCardId } : null,
+                Champion = new PlayCardChampionDto
+                {
+                    Gold = _playerGold
+                }
+            };
+
+            Debug.Log($"[SignalRClient] ✅ successPoseCarte reçu - gameCardId={gameCardId} location={location} playerGold={_playerGold} opponentGold={_opponentGold}");
+            OnPlayCardResult?.Invoke(result);
+            MatchEvents.FirePlayerCardPlayed(result);
+        });
+    }
+
+    private void HandleOpponentPoseCarte(JsonElement payload)
+    {
+        PlayCardSignalDto signal = ParsePlayCardSignalPayload(payload);
+
+        Enqueue(() =>
+        {
+            _playerGold = signal.Self?.Gold ?? _playerGold;
+            _opponentGold = signal.Opponent?.Gold ?? _opponentGold;
+
+            MatchInitCardDto card = signal.Opponent?.Card;
+            int location = signal.Self?.Position ?? -1;
+
+            PlayCardOpponentResultDto result = new PlayCardOpponentResultDto
+            {
+                location = location,
+                PlayedCard = card == null
+                    ? null
+                    : new GameCardDto
+                    {
+                        GameCardId = card.GameCardId,
+                        Name = card.Name,
+                        Hp = card.Hp,
+                        Attack = card.Attack,
+                        Cost = card.Cost,
+                        Description = card.Description,
+                        CardType = (CardType)card.CardType
+                    },
+                Champion = new PlayCardChampionDto
+                {
+                    Gold = _opponentGold
+                }
+            };
+
+            Debug.Log($"[SignalRClient] ✅ opponentPoseCarte reçu - location={location} cardId={result.PlayedCard?.GameCardId} name={result.PlayedCard?.Name}");
+            OnOpponentPlayCardResult?.Invoke(result);
+            MatchEvents.FireOpponentCardPlayed(result);
+        });
+    }
+
+    private static PlayCardSignalDto ParsePlayCardSignalPayload(JsonElement payload)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<PlayCardSignalDto>(payload.GetRawText(), new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }) ?? new PlayCardSignalDto();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[SignalRClient] Failed to parse play card payload: {ex.Message}");
+            return new PlayCardSignalDto();
+        }
     }
 
     private PhaseChangeResultDTO ParsePhaseChangePayload(JsonElement payload)
@@ -430,11 +532,33 @@ public partial class SignalRClient
         return Guid.Empty;
     }
 
+    private static string ResolveLocalUserIdFromJwt()
+    {
+        if (Jwt.I == null)
+            return null;
+
+        string[] claimKeys =
+        {
+            "id",
+            "userId",
+            "sub",
+            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        };
+
+        for (int i = 0; i < claimKeys.Length; i++)
+        {
+            if (Jwt.I.TryGetClaim(claimKeys[i], out string value) && !string.IsNullOrWhiteSpace(value))
+                return value.Trim();
+        }
+
+        return null;
+    }
+
     private static GamePhase ReadGamePhase(JsonElement element)
     {
         if (!TryReadProperty(element, "currentPhase", out JsonElement currentPhase) && !TryReadProperty(element, "phase", out currentPhase))
         {
-            return GamePhase.PLACEMENT;
+            return GamePhase.STAND_BY;
         }
 
         if (currentPhase.ValueKind == JsonValueKind.Number && currentPhase.TryGetInt32(out int numericPhase) && Enum.IsDefined(typeof(GamePhase), numericPhase))
@@ -451,12 +575,12 @@ public partial class SignalRClient
             }
         }
 
-        return GamePhase.PLACEMENT;
+        return GamePhase.STAND_BY;
     }
 
     private static bool TryParseGamePhase(string rawPhase, out GamePhase phase)
     {
-        phase = GamePhase.PLACEMENT;
+        phase = GamePhase.STAND_BY;
 
         if (string.IsNullOrWhiteSpace(rawPhase))
         {
@@ -473,7 +597,7 @@ public partial class SignalRClient
         string loweredPhase = normalizedPhase.ToLowerInvariant();
         if (loweredPhase == "standby" || loweredPhase == "stand_by" || loweredPhase == "placement")
         {
-            phase = GamePhase.PLACEMENT;
+            phase = GamePhase.STAND_BY;
             return true;
         }
 

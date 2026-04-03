@@ -103,6 +103,8 @@ namespace VortexTCG.Scripts.Features.Match.UI
             MatchEvents.OnServerStatusMessage += HandleServerStatus;
             MatchEvents.OnPlayerCardPlayed += HandleCardPlayResult;
             MatchEvents.OnPendingPlayCancelled += HandlePendingPlayCancelled;
+            if (SignalRClient.Instance != null)
+                SignalRClient.Instance.OnStatus += HandleServerStatus;
             Debug.Log("[HandUI] ✅ Tous les événements enregistrés");
         }
 
@@ -123,9 +125,14 @@ namespace VortexTCG.Scripts.Features.Match.UI
             MatchEvents.OnPendingPlayCancelled -= HandlePendingPlayCancelled;
             
             if (HandService != null)
+            {
                 HandService.OnPlayCancelled -= HandleServicePlayCancelled;
                 HandService.OnPlayConfirmed -= HandleServicePlayConfirmed;
             }
+
+            if (SignalRClient.Instance != null)
+                SignalRClient.Instance.OnStatus -= HandleServerStatus;
+        }
         
         /// <summary>
         /// Cherche automatiquement les slots enfants de la main
@@ -340,7 +347,14 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         protected virtual void AddCardsFromMatchInit(List<MatchInitCardDto> matchInitCards)
         {
-            Debug.Log($"[HandUI] AddCardsFromMatchInit appelé - {matchInitCards?.Count ?? 0} cartes à ajouter");
+            Debug.Log($"[HandUI] 🎴 AddCardsFromMatchInit called - {matchInitCards?.Count ?? 0} cards to add");
+            if (matchInitCards != null)
+            {
+                for (int i = 0; i < matchInitCards.Count; i++)
+                {
+                    Debug.Log($"[HandUI]   Card {i}: GameCardId={matchInitCards[i].GameCardId}, Name={matchInitCards[i].Name}");
+                }
+            }
             
             if (_cardPrefab == null)
             {
@@ -404,8 +418,11 @@ namespace VortexTCG.Scripts.Features.Match.UI
                     
                     Debug.Log($"[HandUI] Carte instantiée '{card.gameObject.name}', parent: {card.transform.parent.name}");
                     
+                    string cardIdString = dto.GameCardId.ToString();
+                    Debug.Log($"[HandUI] 📊 Card {cardsAdded} DTO applied: GameCardId={dto.GameCardId} (as string='{cardIdString}'), Name={dto.Name}");
+                    
                     card.ApplyDTO(
-                        dto.GameCardId.ToString(),
+                        cardIdString,
                         dto.Name,
                         dto.Hp,
                         dto.Attack,
