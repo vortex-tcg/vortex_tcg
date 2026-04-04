@@ -56,7 +56,7 @@ public partial class SignalRClient
             OnLog?.Invoke($"Match trouvé ! Salle: {key} (pos={pos}) - Cartes initiales: {_initialDrawnCards.Count}");
             
             // Manually trigger GameStarted with initial phase since server may not send it immediately
-            var initialPhaseDto = new PhaseChangeResultDTO
+            PhaseChangeResultDTO initialPhaseDto = new PhaseChangeResultDTO
             {
                 CurrentPhase = GamePhase.STAND_BY,
                 ActivePlayerId = Guid.Empty, // Will be set by actual GameStarted if received
@@ -156,7 +156,7 @@ public partial class SignalRClient
 
             if (r?.DrawnCards != null)
             {
-                foreach (var card in r.DrawnCards)
+                foreach (DrawnCardDto card in r.DrawnCards)
                 {
                     Debug.Log($"[SignalRClient] - Card: ID={card.GameCardId}, Name='{card.Name}'");
                 }
@@ -241,7 +241,7 @@ public partial class SignalRClient
                     ? result.ActivePlayerId.ToString()
                     : ResolveLocalUserIdFromJwt();
 
-                var drawResult = new DrawResultForPlayerDto
+                DrawResultForPlayerDto drawResult = new DrawResultForPlayerDto
                 {
                     PlayerId = playerId,
                     DrawnCards = new List<DrawnCardDto> { result.DrawnCard }
@@ -312,7 +312,7 @@ public partial class SignalRClient
 
     private static List<int> ParseAttackOrderCardIds(JsonElement payload)
     {
-        var ids = new List<int>();
+        List<int> ids = new List<int>();
 
         if (!TryGetPropertyInsensitive(payload, "engagedCards", out JsonElement engagedCards) ||
             engagedCards.ValueKind != JsonValueKind.Array)
@@ -331,7 +331,7 @@ public partial class SignalRClient
             return ids;
         }
 
-        var entries = new List<(int attackOrder, int gameCardId)>();
+        List<(int attackOrder, int gameCardId)> entries = new List<(int attackOrder, int gameCardId)>();
         foreach (JsonElement engaged in engagedCards.EnumerateArray())
         {
             if (!TryGetPropertyInsensitive(engaged, "gameCardId", out JsonElement gameCardIdEl) ||
@@ -350,7 +350,7 @@ public partial class SignalRClient
             entries.Add((attackOrder, gameCardId));
         }
 
-        foreach (var item in entries.OrderBy(e => e.attackOrder).ThenBy(e => e.gameCardId))
+        foreach ((int attackOrder, int gameCardId) item in entries.OrderBy(e => e.attackOrder).ThenBy(e => e.gameCardId))
         {
             ids.Add(item.gameCardId);
         }
@@ -360,7 +360,7 @@ public partial class SignalRClient
 
     private static DefenseDataResponseDto ParseDefenseUpdatedPayload(JsonElement payload)
     {
-        var dto = new DefenseDataResponseDto();
+        DefenseDataResponseDto dto = new DefenseDataResponseDto();
 
         if (TryGetPropertyInsensitive(payload, "engagedCards", out JsonElement engagedCards) &&
             engagedCards.ValueKind == JsonValueKind.Array)

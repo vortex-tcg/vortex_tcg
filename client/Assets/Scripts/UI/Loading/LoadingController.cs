@@ -22,7 +22,7 @@ public class LoadingController : MonoBehaviour
     IEnumerator LoadNext()
     {
         yield return null; 
-        var op = SceneManager.LoadSceneAsync(req.targetScene);
+        AsyncOperation op = SceneManager.LoadSceneAsync(req.targetScene);
         if (op == null) { Debug.LogError("LoadSceneAsync null. Nom de scène invalide ?"); yield break; }
         op.allowSceneActivation = false;
 
@@ -42,7 +42,7 @@ public class LoadingController : MonoBehaviour
 
         if (req.unloadMenu)
         {
-            var menu = SceneManager.GetSceneByName(req.menuSceneName);
+            Scene menu = SceneManager.GetSceneByName(req.menuSceneName);
             if (menu.IsValid() && menu.isLoaded)
                 yield return SceneManager.UnloadSceneAsync(req.menuSceneName);
         }
@@ -58,7 +58,7 @@ public class LoadingController : MonoBehaviour
 
         #endif
             {
-                var add = SceneManager.LoadSceneAsync(req.menuSceneName, LoadSceneMode.Additive);
+                SceneManager.LoadSceneAsync(req.menuSceneName, LoadSceneMode.Additive);
             }
         }
 

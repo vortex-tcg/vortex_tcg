@@ -295,7 +295,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         public void ResetBoard()
         {
-            foreach (var card in _opponentBoardCards.Values)
+            foreach (CardUI card in _opponentBoardCards.Values)
             {
                 Destroy(card.gameObject);
             }

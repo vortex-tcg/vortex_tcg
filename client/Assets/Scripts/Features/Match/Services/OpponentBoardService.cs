@@ -170,7 +170,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         {
             Debug.Log("[OpponentBoardService] ClearOpponentAttackOutline()");
 
-            foreach (var kvp in opponentCardsById)
+            foreach (KeyValuePair<int, CardUI> kvp in opponentCardsById)
             {
                 if (kvp.Value != null)
                 {
@@ -241,7 +241,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("[OpponentBoardService] BoardState " + label + ": opponentCardsById.Count=" + opponentCardsById.Count);
-            foreach (var kvp in opponentCardsById)
+            foreach (KeyValuePair<int, CardUI> kvp in opponentCardsById)
             {
                 CardUI card = kvp.Value;
                 string cardInfo = card != null ? $"'{card.name}'" : "null";

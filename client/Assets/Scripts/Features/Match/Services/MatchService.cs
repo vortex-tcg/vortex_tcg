@@ -18,14 +18,14 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (Instance != null)
                 return;
 
-            var existing = FindObjectOfType<MatchService>();
+            MatchService existing = FindObjectOfType<MatchService>();
             if (existing != null)
             {
                 Instance = existing;
                 return;
             }
 
-            var go = new GameObject("MatchService");
+            GameObject go = new GameObject("MatchService");
             go.AddComponent<MatchService>();
         }
 

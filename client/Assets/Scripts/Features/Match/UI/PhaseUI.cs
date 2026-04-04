@@ -357,7 +357,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         private void InitializePlayerData()
         {
-            var client = SignalRClient.Instance;
+            SignalRClient client = SignalRClient.Instance;
             if (client == null)
             {
                 Debug.LogWarning("[PhaseUI] SignalRClient not available for player data initialization");
@@ -477,7 +477,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         public void UpdateSecondaryCurrency(int newAmount)
         {
-            var client = SignalRClient.Instance;
+            SignalRClient client = SignalRClient.Instance;
             if (client != null)
             {
                 UpdatePlayerSecondaryCurrencyDisplay(client.SecondaryCurrencyName, newAmount);
@@ -491,7 +491,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         public void UpdateOpponentSecondaryCurrency(int newAmount)
         {
-            var client = SignalRClient.Instance;
+            SignalRClient client = SignalRClient.Instance;
             if (client != null)
             {
                 UpdateOpponentSecondaryCurrencyDisplay(client.OpponentSecondaryCurrencyName, newAmount);

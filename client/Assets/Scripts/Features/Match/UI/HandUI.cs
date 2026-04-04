@@ -174,11 +174,11 @@ namespace VortexTCG.Scripts.Features.Match.UI
             ClearHand();
 
             // Use initial cards from matchFound instead of waiting for CardsDrawn
-            var initialCards = SignalRClient.Instance?.InitialDrawnCards;
+            List<MatchInitCardDto> initialCards = SignalRClient.Instance?.InitialDrawnCards;
             if (initialCards != null && initialCards.Count > 0)
             {
                 Debug.Log($"[HandUI] ✅ Using initial cards from matchFound: {initialCards.Count}");
-                foreach (var dto in initialCards)
+                foreach (MatchInitCardDto dto in initialCards)
                 {
                     Debug.Log($"[HandUI] - Carte initiale: ID={dto.GameCardId}, Name='{dto.Name}', HP={dto.Hp}, ATK={dto.Attack}");
                 }
@@ -211,7 +211,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 }
 
                 Debug.Log($"[HandUI] ✅ Appel de AddCards avec {result.DrawnCards.Count} cartes");
-                foreach (var dto in result.DrawnCards)
+                foreach (DrawnCardDto dto in result.DrawnCards)
                 {
                     Debug.Log($"[HandUI] - Carte reçue: ID={dto.GameCardId}, Name='{dto.Name}', HP={dto.Hp}, ATK={dto.Attack}");
                 }

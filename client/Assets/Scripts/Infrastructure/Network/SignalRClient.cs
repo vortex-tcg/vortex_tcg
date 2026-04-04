@@ -120,7 +120,7 @@ public partial class SignalRClient : MonoBehaviour
     private void EnsureMatchServiceExists()
     {
         // Check if MatchService already exists
-        var matchService = FindObjectOfType<VortexTCG.Scripts.Features.Match.Services.MatchService>();
+        VortexTCG.Scripts.Features.Match.Services.MatchService matchService = FindObjectOfType<VortexTCG.Scripts.Features.Match.Services.MatchService>();
         
         if (matchService == null)
         {
