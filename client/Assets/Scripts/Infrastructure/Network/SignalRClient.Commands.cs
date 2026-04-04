@@ -78,6 +78,13 @@ public partial class SignalRClient
         await SafeInvoke("ChangePhase");
     }
 
+    public async Task Surrender()
+    {
+        RequireConnectedOrThrow();
+        Debug.Log("[SignalRClient] -> Surrender()");
+        await SafeInvoke("Surrender");
+    }
+
     public async Task DrawCards(int playerPosition, int amount)
     {
         RequireConnectedOrThrow();
@@ -105,10 +112,21 @@ public partial class SignalRClient
         await _conn.InvokeAsync("HandleAttackPos", cardId);
     }
 
+    public async Task ToggleAttackCard(int position)
+    {
+        RequireConnectedOrThrow();
+        await SafeInvoke("ToggleAttackCard", position);
+    }
+
     public async Task HandleDefensePos(int cardId, int opponentCardId)
     {
-        if (_conn == null) return;
-        await _conn.InvokeAsync("HandleDefensePos", cardId, opponentCardId);
+        await ToggleDefenseCard(cardId, opponentCardId);
+    }
+
+    public async Task ToggleDefenseCard(int defensePosition, int attackPosition)
+    {
+        RequireConnectedOrThrow();
+        await SafeInvoke("ToggleDefenseCard", defensePosition, attackPosition);
     }
 
     public bool IsConnected => _conn != null && _conn.State == HubConnectionState.Connected;

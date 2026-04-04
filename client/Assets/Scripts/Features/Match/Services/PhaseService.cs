@@ -34,7 +34,8 @@ namespace VortexTCG.Scripts.Features.Match.Services
             }
         }
 
-        public GamePhase CurrentPhase { get; private set; } = GamePhase.PLACEMENT;
+        public GamePhase CurrentPhase { get; private set; } = GamePhase.STAND_BY;
+        public bool CanAct { get; private set; }
 
         // The current turn number reported by the server (1-based)
         public int CurrentTurn { get; private set; } = 0;
@@ -44,12 +45,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         public event Action OnEnterAttack;
         public event Action OnEnterDefense;
         public event Action OnEnterEndTurn;
-        
-        public event Action OnEnterStandBy
-        {
-            add => OnEnterEndTurn += value;
-            remove => OnEnterEndTurn -= value;
-        }
+        public event Action OnEnterStandBy;
 
         public event Action<GamePhase> OnRequestChangePhase;
 
@@ -117,6 +113,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         private void HandleGameStarted(PhaseChangeResultDTO result)
         {
             Debug.Log($"[PhaseService] Game started with phase: {result.CurrentPhase} turn={result.TurnNumber}");
+            CanAct = result.CanAct;
             UpdateTurn(result.TurnNumber);
             ApplyServerPhase(result.CurrentPhase);
         }
@@ -124,6 +121,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         private void HandlePhaseChanged(PhaseChangeResultDTO result)
         {
             Debug.Log($"[PhaseService] Phase changed to: {result.CurrentPhase} turn={result.TurnNumber}");
+            CanAct = result.CanAct;
             UpdateTurn(result.TurnNumber);
             ApplyServerPhase(result.CurrentPhase);
         }
@@ -153,9 +151,9 @@ namespace VortexTCG.Scripts.Features.Match.Services
         {
             switch (phase)
             {
-                case GamePhase.PLACEMENT:
-                    OnEnterPlacement?.Invoke();
-                    Debug.Log("[PhaseService] Invoked OnEnterPlacement");
+                case GamePhase.STAND_BY:
+                    OnEnterStandBy?.Invoke();
+                    Debug.Log("[PhaseService] Invoked OnEnterStandBy");
                     break;
 
                 case GamePhase.ATTACK:
@@ -181,12 +179,13 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
         public void ResetPhase()
         {
-            CurrentPhase = GamePhase.PLACEMENT;
-            _previousPhase = GamePhase.PLACEMENT;
+            CurrentPhase = GamePhase.STAND_BY;
+            CanAct = false;
+            _previousPhase = GamePhase.STAND_BY;
             CurrentTurn = 0;
             // also clear any sleeping state left over
             SleepManager.WakeAll();
-            Debug.Log("[PhaseService] Phase reset to PLACEMENT");
+            Debug.Log("[PhaseService] Phase reset to STAND_BY");
         }
     }
 }
