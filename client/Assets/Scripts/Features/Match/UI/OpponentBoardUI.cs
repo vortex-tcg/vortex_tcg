@@ -132,7 +132,7 @@ namespace VortexTCG.Scripts.MatchScene
                         Destroy(s.CurrentCard.gameObject);
                     }
 
-                    s.CurrentCard = null;
+                    s.SetCurrentCard(null);
                 }
             }
 
@@ -143,6 +143,39 @@ namespace VortexTCG.Scripts.MatchScene
         public void ApplyOpponentDefenseState(DefenseDataResponseDto data) => boardLogic.ApplyOpponentDefenseState(data);
         public void UpdateOpponentCardSnapshot(GameCardDto dto) => boardLogic.UpdateOpponentCardSnapshot(dto);
         public void RemoveOpponentCard(int gameCardId) => boardLogic.RemoveOpponentCard(gameCardId);
+
+        public CardUI GetCardAtSlotIndex(int slotIndex)
+        {
+            if (enemySlots == null)
+                return null;
+
+            for (int i = 0; i < enemySlots.Length; i++)
+            {
+                CardSlotUI slot = enemySlots[i];
+                if (slot != null && slot.slotIndex == slotIndex)
+                    return slot.CurrentCard;
+            }
+
+            return null;
+        }
+
+        public CardUI FindOpponentCardByGameCardId(int gameCardId)
+        {
+            if (enemySlots == null)
+                return null;
+
+            for (int i = 0; i < enemySlots.Length; i++)
+            {
+                CardSlotUI slot = enemySlots[i];
+                if (slot == null || slot.CurrentCard == null)
+                    continue;
+
+                if (int.TryParse(slot.CurrentCard.cardId, out int id) && id == gameCardId)
+                    return slot.CurrentCard;
+            }
+
+            return null;
+        }
 
         public bool IsCardOnOpponentBoard(CardUI card)
         {

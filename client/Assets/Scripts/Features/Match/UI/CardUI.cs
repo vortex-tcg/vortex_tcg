@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using VortexTCG.Scripts.DTOs;
 using VortexTCG.Scripts.Features.Match.Events;
 using VortexTCG.Scripts.Features.Match.Services;
+using VortexTCG.Scripts.Features.Match.UI;
 
 namespace VortexTCG.Scripts.MatchScene
 {
@@ -25,6 +26,7 @@ namespace VortexTCG.Scripts.MatchScene
         public TMP_Text costText;
         public TMP_Text atkText;
         public TMP_Text hpText;
+        public TMP_Text currentHpText;
         public TMP_Text descriptionText;
         [SerializeField] private SpriteRenderer costColor;
         [Header("Cost Colors")]
@@ -47,6 +49,7 @@ namespace VortexTCG.Scripts.MatchScene
 
         [Header("Selection")] [SerializeField] private GameObject AttackState;
         [SerializeField] private GameObject DefenseState;
+        [SerializeField] private GameObject DefendingState;
         [SerializeField] private GameObject AttackOrder;
         [SerializeField] private float selectedScaleMultiplier = 1.08f;
         private bool isSelected;
@@ -56,6 +59,9 @@ namespace VortexTCG.Scripts.MatchScene
         void Awake()
         {
             selectionBaseScale = transform.localScale;
+
+            if (currentHpText == null)
+                TryResolveCurrentHpText();
 
             if (costColor == null)
                 TryResolveCostColor();
@@ -78,6 +84,9 @@ namespace VortexTCG.Scripts.MatchScene
             if (AttackOrder != null)
                 AttackOrder.SetActive(false);
 
+            if (DefendingState != null)
+                DefendingState.SetActive(false);
+
             UpdateCostColor();
 
             // if the sleep manager is currently active (first turn), start sleepy
@@ -85,6 +94,9 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 SetSleepy(true);
             }
+
+            UpdateCurrentHpDisplay();
+            UpdateCurrentHpVisibility();
         }
 
         private void OnValidate()
@@ -92,7 +104,17 @@ namespace VortexTCG.Scripts.MatchScene
             if (costColor == null)
                 TryResolveCostColor();
 
+            if (currentHpText == null)
+                TryResolveCurrentHpText();
+
             UpdateCostColor();
+            UpdateCurrentHpDisplay();
+            UpdateCurrentHpVisibility();
+        }
+
+        private void OnTransformParentChanged()
+        {
+            UpdateCurrentHpVisibility();
         }
 
         void OnMouseEnter()
@@ -134,7 +156,7 @@ namespace VortexTCG.Scripts.MatchScene
 
             MatchEvents.FireCardClicked(this);
             
-            // Only fire card selected if not in DEFENSE phase (to avoid hand errors for board cards)
+
             if (PhaseService.Instance == null || PhaseService.Instance.CurrentPhase != GamePhase.DEFENSE)
             {
                 MatchEvents.FireCardSelected(this);
@@ -159,9 +181,40 @@ namespace VortexTCG.Scripts.MatchScene
             if (nameText != null) nameText.text = cardName;
             if (costText != null) costText.text = cost.ToString();
             if (atkText != null) atkText.text = attack > 0 ? attack.ToString() : "-";
-            if (hpText != null) hpText.text = hp > 0 ? hp.ToString() : "-";
+            if (hpText != null) hpText.text = Mathf.Max(0, hp).ToString();
+            UpdateCurrentHpDisplay();
             if (descriptionText != null) descriptionText.text = description;
             UpdateCostColor();
+            UpdateCurrentHpVisibility();
+        }
+
+        public void RefreshCurrentHpVisibility()
+        {
+            UpdateCurrentHpVisibility();
+        }
+
+        private void UpdateCurrentHpDisplay()
+        {
+            if (currentHpText == null)
+                return;
+
+            currentHpText.text = Mathf.Max(0, hp).ToString();
+        }
+
+        private void UpdateCurrentHpVisibility()
+        {
+            if (currentHpText == null)
+                return;
+
+            CardSlotUI slot = GetComponentInParent<CardSlotUI>();
+            bool isOnPlayerBoard = AttackUI.Instance != null && AttackUI.Instance.IsCardOnP1Board(this);
+            bool isOnOpponentBoard = OpponentBoardUI.Instance != null && OpponentBoardUI.Instance.IsCardOnOpponentBoard(this);
+
+            bool isLikelyBoardByName = slot != null &&
+                                     (slot.name.Contains("BoardSlot") || slot.name.Contains("P1Board") || slot.name.Contains("P2Board"));
+
+            bool isOnBoardSlot = isOnPlayerBoard || isOnOpponentBoard || isLikelyBoardByName;
+            currentHpText.gameObject.SetActive(isOnBoardSlot);
         }
 
         private void UpdateCostColor()
@@ -197,30 +250,26 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
 
+        private void TryResolveCurrentHpText()
+        {
+            TMP_Text[] texts = GetComponentsInChildren<TMP_Text>(true);
+            for (int i = 0; i < texts.Length; i++)
+            {
+                TMP_Text txt = texts[i];
+                if (txt != null && (txt.name == "CurrentHP" || txt.name == "currentHP" || txt.name == "CurrentHp"))
+                {
+                    currentHpText = txt;
+                    return;
+                }
+            }
+        }
+
         public void ShowAttackOrder(int order)
         {
-            Debug.Log($"[CardUI] ShowAttackOrder called on card '{cardName}' (ID: {cardId}) with order: {order}. AttackOrder is {(AttackOrder != null ? "not null" : "NULL")}, attackOrderText is {(attackOrderText != null ? "not null" : "NULL")}");
-
-            if (AttackOrder != null)
-            {
-                AttackOrder.SetActive(true);
-                Debug.Log($"[CardUI] AttackOrder GameObject activated for card '{cardName}'");
-            }
-            else
-            {
-                Debug.LogWarning($"[CardUI] AttackOrder GameObject is NULL for card '{cardName}'");
-            }
-
             if (attackOrderText != null)
             {
                 attackOrderText.text = order.ToString();
                 attackOrderText.enabled = true;
-                attackOrderText.ForceMeshUpdate();
-                Debug.Log($"[CardUI] AttackOrderText updated to '{order}' for card '{cardName}'");
-            }
-            else
-            {
-                Debug.LogWarning($"[CardUI] attackOrderText is NULL for card '{cardName}'");
             }
 
             if (AttackOrder != null)
@@ -330,6 +379,21 @@ namespace VortexTCG.Scripts.MatchScene
             return DefenseState;
         }
 
+        public void SetDefendingState(bool active)
+        {
+            GameObject state = GetDefendingState();
+            if (state != null)
+                state.SetActive(active);
+        }
+
+        public GameObject GetDefendingState()
+        {
+            if (DefendingState == null)
+                DefendingState = FindOutlineByName("DefendingState");
+
+            return DefendingState;
+        }
+
         private GameObject FindOutlineByName(string name)
         {
             Debug.Log($"[CardUI] FindOutlineByName searching for '{name}' in card '{cardName}' (ID: {cardId})");
@@ -362,6 +426,11 @@ namespace VortexTCG.Scripts.MatchScene
         public bool IsDefenseSelected()
         {
             return DefenseState != null && DefenseState.activeSelf;
+        }
+
+        public bool IsDefendingStateActive()
+        {
+            return DefendingState != null && DefendingState.activeSelf;
         }
    
 

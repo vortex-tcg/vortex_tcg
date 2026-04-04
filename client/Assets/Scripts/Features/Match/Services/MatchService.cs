@@ -18,14 +18,14 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (Instance != null)
                 return;
 
-            var existing = FindObjectOfType<MatchService>();
+            MatchService existing = FindObjectOfType<MatchService>();
             if (existing != null)
             {
                 Instance = existing;
                 return;
             }
 
-            var go = new GameObject("MatchService");
+            GameObject go = new GameObject("MatchService");
             go.AddComponent<MatchService>();
         }
 
@@ -67,6 +67,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             client.OnAttackEngage += HandleAttackEngage;
             client.OnOpponentAttackEngage += HandleOpponentAttackEngage;
             client.OnBattleResolution += HandleBattleResolution;
+            client.OnEndPhaseResolved += HandleEndPhaseResolved;
             client.OnDefenseEngage += HandleDefenseEngage;
             client.OnOpponentDefenseEngage += HandleOpponentDefenseEngage;
             Debug.Log("[MatchService] Successfully subscribed to all SignalR events including OnOpponentAttackEngage");
@@ -86,6 +87,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             client.OnAttackEngage += HandleAttackEngage;
             client.OnOpponentAttackEngage += HandleOpponentAttackEngage;
             client.OnBattleResolution += HandleBattleResolution;
+            client.OnEndPhaseResolved += HandleEndPhaseResolved;
             client.OnDefenseEngage += HandleDefenseEngage;
             client.OnOpponentDefenseEngage += HandleOpponentDefenseEngage;
             Debug.Log("[MatchService] Successfully subscribed to all SignalR events including OnOpponentAttackEngage");
@@ -98,6 +100,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             {
                 client.OnGameStarted -= HandleGameStartedMinimal;
                 client.OnBattleResolution -= HandleBattleResolution;
+                client.OnEndPhaseResolved -= HandleEndPhaseResolved;
                 client.OnAttackEngage -= HandleAttackEngage;
                 client.OnDefenseEngage -= HandleDefenseEngage;
                 client.OnOpponentAttackEngage -= HandleOpponentAttackEngage;
@@ -196,6 +199,63 @@ namespace VortexTCG.Scripts.Features.Match.Services
             _battleRoutine = StartCoroutine(ResolveBattles(data, localIsAttacker));
         }
 
+        private void HandleEndPhaseResolved(EndPhaseResolutionDto data, bool localIsAttacker)
+        {
+            if (!_gameStarted)
+            {
+                Debug.LogWarning("[MatchService] EndPhaseResolved ignored: game not started");
+                return;
+            }
+
+            if (data == null)
+            {
+                Debug.LogWarning("[MatchService] EndPhaseResolved ignored: data is NULL");
+                return;
+            }
+
+            Debug.Log($"[MatchService] EndPhaseResolved received battles={data.Battles?.Count ?? 0} deadCards={data.DeadCardIds?.Count ?? 0} localIsAttacker={localIsAttacker}");
+
+            ApplyEndPhaseResolution(data, localIsAttacker);
+        }
+
+        private void ApplyEndPhaseResolution(EndPhaseResolutionDto data, bool localIsAttacker)
+        {
+            if (data.Battles != null)
+            {
+                for (int i = 0; i < data.Battles.Count; i++)
+                {
+                    EndPhaseCardBattleResultDto battle = data.Battles[i];
+                    if (battle == null) continue;
+
+                    if (localIsAttacker)
+                    {
+                        ApplyCardSnapshotBySlotIndex(battle.AttackerPosition, true, battle.AttackerRemainingHp);
+                        ApplyOpponentCardSnapshotBySlotIndex(battle.DefenderPosition, battle.DefenderRemainingHp);
+                    }
+                    else
+                    {
+                        ApplyOpponentCardSnapshotBySlotIndex(battle.AttackerPosition, battle.AttackerRemainingHp);
+                        ApplyCardSnapshotBySlotIndex(battle.DefenderPosition, true, battle.DefenderRemainingHp);
+                    }
+                }
+            }
+
+            if (data.DeadCardIds != null)
+            {
+                for (int i = 0; i < data.DeadCardIds.Count; i++)
+                {
+                    int deadCardId = data.DeadCardIds[i];
+                    RemoveCard(deadCardId, true);
+                    RemoveCard(deadCardId, false);
+                }
+            }
+
+            AttackUI.Instance?.ResetAllAttackStates();
+            OpponentBoardUI.Instance?.OpponentBoardService?.ClearCombatState();
+
+            Debug.Log($"[MatchService] EndPhaseResolution applied currentHp={data.CurrentPlayerChampionHp} opponentHp={data.OpponentPlayerChampionHp}");
+        }
+
 
         private IEnumerator ResolveBattles(BattlesDataDto data, bool localIsAttacker)
         {
@@ -230,8 +290,8 @@ namespace VortexTCG.Scripts.Features.Match.Services
                 Debug.Log($"[MatchService] ResolveBattles Battle[{i}] END");
             }
 
-            AttackUI.Instance?.AttackService?.ClearSelections();
-            DefenseUI.Instance?.DefenseService?.ClearAllDefense();
+            AttackUI.Instance?.ResetAllAttackStates();
+            OpponentBoardUI.Instance?.OpponentBoardService?.ClearCombatState();
 
             Debug.Log("[MatchService] ResolveBattles END -> cleared selections/defense");
         }
@@ -317,6 +377,69 @@ namespace VortexTCG.Scripts.Features.Match.Services
                 OpponentBoardUI.Instance?.OpponentBoardService?.UpdateOpponentCardSnapshot(dto);
         }
 
+        private void ApplyCardSnapshotBySlotIndex(int slotIndex, bool isLocalOwner, int remainingHp)
+        {
+            CardUI card = FindCardBySlotIndex(slotIndex, isLocalOwner);
+            if (card == null)
+            {
+                Debug.LogWarning($"[MatchService] ApplyCardSnapshotBySlotIndex: card not found at slot={slotIndex} owner={(isLocalOwner ? "LOCAL" : "OPPONENT")}");
+                return;
+            }
+
+            card.ApplyDTO(
+                card.cardId,
+                card.cardName,
+                remainingHp,
+                card.attack,
+                card.cost,
+                card.description,
+                card.imageUrl
+            );
+        }
+
+        private void ApplyOpponentCardSnapshotBySlotIndex(int slotIndex, int remainingHp)
+        {
+            CardUI card = FindCardBySlotIndex(slotIndex, false);
+            if (card == null)
+            {
+                Debug.LogWarning($"[MatchService] ApplyOpponentCardSnapshotBySlotIndex: card not found at slot={slotIndex}");
+                return;
+            }
+
+            card.ApplyDTO(
+                card.cardId,
+                card.cardName,
+                remainingHp,
+                card.attack,
+                card.cost,
+                card.description,
+                card.imageUrl
+            );
+        }
+
+        private CardUI FindCardBySlotIndex(int slotIndex, bool isLocalOwner)
+        {
+            if (isLocalOwner)
+            {
+                EnsureLocalSlots();
+                if (_localSlots != null)
+                {
+                    for (int i = 0; i < _localSlots.Length; i++)
+                    {
+                        CardSlotUI slot = _localSlots[i];
+                        if (slot != null && slot.slotIndex == slotIndex)
+                        {
+                            return slot.CurrentCard;
+                        }
+                    }
+                }
+
+                return null;
+            }
+
+            return OpponentBoardUI.Instance != null ? OpponentBoardUI.Instance.GetCardAtSlotIndex(slotIndex) : null;
+        }
+
 
         private void RemoveCard(int gameCardId, bool isLocalOwner)
         {
@@ -370,7 +493,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
                       " slot=" + (slot != null ? slot.name : "NULL"));
 
             if (slot != null && slot.CurrentCard == card)
-                slot.CurrentCard = null;
+                slot.SetCurrentCard(null);
 
             Destroy(card.gameObject);
 

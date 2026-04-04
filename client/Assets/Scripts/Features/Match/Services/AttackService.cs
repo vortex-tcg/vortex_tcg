@@ -63,7 +63,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         public void ResetAllCardAttackStates()
         {
             // Reset attack state for all cards on the board
-            foreach (var card in boardCardsById.Values)
+            foreach (CardUI card in boardCardsById.Values)
             {
                 if (card != null)
                 {

@@ -23,7 +23,6 @@ public sealed class CallManager : ICallManager
         new[] { nameof(ResponseCode.SUCCESS_DEFENSE_UPDATED), "successDefenseUpdated" },
         new[] { nameof(ResponseCode.SUCCESS_END_PHASE_RESOLVED), "successEndPhaseResolved" },
         new[] { nameof(ResponseCode.SUCCESS_MATCH_ENDED), "successMatchEnded" },
-
     };
 
     private static readonly string[][] mapCodesToSignalRCallOpponent =
