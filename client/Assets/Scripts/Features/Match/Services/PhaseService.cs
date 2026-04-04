@@ -45,12 +45,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         public event Action OnEnterAttack;
         public event Action OnEnterDefense;
         public event Action OnEnterEndTurn;
-        
-        public event Action OnEnterStandBy
-        {
-            add => OnEnterEndTurn += value;
-            remove => OnEnterEndTurn -= value;
-        }
+        public event Action OnEnterStandBy;
 
         public event Action<GamePhase> OnRequestChangePhase;
 
@@ -157,7 +152,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             switch (phase)
             {
                 case GamePhase.STAND_BY:
-                    OnEnterEndTurn?.Invoke();
+                    OnEnterStandBy?.Invoke();
                     Debug.Log("[PhaseService] Invoked OnEnterStandBy");
                     break;
 

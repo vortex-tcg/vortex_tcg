@@ -55,7 +55,8 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
                 if ((!opponentCardsById.TryGetValue(id, out CardUI card) || card == null) && OpponentBoardUI.Instance != null)
                 {
-                    CardUI recovered = OpponentBoardUI.Instance.FindOpponentCardByGameCardId(id);
+                    CardUI recovered = OpponentBoardUI.Instance.FindOpponentCardByGameCardId(id)
+                                       ?? OpponentBoardUI.Instance.GetCardAtSlotIndex(id);
                     if (recovered != null)
                     {
                         opponentCardsById[id] = recovered;
@@ -89,42 +90,76 @@ namespace VortexTCG.Scripts.Features.Match.Services
             Debug.Log("[OpponentBoardService] ApplyOpponentDefenseState defenses=" +
                       (data?.DefenseCards == null ? "NULL" : data.DefenseCards.Count.ToString()));
 
+            // Defense updates only contain currently engaged defense pairs, not the full attacker list.
+            // Keep using the last known full opponent attack list when available.
+            List<int> attackIdsToDisplay =
+                (lastOpponentAttackIds != null && lastOpponentAttackIds.Count > 0)
+                    ? new List<int>(lastOpponentAttackIds)
+                    : data?.AttackCardsId;
+
+            if (attackIdsToDisplay != null && attackIdsToDisplay.Count > 0)
+            {
+                lastOpponentAttackIds = new List<int>(attackIdsToDisplay);
+            }
+
             ClearOpponentAttackOutline();
 
-            if (data == null || data.AttackCardsId == null || data.AttackCardsId.Count == 0)
+            if (attackIdsToDisplay == null || attackIdsToDisplay.Count == 0)
                 return;
 
             int found = 0;
             int missing = 0;
 
-            for (int i = 0; i < data.AttackCardsId.Count; i++)
+            for (int i = 0; i < attackIdsToDisplay.Count; i++)
             {
-                int id = data.AttackCardsId[i];
+                int positionOrId = attackIdsToDisplay[i];
+                CardUI card = null;
 
-                if ((!opponentCardsById.TryGetValue(id, out CardUI card) || card == null) && OpponentBoardUI.Instance != null)
+                // First try: lookup by GameCardId (if it's a real ID)
+                if (opponentCardsById.TryGetValue(positionOrId, out card) && card != null)
                 {
-                    CardUI recovered = OpponentBoardUI.Instance.FindOpponentCardByGameCardId(id);
+                    // Found by GameCardId - continue
+                }
+                else if (OpponentBoardUI.Instance != null)
+                {
+                    // Second try: lookup by GameCardId on board
+                    CardUI recovered = OpponentBoardUI.Instance.FindOpponentCardByGameCardId(positionOrId);
                     if (recovered != null)
                     {
-                        opponentCardsById[id] = recovered;
+                        opponentCardsById[positionOrId] = recovered;
                         card = recovered;
-                        Debug.Log("[OpponentBoardService] Recovered opponent defense card from board for id=" + id);
+                        Debug.Log("[OpponentBoardService] Recovered opponent defense card from board by GameCardId=" + positionOrId);
+                    }
+                    else
+                    {
+                        // Third try: lookup by slot position (from new protocol with positions)
+                        recovered = OpponentBoardUI.Instance.GetCardAtSlotIndex(positionOrId);
+                        if (recovered != null)
+                        {
+                            card = recovered;
+                            // Register it by its GameCardId for future lookups
+                            if (int.TryParse(recovered.cardId, out int gameCardId))
+                            {
+                                opponentCardsById[gameCardId] = recovered;
+                            }
+                            Debug.Log("[OpponentBoardService] Recovered opponent attack card from board by SlotIndex=" + positionOrId);
+                        }
                     }
                 }
 
                 if (card != null)
                 {
-                    card.SetOpponentAttacking(true);
                     card.SetSelected(true);
                     card.SetAttackedThisPhase(true);
                     card.ShowAttackOrder(i + 1);
+                    card.SetOpponentAttacking(true);
                     found++;
-                    Debug.Log("[OpponentBoardService] (Defense) Attack OUTLINE ON for opponent card id=" + id + " name=" + card.name + " order=" + (i + 1));
+                    Debug.Log("[OpponentBoardService] (Defense) Attack OUTLINE ON for opponent card position=" + positionOrId + " name=" + card.name + " order=" + (i + 1));
                 }
                 else
                 {
                     missing++;
-                    Debug.LogWarning("[OpponentBoardService] (Defense) attack card id not found on opponent board: " + id);
+                    Debug.LogWarning("[OpponentBoardService] (Defense) attack card not found on opponent board: positionOrId=" + positionOrId);
                 }
             }
 
@@ -145,6 +180,14 @@ namespace VortexTCG.Scripts.Features.Match.Services
                     kvp.Value.ResetAttackState();
                 }
             }
+        }
+
+        public void ClearCombatState()
+        {
+            // End turn resolution is authoritative: clear cached combat payloads so outlines are not re-applied.
+            lastOpponentAttackIds = null;
+            lastOpponentDefenseState = null;
+            ClearOpponentAttackOutline();
         }
 
         public void UpdateOpponentCardSnapshot(GameCardDto dto)

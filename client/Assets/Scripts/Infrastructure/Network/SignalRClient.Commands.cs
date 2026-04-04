@@ -120,8 +120,13 @@ public partial class SignalRClient
 
     public async Task HandleDefensePos(int cardId, int opponentCardId)
     {
-        if (_conn == null) return;
-        await _conn.InvokeAsync("HandleDefensePos", cardId, opponentCardId);
+        await ToggleDefenseCard(cardId, opponentCardId);
+    }
+
+    public async Task ToggleDefenseCard(int defensePosition, int attackPosition)
+    {
+        RequireConnectedOrThrow();
+        await SafeInvoke("ToggleDefenseCard", defensePosition, attackPosition);
     }
 
     public bool IsConnected => _conn != null && _conn.State == HubConnectionState.Connected;

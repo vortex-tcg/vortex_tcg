@@ -44,7 +44,7 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 PhaseService.Instance.OnEnterAttack += OnEnterAttackPhase;
                 PhaseService.Instance.OnEnterDefense += OnEnterDefensePhase;
-                PhaseService.Instance.OnEnterStandBy += OnEndDefensePhase;
+                PhaseService.Instance.OnEnterEndTurn += OnEnterEndTurnPhase;
             }
             if (SignalRClient.Instance != null)
                 SignalRClient.Instance.OnAttackEngage += OnAttackEngage;
@@ -62,7 +62,7 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 PhaseService.Instance.OnEnterAttack -= OnEnterAttackPhase;
                 PhaseService.Instance.OnEnterDefense -= OnEnterDefensePhase;
-                PhaseService.Instance.OnEnterStandBy -= OnEndDefensePhase;
+                PhaseService.Instance.OnEnterEndTurn -= OnEnterEndTurnPhase;
             }
 
             if (SignalRClient.Instance != null)
@@ -74,21 +74,20 @@ namespace VortexTCG.Scripts.MatchScene
 
         private void OnEnterAttackPhase()
         {
-            if (PhaseService.Instance != null && !PhaseService.Instance.CanAct)
-            {
-                return;
-            }
+        }
+        private void OnEnterDefensePhase() { }
+        private void OnEnterEndTurnPhase()
+        {
+            ResetAllAttackStates();
+        }
 
+        public void ResetAllAttackStates()
+        {
             selectedAttacker = null;
             attackLogic.ClearSelections();
             attackLogic.ResetAllCardAttackStates();
-            attackingCards.Clear(); // Clear the attacking cards list
+            attackingCards.Clear();
             ClearAttackStatesFromSlots();
-        }
-        private void OnEnterDefensePhase() { }
-        private void OnEndDefensePhase()
-        {
-            // Keep attack selection state until the local player's next ATTACK phase.
         }
 
         public void RegisterCard(CardUI card)
@@ -155,8 +154,7 @@ namespace VortexTCG.Scripts.MatchScene
             }
 
             Debug.Log($"[AttackUI] -> calling Hub ToggleAttackCard(position={attackPosition})");
-            ToggleCard(card);
-
+            // Server is authoritative for attack selection state.
             _ = SendAttackToServer(client, attackPosition, card);
         }
 
@@ -180,12 +178,10 @@ namespace VortexTCG.Scripts.MatchScene
                 }
                 catch (Exception fallbackEx)
                 {
-                    ToggleCard(card);
                     Debug.LogError($"[AttackUI] Hub call fallback HandleAttackPos FAILED ex={fallbackEx}");
                     return;
                 }
 
-                ToggleCard(card);
                 Debug.LogError($"[AttackUI] Hub call ToggleAttackCard FAILED position={attackPosition} ex={ex}");
             }
         }

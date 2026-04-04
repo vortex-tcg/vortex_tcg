@@ -250,8 +250,8 @@ namespace VortexTCG.Scripts.Features.Match.Services
                 }
             }
 
-            AttackUI.Instance?.AttackService?.ClearSelections();
-            DefenseUI.Instance?.DefenseService?.ClearAllDefense();
+            AttackUI.Instance?.ResetAllAttackStates();
+            OpponentBoardUI.Instance?.OpponentBoardService?.ClearCombatState();
 
             Debug.Log($"[MatchService] EndPhaseResolution applied currentHp={data.CurrentPlayerChampionHp} opponentHp={data.OpponentPlayerChampionHp}");
         }
@@ -290,8 +290,8 @@ namespace VortexTCG.Scripts.Features.Match.Services
                 Debug.Log($"[MatchService] ResolveBattles Battle[{i}] END");
             }
 
-            AttackUI.Instance?.AttackService?.ClearSelections();
-            DefenseUI.Instance?.DefenseService?.ClearAllDefense();
+            AttackUI.Instance?.ResetAllAttackStates();
+            OpponentBoardUI.Instance?.OpponentBoardService?.ClearCombatState();
 
             Debug.Log("[MatchService] ResolveBattles END -> cleared selections/defense");
         }
