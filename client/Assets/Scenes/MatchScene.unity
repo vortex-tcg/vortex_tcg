@@ -315,6 +315,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &68313134 stripped
@@ -900,6 +901,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &250090122
@@ -1273,6 +1275,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &347979653
@@ -1395,6 +1398,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &461632685
@@ -1630,6 +1634,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &620190789 stripped
@@ -1764,6 +1769,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &737667414 stripped
@@ -1868,6 +1874,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &776513355
@@ -2115,6 +2122,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &835679977 stripped
@@ -2175,6 +2183,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &889923923
@@ -2303,6 +2312,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &891603984 stripped
@@ -2363,6 +2373,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &931078889
@@ -2491,6 +2502,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &967252606
@@ -2683,6 +2695,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &1076761479
@@ -2943,6 +2956,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1218190133
@@ -3070,6 +3084,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1410990565 stripped
@@ -3228,6 +3243,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1516896038
@@ -3397,6 +3413,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &1558615408
@@ -3525,6 +3542,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1615186287
@@ -3857,6 +3875,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1795709451 stripped
@@ -3917,6 +3936,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1803225860 stripped
@@ -3977,6 +3997,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1833318994
@@ -4065,7 +4086,7 @@ Transform:
   m_GameObject: {fileID: 1833318994}
   serializedVersion: 2
   m_LocalRotation: {x: 0.46073893, y: -0, z: -0, w: 0.88753575}
-  m_LocalPosition: {x: -6.9, y: 12.74, z: -12}
+  m_LocalPosition: {x: -7.46, y: 12.74, z: -11.79}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4259,6 +4280,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1909179011 stripped
@@ -4319,6 +4341,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &1940300476
@@ -4447,6 +4470,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &1946076882
@@ -4575,6 +4599,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &2011053240
@@ -4703,6 +4728,7 @@ MonoBehaviour:
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1660057539 &9223372036854775807
