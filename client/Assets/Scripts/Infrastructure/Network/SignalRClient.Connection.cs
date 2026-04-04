@@ -50,6 +50,18 @@ public partial class SignalRClient
             _opponentGold = dto.Opponent.Gold;
             _opponentSecondaryCurrencyName = dto.Opponent.SecondaryCurrencyName;
             _opponentSecondaryCurrency = dto.Opponent.SecondaryCurrency;
+            _position1Champion = null;
+            _position2Champion = null;
+
+            if (dto.Self.Position == 1)
+                _position1Champion = dto.Self.Champion;
+            else if (dto.Self.Position == 2)
+                _position2Champion = dto.Self.Champion;
+
+            if (dto.Opponent.Position == 1)
+                _position1Champion = dto.Opponent.Champion;
+            else if (dto.Opponent.Position == 2)
+                _position2Champion = dto.Opponent.Champion;
 
             networkRef?.SetMatch(key, pos);
             OnMatched?.Invoke(key);
