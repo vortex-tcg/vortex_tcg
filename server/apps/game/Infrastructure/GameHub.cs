@@ -55,13 +55,22 @@ public class GameHubClean : Hub
             boardPosition,
             Context.ConnectionAborted
         );
-    public Task ToggleDefenseCard(int position, int positionOpponentCard)
-        => DefenseService.ToggleDefenseCardAsync(
-            GetAuthenticatedUserId(),
-            position,
-            positionOpponentCard,
-            Context.ConnectionAborted
-        );
+    public async Task ToggleDefenseCard(int position, int positionOpponentCard)
+    {
+        try
+        {
+            await DefenseService.ToggleDefenseCardAsync(
+                GetAuthenticatedUserId(),
+                position,
+                positionOpponentCard,
+                Context.ConnectionAborted
+            );
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new HubException(ex.Message);
+        }
+    }
     public Task ChangePhase()
         => PhaseService.ChangePhaseAsync(
             GetAuthenticatedUserId(),

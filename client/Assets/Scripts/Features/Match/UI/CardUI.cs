@@ -49,6 +49,7 @@ namespace VortexTCG.Scripts.MatchScene
 
         [Header("Selection")] [SerializeField] private GameObject AttackState;
         [SerializeField] private GameObject DefenseState;
+        [SerializeField] private GameObject DefendingState;
         [SerializeField] private GameObject AttackOrder;
         [SerializeField] private float selectedScaleMultiplier = 1.08f;
         private bool isSelected;
@@ -82,6 +83,9 @@ namespace VortexTCG.Scripts.MatchScene
 
             if (AttackOrder != null)
                 AttackOrder.SetActive(false);
+
+            if (DefendingState != null)
+                DefendingState.SetActive(false);
 
             UpdateCostColor();
 
@@ -375,6 +379,21 @@ namespace VortexTCG.Scripts.MatchScene
             return DefenseState;
         }
 
+        public void SetDefendingState(bool active)
+        {
+            GameObject state = GetDefendingState();
+            if (state != null)
+                state.SetActive(active);
+        }
+
+        public GameObject GetDefendingState()
+        {
+            if (DefendingState == null)
+                DefendingState = FindOutlineByName("DefendingState");
+
+            return DefendingState;
+        }
+
         private GameObject FindOutlineByName(string name)
         {
             Debug.Log($"[CardUI] FindOutlineByName searching for '{name}' in card '{cardName}' (ID: {cardId})");
@@ -407,6 +426,11 @@ namespace VortexTCG.Scripts.MatchScene
         public bool IsDefenseSelected()
         {
             return DefenseState != null && DefenseState.activeSelf;
+        }
+
+        public bool IsDefendingStateActive()
+        {
+            return DefendingState != null && DefendingState.activeSelf;
         }
    
 

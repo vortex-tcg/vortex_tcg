@@ -20,6 +20,7 @@ namespace VortexTCG.Scripts.DTOs
         public string? AutoChangeReason { get; set; }
         public bool CanAct { get; set; }
         public long? TimerEndTime { get; set; } // Unix timestamp (ms) de fin du timer
+        public DrawnCardDto DrawnCard { get; set; }
     }
 
     [Serializable]

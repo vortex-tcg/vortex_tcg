@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using UnityEngine;
 using VortexTCG.Scripts.DTOs;
 using VortexTCG.Scripts.Features.Match.Events;
+using VortexTCG.Scripts.MatchScene;
 
 public partial class SignalRClient
 {
@@ -102,6 +103,7 @@ public partial class SignalRClient
         _conn.On<JsonElement>("opponentEndPhaseResolved", payload => HandleEndPhaseResolved("opponentEndPhaseResolved", payload, true));
         _conn.On<JsonElement>("successAttackOrderUpdated", payload => HandleAttackOrderUpdated("successAttackOrderUpdated", payload, false));
         _conn.On<JsonElement>("opponentAttackOrderUpdated", payload => HandleAttackOrderUpdated("opponentAttackOrderUpdated", payload, true));
+        _conn.On<JsonElement>("successDefenseUpdated", payload => HandleDefenseUpdated("successDefenseUpdated", payload));
 
         _conn.On<string, string, string>("ReceiveRoomMessage", (key, from, text) =>
             Enqueue(() => OnLog?.Invoke($"{from}: {text}")));
@@ -233,6 +235,23 @@ public partial class SignalRClient
         {
             Debug.Log($"[SignalRClient] ✅ {eventName} reçu - phase={result.CurrentPhase} turn={result.TurnNumber} canAct={result.CanAct}");
 
+            if (result.DrawnCard != null)
+            {
+                string playerId = result.ActivePlayerId != Guid.Empty
+                    ? result.ActivePlayerId.ToString()
+                    : ResolveLocalUserIdFromJwt();
+
+                var drawResult = new DrawResultForPlayerDto
+                {
+                    PlayerId = playerId,
+                    DrawnCards = new List<DrawnCardDto> { result.DrawnCard }
+                };
+
+                OnCardsDrawn?.Invoke(drawResult);
+                MatchEvents.FirePlayerCardsDrawn(drawResult);
+                Debug.Log($"[SignalRClient] ✅ {eventName} contained drawnCard -> relayed to OnCardsDrawn (gameCardId={result.DrawnCard.GameCardId})");
+            }
+
             if (isGameStarted)
             {
                 OnGameStarted?.Invoke(result);
@@ -276,6 +295,18 @@ public partial class SignalRClient
             {
                 OnAttackEngage?.Invoke(orderedAttackCardIds);
             }
+        });
+    }
+
+    private void HandleDefenseUpdated(string eventName, JsonElement payload)
+    {
+        DefenseDataResponseDto result = ParseDefenseUpdatedPayload(payload);
+
+        Enqueue(() =>
+        {
+            Debug.Log($"[SignalRClient] {eventName} received defenseCards={(result?.DefenseCards?.Count ?? 0)} attackCards={(result?.AttackCardsId?.Count ?? 0)}");
+            OnDefenseEngage?.Invoke(result);
+            OnOpponentDefenseEngage?.Invoke(result);
         });
     }
 
@@ -325,6 +356,86 @@ public partial class SignalRClient
         }
 
         return ids;
+    }
+
+    private static DefenseDataResponseDto ParseDefenseUpdatedPayload(JsonElement payload)
+    {
+        var dto = new DefenseDataResponseDto();
+
+        if (TryGetPropertyInsensitive(payload, "engagedCards", out JsonElement engagedCards) &&
+            engagedCards.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement engaged in engagedCards.EnumerateArray())
+            {
+                int defenderGameCardId = -1;
+                int attackPosition = -1;
+
+                if (TryGetPropertyInsensitive(engaged, "gameCardId", out JsonElement cardIdEl) &&
+                    cardIdEl.TryGetInt32(out int parsedCardId))
+                {
+                    defenderGameCardId = parsedCardId;
+                }
+
+                if (TryGetPropertyInsensitive(engaged, "positionOpponentCard", out JsonElement oppPosEl) &&
+                    oppPosEl.TryGetInt32(out int parsedOppPos))
+                {
+                    attackPosition = parsedOppPos;
+                }
+
+                if (defenderGameCardId >= 0 && attackPosition >= 0)
+                {
+                    dto.DefenseCards.Add(new DefenseCardDataDto
+                    {
+                        cardId = defenderGameCardId,
+                        opponentCardId = attackPosition
+                    });
+                    
+                    // Try to resolve attacker's GameCardId from its position
+                    int attackerGameCardId = attackPosition; // default: assume position is ID for legacy compat
+                    if (OpponentBoardUI.Instance != null)
+                    {
+                        CardUI attackCard = OpponentBoardUI.Instance.GetCardAtSlotIndex(attackPosition);
+                        if (attackCard != null && int.TryParse(attackCard.cardId, out int resolvedId))
+                        {
+                            attackerGameCardId = resolvedId;
+                            Debug.Log("[ParseDefenseUpdatedPayload] Resolved attacker position " + attackPosition + " to GameCardId " + resolvedId);
+                        }
+                    }
+                    
+                    dto.AttackCardsId.Add(attackerGameCardId);
+                }
+            }
+
+            return dto;
+        }
+
+        if (TryGetPropertyInsensitive(payload, "defenseCards", out JsonElement legacyDefenseCards) &&
+            legacyDefenseCards.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement pair in legacyDefenseCards.EnumerateArray())
+            {
+                if (!TryGetPropertyInsensitive(pair, "cardId", out JsonElement cardIdEl) ||
+                    !cardIdEl.TryGetInt32(out int defenderGameCardId))
+                {
+                    continue;
+                }
+
+                if (!TryGetPropertyInsensitive(pair, "opponentCardId", out JsonElement oppPosEl) ||
+                    !oppPosEl.TryGetInt32(out int attackPosition))
+                {
+                    continue;
+                }
+
+                dto.DefenseCards.Add(new DefenseCardDataDto
+                {
+                    cardId = defenderGameCardId,
+                    opponentCardId = attackPosition
+                });
+                dto.AttackCardsId.Add(attackPosition);
+            }
+        }
+
+        return dto;
     }
 
     private static bool TryGetPropertyInsensitive(JsonElement element, string propertyName, out JsonElement value)
@@ -457,8 +568,14 @@ public partial class SignalRClient
             TurnNumber = ReadInt(payload, "turnNumber"),
             AutoChanged = ReadBool(payload, "autoChanged"),
             AutoChangeReason = ReadString(payload, "autoChangeReason"),
-            TimerEndTime = ReadNullableLong(payload, "timerEndTime")
+            TimerEndTime = ReadNullableLong(payload, "timerEndTime"),
+            DrawnCard = ReadDrawnCard(payload)
         };
+
+        if (result.ActivePlayerId == Guid.Empty)
+        {
+            result.ActivePlayerId = ReadGuid(payload, "currentPlayerUserId");
+        }
 
         if (TryReadBool(payload, "canAct", out bool canAct))
         {
@@ -472,6 +589,28 @@ public partial class SignalRClient
         }
 
         return result;
+    }
+
+    private static DrawnCardDto ReadDrawnCard(JsonElement payload)
+    {
+        if (!TryReadProperty(payload, "drawnCard", out JsonElement drawnCardElement) ||
+            drawnCardElement.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<DrawnCardDto>(drawnCardElement.GetRawText(), new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[SignalRClient] Failed to parse drawnCard from phase payload: {ex.Message}");
+            return null;
+        }
     }
 
     private int LocalPlayerPosition => networkRef != null ? networkRef.PlayerPosition : _playerPosition;
