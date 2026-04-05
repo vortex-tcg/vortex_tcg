@@ -19,6 +19,10 @@ public static class ResolveEndPhaseService
         BattleResolveDTOs result = new BattleResolveDTOs();
 
         IReadOnlyList<AttackCard> attacks = match.AttackHandler.GetAttackers();
+        if (attacks.Count == 0)
+        {
+            attacks = BuildFallbackAttackersFromBoard(attackingPlayer);
+        }
 
         foreach (AttackCard attack in attacks)
         {
@@ -48,6 +52,30 @@ public static class ResolveEndPhaseService
         ));
 
         return result;
+    }
+
+    private static IReadOnlyList<AttackCard> BuildFallbackAttackersFromBoard(Player attackingPlayer)
+    {
+        List<AttackCard> fallback = new List<AttackCard>();
+
+        foreach (KeyValuePair<int, GameCardDto> entry in attackingPlayer.Board.EnumerateSlots())
+        {
+            int position = entry.Key;
+            GameCardDto card = entry.Value;
+
+            if (card.States.Value == CardStates.Attacking.Value)
+            {
+                fallback.Add(new AttackCard
+                {
+                    Position = position,
+                    GameCardId = card.GameCardId
+                });
+            }
+        }
+
+        // Keep deterministic order for client-side battle sequence.
+        fallback.Sort((a, b) => a.Position.CompareTo(b.Position));
+        return fallback;
     }
 
     private static void ResolveSingleAttack(
