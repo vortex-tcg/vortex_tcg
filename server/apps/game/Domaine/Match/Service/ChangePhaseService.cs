@@ -15,7 +15,18 @@ public static class ChangePhaseService
 
         if (step.NextPhase.Type == Entity.MatchPhaseType.EndTurn)
         {
+            match.SetPhase(step.NextPhase);
             match.SetCurrentPlayerPosition(step.NextCurrentPlayerPosition);
+
+            match.AddEvent(new DomainEvent(
+                MatchEvent.PHASE_CHANGED,
+                new DomainEvent.PhaseChangedData(
+                    match.MatchId.Value,
+                    match.CurrentPlayerPosition,
+                    step.NextPhase.Type
+                )
+            ));
+
             step.NextPhase.OnStartPhase(match, ct);
             step.NextPhase.OnEndPhase(match, ct);
 

@@ -36,6 +36,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         private SignalRClient client;
         private bool _gameStarted;
         private Coroutine _battleRoutine;
+        private Coroutine _endPhaseRoutine;
 
         private void Awake()
         {
@@ -215,11 +216,19 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
             Debug.Log($"[MatchService] EndPhaseResolved received battles={data.Battles?.Count ?? 0} deadCards={data.DeadCardIds?.Count ?? 0} localIsAttacker={localIsAttacker}");
 
-            ApplyEndPhaseResolution(data, localIsAttacker);
+            if (_endPhaseRoutine != null)
+            {
+                StopCoroutine(_endPhaseRoutine);
+            }
+
+            _endPhaseRoutine = StartCoroutine(ResolveEndPhaseSequentially(data, localIsAttacker));
         }
 
-        private void ApplyEndPhaseResolution(EndPhaseResolutionDto data, bool localIsAttacker)
+        private IEnumerator ResolveEndPhaseSequentially(EndPhaseResolutionDto data, bool localIsAttacker)
         {
+            bool attackerIsLocal = localIsAttacker;
+            bool defenderIsLocal = !localIsAttacker;
+
             if (data.Battles != null)
             {
                 for (int i = 0; i < data.Battles.Count; i++)
@@ -227,16 +236,39 @@ namespace VortexTCG.Scripts.Features.Match.Services
                     EndPhaseCardBattleResultDto battle = data.Battles[i];
                     if (battle == null) continue;
 
-                    if (localIsAttacker)
-                    {
-                        ApplyCardSnapshotBySlotIndex(battle.AttackerPosition, true, battle.AttackerRemainingHp);
-                        ApplyOpponentCardSnapshotBySlotIndex(battle.DefenderPosition, battle.DefenderRemainingHp);
-                    }
-                    else
-                    {
-                        ApplyOpponentCardSnapshotBySlotIndex(battle.AttackerPosition, battle.AttackerRemainingHp);
-                        ApplyCardSnapshotBySlotIndex(battle.DefenderPosition, true, battle.DefenderRemainingHp);
-                    }
+                    CardUI attackerCard = FindCardBySlotIndex(battle.AttackerPosition, attackerIsLocal);
+                    CardUI defenderCard = FindCardBySlotIndex(battle.DefenderPosition, defenderIsLocal);
+
+                    if (battle.DamageToAttacker > 0)
+                        attackerCard?.SetDamageReceivedState(true);
+
+                    if (battle.DamageToDefender > 0)
+                        defenderCard?.SetDamageReceivedState(true);
+
+                    if (battle.DamageToAttacker > 0 || battle.DamageToDefender > 0)
+                        yield return new WaitForSeconds(0.35f);
+
+                    ApplyCardSnapshotBySlotIndex(battle.AttackerPosition, attackerIsLocal, battle.AttackerRemainingHp);
+                    ApplyCardSnapshotBySlotIndex(battle.DefenderPosition, defenderIsLocal, battle.DefenderRemainingHp);
+
+                    yield return new WaitForSeconds(0.15f);
+
+                    attackerCard?.SetDamageReceivedState(false);
+                    defenderCard?.SetDamageReceivedState(false);
+
+                    yield return new WaitForSeconds(0.15f);
+                }
+            }
+
+            if (data.DirectChampionDamages != null)
+            {
+                for (int i = 0; i < data.DirectChampionDamages.Count; i++)
+                {
+                    EndPhaseDirectChampionDamageDto damage = data.DirectChampionDamages[i];
+                    if (damage == null) continue;
+
+                    Debug.Log($"[MatchService] Champion receives {damage.Damage} damage from attackerCardId={damage.AttackerCardId}");
+                    yield return new WaitForSeconds(0.2f);
                 }
             }
 
@@ -245,8 +277,8 @@ namespace VortexTCG.Scripts.Features.Match.Services
                 for (int i = 0; i < data.DeadCardIds.Count; i++)
                 {
                     int deadCardId = data.DeadCardIds[i];
-                    RemoveCard(deadCardId, true);
-                    RemoveCard(deadCardId, false);
+                    yield return RemoveCardWithDeathState(deadCardId, true);
+                    yield return RemoveCardWithDeathState(deadCardId, false);
                 }
             }
 
@@ -254,6 +286,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             OpponentBoardUI.Instance?.OpponentBoardService?.ClearCombatState();
 
             Debug.Log($"[MatchService] EndPhaseResolution applied currentHp={data.CurrentPlayerChampionHp} opponentHp={data.OpponentPlayerChampionHp}");
+            _endPhaseRoutine = null;
         }
 
 
@@ -323,13 +356,13 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (b.isAttackerDead && b.attackerCard != null)
             {
                 Debug.Log("[MatchService] ResolveAgainstCard -> remove ATTACKER cardId=" + b.attackerCard.GameCardId + " (ownerLocal=" + attackerIsLocal + ")");
-                RemoveCard(b.attackerCard.GameCardId, attackerIsLocal);
+                yield return RemoveCardWithDeathState(b.attackerCard.GameCardId, attackerIsLocal);
             }
 
             if (b.isDefenderDead && b.defenderCard != null)
             {
                 Debug.Log("[MatchService] ResolveAgainstCard -> remove DEFENDER cardId=" + b.defenderCard.GameCardId + " (ownerLocal=" + defenderIsLocal + ")");
-                RemoveCard(b.defenderCard.GameCardId, defenderIsLocal);
+                yield return RemoveCardWithDeathState(b.defenderCard.GameCardId, defenderIsLocal);
             }
 
             Debug.Log("[MatchService] ResolveAgainstCard END");
@@ -349,7 +382,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (b.isCardDead && b.attackerCard != null)
             {
                 Debug.Log("[MatchService] ResolveAgainstChamp -> remove ATTACKER cardId=" + b.attackerCard.GameCardId + " (ownerLocal=" + attackerIsLocal + ")");
-                RemoveCard(b.attackerCard.GameCardId, attackerIsLocal);
+                yield return RemoveCardWithDeathState(b.attackerCard.GameCardId, attackerIsLocal);
             }
 
             if (b.isChampDead)
@@ -397,26 +430,6 @@ namespace VortexTCG.Scripts.Features.Match.Services
             );
         }
 
-        private void ApplyOpponentCardSnapshotBySlotIndex(int slotIndex, int remainingHp)
-        {
-            CardUI card = FindCardBySlotIndex(slotIndex, false);
-            if (card == null)
-            {
-                Debug.LogWarning($"[MatchService] ApplyOpponentCardSnapshotBySlotIndex: card not found at slot={slotIndex}");
-                return;
-            }
-
-            card.ApplyDTO(
-                card.cardId,
-                card.cardName,
-                remainingHp,
-                card.attack,
-                card.cost,
-                card.description,
-                card.imageUrl
-            );
-        }
-
         private CardUI FindCardBySlotIndex(int slotIndex, bool isLocalOwner)
         {
             if (isLocalOwner)
@@ -448,7 +461,29 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (isLocalOwner)
                 RemoveLocalCard(gameCardId);
             else
-                OpponentBoardUI.Instance?.OpponentBoardService?.RemoveOpponentCard(gameCardId);
+                RemoveOpponentCard(gameCardId);
+        }
+
+        private IEnumerator RemoveCardWithDeathState(int gameCardId, bool isLocalOwner)
+        {
+            if (gameCardId < 0)
+                yield break;
+
+            CardUI card = isLocalOwner
+                ? FindLocalCard(gameCardId)
+                : OpponentBoardUI.Instance?.FindOpponentCardByGameCardId(gameCardId);
+
+            if (card == null)
+            {
+                RemoveCard(gameCardId, isLocalOwner);
+                yield break;
+            }
+
+            card.SetDamageReceivedState(false);
+            card.SetDeathState(true);
+            yield return new WaitForSeconds(3f);
+
+            RemoveCard(gameCardId, isLocalOwner);
         }
 
         private void UpdateLocalCardSnapshot(GameCardDto dto)
@@ -498,6 +533,25 @@ namespace VortexTCG.Scripts.Features.Match.Services
             Destroy(card.gameObject);
 
             Debug.Log("[MatchService] RemoveLocalCard destroyed id=" + gameCardId);
+        }
+
+        private void RemoveOpponentCard(int gameCardId)
+        {
+            CardUI card = OpponentBoardUI.Instance?.FindOpponentCardByGameCardId(gameCardId);
+            OpponentBoardUI.Instance?.OpponentBoardService?.RemoveOpponentCard(gameCardId);
+
+            if (card == null)
+            {
+                Debug.LogWarning("[MatchService] RemoveOpponentCard: opponent card NOT FOUND id=" + gameCardId);
+                return;
+            }
+
+            CardSlotUI slot = card.GetComponentInParent<CardSlotUI>();
+            if (slot != null && slot.CurrentCard == card)
+                slot.SetCurrentCard(null);
+
+            Destroy(card.gameObject);
+            Debug.Log("[MatchService] RemoveOpponentCard destroyed id=" + gameCardId);
         }
 
 
