@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using UnityEngine;
 using VortexTCG.Scripts.Features.Match.Services;
 using VortexTCG.Scripts.Features.Match.Events;
@@ -153,37 +152,9 @@ namespace VortexTCG.Scripts.MatchScene
                 return;
             }
 
-            Debug.Log($"[AttackUI] -> calling Hub ToggleAttackCard(position={attackPosition})");
+            Debug.Log($"[AttackUI] -> sending attack toggle through AttackService position={attackPosition}");
             // Server is authoritative for attack selection state.
-            _ = SendAttackToServer(client, attackPosition, card);
-        }
-
-        private async Task SendAttackToServer(SignalRClient client, int attackPosition, CardUI card)
-        {
-            try
-            {
-                await client.ToggleAttackCard(attackPosition);
-                Debug.Log($"[AttackUI] Hub call ToggleAttackCard DONE position={attackPosition}");
-            }
-            catch (Exception ex)
-            {
-                try
-                {
-                    if (int.TryParse(card.cardId, out int legacyCardId))
-                    {
-                        await client.HandleAttackPos(legacyCardId);
-                        Debug.LogWarning($"[AttackUI] ToggleAttackCard failed, fallback HandleAttackPos used cardId={legacyCardId}");
-                        return;
-                    }
-                }
-                catch (Exception fallbackEx)
-                {
-                    Debug.LogError($"[AttackUI] Hub call fallback HandleAttackPos FAILED ex={fallbackEx}");
-                    return;
-                }
-
-                Debug.LogError($"[AttackUI] Hub call ToggleAttackCard FAILED position={attackPosition} ex={ex}");
-            }
+            _ = attackLogic.ToggleCardAttackOnServer(client, attackPosition, card);
         }
 
         private void ToggleCard(CardUI card)
@@ -329,36 +300,7 @@ namespace VortexTCG.Scripts.MatchScene
 
         private void OnCardClickedHandler(CardUI card)
         {
-            if (card == null)
-                return;
-
-            if (PhaseService.Instance == null)
-                return;
-            
-            if (PhaseService.Instance.CurrentPhase != GamePhase.ATTACK)
-                return;
-
-            // Check if card is on the player's board
-            CardSlotUI slot = card.GetComponentInParent<CardSlotUI>();
-            if (slot == null)
-            {
-                Debug.LogWarning($"[AttackUI] Card '{card.cardName}' is not in a CardSlotUI - likely in hand or elsewhere");
-                return;
-            }
-
-            bool isOnP1Board = IsCardOnP1Board(card);
-            
-            Debug.Log($"[AttackUI] OnCardClickedHandler: card='{card.cardName}' isOnP1Board={isOnP1Board} slot={slot.name}");
-
-            // Only allow selecting cards from the player's board for attack
-            if (isOnP1Board)
-            {
-                SelectAttacker(card);
-            }
-            else
-            {
-                Debug.LogWarning($"[AttackUI] ❌ Card '{card.cardName}' is not on your board - cannot attack with it");
-            }
+            HandleCardClicked(card);
         }
 
         private void SelectAttacker(CardUI card)
