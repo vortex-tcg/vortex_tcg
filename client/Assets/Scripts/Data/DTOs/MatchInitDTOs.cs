@@ -47,6 +47,9 @@ namespace VortexTCG.Scripts.DTOs
 
         [JsonPropertyName("description")]
         public string Description { get; set; } = "";
+
+        [JsonPropertyName("hp")]
+        public int Hp { get; set; }
     }
 
     public class MatchInitCardDto
