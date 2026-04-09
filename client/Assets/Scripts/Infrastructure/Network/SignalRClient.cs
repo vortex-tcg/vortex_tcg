@@ -40,6 +40,8 @@ public partial class SignalRClient : MonoBehaviour
     private string _secondaryCurrencyName;
     private int _playerSecondaryCurrency;
     private MatchInitChampionDto _opponentChampion;
+    private MatchInitChampionDto _position1Champion;
+    private MatchInitChampionDto _position2Champion;
     private int _opponentGold;
     private string _opponentSecondaryCurrencyName;
     private int _opponentSecondaryCurrency;
@@ -51,6 +53,8 @@ public partial class SignalRClient : MonoBehaviour
     public string SecondaryCurrencyName => _secondaryCurrencyName;
     public int PlayerSecondaryCurrency => _playerSecondaryCurrency;
     public MatchInitChampionDto OpponentChampion => _opponentChampion;
+    public MatchInitChampionDto Position1Champion => _position1Champion;
+    public MatchInitChampionDto Position2Champion => _position2Champion;
     public int OpponentGold => _opponentGold;
     public string OpponentSecondaryCurrencyName => _opponentSecondaryCurrencyName;
     public int OpponentSecondaryCurrency => _opponentSecondaryCurrency;

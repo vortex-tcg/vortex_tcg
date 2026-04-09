@@ -31,6 +31,7 @@ public sealed class MatchInitChampionDto
 {
     public string name { get; init; } = "";
     public string description { get; init; } = "";
+    public int hp { get; init; }
 }
 public sealed class MatchInitCardDto
 {
@@ -53,7 +54,8 @@ public static class MatchInitDtoMapper
         return new MatchInitChampionDto
         {
             name = GetChampionName(champ),
-            description = GetChampionDescription(champ)
+            description = GetChampionDescription(champ),
+            hp = champ.Hp.Value
         };
     }
 

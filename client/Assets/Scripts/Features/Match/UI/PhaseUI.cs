@@ -27,12 +27,14 @@ namespace VortexTCG.Scripts.Features.Match.UI
         private Label goldLabel;
         private Label secondaryCurrencyLabel;
         private Label championNameLabel;
+        private Label championHpLabel;
         private Label championDescriptionLabel;
         
         // Opponent HUD elements
         private Label opponentGoldLabel;
         private Label opponentSecondaryCurrencyLabel;
         private Label opponentChampionNameLabel;
+        private Label opponentChampionHpLabel;
         private Label opponentChampionDescriptionLabel;
         private VisualElement switchingPhaseElement;
         
@@ -74,12 +76,20 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
             MatchEvents.OnPhaseChanged += HandlePhaseChanged;
             MatchEvents.OnGameStarted += HandleGameStarted;
+
+            SignalRClient client = SignalRClient.Instance;
+            if (client != null)
+                client.OnMatched += HandleMatched;
         }
 
         private void OnDisable()
         {
             MatchEvents.OnPhaseChanged -= HandlePhaseChanged;
             MatchEvents.OnGameStarted -= HandleGameStarted;
+
+            SignalRClient client = SignalRClient.Instance;
+            if (client != null)
+                client.OnMatched -= HandleMatched;
 
             if (endTurnButton != null)
             {
@@ -129,28 +139,6 @@ namespace VortexTCG.Scripts.Features.Match.UI
             matchPhaseLabel = root.Q<Label>("MatchPhase");
             turnStatusLabel = root.Q<Label>("TurnStatus") ?? root.Q<Label>("TurnStatusLabel");
 
-            if (turnStatusLabel == null && matchPhaseLabel != null)
-            {
-                turnStatusLabel = new Label("En attente...")
-                {
-                    name = "TurnStatus"
-                };
-
-                turnStatusLabel.style.height = 28;
-                turnStatusLabel.style.fontSize = 18;
-                turnStatusLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
-                turnStatusLabel.style.color = new StyleColor(Color.white);
-                turnStatusLabel.style.marginTop = 2;
-                turnStatusLabel.style.marginBottom = 2;
-
-                VisualElement phaseParent = matchPhaseLabel.parent;
-                if (phaseParent != null)
-                {
-                    int phaseIndex = phaseParent.IndexOf(matchPhaseLabel);
-                    phaseParent.Insert(phaseIndex + 1, turnStatusLabel);
-                }
-            }
-
             timerLabel = root.Q<Label>("TimerLabel");
             if (timerLabel == null)
             {
@@ -172,13 +160,15 @@ namespace VortexTCG.Scripts.Features.Match.UI
             // Bind player HUD elements
             goldLabel = root.Q<Label>("P1Golds");
             secondaryCurrencyLabel = root.Q<Label>("SecondaryCurrencyLabel");
-            championNameLabel = root.Q<Label>("ChampionNameLabel");
+            championNameLabel = root.Q<Label>("P1ChampionName") ?? root.Q<Label>("ChampionNameLabel");
+            championHpLabel = root.Q<Label>("P1ChampionHP");
             championDescriptionLabel = root.Q<Label>("ChampionDescriptionLabel");
 
             // Bind opponent HUD elements
             opponentGoldLabel = root.Q<Label>("P2Golds");
             opponentSecondaryCurrencyLabel = root.Q<Label>("OpponentSecondaryCurrencyLabel");
-            opponentChampionNameLabel = root.Q<Label>("OpponentChampionNameLabel");
+            opponentChampionNameLabel = root.Q<Label>("P2ChampionName") ?? root.Q<Label>("OpponentChampionNameLabel");
+            opponentChampionHpLabel = root.Q<Label>("P2ChampionHP");
             opponentChampionDescriptionLabel = root.Q<Label>("OpponentChampionDescriptionLabel");
 
             Debug.Log($"[PhaseUI] Player HUD elements bound - Gold: {(goldLabel != null ? "OK" : "NULL")}, Secondary: {(secondaryCurrencyLabel != null ? "OK" : "NULL")}, Champion: {(championNameLabel != null ? "OK" : "NULL")}");
@@ -231,6 +221,11 @@ namespace VortexTCG.Scripts.Features.Match.UI
             UpdateEndTurnButtonState();
             ShowSwitchingPhase(_currentPhase);
             Debug.Log($"[PhaseUI] Phase changed - New phase: {_currentPhase}, TimerEndTime: {_timerEndTime}");
+        }
+
+        private void HandleMatched(string _)
+        {
+            InitializePlayerData();
         }
 
         private void UpdateTurnStatusLabel()
@@ -474,16 +469,25 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         private void InitializePlayerHUD(SignalRClient client)
         {
+            MatchInitChampionDto championForP1 = client.Position1Champion;
+            if (championForP1 == null)
+            {
+                championForP1 = client.PlayerPosition == 1 ? client.PlayerChampion : client.OpponentChampion;
+            }
+
             // Set champion info
-            if (client.PlayerChampion != null)
+            if (championForP1 != null)
             {
                 if (championNameLabel != null)
-                    championNameLabel.text = client.PlayerChampion.Name;
+                    championNameLabel.text = championForP1.Name;
 
                 if (championDescriptionLabel != null)
-                    championDescriptionLabel.text = client.PlayerChampion.Description;
+                    championDescriptionLabel.text = championForP1.Description;
 
-                Debug.Log($"[PhaseUI] Player champion initialized: {client.PlayerChampion.Name}");
+                if (championHpLabel != null)
+                    championHpLabel.text = $"HP : {championForP1.Hp}";
+
+                Debug.Log($"[PhaseUI] P1 champion initialized: {championForP1.Name}");
             }
 
             // Set initial resources
@@ -495,16 +499,25 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         private void InitializeOpponentHUD(SignalRClient client)
         {
+            MatchInitChampionDto championForP2 = client.Position2Champion;
+            if (championForP2 == null)
+            {
+                championForP2 = client.PlayerPosition == 2 ? client.PlayerChampion : client.OpponentChampion;
+            }
+
             // Set champion info
-            if (client.OpponentChampion != null)
+            if (championForP2 != null)
             {
                 if (opponentChampionNameLabel != null)
-                    opponentChampionNameLabel.text = client.OpponentChampion.Name;
+                    opponentChampionNameLabel.text = championForP2.Name;
 
                 if (opponentChampionDescriptionLabel != null)
-                    opponentChampionDescriptionLabel.text = client.OpponentChampion.Description;
+                    opponentChampionDescriptionLabel.text = championForP2.Description;
 
-                Debug.Log($"[PhaseUI] Opponent champion initialized: {client.OpponentChampion.Name}");
+                if (opponentChampionHpLabel != null)
+                    opponentChampionHpLabel.text = $"HP : {championForP2.Hp}";
+
+                Debug.Log($"[PhaseUI] P2 champion initialized: {championForP2.Name}");
             }
 
             // Set initial resources
