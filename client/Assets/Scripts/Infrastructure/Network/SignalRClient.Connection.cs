@@ -111,8 +111,9 @@ public partial class SignalRClient
         _conn.On<JsonElement>("PhaseChanged", payload => HandlePhaseEvent("PhaseChanged", payload, false));
         _conn.On<JsonElement>("successPhaseChanged", payload => HandlePhaseEvent("successPhaseChanged", payload, false));
         _conn.On<JsonElement>("opponentPhaseChanged", payload => HandlePhaseEvent("opponentPhaseChanged", payload, false));
-        _conn.On<JsonElement>("successEndPhaseResolved", payload => HandleEndPhaseResolved("successEndPhaseResolved", payload, false));
-        _conn.On<JsonElement>("opponentEndPhaseResolved", payload => HandleEndPhaseResolved("opponentEndPhaseResolved", payload, true));
+        // In the current server flow, the caller who advances phase into EndTurn is the attacking side.
+        _conn.On<JsonElement>("successEndPhaseResolved", payload => HandleEndPhaseResolved("successEndPhaseResolved", payload, true));
+        _conn.On<JsonElement>("opponentEndPhaseResolved", payload => HandleEndPhaseResolved("opponentEndPhaseResolved", payload, false));
         _conn.On<JsonElement>("successAttackOrderUpdated", payload => HandleAttackOrderUpdated("successAttackOrderUpdated", payload, false));
         _conn.On<JsonElement>("opponentAttackOrderUpdated", payload => HandleAttackOrderUpdated("opponentAttackOrderUpdated", payload, true));
         _conn.On<JsonElement>("successDefenseUpdated", payload => HandleDefenseUpdated("successDefenseUpdated", payload));
