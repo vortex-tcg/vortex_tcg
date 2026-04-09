@@ -36,6 +36,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
         private Label opponentChampionNameLabel;
         private Label opponentChampionHpLabel;
         private Label opponentChampionDescriptionLabel;
+        private VisualElement switchingPhaseElement;
         
         private float endTurnDefaultOpacity = 1f;
         private Scale endTurnDefaultScale = new Scale(Vector3.one);
@@ -44,6 +45,18 @@ namespace VortexTCG.Scripts.Features.Match.UI
         private bool _canAct;
         private long? _timerEndTime; // Timestamp de fin du timer (Unix ms)
         private const int PhaseFallbackDurationSeconds = 60;
+        private const float SwitchingPhaseFadeInSeconds = 0.25f;
+        private const float SwitchingPhaseStaticSeconds = 1f;
+        private const float SwitchingPhaseFadeOutSeconds = 0.25f;
+        private const float SwitchingPhaseDurationSeconds =
+            SwitchingPhaseFadeInSeconds + SwitchingPhaseStaticSeconds + SwitchingPhaseFadeOutSeconds;
+        private float _switchingPhaseElapsed;
+        private bool _isSwitchingPhaseVisible;
+
+        private Texture2D _standByPhaseTexture;
+        private Texture2D _attackPhaseTexture;
+        private Texture2D _defensePhaseTexture;
+        private Texture2D _endingPhaseTexture;
 
         private void Awake()
         {
@@ -132,6 +145,18 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 Debug.LogWarning("[PhaseUI] TimerLabel not found in UI");
             }
 
+            switchingPhaseElement = root.Q<VisualElement>("SwitchingPhase");
+            if (switchingPhaseElement == null)
+            {
+                Debug.LogWarning("[PhaseUI] SwitchingPhase not found in UI");
+            }
+            else
+            {
+                switchingPhaseElement.style.opacity = 0f;
+                switchingPhaseElement.style.display = DisplayStyle.None;
+                switchingPhaseElement.visible = false;
+            }
+
             // Bind player HUD elements
             goldLabel = root.Q<Label>("P1Golds");
             secondaryCurrencyLabel = root.Q<Label>("SecondaryCurrencyLabel");
@@ -167,6 +192,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
             UpdatePhaseLabel(_currentPhase);
             UpdateTurnStatusLabel();
             UpdateEndTurnButtonState();
+            ShowSwitchingPhase(_currentPhase);
             
             // Initialize player data
             InitializePlayerData();
@@ -181,6 +207,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
             UpdatePhaseLabel(_currentPhase);
             UpdateTurnStatusLabel();
             UpdateEndTurnButtonState();
+            ShowSwitchingPhase(_currentPhase);
             Debug.Log($"[PhaseUI] Game started - Phase: {_currentPhase}, TimerEndTime: {_timerEndTime}");
         }
 
@@ -192,6 +219,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
             UpdatePhaseLabel(_currentPhase);
             UpdateTurnStatusLabel();
             UpdateEndTurnButtonState();
+            ShowSwitchingPhase(_currentPhase);
             Debug.Log($"[PhaseUI] Phase changed - New phase: {_currentPhase}, TimerEndTime: {_timerEndTime}");
         }
 
@@ -305,6 +333,77 @@ namespace VortexTCG.Scripts.Features.Match.UI
         private void Update()
         {
             UpdateTimerDisplay();
+            UpdateSwitchingPhaseFade();
+        }
+
+        private void ShowSwitchingPhase(GamePhase phase)
+        {
+            if (switchingPhaseElement == null)
+                return;
+
+            Texture2D phaseTexture = GetSwitchingPhaseTexture(phase);
+            if (phaseTexture == null)
+            {
+                Debug.LogWarning($"[PhaseUI] Missing texture for switching phase '{phase}'");
+                return;
+            }
+
+            switchingPhaseElement.style.backgroundImage = new StyleBackground(phaseTexture);
+            switchingPhaseElement.style.opacity = 0f;
+            switchingPhaseElement.style.display = DisplayStyle.Flex;
+            switchingPhaseElement.visible = true;
+
+            _switchingPhaseElapsed = 0f;
+            _isSwitchingPhaseVisible = true;
+        }
+
+        private void UpdateSwitchingPhaseFade()
+        {
+            if (!_isSwitchingPhaseVisible || switchingPhaseElement == null)
+                return;
+
+            _switchingPhaseElapsed += Time.deltaTime;
+            float elapsed = _switchingPhaseElapsed;
+            float fadeInEnd = SwitchingPhaseFadeInSeconds;
+            float staticEnd = fadeInEnd + SwitchingPhaseStaticSeconds;
+            float fadeOutEnd = staticEnd + SwitchingPhaseFadeOutSeconds;
+
+            float opacity;
+            if (elapsed <= fadeInEnd)
+            {
+                opacity = Mathf.Clamp01(elapsed / SwitchingPhaseFadeInSeconds);
+            }
+            else if (elapsed <= staticEnd)
+            {
+                opacity = 1f;
+            }
+            else
+            {
+                float fadeOutProgress = (elapsed - staticEnd) / SwitchingPhaseFadeOutSeconds;
+                opacity = Mathf.Clamp01(1f - fadeOutProgress);
+            }
+
+            switchingPhaseElement.style.opacity = opacity;
+
+            if (_switchingPhaseElapsed >= SwitchingPhaseDurationSeconds)
+            {
+                _isSwitchingPhaseVisible = false;
+                switchingPhaseElement.style.opacity = 0f;
+                switchingPhaseElement.style.display = DisplayStyle.None;
+                switchingPhaseElement.visible = false;
+            }
+        }
+
+        private Texture2D GetSwitchingPhaseTexture(GamePhase phase)
+        {
+            return phase switch
+            {
+                GamePhase.STAND_BY => _standByPhaseTexture ??= Resources.Load<Texture2D>("GUI/StandByPhase"),
+                GamePhase.ATTACK => _attackPhaseTexture ??= Resources.Load<Texture2D>("GUI/AttackPhase"),
+                GamePhase.DEFENSE => _defensePhaseTexture ??= Resources.Load<Texture2D>("GUI/DefensePhase"),
+                GamePhase.END_TURN => _endingPhaseTexture ??= Resources.Load<Texture2D>("GUI/EndingPhase"),
+                _ => null
+            };
         }
 
         private void UpdateTimerDisplay()

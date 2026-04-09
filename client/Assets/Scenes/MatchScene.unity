@@ -311,12 +311,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &68313134 stripped
 GameObject:
@@ -897,12 +899,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &250090122
 GameObject:
@@ -1271,12 +1275,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &347979653
 PrefabInstance:
@@ -1394,12 +1400,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &461632685
 PrefabInstance:
@@ -1630,12 +1638,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &620190789 stripped
 GameObject:
@@ -1765,12 +1775,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &737667414 stripped
 GameObject:
@@ -1870,12 +1882,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &776513355
 GameObject:
@@ -2118,12 +2132,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &835679977 stripped
 GameObject:
@@ -2179,12 +2195,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &889923923
 PrefabInstance:
@@ -2308,12 +2326,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &891603984 stripped
 GameObject:
@@ -2369,12 +2389,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &931078889
 PrefabInstance:
@@ -2498,12 +2520,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &967252606
 GameObject:
@@ -2691,12 +2715,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &1076761479
 PrefabInstance:
@@ -2952,12 +2978,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1218190133
 GameObject:
@@ -3080,12 +3108,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1410990565 stripped
 GameObject:
@@ -3239,12 +3269,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1516896038
 GameObject:
@@ -3409,12 +3441,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &1558615408
 PrefabInstance:
@@ -3538,12 +3572,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1615186287
 GameObject:
@@ -3871,12 +3907,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1795709451 stripped
 GameObject:
@@ -3932,12 +3970,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1803225860 stripped
 GameObject:
@@ -3993,12 +4033,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1833318994
 GameObject:
@@ -4276,12 +4318,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1909179011 stripped
 GameObject:
@@ -4337,12 +4381,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &1940300476
 PrefabInstance:
@@ -4466,12 +4512,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &1946076882
 PrefabInstance:
@@ -4595,12 +4643,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &2011053240
 PrefabInstance:
@@ -4724,12 +4774,14 @@ MonoBehaviour:
   costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
   costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
-  sleepyEffect: {fileID: 0}
   attackOrderText: {fileID: 0}
   AttackState: {fileID: 0}
   DefenseState: {fileID: 0}
   DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

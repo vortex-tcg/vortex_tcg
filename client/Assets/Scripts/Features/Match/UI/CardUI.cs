@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Serialization;
 using TMPro;
 using UnityEngine.UI;
 using VortexTCG.Scripts.DTOs;
@@ -39,18 +40,25 @@ namespace VortexTCG.Scripts.MatchScene
         [SerializeField] private bool faceDown;
         public bool IsFaceDown => faceDown;
 
-        [Header("Sleepy")]
-        [Tooltip("Optional gameobject to enable when the card is sleepy (first turn)")]
-        [SerializeField] private GameObject sleepyEffect;
         private bool isSleepy;
         public bool IsSleepy => isSleepy;
 
         [Header("Attack Phase")] public TMP_Text attackOrderText;
 
-        [Header("Selection")] [SerializeField] private GameObject AttackState;
+        [Header("State")]
+        [SerializeField] private GameObject AttackState;
         [SerializeField] private GameObject DefenseState;
         [SerializeField] private GameObject DefendingState;
         [SerializeField] private GameObject AttackOrder;
+        [FormerlySerializedAs("sleepyEffect")]
+        [SerializeField] private GameObject SleepyState;
+
+        [Tooltip("Shown briefly when this card receives damage during end turn resolution")]
+        [SerializeField] private GameObject DamageReceivedState;
+        [Tooltip("Shown briefly before removing the card from board")]
+        [SerializeField] private GameObject DeathState;
+
+        [Header("Selection")]
         [SerializeField] private float selectedScaleMultiplier = 1.08f;
         private bool isSelected;
         private Vector3 selectionBaseScale;
@@ -86,6 +94,15 @@ namespace VortexTCG.Scripts.MatchScene
 
             if (DefendingState != null)
                 DefendingState.SetActive(false);
+
+            if (DamageReceivedState != null)
+                DamageReceivedState.SetActive(false);
+
+            if (DeathState != null)
+                DeathState.SetActive(false);
+
+            if (SleepyState != null)
+                SleepyState.SetActive(false);
 
             UpdateCostColor();
 
@@ -394,6 +411,51 @@ namespace VortexTCG.Scripts.MatchScene
             return DefendingState;
         }
 
+        public void SetDamageReceivedState(bool active)
+        {
+            GameObject state = GetDamageReceivedState();
+            if (state != null)
+                state.SetActive(active);
+        }
+
+        public GameObject GetDamageReceivedState()
+        {
+            if (DamageReceivedState == null)
+                DamageReceivedState = FindOutlineByName("DamageReceivedState");
+
+            return DamageReceivedState;
+        }
+
+        public void SetDeathState(bool active)
+        {
+            GameObject state = GetDeathState();
+            if (state != null)
+                state.SetActive(active);
+        }
+
+        public GameObject GetDeathState()
+        {
+            if (DeathState == null)
+                DeathState = FindOutlineByName("DeathState");
+
+            return DeathState;
+        }
+
+        public void SetSleepyState(bool active)
+        {
+            GameObject state = GetSleepyState();
+            if (state != null)
+                state.SetActive(active);
+        }
+
+        public GameObject GetSleepyState()
+        {
+            if (SleepyState == null)
+                SleepyState = FindOutlineByName("SleepyState");
+
+            return SleepyState;
+        }
+
         private GameObject FindOutlineByName(string name)
         {
             Debug.Log($"[CardUI] FindOutlineByName searching for '{name}' in card '{cardName}' (ID: {cardId})");
@@ -432,6 +494,21 @@ namespace VortexTCG.Scripts.MatchScene
         {
             return DefendingState != null && DefendingState.activeSelf;
         }
+
+        public bool IsDamageReceivedStateActive()
+        {
+            return DamageReceivedState != null && DamageReceivedState.activeSelf;
+        }
+
+        public bool IsDeathStateActive()
+        {
+            return DeathState != null && DeathState.activeSelf;
+        }
+
+        public bool IsSleepyStateActive()
+        {
+            return SleepyState != null && SleepyState.activeSelf;
+        }
    
 
         public void SetFaceDown(bool value)
@@ -450,8 +527,7 @@ namespace VortexTCG.Scripts.MatchScene
             if (isSleepy == sleepy) return;
             isSleepy = sleepy;
 
-            if (sleepyEffect != null)
-                sleepyEffect.SetActive(sleepy);
+            SetSleepyState(sleepy);
 
             // optional: disable collider to prevent any interaction
             // Collider col = GetComponent<Collider>();
