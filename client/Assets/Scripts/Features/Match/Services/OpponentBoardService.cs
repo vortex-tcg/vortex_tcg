@@ -86,6 +86,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         public void ApplyOpponentDefenseState(DefenseDataResponseDto data)
         {
             lastOpponentDefenseState = data;
+            bool isDefensePhase = PhaseService.Instance != null && PhaseService.Instance.CurrentPhase == GamePhase.DEFENSE;
 
             Debug.Log("[OpponentBoardService] ApplyOpponentDefenseState defenses=" +
                       (data?.DefenseCards == null ? "NULL" : data.DefenseCards.Count.ToString()));
@@ -149,10 +150,16 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
                 if (card != null)
                 {
-                    card.SetSelected(true);
+                    card.SetSelected(false);
                     card.SetAttackedThisPhase(true);
                     card.ShowAttackOrder(i + 1);
-                    card.SetOpponentAttacking(true);
+
+                    // During local defense phase we keep order context but hide attack glow/outline.
+                    if (isDefensePhase)
+                        card.SetOpponentAttacking(false);
+                    else
+                        card.SetOpponentAttacking(true);
+
                     found++;
                     Debug.Log("[OpponentBoardService] (Defense) Attack OUTLINE ON for opponent card position=" + positionOrId + " name=" + card.name + " order=" + (i + 1));
                 }
