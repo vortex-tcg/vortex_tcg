@@ -6,6 +6,7 @@ using VortexTCG.Scripts.DTOs;
 using System.Linq; 
 using System.Text;
 using VortexTCG.Scripts.Features.Match.Services;
+using VortexTCG.Scripts.Features.Match.UI;
 using VortexTCG.Scripts.MatchScene;
 
 namespace VortexTCG.Scripts.Features.Match.Services
@@ -228,6 +229,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         {
             bool attackerIsLocal = localIsAttacker;
             bool defenderIsLocal = !localIsAttacker;
+            SyncChampionHpFromEndPhase(data, localIsAttacker);
 
             if (data.Battles != null)
             {
@@ -284,9 +286,34 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
             AttackUI.Instance?.ResetAllAttackStates();
             OpponentBoardUI.Instance?.OpponentBoardService?.ClearCombatState();
+            PhaseUI.Instance?.RefreshChampionHpDisplay();
 
             Debug.Log($"[MatchService] EndPhaseResolution applied currentHp={data.CurrentPlayerChampionHp} opponentHp={data.OpponentPlayerChampionHp}");
             _endPhaseRoutine = null;
+        }
+
+        private void SyncChampionHpFromEndPhase(EndPhaseResolutionDto data, bool localIsAttacker)
+        {
+            if (client == null || data == null)
+            {
+                return;
+            }
+
+            MatchInitChampionDto localChampion = client.PlayerChampion;
+            MatchInitChampionDto remoteChampion = client.OpponentChampion;
+
+            MatchInitChampionDto currentPlayerChampion = localIsAttacker ? localChampion : remoteChampion;
+            MatchInitChampionDto opponentChampion = localIsAttacker ? remoteChampion : localChampion;
+
+            if (currentPlayerChampion != null)
+            {
+                currentPlayerChampion.Hp = data.CurrentPlayerChampionHp;
+            }
+
+            if (opponentChampion != null)
+            {
+                opponentChampion.Hp = data.OpponentPlayerChampionHp;
+            }
         }
 
 
