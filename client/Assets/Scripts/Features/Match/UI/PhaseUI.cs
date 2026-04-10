@@ -527,6 +527,26 @@ namespace VortexTCG.Scripts.Features.Match.UI
             Debug.Log($"[PhaseUI] Opponent data initialized - Gold: {client.OpponentGold}, Secondary: {client.OpponentSecondaryCurrency} ({client.OpponentSecondaryCurrencyName})");
         }
 
+        public void RefreshChampionHpDisplay()
+        {
+            SignalRClient client = SignalRClient.Instance;
+            if (client == null)
+            {
+                Debug.LogWarning("[PhaseUI] Cannot refresh champion HP display: SignalRClient not available");
+                return;
+            }
+
+            if (client.Position1Champion != null && championHpLabel != null)
+            {
+                championHpLabel.text = $"HP : {client.Position1Champion.Hp}";
+            }
+
+            if (client.Position2Champion != null && opponentChampionHpLabel != null)
+            {
+                opponentChampionHpLabel.text = $"HP : {client.Position2Champion.Hp}";
+            }
+        }
+
         private void UpdateGoldDisplay(int gold)
         {
             if (goldLabel != null)
