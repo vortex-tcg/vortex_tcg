@@ -115,7 +115,53 @@ public partial class SignalRClient
     public async Task ToggleAttackCard(int position)
     {
         RequireConnectedOrThrow();
-        await SafeInvoke("ToggleAttackCard", position);
+        if (_conn == null)
+            throw new InvalidOperationException("Not connected to hub.");
+
+        await _conn.InvokeAsync("ToggleAttackCard", position);
+    }
+
+    public async Task<bool> ToggleAttackCardCompat(int position, int gameCardId)
+    {
+        RequireConnectedOrThrow();
+
+        if (_conn == null)
+            return false;
+
+        string[] preferredMethods =
+        {
+            "ToggleAttackCard",
+            "ToggleCardAttack",
+            "togglecardattack"
+        };
+
+        for (int i = 0; i < preferredMethods.Length; i++)
+        {
+            string method = preferredMethods[i];
+            try
+            {
+                await _conn.InvokeAsync(method, position);
+                Debug.Log($"[SignalRClient] Attack toggle sent via '{method}' position={position}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[SignalRClient] Attack toggle via '{method}' failed: {ex.Message}");
+            }
+        }
+
+        // Legacy fallback used in older backend hubs.
+        try
+        {
+            await _conn.InvokeAsync("HandleAttackPos", gameCardId);
+            Debug.Log($"[SignalRClient] Attack toggle sent via legacy HandleAttackPos gameCardId={gameCardId}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[SignalRClient] Attack toggle legacy fallback failed: {ex.Message}");
+            return false;
+        }
     }
 
     public async Task HandleDefensePos(int cardId, int opponentCardId)

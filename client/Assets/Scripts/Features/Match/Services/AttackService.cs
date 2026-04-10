@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using VortexTCG.Scripts.DTOs;
 using VortexTCG.Scripts.MatchScene;
@@ -108,6 +109,35 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
                 RegisterCard(slot.CurrentCard);
             }
+        }
+
+        public async Task<bool> ToggleCardAttackOnServer(SignalRClient client, int attackPosition, CardUI card)
+        {
+            if (client == null)
+            {
+                Debug.LogError("[AttackService] ToggleCardAttackOnServer: SignalRClient is NULL");
+                return false;
+            }
+
+            if (card == null)
+            {
+                Debug.LogError("[AttackService] ToggleCardAttackOnServer: card is NULL");
+                return false;
+            }
+
+            if (!int.TryParse(card.cardId, out int gameCardId))
+            {
+                Debug.LogError($"[AttackService] ToggleCardAttackOnServer: invalid cardId '{card.cardId}'");
+                return false;
+            }
+
+            bool sent = await client.ToggleAttackCardCompat(attackPosition, gameCardId);
+            if (!sent)
+            {
+                Debug.LogError($"[AttackService] Failed to send attack toggle for position={attackPosition} gameCardId={gameCardId}");
+            }
+
+            return sent;
         }
 
         private CardUI FindOrRegisterBoardCardById(int id)
