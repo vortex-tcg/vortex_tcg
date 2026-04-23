@@ -22,6 +22,9 @@ jobs:
         run: |
           export VAULT_ADDR=${{ secrets.VAULT_URL }}
           export VAULT_TOKEN=${{ secrets.VAULT_TOKEN }}
+          wget -qO- https://apt.releases.hashicorp.com/gpg | \
+            gpg --dearmor | \
+            sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
           vault token lookup
       - name: Setup SSH via Vault
         run: |
@@ -34,10 +37,6 @@ jobs:
 
           sudo apt-get update -qq
           sudo apt-get install -y gpg
-
-          wget -qO- https://apt.releases.hashicorp.com/gpg | \
-            gpg --dearmor | \
-            sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
 
           echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
             https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
