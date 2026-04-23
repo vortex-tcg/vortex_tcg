@@ -29,9 +29,9 @@ services:
         - "traefik.http.services.sonarqube.loadbalancer.server.port=9000"
       resources:
         limits:
-          memory: 2G
+          memory: 4G
         reservations:
-          memory: 512M
+          memory: 2G
 
   sonarqube-db:
     image: postgres:15
