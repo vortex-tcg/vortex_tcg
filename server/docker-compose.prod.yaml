@@ -18,38 +18,31 @@ services:
       - "host.docker.internal:host-gateway"
 
     command:
-      # EntryPoints
       - "--entrypoints.web.address=:80"
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.websecure.http.tls=true"
-
-      # Attach the static configuration tls.yml file that contains the tls configuration settings
       - "--providers.file.filename=/dynamic/tls.yml"
-
-      # Providers - Swarm Provider pour Traefik v3
       - "--providers.swarm=true"
       - "--providers.swarm.exposedbydefault=false"
-      # Comment for now to check if network is the issue
       - "--providers.swarm.network=traefik-network"
       - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
       - "--providers.file.directory=/dynamic"
       - "--providers.file.watch=true"
-
-      # API & Dashboard
       - "--api.dashboard=true"
       - "--api.insecure=false"
-
-      # Observability
       - "--log.level=INFO"
       - "--accesslog=true"
       - "--metrics.prometheus=true"
-
       - "--certificatesresolvers.le.acme.email=vortex-tcg.aws@gmail.com"
       - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
       - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+      - "--serversTransport.forwardingTimeouts.readTimeout=120s"
+      - "--serversTransport.forwardingTimeouts.writeTimeout=120s"
+      - "--serversTransport.forwardingTimeouts.idleTimeout=180s"
+      - "--serversTransport.insecureSkipVerify=true"
 
     env_file:
       - .env
@@ -64,9 +57,6 @@ services:
         - "traefik.http.routers.dashboard.service=api@internal"
         - "traefik.http.routers.dashboard.tls=true"
         - "traefik.http.routers.dashboard.tls.certresolver=le"
-        #- "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_PASSWORD}"
-        #- "traefik.http.routers.dashboard.middlewares=dashboard-auth@swarm"
-        # Todo, if time check for vault to secure password
         - "traefik.http.services.vortex-traefik.loadbalancer.server.port=8080"
       placement:
         constraints:
@@ -78,6 +68,30 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
+
+  vault-proxy:
+    image: alpine/socat
+    command: TCP-LISTEN:8200,fork,reuseaddr TCP:host.docker.internal:8200
+    networks:
+      - traefik-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.vault.rule=Host(`vault.vortex-tcg.online`)"
+        - "traefik.http.routers.vault.entrypoints=websecure"
+        - "traefik.http.routers.vault.tls=true"
+        - "traefik.http.routers.vault.tls.certresolver=le"
+        - "traefik.http.routers.vault.service=vault-svc"
+        - "traefik.http.services.vault-svc.loadbalancer.server.port=8200"
+        - "traefik.http.services.vault-svc.loadbalancer.server.scheme=https"
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
 
   auth:
     image: vortextcg/vortex_repository:auth
@@ -176,9 +190,16 @@ services:
           memory: 256M
 
   sonarqube:
-    image: sonarqube:lts
+    image: sonarqube:community
     networks:
       - traefik-network
+    environment:
+      - SONAR_WEB_JAVAADDITIONALOPTS=-Xmx192m -Xms128m
+      - SONAR_CE_JAVAADDITIONALOPTS=-Xmx192m -Xms128m
+      - SONAR_SEARCH_JAVAADDITIONALOPTS=-Xmx512m -Xms512m -XX:MaxDirectMemorySize=256m
+      - SONAR_JDBC_URL=jdbc:postgresql://sonarqube-db:5432/sonar
+      - SONAR_JDBC_USERNAME=${DB_USERNAME}
+      - SONAR_JDBC_PASSWORD=${DB_PASSWORD}
     volumes:
       - /var/sonarqube/data:/opt/sonarqube/data
       - /var/sonarqube/logs:/opt/sonarqube/logs
@@ -193,6 +214,7 @@ services:
         - "traefik.http.routers.sonarqube.tls=true"
         - "traefik.http.routers.sonarqube.tls.certresolver=le"
         - "traefik.http.services.sonarqube.loadbalancer.server.port=9000"
+        - "traefik.http.services.sonarqube.loadbalancer.responseforwarding.flushinterval=100ms"
       update_config:
         parallelism: 1
         delay: 10s
@@ -201,6 +223,34 @@ services:
         condition: on-failure
         delay: 10s
         max_attempts: 3
+      resources:
+        limits:
+          memory: 1200M
+        reservations:
+          memory: 800M
+
+  sonarqube-db:
+    image: postgres:15
+    networks:
+      - traefik-network
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=sonar
+    volumes:
+      - /var/sonarqube/postgresql/data:/var/lib/postgresql/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
 
 networks:
   traefik-network:
