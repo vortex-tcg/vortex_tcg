@@ -39,7 +39,7 @@ jobs:
             sudo tee /etc/apt/sources.list.d/hashicorp.list
 
           sudo apt-get update -qq
-          sudo apt-get install -y vault
+          sudo apt-get install -y vault=1.21.3-1
 
           ssh-keygen -t ed25519 -f /tmp/pipeline_key -N ""
 
