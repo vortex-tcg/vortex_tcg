@@ -39,9 +39,9 @@ services:
       - "--certificatesresolvers.le.acme.email=vortex-tcg.aws@gmail.com"
       - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
       - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
-      - "--serversTransport.respondingTimeouts.readTimeout=120s"
-      - "--serversTransport.respondingTimeouts.writeTimeout=120s"
-      - "--serversTransport.respondingTimeouts.idleTimeout=180s"
+      - "--serversTransport.forwardingTimeouts.readTimeout=120s"
+      - "--serversTransport.forwardingTimeouts.writeTimeout=120s"
+      - "--serversTransport.forwardingTimeouts.idleTimeout=180s"
       - "--serversTransport.insecureSkipVerify=true"
 
     env_file:
@@ -238,7 +238,6 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=sonar
     volumes:
-      - /var/sonarqube/postgresql:/var/lib/postgresql
       - /var/sonarqube/postgresql/data:/var/lib/postgresql/data
     deploy:
       mode: replicated
