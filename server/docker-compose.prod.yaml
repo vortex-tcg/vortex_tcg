@@ -58,13 +58,6 @@ services:
         - "traefik.http.routers.dashboard.tls=true"
         - "traefik.http.routers.dashboard.tls.certresolver=le"
         - "traefik.http.services.vortex-traefik.loadbalancer.server.port=8080"
-        - "traefik.http.routers.vault.rule=Host(`vault.vortex-tcg.online`)"
-        - "traefik.http.routers.vault.entrypoints=websecure"
-        - "traefik.http.routers.vault.tls=true"
-        - "traefik.http.routers.vault.tls.certresolver=le"
-        - "traefik.http.routers.vault.service=vault-svc"
-        - "traefik.http.services.vault-svc.loadbalancer.server.url=https://host.docker.internal:8200"
-        - "traefik.http.services.vault-svc.loadbalancer.server.scheme=https"
       placement:
         constraints:
           - node.role == manager
@@ -75,6 +68,30 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
+
+  vault-proxy:
+    image: alpine/socat
+    command: TCP-LISTEN:8200,fork,reuseaddr TCP:host.docker.internal:8200
+    networks:
+      - traefik-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.vault.rule=Host(`vault.vortex-tcg.online`)"
+        - "traefik.http.routers.vault.entrypoints=websecure"
+        - "traefik.http.routers.vault.tls=true"
+        - "traefik.http.routers.vault.tls.certresolver=le"
+        - "traefik.http.routers.vault.service=vault-svc"
+        - "traefik.http.services.vault-svc.loadbalancer.server.port=8200"
+        - "traefik.http.services.vault-svc.loadbalancer.server.scheme=https"
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
 
   auth:
     image: vortextcg/vortex_repository:auth
