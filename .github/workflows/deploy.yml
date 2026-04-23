@@ -10,45 +10,6 @@ permissions:
   contents: read
 
 jobs:
-  - name: try to connect EC2
-    run: |
-      export VAULT_ADDR=${{ secrets.VAULT_URL }}
-      export VAULT_TOKEN=${{ secrets.VAULT_TOKEN }}
-
-      mkdir -p ~/.ssh
-      ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-      chmod 644 ~/.ssh/known_hosts
-
-      sudo apt-get update
-      sudo apt-get install -y gpg
-
-      # ajouter la clé GPG HashiCorp
-
-      wget -O- https://apt.releases.hashicorp.com/gpg | 
-      gpg --dearmor | 
-      sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
-
-      # ajouter le repo
-
-      echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | 
-      sudo tee /etc/apt/sources.list.d/hashicorp.list
-
-      # installer vault
-
-      sudo apt-get update
-      sudo apt-get install -y vault
-
-      ssh-keygen -t ed25519 -f /tmp/pipeline_key -N ""
-
-      vault write -field=signed_key ssh/sign/ssh-ubuntu-user \
-        public_key=@/tmp/pipeline_key.pub \
-        valid_principals="ubuntu" \
-        > /tmp/pipeline_key-cert.pub
-
-      ssh -i /tmp/pipeline_key \
-        ubuntu@${{ secrets.EC2_HOST }} \
-        echo "Connected to EC2 instance successfully!"
-
   deploy:
     name: Deploy to EC2 (Swarm Mode)
     runs-on: ubuntu-latest
@@ -56,59 +17,81 @@ jobs:
     environment: production
 
     steps:
+      - name: Setup SSH via Vault
+        run: |
+          export VAULT_ADDR=${{ secrets.VAULT_URL }}
+          export VAULT_TOKEN=${{ secrets.VAULT_TOKEN }}
+
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+          sudo apt-get update -qq
+          sudo apt-get install -y gpg
+
+          wget -qO- https://apt.releases.hashicorp.com/gpg | \
+            gpg --dearmor | \
+            sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
+
+          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
+            https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
+            sudo tee /etc/apt/sources.list.d/hashicorp.list
+
+          sudo apt-get update -qq
+          sudo apt-get install -y vault
+
+          ssh-keygen -t ed25519 -f /tmp/pipeline_key -N ""
+
+          vault write -field=signed_key ssh/sign/ssh-ubuntu-user \
+            public_key=@/tmp/pipeline_key.pub \
+            valid_principals="ubuntu" \
+            > /tmp/pipeline_key-cert.pub
+
+          chmod 600 /tmp/pipeline_key
+
+          ssh -i /tmp/pipeline_key \
+            -o CertificateFile=/tmp/pipeline_key-cert.pub \
+            -o StrictHostKeyChecking=no \
+            ubuntu@${{ secrets.EC2_HOST }} \
+            echo "Connected"
+
+      - name: Export SSH helper
+        run: |
+          echo 'SSH_CMD=ssh -i /tmp/pipeline_key -o CertificateFile=/tmp/pipeline_key-cert.pub -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }}' >> $GITHUB_ENV
+
       - name: Pull latest code on EC2
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
+        run: |
+          $SSH_CMD bash << 'EOF'
             cd /var/www/vortex_tcg
             git remote set-url origin git@github.com:vortex-tcg/vortex_tcg.git
             git fetch --all
             git checkout ${{ github.ref_name }}
             git pull origin ${{ github.ref_name }}
+          EOF
 
       - name: Initialize Swarm if needed
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            # Vérifie si Swarm est déjà initialisé
+        run: |
+          $SSH_CMD bash << 'EOF'
             if ! docker info | grep -q "Swarm: active"; then
-              echo "🚀 Initializing Docker Swarm..."
               docker swarm init
-              echo "✅ Swarm initialized successfully"
-            else
-              echo "✅ Swarm already active"
             fi
+          EOF
 
       - name: Pull new Docker images
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            # Pull les nouvelles images
+        run: |
+          $SSH_CMD bash << 'EOF'
             docker pull vortextcg/vortex_repository:api
             docker pull vortextcg/vortex_repository:game
             docker pull vortextcg/vortex_repository:auth
             docker pull vortextcg/vortex_repository:migrations
             docker logout
+          EOF
 
       - name: Create env file on server
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          script: |
+        run: |
+          $SSH_CMD bash << 'EOF'
             cd /var/www/vortex_tcg/server
-            cat > .env << 'EOF'
+            cat > .env << 'ENVEOF'
             ASP_NETCORE_ENVIRONMENT=${{ secrets.ASP_NETCORE_ENVIRONMENT }}
             SONARQUBE_PORT=${{ secrets.SONARQUBE_PORT }}
             DB_NAME=${{ secrets.DB_NAME }}
@@ -116,240 +99,126 @@ jobs:
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             DB_PORT=${{ secrets.DB_PORT }}
             CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}
-            EOF
+            ENVEOF
+          EOF
 
       - name: Prepare directories for deployment
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
+        run: |
+          $SSH_CMD bash << 'EOF'
             cd /var/www/vortex_tcg/server
 
-            # Créer les dossiers requis s'ils n'existent pas
-            echo "📁 Creating required directories..."
             mkdir -p ../certs
             mkdir -p ../traefik/dynamic
             mkdir -p ./letsencrypt
 
             if [ ! -f ./letsencrypt/acme.json ]; then
-              echo "📝 Creating acme.json..."
               touch ./letsencrypt/acme.json
-              chmod 600 ./letsencrypt/acme.json
-            else
-              chmod 600 ./letsencrypt/acme.json
             fi
+            chmod 600 ./letsencrypt/acme.json
 
-            echo "🔍 Verifying docker-compose.prod.yaml..."
             if grep -q "migrations:" docker-compose.prod.yaml; then
-              echo "⚠️  WARNING: migrations service found in docker-compose.prod.yaml"
-              echo "This will be removed by forcing git checkout..."
               git checkout HEAD -- docker-compose.prod.yaml
             fi
 
             if grep -q "migrations:" docker-compose.prod.yaml; then
-              echo "❌ ERROR: migrations still present after git checkout!"
-              echo "Please verify the file was committed correctly in the repository."
+              echo "migrations still present after git checkout"
               exit 1
             fi
-
-            echo "✅ Directories prepared and docker-compose verified"
+          EOF
 
       - name: Run database migrations
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
+        run: |
+          $SSH_CMD bash << 'EOF'
             cd /var/www/vortex_tcg/server
-
-            echo "🗄️ Running database migrations..."
-
-            docker pull vortextcg/vortex_repository:migrations
-
             docker run --rm \
               --env-file .env \
               --name migrations-$(date +%s) \
               vortextcg/vortex_repository:migrations
+          EOF
 
-            echo "✅ Migrations completed"
-
-      - name: Deploy stack with zero-downtime
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
+      - name: Deploy stack
+        run: |
+          $SSH_CMD bash << 'EOF'
             cd /var/www/vortex_tcg/server
 
-            echo "🚀 Deploying stack..."
+            docker stack deploy -c docker-compose.prod.yaml --with-registry-auth vortex || exit 1
 
-            if docker stack deploy -c docker-compose.prod.yaml --with-registry-auth vortex; then
-              echo "✅ Stack deployment command succeeded"
-            else
-              echo "❌ Stack deployment command failed!"
-              exit 1
-            fi
-
-            echo "⏳ Waiting for initial deployment..."
             sleep 10
 
-            echo "🔄 Forcing Traefik restart to apply new configuration..."
             docker service update --force vortex_traefik
 
-            echo "⏳ Waiting for services to stabilize..."
             sleep 20
 
-            echo "🧹 Cleaning up stopped containers..."
             docker container prune -f
 
-            if ! docker stack ls | grep -q vortex; then
-              echo "❌ Stack 'vortex' was not created!"
-              exit 1
-            fi
-
-            echo "✅ Stack deployed successfully"
+            docker stack ls | grep -q vortex || exit 1
+          EOF
 
       - name: Verify deployment health
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            echo "════════════════════════════════════════"
-            echo "📊 DEPLOYMENT VERIFICATION"
-            echo "════════════════════════════════════════"
-            echo ""
-
-            if ! docker stack ls | grep -q vortex; then
-              echo "❌ CRITICAL: Stack 'vortex' does not exist!"
-              echo ""
-              echo "Checking docker-compose.prod.yaml syntax..."
-              docker-compose -f /var/www/vortex_tcg/server/docker-compose.prod.yaml config > /dev/null 2>&1 || echo "❌ YAML syntax error detected!"
+        run: |
+          $SSH_CMD bash << 'EOF'
+            docker stack ls | grep -q vortex || {
+              docker stack ps vortex --no-trunc 2>&1 || true
               exit 1
-            fi
+            }
 
-            echo "✅ Stack 'vortex' exists"
-            echo ""
-
-            echo "📋 Services in stack:"
             docker service ls --filter "label=com.docker.stack.namespace=vortex"
-            echo ""
 
-            SERVICE_COUNT=$(docker service ls --filter "label=com.docker.stack.namespace=vortex" --quiet | wc -l)
-            echo "Total services: $SERVICE_COUNT"
+            SERVICE_COUNT=$(docker service ls --filter "label=com.docker.stack.namespace=vortex" -q | wc -l)
 
-            if [ "$SERVICE_COUNT" -eq 0 ]; then
-              echo "❌ CRITICAL: No services found in stack!"
-              echo ""
-              echo "Checking deployment logs..."
-              docker stack ps vortex --no-trunc 2>&1 || echo "Stack ps failed"
+            [ "$SERVICE_COUNT" -eq 0 ] && {
+              docker stack ps vortex --no-trunc 2>&1 || true
               exit 1
-            fi
+            }
 
-            echo ""
-            echo "📋 Detailed stack status:"
             docker stack ps vortex --no-trunc
-            echo ""
 
-            FAILED=$(docker service ls --filter "label=com.docker.stack.namespace=vortex" --format "{{.Name}} {{.Replicas}}" | grep "0/" || true)
+            FAILED=$(docker service ls --filter "label=com.docker.stack.namespace=vortex" \
+              --format "{{.Name}} {{.Replicas}}" | grep "0/" || true)
 
-            if [ ! -z "$FAILED" ]; then
-              echo "❌ Some services failed to start:"
-              echo "$FAILED"
-              echo ""
-              echo "📋 Checking logs for failed services..."
+            if [ -n "$FAILED" ]; then
               for service in $(echo "$FAILED" | awk '{print $1}'); do
-                echo "════════════════════════════════════════"
-                echo "Logs for $service"
-                echo "════════════════════════════════════════"
-                docker service logs --tail 100 $service 2>&1 || echo "No logs available yet"
-                echo ""
-                echo "📋 Task details for $service:"
+                docker service logs --tail 100 $service 2>&1 || true
                 docker service ps $service --no-trunc
-                echo ""
-                echo "📋 Inspecting failed tasks..."
-                TASK_IDS=$(docker service ps $service -q -f "desired-state=shutdown")
-                for task_id in $TASK_IDS; do
-                  echo "--- Task $task_id ---"
-                  docker inspect $task_id --format='{{.Status.Err}}' 2>&1 || echo "No error info"
-                  docker inspect $task_id --format='{{json .Status}}' 2>&1 | python3 -m json.tool || echo "No status info"
-                done
-                echo ""
               done
               exit 1
             fi
-
-            echo "════════════════════════════════════════"
-            echo "✅ All services are running successfully"
-            echo "════════════════════════════════════════"
-
-      - name: Cleanup old images
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            echo "🧹 Cleaning up resources..."
-
-            echo "  → Removing stopped containers..."
-            docker container prune -f
-
-            echo "  → Removing unused images..."
-            docker image prune -f
-
-            echo "  → Removing old images (24h+)..."
-            docker image prune -a -f --filter "until=24h"
-
-            echo "  → Removing unused networks..."
-            docker network prune -f
-
-            echo "✅ Cleanup completed"
+          EOF
 
       - name: Ensure SonarQube is running
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
+        run: |
+          $SSH_CMD bash << 'EOF'
             if [ ! "$(docker ps -q -f name=sonarqube)" ]; then
-                echo "🚀 Starting SonarQube..."
-                docker rm -f sonarqube 2>/dev/null || true
-                docker run -d --name sonarqube \
-                  -p ${{ secrets.SONARQUBE_PORT }}:9000 \
-                  -e SONAR_WEB_CONTEXT=/sonarqube \
-                  -v /var/sonarqube/data:/opt/sonarqube/data \
-                  -v /var/sonarqube/logs:/opt/sonarqube/logs \
-                  -v /var/sonarqube/extensions:/opt/sonarqube/extensions \
-                  --restart always \
-                  sonarqube:lts
-                echo "✅ SonarQube started"
-            else
-                echo "✅ SonarQube is already running"
+              docker rm -f sonarqube 2>/dev/null || true
+              docker run -d --name sonarqube \
+                -p ${{ secrets.SONARQUBE_PORT }}:9000 \
+                -e SONAR_WEB_CONTEXT=/sonarqube \
+                -v /var/sonarqube/data:/opt/sonarqube/data \
+                -v /var/sonarqube/logs:/opt/sonarqube/logs \
+                -v /var/sonarqube/extensions:/opt/sonarqube/extensions \
+                --restart always \
+                sonarqube:lts
             fi
+          EOF
+
+      - name: Cleanup old images
+        run: |
+          $SSH_CMD bash << 'EOF'
+            docker container prune -f
+            docker image prune -f
+            docker image prune -a -f --filter "until=24h"
+            docker network prune -f
+          EOF
 
       - name: Display deployment summary
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            echo "════════════════════════════════════════"
-            echo "🎉 DEPLOYMENT SUMMARY"
-            echo "════════════════════════════════════════"
-            echo ""
-            echo "📦 Stack: vortex"
-            echo "🌿 Branch: ${{ github.ref_name }}"
-            echo "📝 Commit: ${{ github.sha }}"
-            echo ""
-            echo "🔧 Services:"
-            docker service ls --filter "label=com.docker.stack.namespace=vortex" --format "table {{.Name}}\t{{.Mode}}\t{{.Replicas}}\t{{.Image}}"
-            echo ""
-            echo "════════════════════════════════════════"
+        run: |
+          $SSH_CMD bash << 'EOF'
+            docker service ls \
+              --filter "label=com.docker.stack.namespace=vortex" \
+              --format "table {{.Name}}\t{{.Mode}}\t{{.Replicas}}\t{{.Image}}"
+          EOF
+
+      - name: Cleanup ephemeral SSH key
+        if: always()
+        run: |
+          rm -f /tmp/pipeline_key /tmp/pipeline_key.pub /tmp/pipeline_key-cert.pub
