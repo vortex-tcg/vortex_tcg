@@ -18,6 +18,11 @@ jobs:
     environment: production
 
     steps:
+      - name: Debug Vault
+        run: |
+          export VAULT_ADDR=${{ secrets.VAULT_URL }}
+          export VAULT_TOKEN=${{ secrets.VAULT_TOKEN }}
+          vault token lookup
       - name: Setup SSH via Vault
         run: |
           export VAULT_ADDR=${{ secrets.VAULT_URL }}
