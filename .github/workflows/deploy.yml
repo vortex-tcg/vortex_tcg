@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feature/sonar-stack
   workflow_dispatch:
 
 permissions:
