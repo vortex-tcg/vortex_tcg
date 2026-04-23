@@ -18,30 +18,11 @@ jobs:
     environment: production
 
     steps:
-      - name: Install Vault CLI
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y gnupg
-          wget -qO- https://apt.releases.hashicorp.com/gpg | \
-            gpg --dearmor | \
-            sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
-          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
-            sudo tee /etc/apt/sources.list.d/hashicorp.list
-          sudo apt-get update -qq
-          sudo apt-get install -y vault
-
-      - name: Debug Vault
-        run: |
-          export VAULT_ADDR=${{ secrets.VAULT_URL }}
-          export VAULT_TOKEN=${{ secrets.VAULT_TOKEN }}
-          wget -qO- https://apt.releases.hashicorp.com/gpg | \
-            gpg --dearmor | \
-            sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
-          vault token lookup
       - name: Setup SSH via Vault
         run: |
           export VAULT_ADDR=${{ secrets.VAULT_URL }}
           export VAULT_TOKEN=${{ secrets.VAULT_TOKEN }}
+          export VAULT_SKIP_VERIFY=true
 
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
@@ -50,12 +31,16 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y gpg
 
+          wget -qO- https://apt.releases.hashicorp.com/gpg | \
+            gpg --dearmor | \
+            sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
+
           echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
             https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
             sudo tee /etc/apt/sources.list.d/hashicorp.list
 
           sudo apt-get update -qq
-          sudo apt-get install -y vault
+          sudo apt-get install -y vault=1.21.3-1
 
           ssh-keygen -t ed25519 -f /tmp/pipeline_key -N ""
 
@@ -127,6 +112,10 @@ jobs:
             mkdir -p ../certs
             mkdir -p ../traefik/dynamic
             mkdir -p ./letsencrypt
+            mkdir -p /var/sonarqube/data
+            mkdir -p /var/sonarqube/logs
+            mkdir -p /var/sonarqube/extensions
+            mkdir -p /var/sonarqube/postgresql/data
 
             if [ ! -f ./letsencrypt/acme.json ]; then
               touch ./letsencrypt/acme.json
@@ -199,22 +188,6 @@ jobs:
                 docker service ps $service --no-trunc
               done
               exit 1
-            fi
-          EOF
-
-      - name: Ensure SonarQube is running
-        run: |
-          $SSH_CMD bash << 'EOF'
-            if [ ! "$(docker ps -q -f name=sonarqube)" ]; then
-              docker rm -f sonarqube 2>/dev/null || true
-              docker run -d --name sonarqube \
-                -p ${{ secrets.SONARQUBE_PORT }}:9000 \
-                -e SONAR_WEB_CONTEXT=/sonarqube \
-                -v /var/sonarqube/data:/opt/sonarqube/data \
-                -v /var/sonarqube/logs:/opt/sonarqube/logs \
-                -v /var/sonarqube/extensions:/opt/sonarqube/extensions \
-                --restart always \
-                sonarqube:lts
             fi
           EOF
 
