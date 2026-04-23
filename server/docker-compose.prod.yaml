@@ -77,7 +77,7 @@ services:
       - IPC_LOCK
     volumes:
       - /etc/vault.d:/vault/config
-      - /var/lib/vault/data:/vault/file
+      - /opt/vault/data:/vault/file
     environment:
       VAULT_ADDR: "http://0.0.0.0:8200"
     command: server -config=/vault/config/vault.hcl
