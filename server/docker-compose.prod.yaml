@@ -169,9 +169,9 @@ services:
     env_file:
       - sonar.env
     environment:
-      - SONAR_WEB_JAVAADDITIONALOPTS=-Xmx256m -Xms128m
-      - SONAR_CE_JAVAADDITIONALOPTS=-Xmx128m -Xms64m
-      - SONAR_SEARCH_JAVAADDITIONALOPTS=-Xmx384m -Xms384m -XX:MaxDirectMemorySize=128m
+      - SONAR_WEB_JAVAADDITIONALOPTS=-Xmx512m -Xms128m
+      - SONAR_CE_JAVAADDITIONALOPTS=-Xmx256m -Xms128m
+      - SONAR_SEARCH_JAVAADDITIONALOPTS=-Xmx256m -Xms256m -XX:MaxDirectMemorySize=128m
     volumes:
       - /var/sonarqube/data:/opt/sonarqube/data
       - /var/sonarqube/logs:/opt/sonarqube/logs
@@ -197,9 +197,9 @@ services:
         max_attempts: 3
       resources:
         limits:
-          memory: 2G
+          memory: 2500M
         reservations:
-          memory: 1500M
+          memory: 1800M
 
   sonarqube-db:
     image: postgres:15
