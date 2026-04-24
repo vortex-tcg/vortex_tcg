@@ -198,9 +198,9 @@ services:
         max_attempts: 3
       resources:
         limits:
-          memory: 1500M
+          memory: 1800M
         reservations:
-          memory: 1000M
+          memory: 1200M
 
   sonarqube-db:
     image: postgres:15
