@@ -93,10 +93,10 @@ services:
       resources:
         limits:
           cpus: "0.5"
-          memory: 512M
-        reservations:
-          cpus: "0.25"
           memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
 
   game:
     image: vortextcg/vortex_repository:game
@@ -124,11 +124,11 @@ services:
         failure_action: rollback
       resources:
         limits:
-          cpus: "1"
-          memory: 1G
-        reservations:
           cpus: "0.5"
           memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 256M
 
   api:
     image: vortextcg/vortex_repository:api
@@ -157,10 +157,10 @@ services:
       resources:
         limits:
           cpus: "0.5"
-          memory: 512M
-        reservations:
-          cpus: "0.25"
           memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
 
   sonarqube:
     image: sonarqube:community
@@ -169,10 +169,9 @@ services:
     env_file:
       - sonar.env
     environment:
-      - SONAR_WEB_JAVAADDITIONALOPTS=-Xmx192m -Xms128m
-      - SONAR_CE_JAVAADDITIONALOPTS=-Xmx192m -Xms128m
-      - SONAR_SEARCH_JAVAADDITIONALOPTS=-Xmx512m -Xms512m -XX:MaxDirectMemorySize=128m
-      - SONAR_JDBC_URL=jdbc:postgresql://sonarqube-db:5432/sonar
+      - SONAR_WEB_JAVAADDITIONALOPTS=-Xmx256m -Xms128m
+      - SONAR_CE_JAVAADDITIONALOPTS=-Xmx128m -Xms64m
+      - SONAR_SEARCH_JAVAADDITIONALOPTS=-Xmx384m -Xms384m -XX:MaxDirectMemorySize=128m
     volumes:
       - /var/sonarqube/data:/opt/sonarqube/data
       - /var/sonarqube/logs:/opt/sonarqube/logs
@@ -198,9 +197,9 @@ services:
         max_attempts: 3
       resources:
         limits:
-          memory: 1800M
+          memory: 2G
         reservations:
-          memory: 1200M
+          memory: 1500M
 
   sonarqube-db:
     image: postgres:15
