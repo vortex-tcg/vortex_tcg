@@ -117,6 +117,12 @@ jobs:
             mkdir -p /var/sonarqube/extensions
             mkdir -p /var/sonarqube/postgresql/data
 
+            sudo chown -R 999:999 /var/sonarqube/postgresql/data
+            sudo chmod 750 /var/sonarqube/postgresql/data
+            sudo chown -R 999:999 /var/sonarqube/data
+            sudo chown -R 999:999 /var/sonarqube/logs
+            sudo chown -R 999:999 /var/sonarqube/extensions
+
             if [ ! -f ./letsencrypt/acme.json ]; then
               touch ./letsencrypt/acme.json
             fi
