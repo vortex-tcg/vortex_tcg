@@ -39,8 +39,6 @@ services:
       - "--certificatesresolvers.le.acme.email=vortex-tcg.aws@gmail.com"
       - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
       - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
-      - "--serversTransport.forwardingTimeouts.readTimeout=120s"
-      - "--serversTransport.forwardingTimeouts.writeTimeout=120s"
       - "--serversTransport.insecureSkipVerify=true"
 
     env_file:
