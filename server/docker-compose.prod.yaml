@@ -166,13 +166,13 @@ services:
     image: sonarqube:community
     networks:
       - traefik-network
+    env_file:
+      - sonar.env
     environment:
       - SONAR_WEB_JAVAADDITIONALOPTS=-Xmx192m -Xms128m
       - SONAR_CE_JAVAADDITIONALOPTS=-Xmx192m -Xms128m
       - SONAR_SEARCH_JAVAADDITIONALOPTS=-Xmx512m -Xms512m -XX:MaxDirectMemorySize=256m
       - SONAR_JDBC_URL=jdbc:postgresql://sonarqube-db:5432/sonar
-      - SONAR_JDBC_USERNAME=${DB_USERNAME}
-      - SONAR_JDBC_PASSWORD=${DB_PASSWORD}
     volumes:
       - /var/sonarqube/data:/opt/sonarqube/data
       - /var/sonarqube/logs:/opt/sonarqube/logs
@@ -206,10 +206,8 @@ services:
     image: postgres:15
     networks:
       - traefik-network
-    environment:
-      - POSTGRES_USER=${DB_USERNAME}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=sonar
+    env_file:
+      - sonar.env
     volumes:
       - /var/sonarqube/postgresql/data:/var/lib/postgresql/data
     deploy:
