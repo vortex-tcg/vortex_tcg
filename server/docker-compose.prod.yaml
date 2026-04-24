@@ -171,7 +171,7 @@ services:
     environment:
       - SONAR_WEB_JAVAADDITIONALOPTS=-Xmx192m -Xms128m
       - SONAR_CE_JAVAADDITIONALOPTS=-Xmx192m -Xms128m
-      - SONAR_SEARCH_JAVAADDITIONALOPTS=-Xmx512m -Xms512m -XX:MaxDirectMemorySize=256m
+      - SONAR_SEARCH_JAVAADDITIONALOPTS=-Xmx512m -Xms512m -XX:MaxDirectMemorySize=128m
       - SONAR_JDBC_URL=jdbc:postgresql://sonarqube-db:5432/sonar
     volumes:
       - /var/sonarqube/data:/opt/sonarqube/data
@@ -198,9 +198,9 @@ services:
         max_attempts: 3
       resources:
         limits:
-          memory: 1200M
+          memory: 1500M
         reservations:
-          memory: 800M
+          memory: 1000M
 
   sonarqube-db:
     image: postgres:15
