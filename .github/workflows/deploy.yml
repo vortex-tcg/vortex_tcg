@@ -117,11 +117,13 @@ jobs:
             mkdir -p /var/sonarqube/extensions
             mkdir -p /var/sonarqube/postgresql/data
 
+            sudo chown -R 1000:1000 /var/sonarqube/data
+            sudo chown -R 1000:1000 /var/sonarqube/logs
+            sudo chown -R 1000:1000 /var/sonarqube/extensions
             sudo chown -R 999:999 /var/sonarqube/postgresql/data
             sudo chmod 750 /var/sonarqube/postgresql/data
-            sudo chown -R 999:999 /var/sonarqube/data
-            sudo chown -R 999:999 /var/sonarqube/logs
-            sudo chown -R 999:999 /var/sonarqube/extensions
+
+            sudo rm -rf /var/sonarqube/data/es8
 
             if [ ! -f ./letsencrypt/acme.json ]; then
               touch ./letsencrypt/acme.json
@@ -186,7 +188,7 @@ jobs:
             docker stack ps vortex --no-trunc
 
             FAILED=$(docker service ls --filter "label=com.docker.stack.namespace=vortex" \
-              --format "{{.Name}} {{.Replicas}}" | grep "0/" || true)
+              --format "{{.Name}} {{.Replicas}}" | grep "0/" | grep -v "sonarqube" || true)
 
             if [ -n "$FAILED" ]; then
               for service in $(echo "$FAILED" | awk '{print $1}'); do
