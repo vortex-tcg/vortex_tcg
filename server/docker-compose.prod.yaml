@@ -41,7 +41,6 @@ services:
       - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
       - "--serversTransport.forwardingTimeouts.readTimeout=120s"
       - "--serversTransport.forwardingTimeouts.writeTimeout=120s"
-      - "--serversTransport.forwardingTimeouts.idleTimeout=180s"
       - "--serversTransport.insecureSkipVerify=true"
 
     env_file:
@@ -68,36 +67,6 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
-
-  vault:
-    image: hashicorp/vault:latest
-    cap_add:
-      - IPC_LOCK
-    volumes:
-      - /etc/vault.d:/vault/config
-      - /opt/vault/data:/vault/file
-    environment:
-      VAULT_ADDR: "http://0.0.0.0:8200"
-    command: server -config=/vault/config/vault.hcl
-    networks:
-      - traefik-network
-    deploy:
-      mode: replicated
-      replicas: 1
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.vault.rule=Host(`vault.vortex-tcg.online`)"
-        - "traefik.http.routers.vault.entrypoints=websecure"
-        - "traefik.http.routers.vault.tls=true"
-        - "traefik.http.routers.vault.tls.certresolver=le"
-        - "traefik.http.services.vault.loadbalancer.server.port=8200"
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-      placement:
-        constraints:
-          - node.role == manager
 
   auth:
     image: vortextcg/vortex_repository:auth
