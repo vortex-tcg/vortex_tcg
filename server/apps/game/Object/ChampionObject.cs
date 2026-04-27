@@ -69,6 +69,13 @@ namespace VortexTCG.Game.Object
                 return appliedDamage;
             }
 
+            public int ApplyRawDamage(int damage)
+            {
+                int appliedDamage = Math.Max(0, damage);
+                _hp -= appliedDamage;
+                return appliedDamage;
+            }
+
             public bool IsDead() => _hp <= 0;
 
             internal void ApplyFatigueDamage()

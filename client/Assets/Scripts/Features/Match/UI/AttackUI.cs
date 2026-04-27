@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using VortexTCG.Scripts.Features.Match.Services;
 using VortexTCG.Scripts.Features.Match.Events;
@@ -29,6 +30,7 @@ namespace VortexTCG.Scripts.MatchScene
         private AttackService attackLogic;
         private CardUI selectedAttacker;
         private List<CardUI> attackingCards = new List<CardUI>();
+        private bool _attackSlotsAreOneBased;
 
         private void Awake()
         {
@@ -53,6 +55,7 @@ namespace VortexTCG.Scripts.MatchScene
 
             attackLogic.RegisterExistingCardsFromSlots();
             ClearAttackStatesFromSlots();
+            DetectAttackSlotIndexBase();
         }
 
         private void OnDestroy()
@@ -143,7 +146,8 @@ namespace VortexTCG.Scripts.MatchScene
                 return;
             }
 
-            int attackPosition = slot.slotIndex;
+            int rawAttackPosition = slot.slotIndex;
+            int attackPosition = ResolveAttackPosition(slot, card);
 
             SignalRClient client = SignalRClient.Instance;
             if (client == null)
@@ -152,9 +156,79 @@ namespace VortexTCG.Scripts.MatchScene
                 return;
             }
 
-            Debug.Log($"[AttackUI] -> sending attack toggle through AttackService position={attackPosition}");
+            Debug.Log($"[AttackUI] -> sending attack toggle through AttackService rawPosition={rawAttackPosition} normalizedPosition={attackPosition} oneBased={_attackSlotsAreOneBased}");
             // Server is authoritative for attack selection state.
             _ = attackLogic.ToggleCardAttackOnServer(client, attackPosition, card);
+        }
+
+        private int ResolveAttackPosition(CardSlotUI slot, CardUI card)
+        {
+            if (slot == null)
+                return 0;
+
+            if (P1BoardSlots != null)
+            {
+                for (int i = 0; i < P1BoardSlots.Count; i++)
+                {
+                    CardSlotUI configured = P1BoardSlots[i];
+                    if (configured == null)
+                        continue;
+
+                    if (configured == slot || configured.CurrentCard == card)
+                        return i;
+                }
+            }
+
+            return NormalizeAttackPosition(slot);
+        }
+
+        private void DetectAttackSlotIndexBase()
+        {
+            if (P1BoardSlots == null || P1BoardSlots.Count == 0)
+            {
+                _attackSlotsAreOneBased = false;
+                return;
+            }
+
+            List<int> indices = P1BoardSlots
+                .Where(s => s != null)
+                .Select(s => s.slotIndex)
+                .Distinct()
+                .OrderBy(i => i)
+                .ToList();
+
+            bool hasZero = indices.Contains(0);
+            bool looksOneBasedRange = indices.Count > 0 && indices.First() == 1 && indices.Last() == indices.Count;
+            _attackSlotsAreOneBased = !hasZero && looksOneBasedRange;
+
+            Debug.Log($"[AttackUI] Slot index base detection: indices=[{string.Join(",", indices)}] oneBased={_attackSlotsAreOneBased}");
+        }
+
+        private int NormalizeAttackPosition(CardSlotUI slot)
+        {
+            if (slot == null)
+                return 0;
+
+            int position = slot.slotIndex;
+            if (_attackSlotsAreOneBased)
+            {
+                position = Mathf.Max(0, position - 1);
+            }
+
+            // Fallback safety: if scene slot index is out of server board range,
+            // convert from one-based to zero-based for the last slot edge case.
+            if (P1BoardSlots != null && P1BoardSlots.Count > 0)
+            {
+                int maxServerIndex = P1BoardSlots.Count - 1;
+                if (position > maxServerIndex && slot.slotIndex > 0)
+                {
+                    position = slot.slotIndex - 1;
+                }
+
+                position = Mathf.Clamp(position, 0, maxServerIndex);
+            }
+
+            return position;
         }
 
         private void ToggleCard(CardUI card)

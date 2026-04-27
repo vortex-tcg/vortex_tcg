@@ -77,23 +77,12 @@ namespace VortexTCG.Scripts.Features.Match.Services
         {
             if (currentDefender == null) return;
             if (targetAttacker == null) return;
-            if (!targetAttacker.IsAttackingOutlineActive()) return;
 
-            // Business rule: one attacker can have only one defender.
-            // Refuse locally to avoid showing a fake defense effect on a second card.
-            KeyValuePair<CardUI, CardUI>? existingDefenseOnTarget = defenseAssignments
-                .FirstOrDefault(kvp => kvp.Value == targetAttacker);
-            if (existingDefenseOnTarget.HasValue)
+            bool attackerIsInAttackMode = targetAttacker.HasAttackedThisPhase || targetAttacker.IsAttackingOutlineActive();
+            if (!attackerIsInAttackMode)
             {
-                CardUI existingDefender = existingDefenseOnTarget.Value.Key;
-                if (existingDefender != null && existingDefender != currentDefender)
-                {
-                    currentDefender.SetDefenseSelected(false);
-                    currentDefender.SetDefendingState(false);
-                    currentDefender = null;
-                    Debug.LogWarning("[DefenseService] Impossible d'assigner la defense: cette carte attaquante est deja defendue par une autre carte.");
-                    return;
-                }
+                Debug.LogWarning("[DefenseService] Impossible d'assigner la defense: la carte cible n'est plus en mode attaque.");
+                return;
             }
 
             CardSlotUI defenderSlot = currentDefender.GetComponentInParent<CardSlotUI>();
@@ -106,14 +95,11 @@ namespace VortexTCG.Scripts.Features.Match.Services
             SignalRClient client = SignalRClient.Instance;
             if (client == null) return;
 
-            if (defenseAssignments.ContainsKey(currentDefender))
-                defenseAssignments.Remove(currentDefender);
-
-            defenseAssignments[currentDefender] = targetAttacker;
-            currentDefender.SetDefendingState(true);
-
             CardUI defender = currentDefender;
             currentDefender = null;
+
+            // Server is authoritative for defense assignments.
+            defender.SetDefenseSelected(false);
 
             try
             {
@@ -121,12 +107,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             }
             catch (Exception)
             {
-                if (defenseAssignments.ContainsKey(defender) && defenseAssignments[defender] == targetAttacker)
-                {
-                    defenseAssignments.Remove(defender);
-                    defender.SetDefenseSelected(false);
-                    defender.SetDefendingState(false);
-                }
+                Debug.LogWarning("[DefenseService] ToggleDefenseCard failed; waiting for next authoritative sync.");
             }
         }
 
@@ -142,9 +123,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (currentDefender == defender)
                 currentDefender = null;
 
-            bool hadAssignment = defenseAssignments.Remove(defender);
-            defender.SetDefenseSelected(false);
-            defender.SetDefendingState(false);
+            bool hadAssignment = defenseAssignments.ContainsKey(defender);
 
             if (!hadAssignment)
                 return;
@@ -167,16 +146,13 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (dto == null) return;
             if (dto.DefenseCards == null) return;
 
-            // Keep local defense highlights during DEFENSE when server sends transient empty payloads.
-            if (dto.DefenseCards.Count == 0 &&
-                defenseAssignments.Count > 0 &&
-                PhaseService.Instance != null &&
-                PhaseService.Instance.CurrentPhase == GamePhase.DEFENSE)
-            {
-                return;
-            }
+            Dictionary<int, (CardUI defenderCard, CardUI attackerCard)> uniqueAssignmentsByAttack = new();
 
-            List<(CardUI defenderCard, CardUI attackerCard)> resolvedAssignments = new();
+            if (currentDefender != null)
+            {
+                currentDefender.SetDefenseSelected(false);
+                currentDefender = null;
+            }
 
             foreach (KeyValuePair<CardUI, CardUI> kvp in defenseAssignments)
             {
@@ -194,29 +170,21 @@ namespace VortexTCG.Scripts.Features.Match.Services
                 CardUI defenderCard = FindBoardCardById(pair.cardId);
                 CardUI attackerCard = FindBoardCardByIdOrSlotIndex(pair.opponentCardId);
 
-                if (defenderCard == null) continue;
-                if (attackerCard == null) continue;
+                if (defenderCard == null || attackerCard == null)
+                {
+                    Debug.LogWarning("[DefenseService] Ignoring unresolved defense pair from server payload.");
+                    continue;
+                }
 
-                resolvedAssignments.Add((defenderCard, attackerCard));
+                uniqueAssignmentsByAttack[pair.opponentCardId] = (defenderCard, attackerCard);
             }
 
-            // Ignore malformed/incomplete payloads to avoid clearing a valid local defense highlight.
-            if (dto.DefenseCards.Count > 0 && resolvedAssignments.Count != dto.DefenseCards.Count)
+            foreach ((CardUI defenderCard, CardUI attackerCard) in uniqueAssignmentsByAttack.Values)
             {
-                Debug.LogWarning("[DefenseService] Ignoring defense sync payload: no valid defender/attacker pair could be resolved.");
-                return;
-            }
-
-            for (int i = 0; i < resolvedAssignments.Count; i++)
-            {
-                (CardUI defenderCard, CardUI attackerCard) = resolvedAssignments[i];
-
                 defenderCard.SetDefenseSelected(true);
                 defenderCard.SetDefendingState(true);
                 defenseAssignments[defenderCard] = attackerCard;
             }
-
-            currentDefender = null;
         }
 
         public void ClearAllDefense()
