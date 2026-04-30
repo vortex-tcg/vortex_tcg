@@ -265,12 +265,18 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
 
+          cd ${{ github.workspace }}
+
+          Write-Host "Repertoire de travail : $((Get-Location).Path)"
+
           ${{ runner.temp }}\scanner\dotnet-sonarscanner begin `
             /k:"vortex-tcg_vortex_tcg_f104a55f-7ac5-40e2-a98e-d7418f556229" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
-            /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
+            /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" `
+            /d:sonar.working.directory="${{ github.workspace }}\.sonarqube"
 
           dotnet build ./server/server.sln
 
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end `
-          /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
+            /d:sonar.working.directory="${{ github.workspace }}\.sonarqube"
