@@ -270,8 +270,7 @@ jobs:
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
 
-          # Vérifie bien le nom du fichier .sln ci-dessous :
-          dotnet build ./server/VortexTCG.sln
+          dotnet build ./server/server.sln
 
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end `
           /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
