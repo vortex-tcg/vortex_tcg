@@ -44,7 +44,15 @@ namespace VortexTCG.Scripts.Features.Match.Services
             Debug.Log("[OpponentBoardService] Current registered cards count: " + opponentCardsById.Count);
             Debug.Log("[OpponentBoardService] Registered IDs: " + string.Join(",", opponentCardsById.Keys));
 
-            if (attackIds == null || attackIds.Count == 0) return;
+            if (attackIds == null || attackIds.Count == 0)
+            {
+                for (int i = 0; i < previousAttackIds.Count; i++)
+                {
+                    if (opponentCardsById.TryGetValue(previousAttackIds[i], out CardUI previousCard) && previousCard != null)
+                        ClearAttackVisualState(previousCard);
+                }
+                return;
+            }
 
             HashSet<int> nextAttackIds = new HashSet<int>(attackIds);
 

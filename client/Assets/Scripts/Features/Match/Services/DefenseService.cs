@@ -128,6 +128,12 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (!hadAssignment)
                 return;
 
+            // Optimistically remove the assignment and clear visual state before sending.
+            CardUI previousAttacker = defenseAssignments[defender];
+            defenseAssignments.Remove(defender);
+            defender.SetDefenseSelected(false);
+            defender.SetDefendingState(false);
+
             SignalRClient client = SignalRClient.Instance;
             if (client == null) return;
 
@@ -137,7 +143,10 @@ namespace VortexTCG.Scripts.Features.Match.Services
             }
             catch (Exception)
             {
-                // Let the next server sync restore the authoritative state if needed.
+                // Restore optimistic update on failure; next server sync will be authoritative.
+                defenseAssignments[defender] = previousAttacker;
+                defender.SetDefenseSelected(true);
+                defender.SetDefendingState(true);
             }
         }
 

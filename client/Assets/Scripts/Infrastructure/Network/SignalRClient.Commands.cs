@@ -128,7 +128,7 @@ public partial class SignalRClient
         if (_conn == null)
             return false;
 
-        // The active hub contract exposes ToggleAttackCard(position).
+        // Prefer the clean hub contract ToggleAttackCard(position).
         try
         {
             await _conn.InvokeAsync("ToggleAttackCard", position);
@@ -137,7 +137,19 @@ public partial class SignalRClient
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[SignalRClient] Attack toggle failed via ToggleAttackCard: {ex.Message}");
+            Debug.LogWarning($"[SignalRClient] ToggleAttackCard(position={position}) failed, trying legacy HandleAttackPos: {ex.Message}");
+        }
+
+        // Fallback to legacy hub method.
+        try
+        {
+            await _conn.InvokeAsync("HandleAttackPos", gameCardId);
+            Debug.Log($"[SignalRClient] Attack toggle sent via HandleAttackPos gameCardId={gameCardId}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[SignalRClient] Attack toggle failed via HandleAttackPos: {ex.Message}");
             return false;
         }
     }
