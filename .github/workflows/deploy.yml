@@ -263,10 +263,15 @@ jobs:
       - name: Build and analyze
         shell: powershell
         run: |
+          $ErrorActionPreference = "Stop"
+
           ${{ runner.temp }}\scanner\dotnet-sonarscanner begin `
             /k:"vortex-tcg_vortex_tcg_f104a55f-7ac5-40e2-a98e-d7418f556229" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
-          dotnet build
+
+          # Vérifie bien le nom du fichier .sln ci-dessous :
+          dotnet build ./server/VortexTCG.sln
+
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end `
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
