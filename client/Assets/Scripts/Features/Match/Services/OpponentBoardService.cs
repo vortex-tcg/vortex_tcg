@@ -35,16 +35,38 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
         public void ApplyOpponentAttackState(List<int> attackIds)
         {
-            lastOpponentAttackIds = attackIds;
-            lastOpponentDefenseState = null;
+            List<int> previousAttackIds = lastOpponentAttackIds != null
+                ? new List<int>(lastOpponentAttackIds)
+                : new List<int>();
+            lastOpponentAttackIds = attackIds != null ? new List<int>(attackIds) : null;
             Debug.Log("[OpponentBoardService] ApplyOpponentAttackState ids=" +
                       (attackIds == null ? "NULL" : string.Join(",", attackIds)));
             Debug.Log("[OpponentBoardService] Current registered cards count: " + opponentCardsById.Count);
             Debug.Log("[OpponentBoardService] Registered IDs: " + string.Join(",", opponentCardsById.Keys));
 
-            ClearOpponentAttackOutline();
+            if (attackIds == null || attackIds.Count == 0)
+            {
+                for (int i = 0; i < previousAttackIds.Count; i++)
+                {
+                    if (opponentCardsById.TryGetValue(previousAttackIds[i], out CardUI previousCard) && previousCard != null)
+                        ClearAttackVisualState(previousCard);
+                }
+                return;
+            }
 
-            if (attackIds == null || attackIds.Count == 0) return;
+            HashSet<int> nextAttackIds = new HashSet<int>(attackIds);
+
+            for (int i = 0; i < previousAttackIds.Count; i++)
+            {
+                int previousId = previousAttackIds[i];
+                if (nextAttackIds.Contains(previousId))
+                    continue;
+
+                if (opponentCardsById.TryGetValue(previousId, out CardUI previousCard) && previousCard != null)
+                {
+                    ClearAttackVisualState(previousCard);
+                }
+            }
 
             int found = 0;
             int missing = 0;
@@ -67,10 +89,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
                 if (card != null)
                 {
-                    card.SetSelected(true);
-                    card.SetAttackedThisPhase(true);
-                    card.ShowAttackOrder(i + 1);
-                    card.SetOpponentAttacking(true);
+                    ApplyAttackVisualState(card, i + 1);
                     found++;
                 }
                 else
@@ -85,89 +104,65 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
         public void ApplyOpponentDefenseState(DefenseDataResponseDto data)
         {
-            lastOpponentDefenseState = data;
-            bool isDefensePhase = PhaseService.Instance != null && PhaseService.Instance.CurrentPhase == GamePhase.DEFENSE;
-
             Debug.Log("[OpponentBoardService] ApplyOpponentDefenseState defenses=" +
                       (data?.DefenseCards == null ? "NULL" : data.DefenseCards.Count.ToString()));
 
-            // Defense updates only contain currently engaged defense pairs, not the full attacker list.
-            // Keep using the last known full opponent attack list when available.
-            List<int> attackIdsToDisplay =
-                (lastOpponentAttackIds != null && lastOpponentAttackIds.Count > 0)
-                    ? new List<int>(lastOpponentAttackIds)
-                    : data?.AttackCardsId;
+            DefenseDataResponseDto previousDefenseState = lastOpponentDefenseState;
+            lastOpponentDefenseState = data;
 
-            if (attackIdsToDisplay != null && attackIdsToDisplay.Count > 0)
+            if (previousDefenseState?.DefenseCards != null)
             {
-                lastOpponentAttackIds = new List<int>(attackIdsToDisplay);
+                for (int i = 0; i < previousDefenseState.DefenseCards.Count; i++)
+                {
+                    DefenseCardDataDto previousDefense = previousDefenseState.DefenseCards[i];
+                    if (previousDefense == null)
+                        continue;
+
+                    CardUI previousDefender = null;
+                    if (!opponentCardsById.TryGetValue(previousDefense.cardId, out previousDefender) || previousDefender == null)
+                    {
+                        previousDefender = OpponentBoardUI.Instance != null
+                            ? OpponentBoardUI.Instance.FindOpponentCardByGameCardId(previousDefense.cardId)
+                            : null;
+                    }
+
+                    if (previousDefender != null)
+                    {
+                        previousDefender.SetDefenseSelected(false);
+                        previousDefender.SetDefendingState(false);
+                    }
+                }
             }
 
-            ClearOpponentAttackOutline();
-
-            if (attackIdsToDisplay == null || attackIdsToDisplay.Count == 0)
+            if (data?.DefenseCards == null || data.DefenseCards.Count == 0)
                 return;
 
             int found = 0;
             int missing = 0;
 
-            for (int i = 0; i < attackIdsToDisplay.Count; i++)
+            for (int i = 0; i < data.DefenseCards.Count; i++)
             {
-                int positionOrId = attackIdsToDisplay[i];
-                CardUI card = null;
+                DefenseCardDataDto defense = data.DefenseCards[i];
+                if (defense == null)
+                    continue;
 
-                // First try: lookup by GameCardId (if it's a real ID)
-                if (opponentCardsById.TryGetValue(positionOrId, out card) && card != null)
+                CardUI defenderCard = null;
+                if (!opponentCardsById.TryGetValue(defense.cardId, out defenderCard) || defenderCard == null)
                 {
-                    // Found by GameCardId - continue
-                }
-                else if (OpponentBoardUI.Instance != null)
-                {
-                    // Second try: lookup by GameCardId on board
-                    CardUI recovered = OpponentBoardUI.Instance.FindOpponentCardByGameCardId(positionOrId);
-                    if (recovered != null)
-                    {
-                        opponentCardsById[positionOrId] = recovered;
-                        card = recovered;
-                        Debug.Log("[OpponentBoardService] Recovered opponent defense card from board by GameCardId=" + positionOrId);
-                    }
-                    else
-                    {
-                        // Third try: lookup by slot position (from new protocol with positions)
-                        recovered = OpponentBoardUI.Instance.GetCardAtSlotIndex(positionOrId);
-                        if (recovered != null)
-                        {
-                            card = recovered;
-                            // Register it by its GameCardId for future lookups
-                            if (int.TryParse(recovered.cardId, out int gameCardId))
-                            {
-                                opponentCardsById[gameCardId] = recovered;
-                            }
-                            Debug.Log("[OpponentBoardService] Recovered opponent attack card from board by SlotIndex=" + positionOrId);
-                        }
-                    }
+                    defenderCard = OpponentBoardUI.Instance != null
+                        ? OpponentBoardUI.Instance.FindOpponentCardByGameCardId(defense.cardId)
+                        : null;
                 }
 
-                if (card != null)
-                {
-                    card.SetSelected(false);
-                    card.SetAttackedThisPhase(true);
-                    card.ShowAttackOrder(i + 1);
-
-                    // During local defense phase we keep order context but hide attack glow/outline.
-                    if (isDefensePhase)
-                        card.SetOpponentAttacking(false);
-                    else
-                        card.SetOpponentAttacking(true);
-
-                    found++;
-                    Debug.Log("[OpponentBoardService] (Defense) Attack OUTLINE ON for opponent card position=" + positionOrId + " name=" + card.name + " order=" + (i + 1));
-                }
-                else
+                if (defenderCard == null)
                 {
                     missing++;
-                    Debug.LogWarning("[OpponentBoardService] (Defense) attack card not found on opponent board: positionOrId=" + positionOrId);
+                    Debug.LogWarning("[OpponentBoardService] (Defense) defender card not found on opponent board: cardId=" + defense.cardId);
+                    continue;
                 }
+
+                ApplyDefenseVisualState(defenderCard);
+                found++;
             }
 
             Debug.Log("[OpponentBoardService] ApplyOpponentDefenseState done found=" + found + " missing=" + missing);
@@ -181,10 +176,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             {
                 if (kvp.Value != null)
                 {
-                    kvp.Value.SetOpponentAttacking(false);
-                    kvp.Value.SetSelected(false);
-                    kvp.Value.ClearAttackOrder();
-                    kvp.Value.ResetAttackState();
+                    ClearAttackVisualState(kvp.Value);
                 }
             }
         }
@@ -255,6 +247,40 @@ namespace VortexTCG.Scripts.Features.Match.Services
                 sb.AppendLine($"  Card id={kvp.Key} {cardInfo}");
             }
             Debug.Log(sb.ToString());
+        }
+
+        private void ApplyAttackVisualState(CardUI card, int attackOrder)
+        {
+            if (card == null)
+                return;
+
+            card.SetSelected(true);
+            card.SetAttackedThisPhase(true);
+            card.ShowAttackOrder(attackOrder);
+            card.SetOpponentAttacking(true);
+        }
+
+        private void ClearAttackVisualState(CardUI card)
+        {
+            if (card == null)
+                return;
+
+            card.SetOpponentAttacking(false);
+            card.SetSelected(false);
+            card.ClearAttackOrder();
+            card.ResetAttackState();
+        }
+
+        private void ApplyDefenseVisualState(CardUI card)
+        {
+            if (card == null)
+                return;
+
+            card.SetSelected(false);
+            card.ClearAttackOrder();
+            card.ResetAttackState();
+            card.SetDefenseSelected(true);
+            card.SetDefendingState(true);
         }
     }
 }

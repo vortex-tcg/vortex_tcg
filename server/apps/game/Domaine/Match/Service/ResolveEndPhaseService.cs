@@ -123,6 +123,8 @@ public static class ResolveEndPhaseService
             attack.Position,
             defenderCard,
             defense.Position,
+            defendingPlayer,
+            match,
             result
         );
     }
@@ -132,6 +134,8 @@ public static class ResolveEndPhaseService
         int attackerPosition,
         GameCardDto defenderCard,
         int defenderPosition,
+        Player defendingPlayer,
+        Match match,
         BattleResolveDTOs result)
     {
         int attackerDamage = attackerCard.Attack.Value;
@@ -142,9 +146,27 @@ public static class ResolveEndPhaseService
 
         int attackerRemainingHp = attackerCurrentHp - defenderDamage;
         int defenderRemainingHp = defenderCurrentHp - attackerDamage;
+        int overflowToChampion = Math.Max(0, attackerDamage - defenderCurrentHp);
 
         attackerCard.Hp = new CardHpValue(attackerRemainingHp);
         defenderCard.Hp = new CardHpValue(defenderRemainingHp);
+
+        if (overflowToChampion > 0)
+        {
+            int championRemainingHp = defendingPlayer.Champion.Hp.Value - overflowToChampion;
+            defendingPlayer.Champion.Hp = new ChampionHp(championRemainingHp);
+            new ChampionDeathService().CheckChampionDeath(match, defendingPlayer);
+
+            DirectChampionDamageDto dto = new DirectChampionDamageDto
+            {
+                AttackerCardId = attackerCard.GameCardId,
+                AttackerPosition = attackerPosition,
+                Damage = overflowToChampion,
+                ChampionRemainingHp = championRemainingHp
+            };
+
+            result.DirectChampionDamages.Add(dto);
+        }
 
         bool attackerDied = attackerRemainingHp <= 0;
         bool defenderDied = defenderRemainingHp <= 0;
