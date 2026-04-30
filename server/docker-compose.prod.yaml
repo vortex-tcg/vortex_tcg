@@ -164,6 +164,7 @@ services:
 
   sonarqube:
     image: sonarqube:community
+    user: "1000:1000"
     networks:
       - traefik-network
     env_file:
