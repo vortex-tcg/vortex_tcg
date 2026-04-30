@@ -20,8 +20,45 @@ namespace VortexTCG.Scripts.MatchScene
 
         private void Awake()
         {
+            AutoAssignBoardSlotIndexIfNeeded();
             slotCollider = GetComponent<Collider>();
             UpdateSlotColliderState();
+        }
+
+        private void AutoAssignBoardSlotIndexIfNeeded()
+        {
+            // Some scenes keep slotIndex at default 0; infer board index from slot name to keep server positions stable.
+            if (slotIndex != 0)
+                return;
+
+            string n = name ?? string.Empty;
+            bool isBoardSlot = n.Contains("BoardSlot");
+            if (!isBoardSlot)
+                return;
+
+            int parsed = ParseTrailingNumber(n);
+            if (parsed <= 0)
+                return;
+
+            slotIndex = parsed - 1;
+            Debug.Log($"[CardSlotUI] Auto-assigned board slotIndex={slotIndex} from name='{name}'");
+        }
+
+        private static int ParseTrailingNumber(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return -1;
+
+            int i = value.Length - 1;
+            while (i >= 0 && char.IsDigit(value[i]))
+                i--;
+
+            int start = i + 1;
+            if (start >= value.Length)
+                return -1;
+
+            string numeric = value.Substring(start);
+            return int.TryParse(numeric, out int parsed) ? parsed : -1;
         }
 
         private void OnMouseDown()

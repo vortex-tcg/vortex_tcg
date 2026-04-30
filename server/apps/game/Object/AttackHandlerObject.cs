@@ -53,6 +53,7 @@ namespace VortexTCG.Game.Object {
 
             public void AddDefense(Card playedCard, Card opponentCard) {
                 int oppositeId = opponentCard.GetGameCardId();
+                _defenseCards.RemoveAll(defenseCard => defenseCard.card == playedCard);
                 _defenseCards.RemoveAll(defenseCard => defenseCard.oppositeCardId == oppositeId);
                 _defenseCards.Add(new DefenseCard{
                     card = playedCard,
@@ -69,6 +70,8 @@ namespace VortexTCG.Game.Object {
             public List<DefenseCard> GetDefender() => _defenseCards;
 
             public DefenseCard GetSpecificDefender(int opponentCardId) => _defenseCards.Single(defender => defender.oppositeCardId == opponentCardId);
+
+            public DefenseCard? GetDefenderOrDefault(int opponentCardId) => _defenseCards.FirstOrDefault(defender => defender.oppositeCardId == opponentCardId);
 
         #endregion
 

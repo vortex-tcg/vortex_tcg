@@ -31,8 +31,6 @@ public static class EndTurnService
 
     private static bool ShouldBeReactivated(GameCardDto card)
     {
-        return card.States.Value == CardStates.Sleeping.Value
-               || card.States.Value == CardStates.Attacking.Value
-               || card.States.Value == CardStates.Defending.Value;
+        return card.States.Value != CardStates.Active.Value;
     }
 }

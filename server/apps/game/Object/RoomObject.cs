@@ -438,6 +438,18 @@ public DefenseResponseDto HandleDefenseEvent(Guid userId, int cardId, int oppone
         return null;
     }
 
+    DefenseCard? previousDefender = _attackHandler.GetDefenderOrDefault(opponentCardId);
+    if (previousDefender != null && previousDefender.card != null && previousDefender.card.GetGameCardId() != cardId)
+    {
+        if (playerBoard.TryGetCardPos(previousDefender.card.GetGameCardId(), out int previousPos))
+        {
+            Console.WriteLine($"[HandleDefenseEvent] replacing defender oldCardId={previousDefender.card.GetGameCardId()} oldPos={previousPos} newCardId={cardId}");
+            playerBoard.UnEngageDefenseCard(previousPos);
+        }
+
+        _attackHandler.RemoveDefense(previousDefender.card);
+    }
+
     Console.WriteLine("[HandleDefenseEvent] -> EngageDefenseCard");
     return EngageDefenseCard(playerBoard, opponentBoard, pos, opponentPos, isPlayer1);
 }
@@ -457,8 +469,16 @@ public DefenseResponseDto HandleDefenseEvent(Guid userId, int cardId, int oppone
 
             private BattleDataDto HandleAgainstCardBattle(bool isDefenderPlayer, Card attacker, DefenseCard defender, Champion attackerChamp, Champion defenderChamp)
             {
+                int defenderHpBeforeHit = defender.card.GetHp();
                 int attackerDamageDeal = defender.card.ApplyDamage(attacker);
                 int defenderDamageDeal = attacker.ApplyDamage(defender.card);
+                int overflowChampionDamage = Math.Max(0, attackerDamageDeal - defenderHpBeforeHit);
+
+                if (overflowChampionDamage > 0)
+                {
+                    defenderChamp.ApplyRawDamage(overflowChampionDamage);
+                }
+
                 bool isDefenderDead = defender.card.IsDead();
                 bool isAttackerDead = attacker.IsDead();
 

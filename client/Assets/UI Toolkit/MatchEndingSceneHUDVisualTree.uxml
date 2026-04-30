@@ -1,3 +1,5 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <ui:VisualElement name="EndingScreen" style="flex-grow: 1; background-image: resource(&apos;GUI/VictoryScreen&apos;); background-color: rgba(0, 0, 0, 0);" />
+    <ui:VisualElement name="EndingScreen" style="flex-grow: 1; background-image: resource(&apos;GUI/VictoryScreen&apos;); background-color: rgba(0, 0, 0, 0); justify-content: center; align-items: center;">
+        <ui:Button text="QUITTER" name="QuitButton" class="button" style="width: 498px; -unity-text-align: middle-center; font-size: 35px; height: 98px; -unity-background-image-tint-color: rgb(255, 255, 255); background-color: rgba(255, 255, 255, 0); color: rgb(255, 255, 255); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-ExtraBold&apos;); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0; background-image: resource(&apos;GUI/MenuButton&apos;); position: absolute; top: 650px;" />
+    </ui:VisualElement>
 </ui:UXML>
