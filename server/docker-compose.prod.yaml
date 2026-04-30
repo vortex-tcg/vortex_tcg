@@ -12,7 +12,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /var/www/vortex_tcg/certs:/certs:ro
-      - /var/www/vortex_tcg/traefik/dynamic:/dynamic:ro
+      - /var/www/vortex_tcg/infra/traefik/dynamic:/dynamic:ro
       - /var/www/vortex_tcg/server/letsencrypt:/letsencrypt
     extra_hosts:
       - "host.docker.internal:host-gateway"
