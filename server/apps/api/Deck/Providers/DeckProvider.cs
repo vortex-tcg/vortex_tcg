@@ -83,5 +83,19 @@ namespace VortexTCG.Api.Deck.Providers
                 ))
                 .ToListAsync();
         }
+
+        public async Task<List<(Guid DeckId, string Label, string ChampionPicture)>> GetDecksByUserIdAsync(Guid userId)
+        {
+            return await _db.Decks
+                .AsNoTracking()
+                .Where(d => d.UserId == userId)
+                .Include(d => d.Champion)
+                .Select(d => new ValueTuple<Guid, string, string>(
+                    d.Id,
+                    d.Label,
+                    d.Champion != null ? d.Champion.Picture : string.Empty
+                ))
+                .ToListAsync();
+        }
     }
 }

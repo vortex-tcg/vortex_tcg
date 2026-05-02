@@ -26,6 +26,9 @@ namespace VortexTCG.Scripts.Features.Collection.UI
         private VisualElement cardInformationsPreview;
         private VisualElement cardIllustration;
         private VisualElement costPointsContainer;
+        private VisualElement allDecksContainer;
+        private VisualElement deckButtonsContainer;
+        private VisualElement selectedDeckCardsContainer;
         private Label cardNameLabel;
         private Label cardLoreLabel;
         private Label attackPointsLabel;
@@ -55,6 +58,9 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             attackPointsLabel = root.Q<Label>("ATKPoints");
             healthPointsLabel = root.Q<Label>("HPPoints");
             costPointsLabel = root.Q<Label>("CostPoints");
+            allDecksContainer = root.Q<VisualElement>("AllDecks");
+            deckButtonsContainer = root.Q<VisualElement>("DeckButtonsContainer");
+            selectedDeckCardsContainer = root.Q<VisualElement>("SelectedCardsContainer");
 
             if (cardsScrollView != null)
             {
@@ -81,7 +87,142 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             HideCardPreview();
 
             collectionService ??= new CollectionService();
+            _deckService ??= new VortexTCG.Scripts.Features.Deck.Services.DeckService();
             StartCoroutine(LoadUserCollection());
+            StartCoroutine(LoadUserCollectionAndDecks());
+        }
+
+        private VortexTCG.Scripts.Features.Deck.Services.DeckService _deckService;
+
+        private IEnumerator LoadUserCollectionAndDecks()
+        {
+            List<UserCollectionDeckDto> decks = null;
+            string error = null;
+
+            yield return collectionService.FetchUserCollectionDto(
+                onSuccess: dto => decks = dto?.Decks ?? new List<UserCollectionDeckDto>(),
+                onError: serviceError => error = serviceError
+            );
+
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                Debug.LogError(error);
+                yield break;
+            }
+
+            DisplayDecks(decks ?? new List<UserCollectionDeckDto>());
+        }
+
+        private void DisplayDecks(List<UserCollectionDeckDto> decks)
+        {
+            if (deckButtonsContainer == null) return;
+            deckButtonsContainer.Clear();
+
+            if (decks == null || decks.Count == 0)
+            {
+                ClearSelectedDeckCards();
+                return;
+            }
+
+            Button firstButton = null;
+            UserCollectionDeckDto firstDeck = null;
+
+            foreach (UserCollectionDeckDto deck in decks)
+            {
+                if (deck == null) continue;
+
+                Button btn = new Button();
+                btn.text = string.IsNullOrWhiteSpace(deck.DeckName) ? "Deck" : deck.DeckName;
+                btn.clicked += () => SelectDeck(deck, btn);
+                deckButtonsContainer.Add(btn);
+
+                if (firstButton == null)
+                {
+                    firstButton = btn;
+                    firstDeck = deck;
+                }
+            }
+
+            if (firstDeck != null && firstButton != null)
+            {
+                SelectDeck(firstDeck, firstButton);
+            }
+        }
+
+        private void SelectDeck(UserCollectionDeckDto deck, Button selectedButton)
+        {
+            HighlightSelectedDeck(selectedButton);
+            StartCoroutine(LoadAndShowDeck(deck.DeckId));
+        }
+
+        private void HighlightSelectedDeck(Button selectedButton)
+        {
+            if (deckButtonsContainer == null) return;
+
+            foreach (VisualElement child in deckButtonsContainer.Children())
+            {
+                if (child is Button button)
+                    button.RemoveFromClassList("deck-button-selected");
+            }
+
+            if (selectedButton != null)
+                selectedButton.AddToClassList("deck-button-selected");
+        }
+
+        private void ClearSelectedDeckCards()
+        {
+            if (selectedDeckCardsContainer != null)
+                selectedDeckCardsContainer.Clear();
+        }
+
+        private IEnumerator LoadAndShowDeck(Guid deckId)
+        {
+            if (_deckService == null)
+                _deckService = new VortexTCG.Scripts.Features.Deck.Services.DeckService();
+
+            DeckDataDto deckData = null;
+            string error = null;
+
+            yield return _deckService.FetchDeckData(deckId, d => deckData = d, e => error = e);
+
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                Debug.LogError(error);
+                yield break;
+            }
+
+            ShowSelectedDeckCards(deckData?.Cards ?? new List<DeckCardDto>());
+        }
+
+        private void ShowSelectedDeckCards(List<DeckCardDto> cards)
+        {
+            if (selectedDeckCardsContainer == null) return;
+            selectedDeckCardsContainer.Clear();
+
+            foreach (DeckCardDto c in cards)
+            {
+                if (c == null) continue;
+
+                for (int i = 0; i < Math.Max(c.Quantity, 1); i++)
+                {
+                    VisualElement cardElement = cardTemplate.CloneTree();
+                    CardDto previewCard = new CardDto
+                    {
+                        Name = c.Name,
+                        Attack = c.Attack ?? 0,
+                        Hp = c.Hp ?? 0,
+                        Cost = c.Cost,
+                        Description = c.Description,
+                        Picture = c.Picture
+                    };
+
+                    BindCardVisual(cardElement, previewCard);
+                    cardElement.RegisterCallback<MouseEnterEvent>(_ => ShowCardPreview(previewCard));
+                    cardElement.RegisterCallback<MouseLeaveEvent>(_ => HideCardPreview());
+
+                    selectedDeckCardsContainer.Add(cardElement);
+                }
+            }
         }
 
         private IEnumerator LoadUserCollection()
@@ -156,39 +297,44 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             cardElement.style.flexShrink = 0;
             cardElement.style.alignSelf = Align.FlexStart;
             cardElement.style.marginBottom = 10;
-            Label nameLabel = cardElement.Q<Label>("Name");
-            if (nameLabel != null) nameLabel.text = cardData.Card.Name;
-
-            Label atkLabel = cardElement.Q<Label>("ATK");
-            if (atkLabel != null) atkLabel.text = cardData.Card.Attack.ToString();
-
-            Label defLabel = cardElement.Q<Label>("DEF");
-            if (defLabel != null) defLabel.text = cardData.Card.Hp.ToString();
-
-            Label costLabel = cardElement.Q<Label>("Cost");
-            if (costLabel != null) costLabel.text = cardData.Card.Cost.ToString();
-
-            // Color the cost circle background/tint according to the cost
-            VisualElement costCircle = cardElement.Q<VisualElement>("CostCircle");
-            if (costCircle != null)
-            {
-                int clamped = Mathf.Clamp(cardData.Card.Cost, 0, 10);
-                Color circleColor = clamped switch
-                {
-                    0 or 1 or 2 => costGreen,
-                    3 or 4 => costBlue,
-                    5 or 6 => costOrange,
-                    7 or 8 => costRed,
-                    _ => costViolet
-                };
-
-                costCircle.style.unityBackgroundImageTintColor = new StyleColor(circleColor);
-            }
+            BindCardVisual(cardElement, cardData.Card);
 
             cardElement.RegisterCallback<MouseEnterEvent>(_ => ShowCardPreview(cardData.Card));
             cardElement.RegisterCallback<MouseLeaveEvent>(_ => HideCardPreview());
 
             cardsContainer.Add(cardElement);
+        }
+
+        private void BindCardVisual(VisualElement cardElement, CardDto card)
+        {
+            if (cardElement == null || card == null) return;
+
+            Label nameLabel = cardElement.Q<Label>("Name");
+            if (nameLabel != null) nameLabel.text = card.Name;
+
+            Label atkLabel = cardElement.Q<Label>("ATK");
+            if (atkLabel != null) atkLabel.text = card.Attack.ToString();
+
+            Label defLabel = cardElement.Q<Label>("DEF");
+            if (defLabel != null) defLabel.text = card.Hp.ToString();
+
+            Label costLabel = cardElement.Q<Label>("Cost");
+            if (costLabel != null) costLabel.text = card.Cost.ToString();
+
+            VisualElement costCircle = cardElement.Q<VisualElement>("CostCircle");
+            if (costCircle == null) return;
+
+            int clamped = Mathf.Clamp(card.Cost, 0, 10);
+            Color circleColor = clamped switch
+            {
+                0 or 1 or 2 => costGreen,
+                3 or 4 => costBlue,
+                5 or 6 => costOrange,
+                7 or 8 => costRed,
+                _ => costViolet
+            };
+
+            costCircle.style.unityBackgroundImageTintColor = new StyleColor(circleColor);
         }
 
         private void ShowCardPreview(CardDto card)
