@@ -6,6 +6,7 @@ using VortexTCG.Scripts.DTOs;
 using System.Linq; 
 using System.Text;
 using VortexTCG.Scripts.Features.Match.Services;
+using VortexTCG.Scripts.Features.Match.UI;
 using VortexTCG.Scripts.MatchScene;
 
 namespace VortexTCG.Scripts.Features.Match.Services
@@ -18,14 +19,14 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (Instance != null)
                 return;
 
-            var existing = FindObjectOfType<MatchService>();
+            MatchService existing = FindObjectOfType<MatchService>();
             if (existing != null)
             {
                 Instance = existing;
                 return;
             }
 
-            var go = new GameObject("MatchService");
+            GameObject go = new GameObject("MatchService");
             go.AddComponent<MatchService>();
         }
 
@@ -36,6 +37,10 @@ namespace VortexTCG.Scripts.Features.Match.Services
         private SignalRClient client;
         private bool _gameStarted;
         private Coroutine _battleRoutine;
+        private Coroutine _endPhaseRoutine;
+        private int? _lastSyncedLocalChampionHp;
+        private int? _lastSyncedOpponentChampionHp;
+        private bool? _pendingEndScreenLocalWon;
 
         private void Awake()
         {
@@ -64,10 +69,9 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
             Debug.Log("[MatchService] Subscribing to SignalR events...");
             client.OnGameStarted += HandleGameStartedMinimal;
-            client.OnAttackEngage += HandleAttackEngage;
             client.OnOpponentAttackEngage += HandleOpponentAttackEngage;
             client.OnBattleResolution += HandleBattleResolution;
-            client.OnDefenseEngage += HandleDefenseEngage;
+            client.OnEndPhaseResolved += HandleEndPhaseResolved;
             client.OnOpponentDefenseEngage += HandleOpponentDefenseEngage;
             Debug.Log("[MatchService] Successfully subscribed to all SignalR events including OnOpponentAttackEngage");
         }
@@ -83,10 +87,9 @@ namespace VortexTCG.Scripts.Features.Match.Services
             Debug.Log("[MatchService] SignalRClient now available, subscribing...");
             Debug.Log("[MatchService] Subscribing to SignalR events...");
             client.OnGameStarted += HandleGameStartedMinimal;
-            client.OnAttackEngage += HandleAttackEngage;
             client.OnOpponentAttackEngage += HandleOpponentAttackEngage;
             client.OnBattleResolution += HandleBattleResolution;
-            client.OnDefenseEngage += HandleDefenseEngage;
+            client.OnEndPhaseResolved += HandleEndPhaseResolved;
             client.OnOpponentDefenseEngage += HandleOpponentDefenseEngage;
             Debug.Log("[MatchService] Successfully subscribed to all SignalR events including OnOpponentAttackEngage");
         }
@@ -98,8 +101,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             {
                 client.OnGameStarted -= HandleGameStartedMinimal;
                 client.OnBattleResolution -= HandleBattleResolution;
-                client.OnAttackEngage -= HandleAttackEngage;
-                client.OnDefenseEngage -= HandleDefenseEngage;
+                client.OnEndPhaseResolved -= HandleEndPhaseResolved;
                 client.OnOpponentAttackEngage -= HandleOpponentAttackEngage;
                 client.OnOpponentDefenseEngage -= HandleOpponentDefenseEngage;
             }
@@ -196,6 +198,284 @@ namespace VortexTCG.Scripts.Features.Match.Services
             _battleRoutine = StartCoroutine(ResolveBattles(data, localIsAttacker));
         }
 
+        private void HandleEndPhaseResolved(EndPhaseResolutionDto data, bool localIsAttacker)
+        {
+            if (!_gameStarted)
+            {
+                Debug.LogWarning("[MatchService] EndPhaseResolved ignored: game not started");
+                return;
+            }
+
+            if (data == null)
+            {
+                Debug.LogWarning("[MatchService] EndPhaseResolved ignored: data is NULL");
+                return;
+            }
+
+            Debug.Log($"[MatchService] EndPhaseResolved received battles={data.Battles?.Count ?? 0} deadCards={data.DeadCardIds?.Count ?? 0} localIsAttacker={localIsAttacker}");
+
+            if (_endPhaseRoutine != null)
+            {
+                StopCoroutine(_endPhaseRoutine);
+            }
+
+            _endPhaseRoutine = StartCoroutine(ResolveEndPhaseSequentially(data, localIsAttacker));
+        }
+
+        private IEnumerator ResolveEndPhaseSequentially(EndPhaseResolutionDto data, bool localIsAttacker)
+        {
+            bool attackerIsLocal = localIsAttacker;
+            bool defenderIsLocal = !localIsAttacker;
+            SyncChampionHpFromEndPhase(data, localIsAttacker);
+            _pendingEndScreenLocalWon = ResolveOutcomeFromEndPhasePayload(data, localIsAttacker);
+
+            if (data.Battles != null)
+            {
+                for (int i = 0; i < data.Battles.Count; i++)
+                {
+                    EndPhaseCardBattleResultDto battle = data.Battles[i];
+                    if (battle == null) continue;
+
+                    CardUI attackerCard = FindCardBySlotIndex(battle.AttackerPosition, attackerIsLocal);
+                    CardUI defenderCard = FindCardBySlotIndex(battle.DefenderPosition, defenderIsLocal);
+
+                    if (battle.DamageToAttacker > 0)
+                        attackerCard?.SetDamageReceivedState(true);
+
+                    if (battle.DamageToDefender > 0)
+                        defenderCard?.SetDamageReceivedState(true);
+
+                    if (battle.DamageToAttacker > 0 || battle.DamageToDefender > 0)
+                        yield return new WaitForSeconds(0.35f);
+
+                    ApplyCardSnapshotBySlotIndex(battle.AttackerPosition, attackerIsLocal, battle.AttackerRemainingHp);
+                    ApplyCardSnapshotBySlotIndex(battle.DefenderPosition, defenderIsLocal, battle.DefenderRemainingHp);
+
+                    yield return new WaitForSeconds(0.15f);
+
+                    attackerCard?.SetDamageReceivedState(false);
+                    defenderCard?.SetDamageReceivedState(false);
+
+                    yield return new WaitForSeconds(0.15f);
+                }
+            }
+
+            if (data.DirectChampionDamages != null)
+            {
+                for (int i = 0; i < data.DirectChampionDamages.Count; i++)
+                {
+                    EndPhaseDirectChampionDamageDto damage = data.DirectChampionDamages[i];
+                    if (damage == null) continue;
+
+                    Debug.Log($"[MatchService] Champion receives {damage.Damage} damage from attackerCardId={damage.AttackerCardId}");
+                    yield return new WaitForSeconds(0.2f);
+                }
+            }
+
+            if (data.DeadCardIds != null)
+            {
+                for (int i = 0; i < data.DeadCardIds.Count; i++)
+                {
+                    int deadCardId = data.DeadCardIds[i];
+                    yield return RemoveCardWithDeathState(deadCardId, true);
+                    yield return RemoveCardWithDeathState(deadCardId, false);
+                }
+            }
+
+            AttackUI.Instance?.ResetAllAttackStates();
+            OpponentBoardUI.Instance?.OpponentBoardService?.ClearCombatState();
+            PhaseUI.Instance?.RefreshChampionHpDisplay();
+            TryShowEndingScreen();
+
+            Debug.Log($"[MatchService] EndPhaseResolution applied currentHp={data.CurrentPlayerChampionHp} opponentHp={data.OpponentPlayerChampionHp}");
+            _endPhaseRoutine = null;
+        }
+
+        private void SyncChampionHpFromEndPhase(EndPhaseResolutionDto data, bool localIsAttacker)
+        {
+            if (client == null || data == null)
+            {
+                return;
+            }
+
+            int currentHp = Mathf.Max(0, data.CurrentPlayerChampionHp);
+            int opponentHp = Mathf.Max(0, data.OpponentPlayerChampionHp);
+
+            // In this UI, P1 slot is local champion and P2 slot is opponent champion.
+            MatchInitChampionDto championP1 = client.Position1Champion;
+            MatchInitChampionDto championP2 = client.Position2Champion;
+
+            MatchInitChampionDto localChampion = client.PlayerChampion;
+            MatchInitChampionDto opponentChampion = client.OpponentChampion;
+
+            int baselineLocalHp = localChampion?.Hp ?? championP1?.Hp ?? currentHp;
+            int baselineRemoteHp = opponentChampion?.Hp ?? championP2?.Hp ?? opponentHp;
+
+            // Candidate A: payload already local/opponent.
+            int localHpAsIs = currentHp;
+            int remoteHpAsIs = opponentHp;
+
+            // Candidate B: payload is attacker/defender relative and needs swap for local view.
+            int localHpSwapped = opponentHp;
+            int remoteHpSwapped = currentHp;
+
+            int scoreAsIs = Mathf.Abs(baselineLocalHp - localHpAsIs) + Mathf.Abs(baselineRemoteHp - remoteHpAsIs);
+            int scoreSwapped = Mathf.Abs(baselineLocalHp - localHpSwapped) + Mathf.Abs(baselineRemoteHp - remoteHpSwapped);
+
+            bool useSwappedMapping = scoreSwapped < scoreAsIs;
+            if (scoreSwapped == scoreAsIs)
+            {
+                // Tie-breaker: keep previous behavior hint from event direction.
+                useSwappedMapping = !localIsAttacker;
+            }
+
+            int localHp = useSwappedMapping ? localHpSwapped : localHpAsIs;
+            int remoteHp = useSwappedMapping ? remoteHpSwapped : remoteHpAsIs;
+
+            if (championP1 != null)
+            {
+                championP1.Hp = localHp;
+            }
+
+            if (championP2 != null)
+            {
+                championP2.Hp = remoteHp;
+            }
+
+            if (localChampion != null)
+            {
+                localChampion.Hp = localHp;
+            }
+
+            if (opponentChampion != null)
+            {
+                opponentChampion.Hp = remoteHp;
+            }
+
+            Debug.Log($"[MatchService] SyncChampionHpFromEndPhase localIsAttacker={localIsAttacker} currentHp={currentHp} opponentHp={opponentHp} baselineLocal={baselineLocalHp} baselineRemote={baselineRemoteHp} scoreAsIs={scoreAsIs} scoreSwapped={scoreSwapped} useSwapped={useSwappedMapping} => localHp={localHp} remoteHp={remoteHp}");
+
+            _lastSyncedLocalChampionHp = localHp;
+            _lastSyncedOpponentChampionHp = remoteHp;
+        }
+
+        private static bool? ResolveOutcomeFromEndPhasePayload(EndPhaseResolutionDto data, bool localIsAttacker)
+        {
+            if (data == null)
+            {
+                return null;
+            }
+
+            if (data.DirectChampionDamages != null)
+            {
+                for (int i = 0; i < data.DirectChampionDamages.Count; i++)
+                {
+                    EndPhaseDirectChampionDamageDto damage = data.DirectChampionDamages[i];
+                    if (damage == null) continue;
+
+                    if (damage.ChampionRemainingHp <= 0)
+                    {
+                        // During EndPhaseResolved, localIsAttacker indicates whether local damaged opponent champion.
+                        return localIsAttacker;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private void TryShowEndingScreen()
+        {
+            if (client == null)
+            {
+                return;
+            }
+
+            int localPosition = client.PlayerPosition;
+            MatchInitChampionDto localChampion = client.PlayerChampion;
+            MatchInitChampionDto opponentChampion = client.OpponentChampion;
+
+            if (localChampion == null || opponentChampion == null)
+            {
+                MatchInitChampionDto championP1 = client.Position1Champion;
+                MatchInitChampionDto championP2 = client.Position2Champion;
+
+                if (localPosition == 1)
+                {
+                    localChampion ??= championP1;
+                    opponentChampion ??= championP2;
+                }
+                else if (localPosition == 2)
+                {
+                    localChampion ??= championP2;
+                    opponentChampion ??= championP1;
+                }
+            }
+
+            if (localChampion == null || opponentChampion == null)
+            {
+                Debug.LogWarning("[MatchService] TryShowEndingScreen aborted: champion references are missing");
+                return;
+            }
+
+            if (_pendingEndScreenLocalWon.HasValue)
+            {
+                bool forcedLocalWon = _pendingEndScreenLocalWon.Value;
+                _pendingEndScreenLocalWon = null;
+
+                MatchEndingScreenUI forcedScreen = MatchEndingScreenUI.Instance;
+                if (forcedScreen == null)
+                {
+                    forcedScreen = FindFirstObjectByType<MatchEndingScreenUI>(FindObjectsInactive.Include);
+                }
+
+                if (forcedScreen == null)
+                {
+                    Debug.LogError("[MatchService] Ending screen not found for forced end-phase outcome");
+                    return;
+                }
+
+                if (!forcedScreen.gameObject.activeSelf)
+                {
+                    forcedScreen.gameObject.SetActive(true);
+                }
+
+                forcedScreen.ShowEndingScreen(forcedLocalWon);
+                Debug.Log($"[MatchService] Ending screen shown (forced from end-phase payload) localWon={forcedLocalWon}");
+                return;
+            }
+
+            int localHp = _lastSyncedLocalChampionHp ?? localChampion.Hp;
+            int opponentHp = _lastSyncedOpponentChampionHp ?? opponentChampion.Hp;
+
+            bool localLost = localHp <= 0;
+            bool localWon = opponentHp <= 0 && !localLost;
+
+            if (!localWon && !localLost)
+            {
+                return;
+            }
+
+            MatchEndingScreenUI endingScreen = MatchEndingScreenUI.Instance;
+            if (endingScreen == null)
+            {
+                endingScreen = FindFirstObjectByType<MatchEndingScreenUI>(FindObjectsInactive.Include);
+            }
+
+            if (endingScreen == null)
+            {
+                Debug.LogError($"[MatchService] Ending screen not found. localHp={localHp} opponentHp={opponentHp}");
+                return;
+            }
+
+            if (!endingScreen.gameObject.activeSelf)
+            {
+                endingScreen.gameObject.SetActive(true);
+            }
+
+            endingScreen.ShowEndingScreen(localWon);
+            Debug.Log($"[MatchService] Ending screen shown localWon={localWon} localHp={localHp} opponentHp={opponentHp}");
+        }
+
 
         private IEnumerator ResolveBattles(BattlesDataDto data, bool localIsAttacker)
         {
@@ -230,8 +510,10 @@ namespace VortexTCG.Scripts.Features.Match.Services
                 Debug.Log($"[MatchService] ResolveBattles Battle[{i}] END");
             }
 
-            AttackUI.Instance?.AttackService?.ClearSelections();
-            DefenseUI.Instance?.DefenseService?.ClearAllDefense();
+            AttackUI.Instance?.ResetAllAttackStates();
+            OpponentBoardUI.Instance?.OpponentBoardService?.ClearCombatState();
+            PhaseUI.Instance?.RefreshChampionHpDisplay();
+            TryShowEndingScreen();
 
             Debug.Log("[MatchService] ResolveBattles END -> cleared selections/defense");
         }
@@ -263,13 +545,13 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (b.isAttackerDead && b.attackerCard != null)
             {
                 Debug.Log("[MatchService] ResolveAgainstCard -> remove ATTACKER cardId=" + b.attackerCard.GameCardId + " (ownerLocal=" + attackerIsLocal + ")");
-                RemoveCard(b.attackerCard.GameCardId, attackerIsLocal);
+                yield return RemoveCardWithDeathState(b.attackerCard.GameCardId, attackerIsLocal);
             }
 
             if (b.isDefenderDead && b.defenderCard != null)
             {
                 Debug.Log("[MatchService] ResolveAgainstCard -> remove DEFENDER cardId=" + b.defenderCard.GameCardId + " (ownerLocal=" + defenderIsLocal + ")");
-                RemoveCard(b.defenderCard.GameCardId, defenderIsLocal);
+                yield return RemoveCardWithDeathState(b.defenderCard.GameCardId, defenderIsLocal);
             }
 
             Debug.Log("[MatchService] ResolveAgainstCard END");
@@ -289,11 +571,13 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (b.isCardDead && b.attackerCard != null)
             {
                 Debug.Log("[MatchService] ResolveAgainstChamp -> remove ATTACKER cardId=" + b.attackerCard.GameCardId + " (ownerLocal=" + attackerIsLocal + ")");
-                RemoveCard(b.attackerCard.GameCardId, attackerIsLocal);
+                yield return RemoveCardWithDeathState(b.attackerCard.GameCardId, attackerIsLocal);
             }
 
             if (b.isChampDead)
-                Debug.LogWarning("[MatchService] ResolveAgainstChamp -> Champion DEAD (TODO endgame UI)");
+            {
+                Debug.LogWarning("[MatchService] ResolveAgainstChamp -> Champion DEAD detected (waiting consolidated end-phase sync before showing ending screen)");
+            }
 
             Debug.Log("[MatchService] ResolveAgainstChamp END");
             yield return new WaitForSeconds(0.25f);
@@ -317,6 +601,49 @@ namespace VortexTCG.Scripts.Features.Match.Services
                 OpponentBoardUI.Instance?.OpponentBoardService?.UpdateOpponentCardSnapshot(dto);
         }
 
+        private void ApplyCardSnapshotBySlotIndex(int slotIndex, bool isLocalOwner, int remainingHp)
+        {
+            CardUI card = FindCardBySlotIndex(slotIndex, isLocalOwner);
+            if (card == null)
+            {
+                Debug.LogWarning($"[MatchService] ApplyCardSnapshotBySlotIndex: card not found at slot={slotIndex} owner={(isLocalOwner ? "LOCAL" : "OPPONENT")}");
+                return;
+            }
+
+            card.ApplyDTO(
+                card.cardId,
+                card.cardName,
+                remainingHp,
+                card.attack,
+                card.cost,
+                card.description,
+                card.imageUrl
+            );
+        }
+
+        private CardUI FindCardBySlotIndex(int slotIndex, bool isLocalOwner)
+        {
+            if (isLocalOwner)
+            {
+                EnsureLocalSlots();
+                if (_localSlots != null)
+                {
+                    for (int i = 0; i < _localSlots.Length; i++)
+                    {
+                        CardSlotUI slot = _localSlots[i];
+                        if (slot != null && slot.slotIndex == slotIndex)
+                        {
+                            return slot.CurrentCard;
+                        }
+                    }
+                }
+
+                return null;
+            }
+
+            return OpponentBoardUI.Instance != null ? OpponentBoardUI.Instance.GetCardAtSlotIndex(slotIndex) : null;
+        }
+
 
         private void RemoveCard(int gameCardId, bool isLocalOwner)
         {
@@ -325,7 +652,29 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (isLocalOwner)
                 RemoveLocalCard(gameCardId);
             else
-                OpponentBoardUI.Instance?.OpponentBoardService?.RemoveOpponentCard(gameCardId);
+                RemoveOpponentCard(gameCardId);
+        }
+
+        private IEnumerator RemoveCardWithDeathState(int gameCardId, bool isLocalOwner)
+        {
+            if (gameCardId < 0)
+                yield break;
+
+            CardUI card = isLocalOwner
+                ? FindLocalCard(gameCardId)
+                : OpponentBoardUI.Instance?.FindOpponentCardByGameCardId(gameCardId);
+
+            if (card == null)
+            {
+                RemoveCard(gameCardId, isLocalOwner);
+                yield break;
+            }
+
+            card.SetDamageReceivedState(false);
+            card.SetDeathState(true);
+            yield return new WaitForSeconds(3f);
+
+            RemoveCard(gameCardId, isLocalOwner);
         }
 
         private void UpdateLocalCardSnapshot(GameCardDto dto)
@@ -370,11 +719,30 @@ namespace VortexTCG.Scripts.Features.Match.Services
                       " slot=" + (slot != null ? slot.name : "NULL"));
 
             if (slot != null && slot.CurrentCard == card)
-                slot.CurrentCard = null;
+                slot.SetCurrentCard(null);
 
             Destroy(card.gameObject);
 
             Debug.Log("[MatchService] RemoveLocalCard destroyed id=" + gameCardId);
+        }
+
+        private void RemoveOpponentCard(int gameCardId)
+        {
+            CardUI card = OpponentBoardUI.Instance?.FindOpponentCardByGameCardId(gameCardId);
+            OpponentBoardUI.Instance?.OpponentBoardService?.RemoveOpponentCard(gameCardId);
+
+            if (card == null)
+            {
+                Debug.LogWarning("[MatchService] RemoveOpponentCard: opponent card NOT FOUND id=" + gameCardId);
+                return;
+            }
+
+            CardSlotUI slot = card.GetComponentInParent<CardSlotUI>();
+            if (slot != null && slot.CurrentCard == card)
+                slot.SetCurrentCard(null);
+
+            Destroy(card.gameObject);
+            Debug.Log("[MatchService] RemoveOpponentCard destroyed id=" + gameCardId);
         }
 
 

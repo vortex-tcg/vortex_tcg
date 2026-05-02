@@ -50,7 +50,7 @@ namespace VortexTCG.Scripts.MatchScene.States
         /// </summary>
         public GameCardDto GetPlayerCardAtPosition(int position)
         {
-            return PlayerBoardCards.TryGetValue(position, out var card) ? card : null;
+            return PlayerBoardCards.TryGetValue(position, out GameCardDto card) ? card : null;
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace VortexTCG.Scripts.MatchScene.States
         /// </summary>
         public GameCardDto GetOpponentCardAtPosition(int position)
         {
-            return OpponentBoardCards.TryGetValue(position, out var card) ? card : null;
+            return OpponentBoardCards.TryGetValue(position, out GameCardDto card) ? card : null;
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace VortexTCG.Scripts.MatchScene.States
         /// </summary>
         public bool RemovePlayerCard(int gameCardId)
         {
-            foreach (var kvp in PlayerBoardCards)
+            foreach (KeyValuePair<int, GameCardDto> kvp in PlayerBoardCards)
             {
                 if (kvp.Value.GameCardId == gameCardId)
                 {
@@ -106,7 +106,7 @@ namespace VortexTCG.Scripts.MatchScene.States
         /// </summary>
         public bool RemoveOpponentCard(int gameCardId)
         {
-            foreach (var kvp in OpponentBoardCards)
+            foreach (KeyValuePair<int, GameCardDto> kvp in OpponentBoardCards)
             {
                 if (kvp.Value.GameCardId == gameCardId)
                 {
