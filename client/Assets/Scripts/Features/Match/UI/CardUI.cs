@@ -1,9 +1,11 @@
 ﻿using UnityEngine;
+using UnityEngine.Serialization;
 using TMPro;
 using UnityEngine.UI;
 using VortexTCG.Scripts.DTOs;
 using VortexTCG.Scripts.Features.Match.Events;
 using VortexTCG.Scripts.Features.Match.Services;
+using VortexTCG.Scripts.Features.Match.UI;
 
 namespace VortexTCG.Scripts.MatchScene
 {
@@ -25,6 +27,7 @@ namespace VortexTCG.Scripts.MatchScene
         public TMP_Text costText;
         public TMP_Text atkText;
         public TMP_Text hpText;
+        public TMP_Text currentHpText;
         public TMP_Text descriptionText;
         [SerializeField] private SpriteRenderer costColor;
         [Header("Cost Colors")]
@@ -37,17 +40,25 @@ namespace VortexTCG.Scripts.MatchScene
         [SerializeField] private bool faceDown;
         public bool IsFaceDown => faceDown;
 
-        [Header("Sleepy")]
-        [Tooltip("Optional gameobject to enable when the card is sleepy (first turn)")]
-        [SerializeField] private GameObject sleepyEffect;
         private bool isSleepy;
         public bool IsSleepy => isSleepy;
 
         [Header("Attack Phase")] public TMP_Text attackOrderText;
 
-        [Header("Selection")] [SerializeField] private GameObject AttackState;
+        [Header("State")]
+        [SerializeField] private GameObject AttackState;
         [SerializeField] private GameObject DefenseState;
+        [SerializeField] private GameObject DefendingState;
         [SerializeField] private GameObject AttackOrder;
+        [FormerlySerializedAs("sleepyEffect")]
+        [SerializeField] private GameObject SleepyState;
+
+        [Tooltip("Shown briefly when this card receives damage during end turn resolution")]
+        [SerializeField] private GameObject DamageReceivedState;
+        [Tooltip("Shown briefly before removing the card from board")]
+        [SerializeField] private GameObject DeathState;
+
+        [Header("Selection")]
         [SerializeField] private float selectedScaleMultiplier = 1.08f;
         private bool isSelected;
         private Vector3 selectionBaseScale;
@@ -56,6 +67,9 @@ namespace VortexTCG.Scripts.MatchScene
         void Awake()
         {
             selectionBaseScale = transform.localScale;
+
+            if (currentHpText == null)
+                TryResolveCurrentHpText();
 
             if (costColor == null)
                 TryResolveCostColor();
@@ -78,6 +92,18 @@ namespace VortexTCG.Scripts.MatchScene
             if (AttackOrder != null)
                 AttackOrder.SetActive(false);
 
+            if (DefendingState != null)
+                DefendingState.SetActive(false);
+
+            if (DamageReceivedState != null)
+                DamageReceivedState.SetActive(false);
+
+            if (DeathState != null)
+                DeathState.SetActive(false);
+
+            if (SleepyState != null)
+                SleepyState.SetActive(false);
+
             UpdateCostColor();
 
             // if the sleep manager is currently active (first turn), start sleepy
@@ -85,6 +111,9 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 SetSleepy(true);
             }
+
+            UpdateCurrentHpDisplay();
+            UpdateCurrentHpVisibility();
         }
 
         private void OnValidate()
@@ -92,7 +121,17 @@ namespace VortexTCG.Scripts.MatchScene
             if (costColor == null)
                 TryResolveCostColor();
 
+            if (currentHpText == null)
+                TryResolveCurrentHpText();
+
             UpdateCostColor();
+            UpdateCurrentHpDisplay();
+            UpdateCurrentHpVisibility();
+        }
+
+        private void OnTransformParentChanged()
+        {
+            UpdateCurrentHpVisibility();
         }
 
         void OnMouseEnter()
@@ -134,7 +173,7 @@ namespace VortexTCG.Scripts.MatchScene
 
             MatchEvents.FireCardClicked(this);
             
-            // Only fire card selected if not in DEFENSE phase (to avoid hand errors for board cards)
+
             if (PhaseService.Instance == null || PhaseService.Instance.CurrentPhase != GamePhase.DEFENSE)
             {
                 MatchEvents.FireCardSelected(this);
@@ -159,9 +198,40 @@ namespace VortexTCG.Scripts.MatchScene
             if (nameText != null) nameText.text = cardName;
             if (costText != null) costText.text = cost.ToString();
             if (atkText != null) atkText.text = attack > 0 ? attack.ToString() : "-";
-            if (hpText != null) hpText.text = hp > 0 ? hp.ToString() : "-";
+            if (hpText != null) hpText.text = Mathf.Max(0, hp).ToString();
+            UpdateCurrentHpDisplay();
             if (descriptionText != null) descriptionText.text = description;
             UpdateCostColor();
+            UpdateCurrentHpVisibility();
+        }
+
+        public void RefreshCurrentHpVisibility()
+        {
+            UpdateCurrentHpVisibility();
+        }
+
+        private void UpdateCurrentHpDisplay()
+        {
+            if (currentHpText == null)
+                return;
+
+            currentHpText.text = Mathf.Max(0, hp).ToString();
+        }
+
+        private void UpdateCurrentHpVisibility()
+        {
+            if (currentHpText == null)
+                return;
+
+            CardSlotUI slot = GetComponentInParent<CardSlotUI>();
+            bool isOnPlayerBoard = AttackUI.Instance != null && AttackUI.Instance.IsCardOnP1Board(this);
+            bool isOnOpponentBoard = OpponentBoardUI.Instance != null && OpponentBoardUI.Instance.IsCardOnOpponentBoard(this);
+
+            bool isLikelyBoardByName = slot != null &&
+                                     (slot.name.Contains("BoardSlot") || slot.name.Contains("P1Board") || slot.name.Contains("P2Board"));
+
+            bool isOnBoardSlot = isOnPlayerBoard || isOnOpponentBoard || isLikelyBoardByName;
+            currentHpText.gameObject.SetActive(isOnBoardSlot);
         }
 
         private void UpdateCostColor()
@@ -197,30 +267,26 @@ namespace VortexTCG.Scripts.MatchScene
             }
         }
 
+        private void TryResolveCurrentHpText()
+        {
+            TMP_Text[] texts = GetComponentsInChildren<TMP_Text>(true);
+            for (int i = 0; i < texts.Length; i++)
+            {
+                TMP_Text txt = texts[i];
+                if (txt != null && (txt.name == "CurrentHP" || txt.name == "currentHP" || txt.name == "CurrentHp"))
+                {
+                    currentHpText = txt;
+                    return;
+                }
+            }
+        }
+
         public void ShowAttackOrder(int order)
         {
-            Debug.Log($"[CardUI] ShowAttackOrder called on card '{cardName}' (ID: {cardId}) with order: {order}. AttackOrder is {(AttackOrder != null ? "not null" : "NULL")}, attackOrderText is {(attackOrderText != null ? "not null" : "NULL")}");
-
-            if (AttackOrder != null)
-            {
-                AttackOrder.SetActive(true);
-                Debug.Log($"[CardUI] AttackOrder GameObject activated for card '{cardName}'");
-            }
-            else
-            {
-                Debug.LogWarning($"[CardUI] AttackOrder GameObject is NULL for card '{cardName}'");
-            }
-
             if (attackOrderText != null)
             {
                 attackOrderText.text = order.ToString();
                 attackOrderText.enabled = true;
-                attackOrderText.ForceMeshUpdate();
-                Debug.Log($"[CardUI] AttackOrderText updated to '{order}' for card '{cardName}'");
-            }
-            else
-            {
-                Debug.LogWarning($"[CardUI] attackOrderText is NULL for card '{cardName}'");
             }
 
             if (AttackOrder != null)
@@ -330,6 +396,66 @@ namespace VortexTCG.Scripts.MatchScene
             return DefenseState;
         }
 
+        public void SetDefendingState(bool active)
+        {
+            GameObject state = GetDefendingState();
+            if (state != null)
+                state.SetActive(active);
+        }
+
+        public GameObject GetDefendingState()
+        {
+            if (DefendingState == null)
+                DefendingState = FindOutlineByName("DefendingState");
+
+            return DefendingState;
+        }
+
+        public void SetDamageReceivedState(bool active)
+        {
+            GameObject state = GetDamageReceivedState();
+            if (state != null)
+                state.SetActive(active);
+        }
+
+        public GameObject GetDamageReceivedState()
+        {
+            if (DamageReceivedState == null)
+                DamageReceivedState = FindOutlineByName("DamageReceivedState");
+
+            return DamageReceivedState;
+        }
+
+        public void SetDeathState(bool active)
+        {
+            GameObject state = GetDeathState();
+            if (state != null)
+                state.SetActive(active);
+        }
+
+        public GameObject GetDeathState()
+        {
+            if (DeathState == null)
+                DeathState = FindOutlineByName("DeathState");
+
+            return DeathState;
+        }
+
+        public void SetSleepyState(bool active)
+        {
+            GameObject state = GetSleepyState();
+            if (state != null)
+                state.SetActive(active);
+        }
+
+        public GameObject GetSleepyState()
+        {
+            if (SleepyState == null)
+                SleepyState = FindOutlineByName("SleepyState");
+
+            return SleepyState;
+        }
+
         private GameObject FindOutlineByName(string name)
         {
             Debug.Log($"[CardUI] FindOutlineByName searching for '{name}' in card '{cardName}' (ID: {cardId})");
@@ -363,6 +489,26 @@ namespace VortexTCG.Scripts.MatchScene
         {
             return DefenseState != null && DefenseState.activeSelf;
         }
+
+        public bool IsDefendingStateActive()
+        {
+            return DefendingState != null && DefendingState.activeSelf;
+        }
+
+        public bool IsDamageReceivedStateActive()
+        {
+            return DamageReceivedState != null && DamageReceivedState.activeSelf;
+        }
+
+        public bool IsDeathStateActive()
+        {
+            return DeathState != null && DeathState.activeSelf;
+        }
+
+        public bool IsSleepyStateActive()
+        {
+            return SleepyState != null && SleepyState.activeSelf;
+        }
    
 
         public void SetFaceDown(bool value)
@@ -381,8 +527,7 @@ namespace VortexTCG.Scripts.MatchScene
             if (isSleepy == sleepy) return;
             isSleepy = sleepy;
 
-            if (sleepyEffect != null)
-                sleepyEffect.SetActive(sleepy);
+            SetSleepyState(sleepy);
 
             // optional: disable collider to prevent any interaction
             // Collider col = GetComponent<Collider>();

@@ -35,8 +35,7 @@ namespace VortexTCG.Scripts.MatchScene
             if (PhaseService.Instance != null)
             {
                 PhaseService.Instance.OnEnterDefense += OnEnterDefense;
-                PhaseService.Instance.OnEnterStandBy += OnExitDefense;
-                PhaseService.Instance.OnEnterAttack += OnExitDefense;
+                PhaseService.Instance.OnEnterStandBy += OnEnterStandBy;
             }
 
             defenseLogic.RegisterExistingCardsFromSlots();
@@ -53,8 +52,7 @@ namespace VortexTCG.Scripts.MatchScene
             if (PhaseService.Instance != null)
             {
                 PhaseService.Instance.OnEnterDefense -= OnEnterDefense;
-                PhaseService.Instance.OnEnterStandBy -= OnExitDefense;
-                PhaseService.Instance.OnEnterAttack -= OnExitDefense;
+                PhaseService.Instance.OnEnterStandBy -= OnEnterStandBy;
             }
 
             if (SignalRClient.Instance != null)
@@ -66,10 +64,10 @@ namespace VortexTCG.Scripts.MatchScene
 
         private void OnEnterDefense()
         {
-            defenseLogic.ClearAllDefense();
-            selectedDefender = null;
+            // Defense state must remain visible during the whole Defense/EndTurn flow.
         }
-        private void OnExitDefense()
+
+        private void OnEnterStandBy()
         {
             defenseLogic.ClearAllDefense();
             selectedDefender = null;
@@ -103,10 +101,22 @@ namespace VortexTCG.Scripts.MatchScene
                     return;
                 }
 
-                // Check if card is already defending, toggle off if so
+                if (card.HasAttackedThisPhase)
+                {
+                    Debug.LogWarning($"[DefenseUI] Card '{card.cardName}' is already in attack mode and cannot defend this turn");
+                    return;
+                }
+
+                // If card is already defending, second click toggles defense off.
                 if (card.IsDefenseSelected())
                 {
                     RemoveDefense(card);
+                    return;
+                }
+
+                if (defenseLogic.IsDefenseLocked(card))
+                {
+                    Debug.Log($"[DefenseUI] Card '{card.cardName}' has already defended this turn and cannot be re-selected.");
                     return;
                 }
 
@@ -118,6 +128,12 @@ namespace VortexTCG.Scripts.MatchScene
             if (isOpponentCard && selectedDefender != null)
             {
                 AssignDefense(card);
+                return;
+            }
+
+            if (isOpponentCard && selectedDefender == null)
+            {
+                Debug.Log($"[DefenseUI] Aucun defenseur selectionne: si l'attaque de '{card.cardName}' aboutit, le champion recevra les degats.");
             }
         }
 
@@ -136,9 +152,7 @@ namespace VortexTCG.Scripts.MatchScene
             // remember the defender locally
             selectedDefender = defender;
 
-            // inform service/UI immediately so the player sees a highlight
             Debug.Log($"[DefenseUI] defender '{defender.cardName}' selected for potential defence");
-            defenseLogic.SelectDefender(defender);
         }
 
         private void AssignDefense(CardUI attackingCard)
@@ -147,14 +161,18 @@ namespace VortexTCG.Scripts.MatchScene
                 return;
 
             // Verify opponent card is in attack mode
-            if (!attackingCard.IsSelected || !attackingCard.HasAttackedThisPhase)
+            bool attackerIsInAttackMode = attackingCard.HasAttackedThisPhase || attackingCard.IsAttackingOutlineActive();
+            if (!attackerIsInAttackMode)
             {
                 Debug.LogWarning("[DefenseUI] Cette carte adverse n'est pas en mode attaque");
                 return;
             }
 
-            // Activate DefenseState now that defense is assigned
+            // Activate DefenseState only now that the defense target is chosen.
+            defenseLogic.SelectDefender(selectedDefender);
             selectedDefender.SetDefenseSelected(true);
+
+            Debug.Log($"[DefenseUI] Defense assignee: '{selectedDefender.cardName}' (id={selectedDefender.cardId}) defendra contre '{attackingCard.cardName}' (id={attackingCard.cardId}).");
 
             // Assign defense and send to server
             defenseLogic.SelectDefender(selectedDefender);
@@ -166,7 +184,7 @@ namespace VortexTCG.Scripts.MatchScene
             if (defenseCard == null)
                 return;
 
-            defenseCard.SetDefenseSelected(false);
+            _ = defenseLogic.RemoveDefenseAndSend(defenseCard);
             
             if (selectedDefender == defenseCard)
             {
