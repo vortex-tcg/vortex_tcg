@@ -106,6 +106,82 @@ namespace VortexTCG.Scripts.Features.Collection.Services
             onSuccess?.Invoke(result.data.Cards ?? new List<UserCollectionCardDto>());
         }
 
+        public IEnumerator FetchUserCollectionDto(Action<UserCollectionDto> onSuccess, Action<string> onError)
+        {
+            if (Jwt.I == null)
+            {
+                onError?.Invoke("[CollectionService] JWT indisponible");
+                yield break;
+            }
+
+            yield return ResolveUserId(userId =>
+            {
+                if (!string.IsNullOrWhiteSpace(userId))
+                {
+                    _resolvedUserId = userId;
+                    _hasResolvedUserId = true;
+                }
+            }, onError);
+
+            if (!_hasResolvedUserId || string.IsNullOrWhiteSpace(_resolvedUserId))
+            {
+                onError?.Invoke("[CollectionService] Impossible de recuperer l'ID utilisateur");
+                yield break;
+            }
+
+            AppConfig cfg = ConfigLoader.Load();
+            if (cfg == null || string.IsNullOrWhiteSpace(cfg.baseUrl))
+            {
+                onError?.Invoke("[CollectionService] Config API manquante");
+                yield break;
+            }
+
+            string url = BuildUserCollectionUrl(cfg.baseUrl, _resolvedUserId);
+
+            using UnityWebRequest req = UnityWebRequest.Get(url);
+            Jwt.I.AttachAuthHeader(req);
+
+            yield return req.SendWebRequest();
+
+            if (req.result != UnityWebRequest.Result.Success)
+            {
+                onError?.Invoke($"[CollectionService] Requete echouee : {req.error}");
+                yield break;
+            }
+
+            string json = req.downloadHandler.text;
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                onError?.Invoke("[CollectionService] JSON vide recu");
+                yield break;
+            }
+
+            ResultDTO<UserCollectionDto> result;
+            try
+            {
+                result = JsonConvert.DeserializeObject<ResultDTO<UserCollectionDto>>(json);
+            }
+            catch (Exception ex)
+            {
+                onError?.Invoke($"[CollectionService] Erreur parsing JSON : {ex.Message}");
+                yield break;
+            }
+
+            if (result == null)
+            {
+                onError?.Invoke("[CollectionService] Parsing JSON a renvoye null");
+                yield break;
+            }
+
+            if (!(result.success && result.data != null))
+            {
+                onError?.Invoke($"[CollectionService] Reponse invalide : {result.message}");
+                yield break;
+            }
+
+            onSuccess?.Invoke(result.data);
+        }
+
         private string _resolvedUserId;
         private bool _hasResolvedUserId;
 
