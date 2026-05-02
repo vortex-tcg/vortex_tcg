@@ -7,6 +7,7 @@ public class HomeUI : MonoBehaviour
     [SerializeField] private UIDocument uiDocument;
     [SerializeField] private string searchOpponentButtonName = "PlayButton";
     [SerializeField] private string inviteFriendButtonName = "PlayWithFriendsButton";
+    [SerializeField] private string collectionButtonName = "CollectionButton";
     [SerializeField] private string statusTextName = "StatusText";
     [SerializeField] private string searchingPanelName = "SearchingPanel";
 
@@ -18,6 +19,7 @@ public class HomeUI : MonoBehaviour
 
     private Button searchOpponentButton;
     private Button inviteFriendButton;
+    private Button collectionButton;
     private Label statusText;
     private VisualElement searchingPanel;
 
@@ -50,6 +52,7 @@ public class HomeUI : MonoBehaviour
         VisualElement root = uiDocument.rootVisualElement;
         searchOpponentButton = root.Q<Button>(searchOpponentButtonName);
         inviteFriendButton = root.Q<Button>(inviteFriendButtonName);
+        collectionButton = root.Q<Button>(collectionButtonName);
         statusText = root.Q<Label>(statusTextName);
         searchingPanel = root.Q<VisualElement>(searchingPanelName);
 
@@ -62,6 +65,11 @@ public class HomeUI : MonoBehaviour
             inviteFriendButton.clicked += OnClickInviteFriend;
         else
             Debug.LogWarning($"Bouton '{inviteFriendButtonName}' introuvable dans l'UXML.");
+
+        if (collectionButton != null)
+            collectionButton.clicked += OnClickCollection;
+        else
+            Debug.LogWarning($"Bouton '{collectionButtonName}' introuvable dans l'UXML.");
 
         SetVisible(searchingPanel, false);
     }
@@ -100,6 +108,9 @@ public class HomeUI : MonoBehaviour
         if (inviteFriendButton != null)
             inviteFriendButton.clicked -= OnClickInviteFriend;
 
+        if (collectionButton != null)
+            collectionButton.clicked -= OnClickCollection;
+
         if (service != null)
         {
             service.OnStatusChanged -= HandleStatusChanged;
@@ -129,6 +140,12 @@ public class HomeUI : MonoBehaviour
     private void OnClickInviteFriend()
     {
         Debug.Log("Inviter un ami (non implémenté pour l'instant).");
+    }
+
+    private void OnClickCollection()
+    {
+        Debug.Log("[HomeUI] Ouverture de la collection.");
+        LoadingScreen.Load("CollectionScene", loadMenu: false, unloadMenu: false);
     }
 
     private void HandleStatusChanged(string status)
