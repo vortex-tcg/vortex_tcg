@@ -31,6 +31,11 @@ namespace VortexTCG.Scripts.Features.Collection.UI
         private VisualElement deckDropZone;
         private VisualElement allDecksContainer;
         private VisualElement deckButtonsContainer;
+        private VisualElement deckNameContainer;
+        private Label deckNameLabel;
+        private Button editDeckNameButton;
+        private TextField deckNameTextField;
+        private Button selectedDeckButton;
         private VisualElement selectedDeckCardsContainer;
         private Label cardNameLabel;
         private Label cardLoreLabel;
@@ -88,8 +93,13 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             costPointsLabel = rootVisualElement.Q<Label>("CostPoints");
             allDecksContainer = rootVisualElement.Q<VisualElement>("AllDecks");
             deckButtonsContainer = rootVisualElement.Q<VisualElement>("DeckButtonsContainer");
+            deckNameContainer = rootVisualElement.Q<VisualElement>("DeckNameContainer");
+            deckNameLabel = rootVisualElement.Q<Label>("DeckName");
+            editDeckNameButton = rootVisualElement.Q<Button>("EditDeckName");
             selectedDeckCardsContainer = rootVisualElement.Q<VisualElement>("SelectedCardsContainer");
             deckDropZone = rootVisualElement.Q<VisualElement>("DragAndDropZone");
+
+            InitializeDeckNameEditor();
 
             if (deckDropZone == null)
                 deckDropZone = selectedDeckCardsContainer;
@@ -146,45 +156,77 @@ namespace VortexTCG.Scripts.Features.Collection.UI
         private void DisplayDecks(List<UserCollectionDeckDto> decks)
         {
             if (deckButtonsContainer == null) return;
-            deckButtonsContainer.Clear();
+
+            Dictionary<Guid, Button> existingButtons = deckButtonsContainer
+                .Children()
+                .OfType<Button>()
+                .Where(button => button.userData is Guid)
+                .ToDictionary(button => (Guid)button.userData, button => button);
+
+            bool hasExistingButtons = existingButtons.Count > 0;
+            selectedDeckButton = hasExistingButtons ? selectedDeckButton : null;
 
             if (decks == null || decks.Count == 0)
             {
-                ResetCurrentDeckState();
+                if (!hasExistingButtons)
+                    ResetCurrentDeckState();
+
                 return;
             }
 
-            Button firstButton = null;
+            Button firstCreatedButton = null;
             UserCollectionDeckDto firstDeck = null;
 
             foreach (UserCollectionDeckDto deck in decks)
             {
                 if (deck == null) continue;
 
+                if (existingButtons.TryGetValue(deck.DeckId, out Button existingButton))
+                {
+                    existingButton.text = string.IsNullOrWhiteSpace(deck.DeckName) ? "Deck" : deck.DeckName;
+                    if (firstCreatedButton == null)
+                    {
+                        firstCreatedButton = existingButton;
+                        firstDeck = deck;
+                    }
+
+                    continue;
+                }
+
                 Button btn = new Button();
+                btn.userData = deck.DeckId;
+                btn.name = $"DeckButton_{deck.DeckId}";
                 btn.text = string.IsNullOrWhiteSpace(deck.DeckName) ? "Deck" : deck.DeckName;
+                btn.AddToClassList("vortexButton");
+                btn.style.borderTopWidth = 0;
+                btn.style.borderRightWidth = 0;
+                btn.style.borderBottomWidth = 0;
+                btn.style.borderLeftWidth = 0;
+                btn.style.backgroundColor = new StyleColor(new Color(0f, 0f, 0f, 0f));
                 btn.clicked += () => SelectDeck(deck, btn);
                 deckButtonsContainer.Add(btn);
 
-                if (firstButton == null)
+                if (firstCreatedButton == null)
                 {
-                    firstButton = btn;
+                    firstCreatedButton = btn;
                     firstDeck = deck;
                 }
             }
 
-            if (firstDeck != null && firstButton != null)
+            if (!hasExistingButtons && firstDeck != null && firstCreatedButton != null)
             {
-                SelectDeck(firstDeck, firstButton);
+                SelectDeck(firstDeck, firstCreatedButton);
             }
         }
 
         private void SelectDeck(UserCollectionDeckDto deck, Button selectedButton)
         {
+            CommitDeckNameEditIfNeeded();
             HighlightSelectedDeck(selectedButton);
+            selectedDeckButton = selectedButton;
             currentChampionId = deck.ChampionId;
             currentFactionId = deck.FactionId;
-            currentDeckName = deck.DeckName;
+            SetCurrentDeckName(deck.DeckName);
             StartCoroutine(LoadAndShowDeck(deck.DeckId, deck.DeckName));
         }
 
@@ -211,11 +253,13 @@ namespace VortexTCG.Scripts.Features.Collection.UI
         private void ResetCurrentDeckState()
         {
             currentDeckId = Guid.Empty;
-            currentDeckName = "";
+            SetCurrentDeckName("");
             currentChampionId = Guid.Empty;
             currentFactionId = Guid.Empty;
             currentDeckCards.Clear();
             ClearSelectedDeckCards();
+            selectedDeckButton = null;
+            SetDeckNameEditMode(false);
         }
 
         private IEnumerator LoadAndShowDeck(Guid deckId, string deckName)
@@ -224,7 +268,7 @@ namespace VortexTCG.Scripts.Features.Collection.UI
                 deckService = new VortexTCG.Scripts.Features.Deck.Services.DeckService();
 
             currentDeckId = deckId;
-            currentDeckName = string.IsNullOrWhiteSpace(deckName) ? "Deck" : deckName;
+            SetCurrentDeckName(deckName);
 
             DeckDataDto deckData = null;
             string error = null;
@@ -590,6 +634,143 @@ namespace VortexTCG.Scripts.Features.Collection.UI
                 onSuccess: () => Debug.Log("[CollectionUI] Deck mis a jour"),
                 onError: error => Debug.LogError(error)
             ));
+        }
+
+        private void InitializeDeckNameEditor()
+        {
+            if (deckNameContainer == null || deckNameLabel == null || editDeckNameButton == null)
+                return;
+
+            deckNameContainer.style.display = DisplayStyle.Flex;
+            deckNameContainer.style.alignItems = Align.Center;
+            deckNameContainer.style.justifyContent = Justify.FlexStart;
+
+            // Keep the label compact so the edit button stays next to it
+            deckNameLabel.style.flexGrow = 0f;
+            deckNameLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
+
+            editDeckNameButton.style.flexShrink = 0f;
+            editDeckNameButton.text = string.Empty;
+            editDeckNameButton.tooltip = "Edit deck name";
+            editDeckNameButton.style.marginLeft = 6;
+
+            deckNameTextField = rootVisualElement.Q<TextField>("DeckNameInput");
+            if (deckNameTextField != null)
+            {
+                deckNameTextField.isDelayed = false;
+                deckNameTextField.style.display = DisplayStyle.None;
+                deckNameTextField.style.flexGrow = 1f;
+                deckNameTextField.style.marginRight = 8;
+                deckNameTextField.RegisterCallback<KeyDownEvent>(OnDeckNameInputKeyDown);
+                deckNameTextField.RegisterCallback<BlurEvent>(_ => CommitDeckNameEdit());
+            }
+
+            editDeckNameButton.clicked += ToggleDeckNameEditMode;
+            RefreshDeckNameDisplay();
+        }
+
+        private void ToggleDeckNameEditMode()
+        {
+            if (currentDeckId == Guid.Empty || deckNameLabel == null || deckNameTextField == null)
+                return;
+
+            bool isEditing = deckNameTextField.style.display == DisplayStyle.Flex;
+            if (isEditing)
+            {
+                CommitDeckNameEdit();
+                return;
+            }
+
+            deckNameTextField.value = currentDeckName;
+            SetDeckNameEditMode(true);
+            deckNameTextField.schedule.Execute(() =>
+            {
+                deckNameTextField.Focus();
+                deckNameTextField.SelectAll();
+            });
+        }
+
+        private void OnDeckNameInputKeyDown(KeyDownEvent evt)
+        {
+            if (evt == null)
+                return;
+
+            if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
+            {
+                evt.StopPropagation();
+                CommitDeckNameEdit();
+            }
+            else if (evt.keyCode == KeyCode.Escape)
+            {
+                evt.StopPropagation();
+                CancelDeckNameEdit();
+            }
+        }
+
+        private void CommitDeckNameEdit()
+        {
+            if (deckNameTextField == null)
+                return;
+
+            string newName = deckNameTextField.value?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(newName))
+                newName = "Deck";
+
+            SetCurrentDeckName(newName);
+            SetDeckNameEditMode(false);
+
+            if (currentDeckId != Guid.Empty)
+                PersistDeckChanges();
+        }
+
+        private void CommitDeckNameEditIfNeeded()
+        {
+            if (deckNameTextField == null)
+                return;
+
+            if (deckNameTextField.style.display == DisplayStyle.Flex)
+                CommitDeckNameEdit();
+        }
+
+        private void CancelDeckNameEdit()
+        {
+            if (deckNameTextField != null)
+                deckNameTextField.value = currentDeckName;
+
+            SetDeckNameEditMode(false);
+        }
+
+        private void SetCurrentDeckName(string deckName)
+        {
+            currentDeckName = string.IsNullOrWhiteSpace(deckName) ? "Deck" : deckName;
+            RefreshDeckNameDisplay();
+
+            if (deckNameContainer != null)
+                deckNameContainer.style.display = DisplayStyle.Flex;
+
+            if (selectedDeckButton != null)
+                selectedDeckButton.text = currentDeckName;
+        }
+
+        private void RefreshDeckNameDisplay()
+        {
+            if (deckNameLabel != null)
+                deckNameLabel.text = string.IsNullOrWhiteSpace(currentDeckName) ? "Deck" : currentDeckName;
+
+            if (deckNameTextField != null)
+                deckNameTextField.value = string.IsNullOrWhiteSpace(currentDeckName) ? "Deck" : currentDeckName;
+        }
+
+        private void SetDeckNameEditMode(bool isEditing)
+        {
+            if (deckNameLabel != null)
+                deckNameLabel.style.display = isEditing ? DisplayStyle.None : DisplayStyle.Flex;
+
+            if (deckNameTextField != null)
+                deckNameTextField.style.display = isEditing ? DisplayStyle.Flex : DisplayStyle.None;
+
+            if (editDeckNameButton != null)
+                editDeckNameButton.tooltip = isEditing ? "Save deck name" : "Edit deck name";
         }
 
         private static CardDto CreateDeckPreviewCard(DeckCardDto card)
