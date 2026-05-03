@@ -198,12 +198,15 @@ namespace VortexTCG.Scripts.Features.Collection.UI
                 btn.name = $"DeckButton_{deck.DeckId}";
                 btn.text = string.IsNullOrWhiteSpace(deck.DeckName) ? "Deck" : deck.DeckName;
                 btn.AddToClassList("vortexButton");
+                btn.AddToClassList("interactive");
                 btn.style.borderTopWidth = 0;
                 btn.style.borderRightWidth = 0;
                 btn.style.borderBottomWidth = 0;
                 btn.style.borderLeftWidth = 0;
                 btn.style.backgroundColor = new StyleColor(new Color(0f, 0f, 0f, 0f));
-                btn.clicked += () => SelectDeck(deck, btn);
+
+                var capturedId = deck.DeckId;
+                btn.clicked += () => SelectDeckByButton(capturedId, btn);
                 deckButtonsContainer.Add(btn);
 
                 if (firstCreatedButton == null)
@@ -226,8 +229,22 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             selectedDeckButton = selectedButton;
             currentChampionId = deck.ChampionId;
             currentFactionId = deck.FactionId;
+            Debug.Log($"[DeckUI] SelectDeck deckId={deck.DeckId} deckName='{deck.DeckName}'");
             SetCurrentDeckName(deck.DeckName);
             StartCoroutine(LoadAndShowDeck(deck.DeckId, deck.DeckName));
+        }
+
+        private void SelectDeckByButton(Guid deckId, Button selectedButton)
+        {
+            CommitDeckNameEditIfNeeded();
+            HighlightSelectedDeck(selectedButton);
+            selectedDeckButton = selectedButton;
+            currentChampionId = Guid.Empty;
+            currentFactionId = Guid.Empty;
+            string deckName = selectedButton != null ? selectedButton.text : "Deck";
+            Debug.Log($"[DeckUI] SelectDeckByButton deckId={deckId} deckName='{deckName}'");
+            SetCurrentDeckName(deckName);
+            StartCoroutine(LoadAndShowDeck(deckId, deckName));
         }
 
         private void HighlightSelectedDeck(Button selectedButton)
@@ -268,6 +285,7 @@ namespace VortexTCG.Scripts.Features.Collection.UI
                 deckService = new VortexTCG.Scripts.Features.Deck.Services.DeckService();
 
             currentDeckId = deckId;
+            Debug.Log($"[DeckUI] LoadAndShowDeck deckId={deckId} deckName='{deckName}'");
             SetCurrentDeckName(deckName);
 
             DeckDataDto deckData = null;
@@ -628,10 +646,11 @@ namespace VortexTCG.Scripts.Features.Collection.UI
                 }).ToList()
             };
 
+            Debug.Log($"[DeckUI] PersistDeckChanges sending deckId={currentDeckId} Name='{payload.Name}' Cards={payload.Cards.Count}");
             StartCoroutine(deckService.UpdateDeckAsync(
                 currentDeckId,
                 payload,
-                onSuccess: () => Debug.Log("[CollectionUI] Deck mis a jour"),
+                onSuccess: () => Debug.Log("[DeckUI] Persist succeeded"),
                 onError: error => Debug.LogError(error)
             ));
         }
@@ -643,7 +662,6 @@ namespace VortexTCG.Scripts.Features.Collection.UI
 
             deckNameContainer.style.display = DisplayStyle.Flex;
             deckNameContainer.style.alignItems = Align.Center;
-            deckNameContainer.style.justifyContent = Justify.FlexStart;
 
             // Keep the label compact so the edit button stays next to it
             deckNameLabel.style.flexGrow = 0f;
@@ -715,6 +733,15 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             string newName = deckNameTextField.value?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(newName))
                 newName = "Deck";
+
+            Debug.Log($"[DeckUI] CommitDeckNameEdit newName='{newName}'");
+
+            // If the name didn't actually change, don't persist (avoids duplicate requests from UI blur/updates)
+            if (string.Equals(newName, currentDeckName, StringComparison.Ordinal))
+            {
+                SetDeckNameEditMode(false);
+                return;
+            }
 
             SetCurrentDeckName(newName);
             SetDeckNameEditMode(false);
