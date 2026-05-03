@@ -119,6 +119,55 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &1583687653
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1583687655}
+  - component: {fileID: 1583687654}
+  m_Layer: 0
+  m_Name: CursorManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1583687654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1583687653}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a98bee937a9b7fc4e84c9a699df46da6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 1687906745}
+  normalCursor: {fileID: 2800000, guid: 1ae6e2f3e6b1c4b488fee54f29666ecc, type: 3}
+  normalCursorClicked: {fileID: 2800000, guid: 7db97b6c3a82daf4ca73030626fa5a18, type: 3}
+  pointerCursor: {fileID: 2800000, guid: ef555f55ed04f484686c92ee08e820b2, type: 3}
+  pointerCursorClicked: {fileID: 2800000, guid: f1689b5c514d0d64f950e1614af3aece, type: 3}
+--- !u!4 &1583687655
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1583687653}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 960, y: 540, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1687906744
 GameObject:
   m_ObjectHideFlags: 0
@@ -131,6 +180,8 @@ GameObject:
   - component: {fileID: 1687906745}
   - component: {fileID: 1687906747}
   - component: {fileID: 1687906748}
+  - component: {fileID: 1687906749}
+  - component: {fileID: 1687906750}
   m_Layer: 5
   m_Name: HUD
   m_TagString: Untagged
@@ -186,6 +237,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   uiDocument: {fileID: 1687906745}
   cardTemplate: {fileID: 9197481963319205126, guid: 3a92674ccbbb835448fb48ab94805e2c, type: 3}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
 --- !u!114 &1687906748
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -200,6 +256,44 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   uiDocument: {fileID: 1687906745}
   menuParams: {fileID: 0}
+--- !u!114 &1687906749
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1687906744}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59b7c238a5b2078409e6d4a08bf05864, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 1687906745}
+  buttonName: Add
+  buttonNames: []
+  pressedVisibleDuration: 0.08
+  debugLogs: 0
+  normalBackground: {fileID: 2800000, guid: 6c970697f6483e746966f35f78f0e313, type: 3}
+  pressedBackground: {fileID: 2800000, guid: c9a0d9310be21fc4e8f9f0f23ce4d5d8, type: 3}
+--- !u!114 &1687906750
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1687906744}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59b7c238a5b2078409e6d4a08bf05864, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 1687906745}
+  buttonName: EditDeckName
+  buttonNames: []
+  pressedVisibleDuration: 0.08
+  debugLogs: 0
+  normalBackground: {fileID: 2800000, guid: 8c1f018e1c551f24bb66bebcbce55bda, type: 3}
+  pressedBackground: {fileID: 2800000, guid: 36bf8f87658f73c4098f1458a061ca5c, type: 3}
 --- !u!1 &1762338876
 GameObject:
   m_ObjectHideFlags: 0
@@ -367,3 +461,4 @@ SceneRoots:
   - {fileID: 1687906746}
   - {fileID: 1762338879}
   - {fileID: 1885378933}
+  - {fileID: 1583687655}

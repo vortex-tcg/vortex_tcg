@@ -19,6 +19,8 @@ namespace VortexTCG.Api.Collection.DTOs
     public class UserCollectionDeckDto
     {
         public required Guid DeckId { get; set; }
+        public Guid ChampionId { get; set; }
+        public Guid FactionId { get; set; }
 
         public string DeckName { get; set; } = "";
         
@@ -33,6 +35,7 @@ namespace VortexTCG.Api.Collection.DTOs
 
     public class UserCollectionCardDto
     {
+        public Guid CollectionCardId { get; set; }
         public CardDto Card { get; set; }
         public List<UserCollectionCardOwnDto> OwnData { get; set; } = new List<UserCollectionCardOwnDto>();
     }

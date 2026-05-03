@@ -40,4 +40,20 @@ namespace VortexTCG.Scripts.DTOs
         public string Picture { get; set; } = "";
         public Guid FactionId { get; set; }
     }
+
+    [Serializable]
+    public class UpdateDeckDto
+    {
+        public string Name { get; set; } = "";
+        public Guid ChampionId { get; set; }
+        public Guid FactionId { get; set; }
+        public List<UpdateDeckCardDto> Cards { get; set; } = new List<UpdateDeckCardDto>();
+    }
+
+    [Serializable]
+    public class UpdateDeckCardDto
+    {
+        public Guid CollectionCardId { get; set; }
+        public int Quantity { get; set; }
+    }
 }

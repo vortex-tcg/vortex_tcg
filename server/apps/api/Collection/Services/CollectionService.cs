@@ -4,6 +4,7 @@ using VortexTCG.Api.Collection.Providers;
 using VortexTCG.Common.DTO;
 using VortexTCG.DataAccess.Models;
 using CollectionModel = VortexTCG.DataAccess.Models.Collection;
+using DeckModel = VortexTCG.DataAccess.Models.Deck;
 
 namespace VortexTCG.Api.Collection.Services
 {
@@ -104,6 +105,7 @@ namespace VortexTCG.Api.Collection.Services
                 .Where(cc => cc.Card != null)
                 .Select(cc => new UserCollectionCardDto
                 {
+                    CollectionCardId = cc.Id,
                     Card = new CardDto
                     {
                         Id = cc.Card.Id,
@@ -142,14 +144,16 @@ namespace VortexTCG.Api.Collection.Services
             // Try to populate user's decks
             try
             {
-                List<(Guid DeckId, string Label, string ChampionPicture)> decks = await _deckProvider.GetDecksByUserIdAsync(id);
+                List<DeckModel> decks = await _deckProvider.GetDecksByUserIdAsync(id);
                 if (decks != null && decks.Count > 0)
                 {
                     dto.Decks = decks.Select(d => new UserCollectionDeckDto
                     {
-                        DeckId = d.DeckId,
+                        DeckId = d.Id,
+                        ChampionId = d.ChampionId,
+                        FactionId = d.FactionId,
                         DeckName = string.IsNullOrWhiteSpace(d.Label) ? "Deck" : d.Label,
-                        ChampionImage = d.ChampionPicture ?? string.Empty
+                        ChampionImage = d.Champion?.Picture ?? string.Empty
                     }).ToList();
                 }
             }
