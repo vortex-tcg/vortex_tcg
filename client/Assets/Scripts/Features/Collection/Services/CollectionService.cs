@@ -8,7 +8,7 @@ using VortexTCG.Scripts.DTOs;
 
 namespace VortexTCG.Scripts.Features.Collection.Services
 {
-    public class CollectionService
+    public partial class CollectionService
     {
         private const string NameIdentifierClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier";
         private static readonly string[] FallbackUserIdClaims = { "id", "userId", "sub" };
@@ -181,7 +181,7 @@ namespace VortexTCG.Scripts.Features.Collection.Services
 
             onSuccess?.Invoke(result.data);
         }
-
+        
         private string _resolvedUserId;
         private bool _hasResolvedUserId;
 

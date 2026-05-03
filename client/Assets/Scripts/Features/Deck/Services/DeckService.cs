@@ -77,5 +77,47 @@ namespace VortexTCG.Scripts.Features.Deck.Services
 
             onSuccess?.Invoke(result.data);
         }
+
+        public IEnumerator UpdateDeckAsync(Guid deckId, UpdateDeckDto deckUpdate, Action onSuccess, Action<string> onError)
+        {
+            if (deckUpdate == null)
+            {
+                onError?.Invoke("[DeckService] Payload de mise a jour manquant");
+                yield break;
+            }
+
+            AppConfig cfg = ConfigLoader.Load();
+            if (cfg == null || string.IsNullOrWhiteSpace(cfg.baseUrl))
+            {
+                onError?.Invoke("[DeckService] Config API manquante");
+                yield break;
+            }
+
+            string apiBase = cfg.baseUrl.TrimEnd('/');
+            string url = apiBase.EndsWith("/api", StringComparison.OrdinalIgnoreCase)
+                ? $"{apiBase}/deck/{deckId}"
+                : $"{apiBase}/api/deck/{deckId}";
+
+            string payload = JsonConvert.SerializeObject(deckUpdate);
+            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(payload);
+
+            using UnityWebRequest req = new UnityWebRequest(url, "PUT");
+            req.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "application/json");
+
+            if (Jwt.I != null)
+                Jwt.I.AttachAuthHeader(req);
+
+            yield return req.SendWebRequest();
+
+            if (req.result != UnityWebRequest.Result.Success)
+            {
+                onError?.Invoke($"[DeckService] Mise a jour du deck echouee : {req.error}");
+                yield break;
+            }
+
+            onSuccess?.Invoke();
+        }
     }
 }

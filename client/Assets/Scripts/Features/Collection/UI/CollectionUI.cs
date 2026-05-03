@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 using VortexTCG.Scripts.DTOs;
@@ -8,7 +9,7 @@ using VortexTCG.Scripts.Features.Collection.Services;
 
 namespace VortexTCG.Scripts.Features.Collection.UI
 {
-    public class CollectionUI : MonoBehaviour
+    public partial class CollectionUI : MonoBehaviour
     {
         [Header("UI")]
         [SerializeField] private UIDocument uiDocument;
@@ -23,11 +24,18 @@ namespace VortexTCG.Scripts.Features.Collection.UI
 
         private ScrollView cardsScrollView;
         private VisualElement cardsContainer;
+        private VisualElement rootVisualElement;
         private VisualElement cardInformationsPreview;
         private VisualElement cardIllustration;
         private VisualElement costPointsContainer;
+        private VisualElement deckDropZone;
         private VisualElement allDecksContainer;
         private VisualElement deckButtonsContainer;
+        private VisualElement deckNameContainer;
+        private Label deckNameLabel;
+        private Button editDeckNameButton;
+        private TextField deckNameTextField;
+        private Button selectedDeckButton;
         private VisualElement selectedDeckCardsContainer;
         private Label cardNameLabel;
         private Label cardLoreLabel;
@@ -35,6 +43,31 @@ namespace VortexTCG.Scripts.Features.Collection.UI
         private Label healthPointsLabel;
         private Label costPointsLabel;
         private CollectionService collectionService;
+        private VortexTCG.Scripts.Features.Deck.Services.DeckService deckService;
+
+        private Guid currentDeckId = Guid.Empty;
+        private string currentDeckName = "";
+        private Guid currentChampionId = Guid.Empty;
+        private Guid currentFactionId = Guid.Empty;
+        private List<DeckCardDto> currentDeckCards = new List<DeckCardDto>();
+
+        private enum DragSourceType
+        {
+            None,
+            Collection,
+            Deck
+        }
+
+        private DragSourceType activeDragSource = DragSourceType.None;
+        private CardDto draggedPreviewCard;
+        private UserCollectionCardDto draggedCollectionCard;
+        private DeckCardDto draggedDeckCard;
+        private VisualElement draggedCardSource;
+        private VisualElement draggedCardGhost;
+        private Vector2 dragStartPosition;
+        private int activeDragPointerId = -1;
+        private bool isDraggingCard;
+        private bool isDeckDropZoneHighlighted;
 
         private void OnEnable()
         {
@@ -47,20 +80,29 @@ namespace VortexTCG.Scripts.Features.Collection.UI
                 return;
             }
 
-            VisualElement root = uiDocument.rootVisualElement;
-            cardsScrollView = root.Q<ScrollView>("CardsScrollContainer");
-            cardsContainer = root.Q<VisualElement>("CardsContainer");
-            cardInformationsPreview = root.Q<VisualElement>("CardInformationsPreview");
-            cardIllustration = root.Q<VisualElement>("Illustration");
-            costPointsContainer = root.Q<VisualElement>("CardCostPoints");
-            cardNameLabel = root.Q<Label>("CardName");
-            cardLoreLabel = root.Q<Label>("CardLore");
-            attackPointsLabel = root.Q<Label>("ATKPoints");
-            healthPointsLabel = root.Q<Label>("HPPoints");
-            costPointsLabel = root.Q<Label>("CostPoints");
-            allDecksContainer = root.Q<VisualElement>("AllDecks");
-            deckButtonsContainer = root.Q<VisualElement>("DeckButtonsContainer");
-            selectedDeckCardsContainer = root.Q<VisualElement>("SelectedCardsContainer");
+            rootVisualElement = uiDocument.rootVisualElement;
+            cardsScrollView = rootVisualElement.Q<ScrollView>("CardsScrollContainer");
+            cardsContainer = rootVisualElement.Q<VisualElement>("CardsContainer");
+            cardInformationsPreview = rootVisualElement.Q<VisualElement>("CardInformationsPreview");
+            cardIllustration = rootVisualElement.Q<VisualElement>("Illustration");
+            costPointsContainer = rootVisualElement.Q<VisualElement>("CardCostPoints");
+            cardNameLabel = rootVisualElement.Q<Label>("CardName");
+            cardLoreLabel = rootVisualElement.Q<Label>("CardLore");
+            attackPointsLabel = rootVisualElement.Q<Label>("ATKPoints");
+            healthPointsLabel = rootVisualElement.Q<Label>("HPPoints");
+            costPointsLabel = rootVisualElement.Q<Label>("CostPoints");
+            allDecksContainer = rootVisualElement.Q<VisualElement>("AllDecks");
+            deckButtonsContainer = rootVisualElement.Q<VisualElement>("DeckButtonsContainer");
+            deckNameContainer = rootVisualElement.Q<VisualElement>("DeckNameContainer");
+            deckNameLabel = rootVisualElement.Q<Label>("DeckName");
+            editDeckNameButton = rootVisualElement.Q<Button>("EditDeckName");
+            selectedDeckCardsContainer = rootVisualElement.Q<VisualElement>("SelectedCardsContainer");
+            deckDropZone = rootVisualElement.Q<VisualElement>("DragAndDropZone");
+
+            InitializeDeckNameEditor();
+
+            if (deckDropZone == null)
+                deckDropZone = selectedDeckCardsContainer;
 
             if (cardsScrollView != null)
             {
@@ -87,12 +129,10 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             HideCardPreview();
 
             collectionService ??= new CollectionService();
-            _deckService ??= new VortexTCG.Scripts.Features.Deck.Services.DeckService();
+            deckService ??= new VortexTCG.Scripts.Features.Deck.Services.DeckService();
             StartCoroutine(LoadUserCollection());
             StartCoroutine(LoadUserCollectionAndDecks());
         }
-
-        private VortexTCG.Scripts.Features.Deck.Services.DeckService _deckService;
 
         private IEnumerator LoadUserCollectionAndDecks()
         {
@@ -111,118 +151,6 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             }
 
             DisplayDecks(decks ?? new List<UserCollectionDeckDto>());
-        }
-
-        private void DisplayDecks(List<UserCollectionDeckDto> decks)
-        {
-            if (deckButtonsContainer == null) return;
-            deckButtonsContainer.Clear();
-
-            if (decks == null || decks.Count == 0)
-            {
-                ClearSelectedDeckCards();
-                return;
-            }
-
-            Button firstButton = null;
-            UserCollectionDeckDto firstDeck = null;
-
-            foreach (UserCollectionDeckDto deck in decks)
-            {
-                if (deck == null) continue;
-
-                Button btn = new Button();
-                btn.text = string.IsNullOrWhiteSpace(deck.DeckName) ? "Deck" : deck.DeckName;
-                btn.clicked += () => SelectDeck(deck, btn);
-                deckButtonsContainer.Add(btn);
-
-                if (firstButton == null)
-                {
-                    firstButton = btn;
-                    firstDeck = deck;
-                }
-            }
-
-            if (firstDeck != null && firstButton != null)
-            {
-                SelectDeck(firstDeck, firstButton);
-            }
-        }
-
-        private void SelectDeck(UserCollectionDeckDto deck, Button selectedButton)
-        {
-            HighlightSelectedDeck(selectedButton);
-            StartCoroutine(LoadAndShowDeck(deck.DeckId));
-        }
-
-        private void HighlightSelectedDeck(Button selectedButton)
-        {
-            if (deckButtonsContainer == null) return;
-
-            foreach (VisualElement child in deckButtonsContainer.Children())
-            {
-                if (child is Button button)
-                    button.RemoveFromClassList("deck-button-selected");
-            }
-
-            if (selectedButton != null)
-                selectedButton.AddToClassList("deck-button-selected");
-        }
-
-        private void ClearSelectedDeckCards()
-        {
-            if (selectedDeckCardsContainer != null)
-                selectedDeckCardsContainer.Clear();
-        }
-
-        private IEnumerator LoadAndShowDeck(Guid deckId)
-        {
-            if (_deckService == null)
-                _deckService = new VortexTCG.Scripts.Features.Deck.Services.DeckService();
-
-            DeckDataDto deckData = null;
-            string error = null;
-
-            yield return _deckService.FetchDeckData(deckId, d => deckData = d, e => error = e);
-
-            if (!string.IsNullOrWhiteSpace(error))
-            {
-                Debug.LogError(error);
-                yield break;
-            }
-
-            ShowSelectedDeckCards(deckData?.Cards ?? new List<DeckCardDto>());
-        }
-
-        private void ShowSelectedDeckCards(List<DeckCardDto> cards)
-        {
-            if (selectedDeckCardsContainer == null) return;
-            selectedDeckCardsContainer.Clear();
-
-            foreach (DeckCardDto c in cards)
-            {
-                if (c == null) continue;
-
-                for (int i = 0; i < Math.Max(c.Quantity, 1); i++)
-                {
-                    VisualElement cardElement = cardTemplate.CloneTree();
-                    CardDto previewCard = new CardDto
-                    {
-                        Name = c.Name,
-                        Attack = c.Attack ?? 0,
-                        Hp = c.Hp ?? 0,
-                        Cost = c.Cost,
-                        Description = c.Description,
-                        Picture = c.Picture
-                    };
-
-                    BindCardVisual(cardElement, previewCard);
-                    cardElement.RegisterCallback<MouseEnterEvent>(_ => ShowCardPreview(previewCard));
-                    cardElement.RegisterCallback<MouseLeaveEvent>(_ => HideCardPreview());
-
-                    selectedDeckCardsContainer.Add(cardElement);
-                }
-            }
         }
 
         private IEnumerator LoadUserCollection()
@@ -298,12 +226,178 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             cardElement.style.alignSelf = Align.FlexStart;
             cardElement.style.marginBottom = 10;
             BindCardVisual(cardElement, cardData.Card);
+            RegisterCollectionCardDrag(cardElement, cardData);
 
             cardElement.RegisterCallback<MouseEnterEvent>(_ => ShowCardPreview(cardData.Card));
             cardElement.RegisterCallback<MouseLeaveEvent>(_ => HideCardPreview());
 
             cardsContainer.Add(cardElement);
         }
+
+        private void RegisterCollectionCardDrag(VisualElement cardElement, UserCollectionCardDto cardData)
+        {
+            if (cardElement == null || cardData?.Card == null)
+                return;
+
+            cardElement.RegisterCallback<PointerDownEvent>(evt => BeginCardDrag(evt, DragSourceType.Collection, cardElement, cardData.Card, cardData.CollectionCardId, null), TrickleDown.TrickleDown);
+            cardElement.RegisterCallback<PointerMoveEvent>(OnCardDragMove, TrickleDown.TrickleDown);
+            cardElement.RegisterCallback<PointerUpEvent>(OnCardDragEnd, TrickleDown.TrickleDown);
+            cardElement.RegisterCallback<PointerCancelEvent>(OnCardDragCancel, TrickleDown.TrickleDown);
+        }
+
+        private void RegisterDeckCardDrag(VisualElement cardElement, DeckCardDto deckCard, CardDto previewCard)
+        {
+            if (cardElement == null || deckCard == null || previewCard == null)
+                return;
+
+            cardElement.RegisterCallback<PointerDownEvent>(evt => BeginCardDrag(evt, DragSourceType.Deck, cardElement, previewCard, deckCard.CollectionCardId, deckCard), TrickleDown.TrickleDown);
+            cardElement.RegisterCallback<PointerMoveEvent>(OnCardDragMove, TrickleDown.TrickleDown);
+            cardElement.RegisterCallback<PointerUpEvent>(OnCardDragEnd, TrickleDown.TrickleDown);
+            cardElement.RegisterCallback<PointerCancelEvent>(OnCardDragCancel, TrickleDown.TrickleDown);
+        }
+
+        private void BeginCardDrag(PointerDownEvent evt, DragSourceType sourceType, VisualElement sourceElement, CardDto previewCard, Guid collectionCardId, DeckCardDto deckCard)
+        {
+            if (evt == null || sourceElement == null || previewCard == null || evt.button != 0)
+                return;
+
+            CancelCardDrag(false);
+
+            activeDragSource = sourceType;
+            draggedPreviewCard = previewCard;
+            draggedCollectionCard = sourceType == DragSourceType.Collection
+                ? new UserCollectionCardDto { CollectionCardId = collectionCardId, Card = previewCard }
+                : null;
+            draggedDeckCard = deckCard;
+            draggedCardSource = sourceElement;
+            dragStartPosition = evt.position;
+            activeDragPointerId = evt.pointerId;
+            isDraggingCard = false;
+
+            draggedCardSource.CapturePointer(evt.pointerId);
+        }
+
+        private void OnCardDragMove(PointerMoveEvent evt)
+        {
+            if (draggedPreviewCard == null || draggedCardSource == null || evt.pointerId != activeDragPointerId)
+                return;
+
+            if (!isDraggingCard)
+            {
+                if (Vector2.Distance(evt.position, dragStartPosition) < 6f)
+                    return;
+
+                StartCardDragGhost();
+                isDraggingCard = true;
+            }
+
+            UpdateCardDragGhost(evt.position);
+            SetDeckDropZoneHighlight(IsPointerOverDeckDropZone(evt.position));
+        }
+
+        private void OnCardDragEnd(PointerUpEvent evt)
+        {
+            if (draggedPreviewCard == null || draggedCardSource == null || evt.pointerId != activeDragPointerId)
+                return;
+
+            if (isDraggingCard)
+            {
+                bool isOverDeckZone = IsPointerOverDeckDropZone(evt.position);
+
+                if (isOverDeckZone && activeDragSource == DragSourceType.Collection)
+                {
+                    AddCardToSelectedDeck(draggedCollectionCard);
+                }
+                else if (!isOverDeckZone && activeDragSource == DragSourceType.Deck)
+                {
+                    RemoveCardFromSelectedDeck(draggedDeckCard);
+                }
+            }
+
+            CancelCardDrag(true);
+        }
+
+        private void OnCardDragCancel(PointerCancelEvent evt)
+        {
+            if (evt == null || evt.pointerId != activeDragPointerId)
+                return;
+
+            CancelCardDrag(true);
+        }
+
+        private void StartCardDragGhost()
+        {
+            if (rootVisualElement == null || draggedCardSource == null || draggedPreviewCard == null)
+                return;
+
+            if (draggedCardGhost != null)
+                draggedCardGhost.RemoveFromHierarchy();
+
+            draggedCardGhost = cardTemplate.CloneTree();
+            draggedCardGhost.pickingMode = PickingMode.Ignore;
+            draggedCardGhost.style.position = Position.Absolute;
+            draggedCardGhost.style.opacity = 0.85f;
+            draggedCardGhost.style.width = draggedCardSource.resolvedStyle.width;
+            draggedCardGhost.style.height = draggedCardSource.resolvedStyle.height;
+            draggedCardGhost.style.left = dragStartPosition.x + 16f;
+            draggedCardGhost.style.top = dragStartPosition.y + 16f;
+
+            BindCardVisual(draggedCardGhost, draggedPreviewCard);
+            rootVisualElement.Add(draggedCardGhost);
+        }
+
+        private void UpdateCardDragGhost(Vector2 panelPosition)
+        {
+            if (draggedCardGhost == null)
+                return;
+
+            draggedCardGhost.style.left = panelPosition.x + 16f;
+            draggedCardGhost.style.top = panelPosition.y + 16f;
+        }
+
+        private void SetDeckDropZoneHighlight(bool highlighted)
+        {
+            if (deckDropZone == null || isDeckDropZoneHighlighted == highlighted)
+                return;
+
+            isDeckDropZoneHighlighted = highlighted;
+            deckDropZone.style.backgroundColor = highlighted
+                ? new Color(0.92f, 0.96f, 1f, 0.85f)
+                : Color.white;
+        }
+
+        private bool IsPointerOverDeckDropZone(Vector2 panelPosition)
+        {
+            if (deckDropZone == null || rootVisualElement?.panel == null)
+                return false;
+
+            return deckDropZone.worldBound.Contains(panelPosition);
+        }
+
+        private void CancelCardDrag(bool resetHighlight)
+        {
+            if (draggedCardSource != null && activeDragPointerId >= 0)
+                draggedCardSource.ReleasePointer(activeDragPointerId);
+
+            activeDragSource = DragSourceType.None;
+            draggedPreviewCard = null;
+            draggedCollectionCard = null;
+            draggedDeckCard = null;
+            draggedCardSource = null;
+            activeDragPointerId = -1;
+            isDraggingCard = false;
+
+            if (draggedCardGhost != null)
+            {
+                draggedCardGhost.RemoveFromHierarchy();
+                draggedCardGhost = null;
+            }
+
+            if (resetHighlight)
+                SetDeckDropZoneHighlight(false);
+        }
+
+
 
         private void BindCardVisual(VisualElement cardElement, CardDto card)
         {
