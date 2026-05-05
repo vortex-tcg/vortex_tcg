@@ -73,6 +73,75 @@ namespace VortexTCG.Tests.Api.Deck.Providers
         }
 
         [Fact]
+        public async Task GetByIdAsync_ReturnsNull_WhenNotFound()
+        {
+            using VortexDbContext db = CreateDb();
+            DeckProvider provider = new DeckProvider(db);
+
+            DeckModel? result = await provider.GetByIdAsync(Guid.NewGuid());
+
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetByIdAsync_ReturnsDeck_WhenFound()
+        {
+            using VortexDbContext db = CreateDb();
+
+            DeckModel deck = new DeckModel { Id = Guid.NewGuid(), Label = "Test", ChampionId = Guid.NewGuid(), CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            db.Decks.Add(deck);
+            await db.SaveChangesAsync();
+
+            DeckProvider provider = new DeckProvider(db);
+            DeckModel? result = await provider.GetByIdAsync(deck.Id);
+
+            Assert.NotNull(result);
+            Assert.Equal(deck.Id, result!.Id);
+            Assert.Equal("Test", result.Label);
+        }
+
+        [Fact]
+        public async Task AddAsync_PersistsDeck_AndReturnsIt()
+        {
+            using VortexDbContext db = CreateDb();
+            DeckProvider provider = new DeckProvider(db);
+
+            DeckModel deck = new DeckModel { Id = Guid.NewGuid(), Label = "New Deck", UserId = Guid.NewGuid(), ChampionId = Guid.NewGuid(), FactionId = Guid.NewGuid(), CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+
+            DeckModel result = await provider.AddAsync(deck);
+
+            Assert.Equal(deck.Id, result.Id);
+            Assert.NotNull(await db.Decks.FindAsync(deck.Id));
+        }
+
+        [Fact]
+        public async Task DeleteAsync_ReturnsFalse_WhenNotFound()
+        {
+            using VortexDbContext db = CreateDb();
+            DeckProvider provider = new DeckProvider(db);
+
+            bool result = await provider.DeleteAsync(Guid.NewGuid());
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_ReturnsTrue_AndRemovesDeck()
+        {
+            using VortexDbContext db = CreateDb();
+
+            DeckModel deck = new DeckModel { Id = Guid.NewGuid(), Label = "ToDelete", ChampionId = Guid.NewGuid(), CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            db.Decks.Add(deck);
+            await db.SaveChangesAsync();
+
+            DeckProvider provider = new DeckProvider(db);
+            bool result = await provider.DeleteAsync(deck.Id);
+
+            Assert.True(result);
+            Assert.Null(await db.Decks.FindAsync(deck.Id));
+        }
+
+        [Fact]
         public async Task GetClassRowsByCardIdsAsync_ReturnsEmpty_WhenNoMatch()
         {
             using VortexDbContext db = CreateDb();

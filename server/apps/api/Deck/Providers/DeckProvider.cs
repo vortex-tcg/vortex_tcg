@@ -62,6 +62,26 @@ namespace VortexTCG.Api.Deck.Providers
             return deck;
         }
 
+        public async Task<DeckModel?> GetByIdAsync(Guid deckId)
+            => await _db.Decks.AsNoTracking().FirstOrDefaultAsync(d => d.Id == deckId);
+
+        public async Task<DeckModel> AddAsync(DeckModel deck)
+        {
+            await _db.Decks.AddAsync(deck);
+            await _db.SaveChangesAsync();
+            return deck;
+        }
+
+        public async Task<bool> DeleteAsync(Guid deckId)
+        {
+            DeckModel? deck = await _db.Decks.FindAsync(deckId);
+            if (deck == null) return false;
+
+            _db.Decks.Remove(deck);
+            await _db.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<DeckModel?> GetDeckWithCardsAndChampionAsync(Guid deckId)
         {
             return await _db.Decks
