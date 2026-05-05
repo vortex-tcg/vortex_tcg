@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using VortexTCG.Api.Deck.DTOs;
 using VortexTCG.Api.Deck.Providers;
 using VortexTCG.Api.Deck.Services;
@@ -80,6 +81,110 @@ namespace VortexTCG.Tests.Api.Deck.Services
             Assert.Single(result.data!.Cards);
             Assert.Equal("Sword", result.data.Cards[0].Name);
             Assert.Equal("Hero", result.data.Champion.Name);
+        }
+
+        [Fact]
+        public async Task CreateAsync_Returns400_WhenLabelEmpty()
+        {
+            using VortexDbContext db = CreateDb();
+            DeckService service = CreateService(db);
+
+            ResultDTO<DeckResponseDto> result = await service.CreateAsync(new CreateDeckDto { Label = "", UserId = Guid.NewGuid(), ChampionId = Guid.NewGuid() });
+
+            Assert.False(result.success);
+            Assert.Equal(400, result.statusCode);
+            Assert.Equal("Label requis", result.message);
+        }
+
+        [Fact]
+        public async Task CreateAsync_Returns400_WhenUserIdEmpty()
+        {
+            using VortexDbContext db = CreateDb();
+            DeckService service = CreateService(db);
+
+            ResultDTO<DeckResponseDto> result = await service.CreateAsync(new CreateDeckDto { Label = "My Deck", UserId = Guid.Empty, ChampionId = Guid.NewGuid() });
+
+            Assert.False(result.success);
+            Assert.Equal(400, result.statusCode);
+            Assert.Equal("UserId requis", result.message);
+        }
+
+        [Fact]
+        public async Task CreateAsync_Returns400_WhenChampionIdEmpty()
+        {
+            using VortexDbContext db = CreateDb();
+            DeckService service = CreateService(db);
+
+            ResultDTO<DeckResponseDto> result = await service.CreateAsync(new CreateDeckDto { Label = "My Deck", UserId = Guid.NewGuid(), ChampionId = Guid.Empty });
+
+            Assert.False(result.success);
+            Assert.Equal(400, result.statusCode);
+            Assert.Equal("ChampionId requis", result.message);
+        }
+
+        [Fact]
+        public async Task CreateAsync_Returns201_AndPersistsDeck_WhenValid()
+        {
+            using VortexDbContext db = CreateDb();
+            DeckService service = CreateService(db);
+
+            Guid userId = Guid.NewGuid();
+            Guid championId = Guid.NewGuid();
+            Guid factionId = Guid.NewGuid();
+
+            ResultDTO<DeckResponseDto> result = await service.CreateAsync(new CreateDeckDto
+            {
+                Label = "Hero Deck",
+                UserId = userId,
+                ChampionId = championId,
+                FactionId = factionId
+            });
+
+            Assert.True(result.success);
+            Assert.Equal(201, result.statusCode);
+            Assert.NotNull(result.data);
+            Assert.Equal("Hero Deck", result.data!.Label);
+            Assert.Equal(userId, result.data.UserId);
+            Assert.Equal(championId, result.data.ChampionId);
+            Assert.Equal(factionId, result.data.FactionId);
+            Assert.NotEqual(Guid.Empty, result.data.Id);
+
+            bool persisted = await db.Decks.AnyAsync(d => d.Id == result.data.Id);
+            Assert.True(persisted);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_Returns404_WhenDeckNotFound()
+        {
+            using VortexDbContext db = CreateDb();
+            DeckService service = CreateService(db);
+
+            ResultDTO<bool> result = await service.DeleteAsync(Guid.NewGuid());
+
+            Assert.False(result.success);
+            Assert.Equal(404, result.statusCode);
+            Assert.Equal("Deck non trouvé", result.message);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_Returns204_AndRemovesDeck_WhenFound()
+        {
+            using VortexDbContext db = CreateDb();
+
+            DeckModel deck = new DeckModel { Id = Guid.NewGuid(), Label = "To Delete", ChampionId = Guid.NewGuid(), CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            db.Decks.Add(deck);
+            await db.SaveChangesAsync();
+
+            DeckService service = CreateService(db);
+
+            ResultDTO<bool> result = await service.DeleteAsync(deck.Id);
+
+            Assert.True(result.success);
+            Assert.Equal(204, result.statusCode);
+            Assert.True(result.data);
+
+            bool stillExists = await db.Decks.AnyAsync(d => d.Id == deck.Id);
+            Assert.False(stillExists);
         }
 
         [Fact]

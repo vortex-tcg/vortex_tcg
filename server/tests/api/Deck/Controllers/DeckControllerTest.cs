@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using VortexTCG.Api.Deck.Controllers;
 using VortexTCG.Api.Deck.DTOs;
 using VortexTCG.Api.Deck.Providers;
@@ -55,6 +56,91 @@ namespace VortexTCG.Tests.Api.Deck.Controllers
             ResultDTO<DeckDataDto> payload = Assert.IsType<ResultDTO<DeckDataDto>>(notFound.Value);
             Assert.False(payload.success);
             Assert.Equal(404, payload.statusCode);
+        }
+
+        [Fact]
+        public async Task CreateDeck_Returns400_WhenLabelEmpty()
+        {
+            using VortexDbContext db = CreateDb();
+            DeckController controller = CreateController(db);
+
+            IActionResult result = await controller.CreateDeck(new CreateDeckDto { Label = "", UserId = Guid.NewGuid(), ChampionId = Guid.NewGuid() });
+
+            ObjectResult response = Assert.IsType<ObjectResult>(result);
+            ResultDTO<DeckResponseDto> payload = Assert.IsType<ResultDTO<DeckResponseDto>>(response.Value);
+            Assert.False(payload.success);
+            Assert.Equal(400, payload.statusCode);
+        }
+
+        [Fact]
+        public async Task CreateDeck_Returns400_WhenUserIdEmpty()
+        {
+            using VortexDbContext db = CreateDb();
+            DeckController controller = CreateController(db);
+
+            IActionResult result = await controller.CreateDeck(new CreateDeckDto { Label = "Deck", UserId = Guid.Empty, ChampionId = Guid.NewGuid() });
+
+            ObjectResult response = Assert.IsType<ObjectResult>(result);
+            ResultDTO<DeckResponseDto> payload = Assert.IsType<ResultDTO<DeckResponseDto>>(response.Value);
+            Assert.False(payload.success);
+            Assert.Equal(400, payload.statusCode);
+        }
+
+        [Fact]
+        public async Task CreateDeck_Returns201_WhenValid()
+        {
+            using VortexDbContext db = CreateDb();
+            DeckController controller = CreateController(db);
+
+            Guid userId = Guid.NewGuid();
+            Guid championId = Guid.NewGuid();
+
+            IActionResult result = await controller.CreateDeck(new CreateDeckDto { Label = "My Deck", UserId = userId, ChampionId = championId });
+
+            ObjectResult response = Assert.IsType<ObjectResult>(result);
+            ResultDTO<DeckResponseDto> payload = Assert.IsType<ResultDTO<DeckResponseDto>>(response.Value);
+            Assert.True(payload.success);
+            Assert.Equal(201, payload.statusCode);
+            Assert.NotNull(payload.data);
+            Assert.Equal("My Deck", payload.data!.Label);
+            Assert.Equal(userId, payload.data.UserId);
+            Assert.NotEqual(Guid.Empty, payload.data.Id);
+        }
+
+        [Fact]
+        public async Task DeleteDeck_Returns404_WhenNotFound()
+        {
+            using VortexDbContext db = CreateDb();
+            DeckController controller = CreateController(db);
+
+            IActionResult result = await controller.DeleteDeck(Guid.NewGuid());
+
+            ObjectResult response = Assert.IsType<ObjectResult>(result);
+            ResultDTO<bool> payload = Assert.IsType<ResultDTO<bool>>(response.Value);
+            Assert.False(payload.success);
+            Assert.Equal(404, payload.statusCode);
+        }
+
+        [Fact]
+        public async Task DeleteDeck_Returns204_WhenFound()
+        {
+            using VortexDbContext db = CreateDb();
+
+            DeckModel deck = new DeckModel { Id = Guid.NewGuid(), Label = "Deletable", ChampionId = Guid.NewGuid(), CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            db.Decks.Add(deck);
+            await db.SaveChangesAsync();
+
+            DeckController controller = CreateController(db);
+
+            IActionResult result = await controller.DeleteDeck(deck.Id);
+
+            ObjectResult response = Assert.IsType<ObjectResult>(result);
+            ResultDTO<bool> payload = Assert.IsType<ResultDTO<bool>>(response.Value);
+            Assert.True(payload.success);
+            Assert.Equal(204, payload.statusCode);
+
+            bool stillExists = await db.Decks.AnyAsync(d => d.Id == deck.Id);
+            Assert.False(stillExists);
         }
 
         [Fact]
