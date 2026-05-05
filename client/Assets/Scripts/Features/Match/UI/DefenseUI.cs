@@ -161,7 +161,8 @@ namespace VortexTCG.Scripts.MatchScene
                 return;
 
             // Verify opponent card is in attack mode
-            if (!attackingCard.IsSelected || !attackingCard.HasAttackedThisPhase)
+            bool attackerIsInAttackMode = attackingCard.HasAttackedThisPhase || attackingCard.IsAttackingOutlineActive();
+            if (!attackerIsInAttackMode)
             {
                 Debug.LogWarning("[DefenseUI] Cette carte adverse n'est pas en mode attaque");
                 return;

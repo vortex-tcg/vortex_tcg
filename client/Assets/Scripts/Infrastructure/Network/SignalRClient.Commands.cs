@@ -128,38 +128,28 @@ public partial class SignalRClient
         if (_conn == null)
             return false;
 
-        string[] preferredMethods =
-        {
-            "ToggleAttackCard",
-            "ToggleCardAttack",
-            "togglecardattack"
-        };
-
-        for (int i = 0; i < preferredMethods.Length; i++)
-        {
-            string method = preferredMethods[i];
-            try
-            {
-                await _conn.InvokeAsync(method, position);
-                Debug.Log($"[SignalRClient] Attack toggle sent via '{method}' position={position}");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning($"[SignalRClient] Attack toggle via '{method}' failed: {ex.Message}");
-            }
-        }
-
-        // Legacy fallback used in older backend hubs.
+        // Prefer the clean hub contract ToggleAttackCard(position).
         try
         {
-            await _conn.InvokeAsync("HandleAttackPos", gameCardId);
-            Debug.Log($"[SignalRClient] Attack toggle sent via legacy HandleAttackPos gameCardId={gameCardId}");
+            await _conn.InvokeAsync("ToggleAttackCard", position);
+            Debug.Log($"[SignalRClient] Attack toggle sent via ToggleAttackCard position={position} gameCardId={gameCardId}");
             return true;
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[SignalRClient] Attack toggle legacy fallback failed: {ex.Message}");
+            Debug.LogWarning($"[SignalRClient] ToggleAttackCard(position={position}) failed, trying legacy HandleAttackPos: {ex.Message}");
+        }
+
+        // Fallback to legacy hub method.
+        try
+        {
+            await _conn.InvokeAsync("HandleAttackPos", gameCardId);
+            Debug.Log($"[SignalRClient] Attack toggle sent via HandleAttackPos gameCardId={gameCardId}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[SignalRClient] Attack toggle failed via HandleAttackPos: {ex.Message}");
             return false;
         }
     }
