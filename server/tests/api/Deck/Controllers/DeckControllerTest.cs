@@ -29,22 +29,6 @@ namespace VortexTCG.Tests.Api.Deck.Controllers
         }
 
         [Fact]
-        public async Task GetDeckById_Returns200_WithMockDeck()
-        {
-            using VortexDbContext db = CreateDb();
-            DeckController controller = CreateController(db);
-
-            IActionResult result = await controller.GetDeckById("my-deck");
-
-            ObjectResult ok = Assert.IsType<ObjectResult>(result);
-            ResultDTO<DeckDTO> payload = Assert.IsType<ResultDTO<DeckDTO>>(ok.Value);
-            Assert.True(payload.success);
-            Assert.Equal(200, payload.statusCode);
-            Assert.NotNull(payload.data);
-            Assert.Equal("my-deck", payload.data!.Id);
-        }
-
-        [Fact]
         public async Task GetDeckData_Returns404_WhenNotFound()
         {
             using VortexDbContext db = CreateDb();

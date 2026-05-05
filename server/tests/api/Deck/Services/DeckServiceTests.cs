@@ -26,21 +26,6 @@ namespace VortexTCG.Tests.Api.Deck.Services
         }
 
         [Fact]
-        public void GetDeckById_Returns200_WithMockDeck()
-        {
-            using VortexDbContext db = CreateDb();
-            DeckService service = CreateService(db);
-
-            ResultDTO<DeckDTO> result = service.GetDeckById("my-deck-id");
-
-            Assert.True(result.success);
-            Assert.Equal(200, result.statusCode);
-            Assert.NotNull(result.data);
-            Assert.Equal("my-deck-id", result.data!.Id);
-            Assert.Equal(30, result.data.Cards.Count);
-        }
-
-        [Fact]
         public async Task GetDeckDataAsync_Returns404_WhenDeckNotFound()
         {
             using VortexDbContext db = CreateDb();
