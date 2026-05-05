@@ -22,6 +22,33 @@ namespace VortexTCG.Tests.Api.User.Services
         }
 
         [Fact]
+        public async Task GetById_ReturnsNull_WhenMissing()
+        {
+            using VortexDbContext db = CreateDb();
+            UserService service = CreateService(db);
+
+            UserDTO? result = await service.GetByIdAsync(Guid.NewGuid());
+
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetById_ReturnsDto_WhenFound()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel entity = new UserModel { Id = Guid.NewGuid(), FirstName = "Alice", LastName = "Smith", Username = "alice", Password = "p", Email = "a@a.com", Language = "en", Role = Role.USER, Status = UserStatus.DISCONNECTED };
+            db.Users.Add(entity);
+            await db.SaveChangesAsync();
+            UserService service = CreateService(db);
+
+            UserDTO? result = await service.GetByIdAsync(entity.Id);
+
+            Assert.NotNull(result);
+            Assert.Equal("Alice", result!.FirstName);
+            Assert.Equal("alice", result.Username);
+        }
+
+        [Fact]
         public async Task Create_Returns409_WhenUsernameExists()
         {
             using VortexDbContext db = CreateDb();

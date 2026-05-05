@@ -138,6 +138,55 @@ namespace VortexTCG.Api.Deck.Services
             };
         }
 
+        public async Task<ResultDTO<DeckResponseDto>> CreateAsync(CreateDeckDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Label))
+                return new ResultDTO<DeckResponseDto> { success = false, statusCode = 400, message = "Label requis" };
+
+            if (dto.UserId == Guid.Empty)
+                return new ResultDTO<DeckResponseDto> { success = false, statusCode = 400, message = "UserId requis" };
+
+            if (dto.ChampionId == Guid.Empty)
+                return new ResultDTO<DeckResponseDto> { success = false, statusCode = 400, message = "ChampionId requis" };
+
+            DeckModel deck = new DeckModel
+            {
+                Id = Guid.NewGuid(),
+                Label = dto.Label,
+                UserId = dto.UserId,
+                ChampionId = dto.ChampionId,
+                FactionId = dto.FactionId
+            };
+
+            deck = await _deckProvider.AddAsync(deck);
+
+            return new ResultDTO<DeckResponseDto>
+            {
+                success = true,
+                statusCode = 201,
+                data = MapToResponseDto(deck)
+            };
+        }
+
+        public async Task<ResultDTO<bool>> DeleteAsync(Guid deckId)
+        {
+            bool deleted = await _deckProvider.DeleteAsync(deckId);
+
+            if (!deleted)
+                return new ResultDTO<bool> { success = false, statusCode = 404, message = "Deck non trouvé" };
+
+            return new ResultDTO<bool> { success = true, statusCode = 204, data = true };
+        }
+
+        private static DeckResponseDto MapToResponseDto(DeckModel deck) => new DeckResponseDto
+        {
+            Id = deck.Id,
+            Label = deck.Label,
+            UserId = deck.UserId,
+            ChampionId = deck.ChampionId,
+            FactionId = deck.FactionId
+        };
+
         private static DeckChampionDto MapToDeckChampionDto(DataAccess.Models.Champion ch)
         {
             return new DeckChampionDto

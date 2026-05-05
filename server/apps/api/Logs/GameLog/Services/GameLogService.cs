@@ -86,7 +86,7 @@ namespace VortexTCG.Api.Logs.GameLog.Services
 				Label = gamelog.Label,
 				TurnNumber = gamelog.TurnNumber,
 				UserId = gamelog.User?.Id,
-				ActionIds = gamelog.Actions?.Select(a => a.Id).ToList()
+				ActionIds = gamelog.Actions != null && gamelog.Actions.Any() ? gamelog.Actions.Select(a => a.Id).ToList() : null
 			};
 		}
 	}

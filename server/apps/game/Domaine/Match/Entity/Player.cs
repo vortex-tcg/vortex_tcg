@@ -1,6 +1,4 @@
-﻿using VortexTCG.Game.Object;
-
-namespace game.Domaine.Match.Entity;
+﻿namespace game.Domaine.Match.Entity;
 
 using game.Domaine.Match.ValueObject;
 

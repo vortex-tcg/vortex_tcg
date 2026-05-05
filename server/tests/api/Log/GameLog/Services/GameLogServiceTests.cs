@@ -47,6 +47,25 @@ namespace VortexTCG.Tests.Api.Log.GameLog.Services
         }
 
         [Fact]
+        public async Task GetById_ReturnsDto_WhenFound()
+        {
+            using VortexDbContext db = CreateDb();
+            Guid id = Guid.NewGuid();
+            db.Gamelogs.Add(new GameLogModel { Id = id, Label = "Found", TurnNumber = 7 });
+            await db.SaveChangesAsync();
+            GameLogService service = CreateService(db);
+
+            GameLogDTO? dto = await service.GetByIdAsync(id);
+
+            Assert.NotNull(dto);
+            Assert.Equal(id, dto!.Id);
+            Assert.Equal("Found", dto.Label);
+            Assert.Equal(7, dto.TurnNumber);
+            Assert.Null(dto.UserId);
+            Assert.Null(dto.ActionIds);
+        }
+
+        [Fact]
         public async Task Create_ReturnsCreatedDto()
         {
             using VortexDbContext db = CreateDb();
