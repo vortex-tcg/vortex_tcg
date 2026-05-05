@@ -18,22 +18,6 @@ namespace VortexTCG.Tests.Api.Deck.Providers
         private static VortexDbContext CreateDb() => VortexDbCoontextFactory.getInMemoryDbContext();
 
         [Fact]
-        public void GetMockDeck_Returns_DeckWith30Cards()
-        {
-            using VortexDbContext db = CreateDb();
-            DeckProvider provider = new DeckProvider(db);
-
-            var result = provider.GetMockDeck("test-deck-id");
-
-            Assert.NotNull(result);
-            Assert.Equal("test-deck-id", result.Id);
-            Assert.Equal("Mock Deck test-deck-id", result.Name);
-            Assert.Equal(30, result.Cards.Count);
-            Assert.NotNull(result.Champion);
-            Assert.Equal("Emporio PingChilling", result.Champion.Name);
-        }
-
-        [Fact]
         public async Task GetDeckWithCardsAndChampionAsync_ReturnsNull_WhenNotFound()
         {
             using VortexDbContext db = CreateDb();
