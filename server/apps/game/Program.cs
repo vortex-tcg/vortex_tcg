@@ -7,7 +7,6 @@
 using Microsoft.EntityFrameworkCore;
 using VortexTCG.DataAccess;
 using VortexTCG.Common.Services;
-using game.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;

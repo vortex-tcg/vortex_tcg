@@ -29,6 +29,35 @@ namespace VortexTCG.Tests.Api.User.Controllers
 		}
 
 		[Fact]
+		public async Task GetAll_ReturnsEmpty_WhenNoUsers()
+		{
+			using VortexDbContext db = CreateDb();
+			UserController controller = CreateController(db);
+
+			IActionResult result = await controller.GetAll();
+
+			ObjectResult ok = Assert.IsType<ObjectResult>(result);
+			ResultDTO<UserDTO[]> payload = Assert.IsType<ResultDTO<UserDTO[]>>(ok.Value);
+			Assert.True(payload.success);
+			Assert.Equal(200, payload.statusCode);
+			Assert.Empty(payload.data!);
+		}
+
+		[Fact]
+		public async Task GetById_Returns404_WhenNotFound()
+		{
+			using VortexDbContext db = CreateDb();
+			UserController controller = CreateController(db);
+
+			IActionResult result = await controller.GetById(Guid.NewGuid());
+
+			ObjectResult notFound = Assert.IsType<ObjectResult>(result);
+			ResultDTO<UserDTO> payload = Assert.IsType<ResultDTO<UserDTO>>(notFound.Value);
+			Assert.False(payload.success);
+			Assert.Equal(404, payload.statusCode);
+		}
+
+		[Fact]
 		public async Task CreateUser_ReturnsCreated()
 		{
 			using VortexDbContext db = CreateDb();

@@ -338,5 +338,82 @@ namespace VortexTCG.Tests.Auth.Controllers
             Assert.NotNull(saved);
             Assert.Equal("ada", saved!.Username);
         }
+
+        [Fact]
+        public async Task Register_Controller_Returns201_WhenValid()
+        {
+            using VortexDbContext db = CreateDb();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
+            AuthController controller = new AuthController(db, config);
+            RegisterDTO dto = new RegisterDTO
+            {
+                first_name = "Test",
+                last_name = "User",
+                username = "testuser",
+                email = "test@example.com",
+                password = "P@ssw0rd1!",
+                password_confirmation = "P@ssw0rd1!"
+            };
+
+            IActionResult result = await controller.register(dto, CancellationToken.None);
+
+            ObjectResult statusResult = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(201, statusResult.StatusCode);
+        }
+
+        [Fact]
+        public async Task Register_Controller_Returns400_WhenPasswordMismatch()
+        {
+            using VortexDbContext db = CreateDb();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
+            AuthController controller = new AuthController(db, config);
+            RegisterDTO dto = new RegisterDTO
+            {
+                first_name = "Test",
+                last_name = "User",
+                username = "testuser2",
+                email = "test2@example.com",
+                password = "P@ssw0rd1!",
+                password_confirmation = "DifferentPassword1!"
+            };
+
+            IActionResult result = await controller.register(dto, CancellationToken.None);
+
+            ObjectResult statusResult = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(400, statusResult.StatusCode);
+        }
+
+        [Fact]
+        public async Task Register_Controller_Returns409_WhenEmailDuplicate()
+        {
+            using VortexDbContext db = CreateDb();
+            db.Users.Add(new UserModel
+            {
+                FirstName = "Existing",
+                LastName = "User",
+                Username = "existing",
+                Email = "duplicate@example.com",
+                Password = "hash",
+                Language = "fr",
+                CurrencyQuantity = 0
+            });
+            await db.SaveChangesAsync();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
+            AuthController controller = new AuthController(db, config);
+            RegisterDTO dto = new RegisterDTO
+            {
+                first_name = "New",
+                last_name = "User",
+                username = "newuser",
+                email = "duplicate@example.com",
+                password = "P@ssw0rd1!",
+                password_confirmation = "P@ssw0rd1!"
+            };
+
+            IActionResult result = await controller.register(dto, CancellationToken.None);
+
+            ObjectResult statusResult = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(409, statusResult.StatusCode);
+        }
     }
 }

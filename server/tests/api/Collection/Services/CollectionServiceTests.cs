@@ -6,6 +6,10 @@ using VortexTCG.Common.DTO;
 using VortexTCG.Common.Services;
 using VortexTCG.DataAccess;
 using CollectionModel = VortexTCG.DataAccess.Models.Collection;
+using CollectionCardModel = VortexTCG.DataAccess.Models.CollectionCard;
+using CardModel = VortexTCG.DataAccess.Models.Card;
+using UserModel = VortexTCG.DataAccess.Models.User;
+using RarityEnum = VortexTCG.DataAccess.Models.Rarity;
 using Xunit;
 
 namespace VortexTCG.Tests.Api.Collection.Services
@@ -115,5 +119,224 @@ namespace VortexTCG.Tests.Api.Collection.Services
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
         }
+
+        [Fact]
+        public async Task Delete_Succeeds()
+        {
+            using VortexDbContext db = CreateDb();
+            CollectionModel entity = new CollectionModel { Id = Guid.NewGuid() };
+            db.Collections.Add(entity);
+            await db.SaveChangesAsync();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<bool> result = await service.DeleteAsync(entity.Id);
+
+            Assert.True(result.success);
+            Assert.Equal(204, result.statusCode);
+        }
+
+        [Fact]
+        public async Task Update_Returns400_WhenUserIdEmpty()
+        {
+            using VortexDbContext db = CreateDb();
+            CollectionModel entity = new CollectionModel { Id = Guid.NewGuid() };
+            db.Collections.Add(entity);
+            await db.SaveChangesAsync();
+            CollectionService service = CreateService(db);
+            CollectionCreateDto input = new CollectionCreateDto { UserId = Guid.Empty };
+
+            ResultDTO<CollectionDto> result = await service.UpdateAsync(entity.Id, input);
+
+            Assert.False(result.success);
+            Assert.Equal(400, result.statusCode);
+        }
+
+        [Fact]
+        public async Task GetAll_ReturnsEmpty_WhenNoCollections()
+        {
+            using VortexDbContext db = CreateDb();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<CollectionDto[]> result = await service.GetAllAsync();
+
+            Assert.True(result.success);
+            Assert.Equal(200, result.statusCode);
+            Assert.Empty(result.data!);
+        }
+
+        [Fact]
+        public async Task GetAll_ReturnsAll_WhenCollectionsExist()
+        {
+            using VortexDbContext db = CreateDb();
+            db.Collections.Add(new CollectionModel { Id = Guid.NewGuid() });
+            db.Collections.Add(new CollectionModel { Id = Guid.NewGuid() });
+            await db.SaveChangesAsync();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<CollectionDto[]> result = await service.GetAllAsync();
+
+            Assert.True(result.success);
+            Assert.Equal(2, result.data!.Length);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_Returns400_WhenUserIdEmpty()
+        {
+            using VortexDbContext db = CreateDb();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(Guid.Empty);
+
+            Assert.False(result.success);
+            Assert.Equal(400, result.statusCode);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_Returns404_WhenNotFound()
+        {
+            using VortexDbContext db = CreateDb();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(Guid.NewGuid());
+
+            Assert.False(result.success);
+            Assert.Equal(404, result.statusCode);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_Returns200_WhenFound()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            CollectionModel entity = new CollectionModel { Id = Guid.NewGuid(), User = user };
+            db.Collections.Add(entity);
+            await db.SaveChangesAsync();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.True(result.success);
+            Assert.Equal(200, result.statusCode);
+            Assert.NotNull(result.data);
+            Assert.Empty(result.data!.Cards);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_ReturnsCard_WhenCollectionHasCard()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            CardModel card = new CardModel
+            {
+                Id = Guid.NewGuid(), Name = "Fireball", Price = 50,
+                Hp = 3, Attack = 5, Cost = 2,
+                Description = "desc", Picture = "img.png"
+            };
+            db.Cards.Add(card);
+            CollectionModel collection = new CollectionModel
+            {
+                Id = Guid.NewGuid(),
+                User = user,
+                Cards = new List<CollectionCardModel>
+                {
+                    new CollectionCardModel { Id = Guid.NewGuid(), Card = card, Quantity = 2, Rarity = RarityEnum.EPIC }
+                }
+            };
+            db.Collections.Add(collection);
+            await db.SaveChangesAsync();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.True(result.success);
+            Assert.Single(result.data!.Cards);
+            UserCollectionCardDto dto = result.data.Cards[0];
+            Assert.Equal(card.Id, dto.Card.Id);
+            Assert.Equal("Fireball", dto.Card.Name);
+            Assert.Equal(50, dto.Card.Price);
+            Assert.Equal(3, dto.Card.Hp);
+            Assert.Equal(5, dto.Card.Attack);
+            Assert.Equal(2, dto.Card.Cost);
+            Assert.Single(dto.OwnData);
+            Assert.Equal(2, dto.OwnData[0].Number);
+            Assert.Equal("EPIC", dto.OwnData[0].Rarity);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_MapsNullHpAndAttackAsZero()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            CardModel card = new CardModel
+            {
+                Id = Guid.NewGuid(), Name = "Shield", Price = 10,
+                Hp = null, Attack = null, Cost = 1,
+                Description = "desc", Picture = "img.png"
+            };
+            db.Cards.Add(card);
+            CollectionModel collection = new CollectionModel
+            {
+                Id = Guid.NewGuid(),
+                User = user,
+                Cards = new List<CollectionCardModel>
+                {
+                    new CollectionCardModel { Id = Guid.NewGuid(), Card = card, Quantity = 1, Rarity = RarityEnum.NORMAL }
+                }
+            };
+            db.Collections.Add(collection);
+            await db.SaveChangesAsync();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.True(result.success);
+            Assert.Single(result.data!.Cards);
+            UserCollectionCardDto dto = result.data.Cards[0];
+            Assert.Equal(0, dto.Card.Hp);
+            Assert.Equal(0, dto.Card.Attack);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_ReturnsAllCards_WhenMultipleCards()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            CardModel card1 = new CardModel { Id = Guid.NewGuid(), Name = "Card1", Cost = 1, Description = "d", Picture = "p" };
+            CardModel card2 = new CardModel { Id = Guid.NewGuid(), Name = "Card2", Cost = 2, Description = "d", Picture = "p" };
+            db.Cards.AddRange(card1, card2);
+            CollectionModel collection = new CollectionModel
+            {
+                Id = Guid.NewGuid(),
+                User = user,
+                Cards = new List<CollectionCardModel>
+                {
+                    new CollectionCardModel { Id = Guid.NewGuid(), Card = card1, Quantity = 1, Rarity = RarityEnum.NORMAL },
+                    new CollectionCardModel { Id = Guid.NewGuid(), Card = card2, Quantity = 2, Rarity = RarityEnum.RARE }
+                }
+            };
+            db.Collections.Add(collection);
+            await db.SaveChangesAsync();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.True(result.success);
+            Assert.Equal(2, result.data!.Cards.Count);
+        }
+
+        private static UserModel CreateTestUser(Guid id) => new UserModel
+        {
+            Id = id,
+            FirstName = "Test", LastName = "User",
+            Username = $"user_{id:N}",
+            Email = $"{id:N}@test.com",
+            Password = "hash", Language = "fr",
+            Role = VortexTCG.DataAccess.Models.Role.USER,
+            Status = VortexTCG.DataAccess.Models.UserStatus.DISCONNECTED
+        };
     }
 }
