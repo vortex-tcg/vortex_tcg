@@ -45,5 +45,4 @@ services:
 
 networks:
   sonar-network:
-    name: sonar-network
-    driver: bridge
+    external: true
