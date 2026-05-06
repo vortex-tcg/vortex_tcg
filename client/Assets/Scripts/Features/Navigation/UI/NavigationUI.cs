@@ -91,7 +91,7 @@ public class NavigationUI : MonoBehaviour
 
     private void OnCollectionClicked()
     {
-        eventBus.Publish(new NavigationRequestedEvent("Scenes/CollectionScene", UpMenuStatus.COLLECTION));
+        eventBus.Publish(new NavigationRequestedEvent("CollectionScene", UpMenuStatus.COLLECTION));
     }
 
     private void OnFriendsClicked()

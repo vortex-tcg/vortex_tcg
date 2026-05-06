@@ -21,7 +21,8 @@ namespace VortexTCG.Tests.Api.Collection.Controllers
         private static CollectionController CreateController(VortexDbContext db)
         {
             CollectionProvider provider = new CollectionProvider(db);
-            CollectionService service = new CollectionService(provider);
+            VortexTCG.Api.Deck.Providers.DeckProvider deckProvider = new VortexTCG.Api.Deck.Providers.DeckProvider(db);
+            CollectionService service = new CollectionService(provider, deckProvider);
             return new CollectionController(service);
         }
 

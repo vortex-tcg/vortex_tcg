@@ -74,6 +74,9 @@ namespace VortexTCG.Scripts.Features.UI
                     Debug.LogWarning($"[ButtonPressedBackgroundUI] Button '{targetName}' not found yet.");
             }
 
+            if (TryBindDeckButtons())
+                anyBound = true;
+
             if (anyBound && allBound)
             {
                 bindRetryTask?.Pause();
@@ -93,9 +96,35 @@ namespace VortexTCG.Scripts.Features.UI
                     return true;
             }
 
-            Button button = root.Q<Button>(targetName);
+            return TryBindButton(root.Q<Button>(targetName), targetName);
+        }
+
+        private bool TryBindDeckButtons()
+        {
+            bool anyBound = false;
+
+            root.Query<Button>().ForEach(button =>
+            {
+                if (button == null || string.IsNullOrWhiteSpace(button.name) || !button.name.StartsWith("DeckButton_", StringComparison.Ordinal))
+                    return;
+
+                if (TryBindButton(button, button.name))
+                    anyBound = true;
+            });
+
+            return anyBound;
+        }
+
+        private bool TryBindButton(Button button, string targetName)
+        {
             if (button == null)
                 return false;
+
+            foreach (KeyValuePair<Button, BoundButtonState> pair in boundButtons)
+            {
+                if (pair.Key == button)
+                    return true;
+            }
 
             BoundButtonState state = new BoundButtonState
             {
