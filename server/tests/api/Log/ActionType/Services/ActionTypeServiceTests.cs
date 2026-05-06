@@ -49,6 +49,43 @@ namespace VortexTCG.Tests.Api.Log.ActionType.Services
         }
 
         [Fact]
+        public async Task GetById_ReturnsDto_WhenFound()
+        {
+            using VortexDbContext db = CreateDb();
+            Guid id = Guid.NewGuid();
+            Guid gamelogId = Guid.NewGuid();
+            db.Actions.Add(new ActionTypeModel { Id = id, actionDescription = "TestDesc", GameLogId = gamelogId, ParentId = Guid.Empty });
+            await db.SaveChangesAsync();
+            ActionTypeService service = CreateService(db);
+
+            ActionTypeDTO? dto = await service.GetByIdAsync(id);
+
+            Assert.NotNull(dto);
+            Assert.Equal(id, dto!.Id);
+            Assert.Equal("TestDesc", dto.ActionDescription);
+            Assert.Equal(gamelogId, dto.GameLogId);
+            Assert.Null(dto.ParentId);
+        }
+
+        [Fact]
+        public async Task GetById_ReturnsDto_WithParentId_WhenParentIsSet()
+        {
+            using VortexDbContext db = CreateDb();
+            Guid parentId = Guid.NewGuid();
+            ActionTypeModel parent = new ActionTypeModel { Id = parentId, actionDescription = "Parent", ParentId = parentId };
+            Guid childId = Guid.NewGuid();
+            ActionTypeModel child = new ActionTypeModel { Id = childId, actionDescription = "Child", ParentId = parentId };
+            db.Actions.AddRange(parent, child);
+            await db.SaveChangesAsync();
+            ActionTypeService service = CreateService(db);
+
+            ActionTypeDTO? dto = await service.GetByIdAsync(childId);
+
+            Assert.NotNull(dto);
+            Assert.Equal(parentId, dto!.ParentId);
+        }
+
+        [Fact]
         public async Task Create_ReturnsCreatedDto()
         {
             using VortexDbContext db = CreateDb();
