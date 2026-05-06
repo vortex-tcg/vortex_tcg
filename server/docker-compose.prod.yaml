@@ -162,67 +162,6 @@ services:
           cpus: "0.1"
           memory: 128M
 
-  sonarqube:
-    image: sonarqube:community
-    user: "1000:1000"
-    networks:
-      - traefik-network
-    env_file:
-      - sonar.env
-    environment:
-      - SONAR_WEB_JAVAADDITIONALOPTS=-Xmx512m -Xms128m
-      - SONAR_CE_JAVAADDITIONALOPTS=-Xmx256m -Xms128m
-      - SONAR_SEARCH_JAVAADDITIONALOPTS=-Xmx256m -Xms256m -XX:MaxDirectMemorySize=128m
-    volumes:
-      - /var/sonarqube/data:/opt/sonarqube/data
-      - /var/sonarqube/logs:/opt/sonarqube/logs
-      - /var/sonarqube/extensions:/opt/sonarqube/extensions
-    deploy:
-      mode: replicated
-      replicas: 1
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.sonarqube.rule=Host(`sonarqube.vortex-tcg.online`)"
-        - "traefik.http.routers.sonarqube.entrypoints=websecure"
-        - "traefik.http.routers.sonarqube.tls=true"
-        - "traefik.http.routers.sonarqube.tls.certresolver=le"
-        - "traefik.http.services.sonarqube.loadbalancer.server.port=9000"
-        - "traefik.http.services.sonarqube.loadbalancer.responseforwarding.flushinterval=100ms"
-      update_config:
-        parallelism: 1
-        delay: 10s
-        order: start-first
-      restart_policy:
-        condition: on-failure
-        delay: 10s
-        max_attempts: 3
-      resources:
-        limits:
-          memory: 2500M
-        reservations:
-          memory: 1800M
-
-  sonarqube-db:
-    image: postgres:15
-    networks:
-      - traefik-network
-    env_file:
-      - sonar.env
-    volumes:
-      - /var/sonarqube/postgresql/data:/var/lib/postgresql/data
-    deploy:
-      mode: replicated
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-      resources:
-        limits:
-          memory: 256M
-        reservations:
-          memory: 128M
-
 networks:
   traefik-network:
     driver: overlay
