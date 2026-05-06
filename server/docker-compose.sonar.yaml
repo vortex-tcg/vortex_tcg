@@ -4,6 +4,7 @@ services:
     user: "1000:1000"
     networks:
       - sonar-network
+      - traefik-network
     env_file:
       - sonar.env
     environment:
@@ -17,7 +18,7 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=sonar-network"
+      - "traefik.docker.network=vortex_traefik-network"
       - "traefik.http.routers.sonarqube.rule=Host(`sonarqube.vortex-tcg.online`)"
       - "traefik.http.routers.sonarqube.entrypoints=websecure"
       - "traefik.http.routers.sonarqube.tls=true"
@@ -46,3 +47,6 @@ services:
 networks:
   sonar-network:
     external: true
+  traefik-network:
+    external: true
+    name: vortex_traefik-network
