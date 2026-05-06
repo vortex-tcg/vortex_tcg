@@ -1,0 +1,47 @@
+services:
+  sonarqube:
+    image: sonarqube:community
+    user: "1000:1000"
+    networks:
+      - traefik-network
+    env_file:
+      - sonar.env
+    environment:
+      - SONAR_WEB_JAVAADDITIONALOPTS=-Xmx512m -Xms128m
+      - SONAR_CE_JAVAADDITIONALOPTS=-Xmx256m -Xms128m
+      - SONAR_SEARCH_JAVAADDITIONALOPTS=-Xmx256m -Xms256m -XX:MaxDirectMemorySize=128m
+    volumes:
+      - /var/sonarqube/data:/opt/sonarqube/data
+      - /var/sonarqube/logs:/opt/sonarqube/logs
+      - /var/sonarqube/extensions:/opt/sonarqube/extensions
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonarqube.rule=Host(`sonarqube.vortex-tcg.online`)"
+      - "traefik.http.routers.sonarqube.entrypoints=websecure"
+      - "traefik.http.routers.sonarqube.tls=true"
+      - "traefik.http.routers.sonarqube.tls.certresolver=le"
+      - "traefik.http.services.sonarqube.loadbalancer.server.port=9000"
+      - "traefik.http.services.sonarqube.loadbalancer.responseforwarding.flushinterval=100ms"
+    depends_on:
+      sonarqube-db:
+        condition: service_healthy
+
+  sonarqube-db:
+    image: postgres:15
+    networks:
+      - traefik-network
+    env_file:
+      - sonar.env
+    volumes:
+      - /var/sonarqube/postgresql/data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  traefik-network:
+    external: true

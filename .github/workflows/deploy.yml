@@ -260,33 +260,6 @@ jobs:
           New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
           dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
 
-      - name: Wait for SonarQube to be ready
-        shell: powershell
-        run: |
-          $url = "${{ secrets.SONAR_HOST_URL }}/api/system/status"
-          $timeout = 300
-          $elapsed = 0
-
-          Write-Host "Waiting for SonarQube at $url ..."
-
-          while ($elapsed -lt $timeout) {
-            try {
-              $response = Invoke-RestMethod -Uri $url -TimeoutSec 10
-              if ($response.status -eq "UP") {
-                Write-Host "SonarQube is UP after $elapsed seconds"
-                exit 0
-              }
-              Write-Host "[$elapsed s] Status: $($response.status) - waiting..."
-            } catch {
-              Write-Host "[$elapsed s] Not reachable yet - $_"
-            }
-            Start-Sleep -Seconds 15
-            $elapsed += 15
-          }
-
-          Write-Host "ERROR: SonarQube did not become ready within $timeout seconds"
-          exit 1
-
       - name: Build and analyze
         shell: powershell
         run: |
