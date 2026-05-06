@@ -1,8 +1,9 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI%20Toolkit/Stylesheet/HUD.uss?fileID=7433441132597879392&amp;guid=81b04aa871a624441bed15942152a858&amp;type=3#HUD" />
     <ui:VisualElement name="Container" style="flex-grow: 1; flex-direction: row;">
         <ui:VisualElement name="CardPreviewSide" style="flex-grow: 1; flex-direction: column; background-color: rgba(0, 0, 0, 0.75); width: 1px; max-width: 350px; justify-content: flex-start; max-height: initial; flex-wrap: wrap-reverse; align-items: center; background-image: resource(&apos;GUI/CardPreviewBackgroundGUI&apos;);">
             <ui:VisualElement name="CardInformationsPreview" style="flex-grow: 1; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; height: 350px; display: flex;">
-                <ui:VisualElement name="Illustration" style="flex-grow: 1; background-image: resource(&apos;GUI/CardPlaceholder&apos;); width: 350px; height: 300px; display: flex;" />
+                <ui:VisualElement name="Illustration" style="flex-grow: 1; background-image: resource(&apos;GUI/CardPlaceholder&apos;); width: 350px; height: 516px; display: flex; max-width: 350px; max-height: 516px;" />
                 <ui:Label text="Dark Magician" name="CardName" style="color: rgb(255, 255, 255); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-ExtraBold&apos;); -unity-text-align: upper-left; font-size: 27px; margin-top: 10px; border-left-width: 10px; border-right-width: 10px;" />
                 <ui:Label text="The ultimate wizard in terms of attack and defense" name="CardLore" style="color: rgb(255, 255, 255); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-Light&apos;); -unity-text-align: upper-left; font-size: 22px; margin-top: 10px; flex-wrap: wrap-reverse; white-space: normal; -unity-font-style: italic; border-left-width: 10px; border-right-width: 10px;" />
                 <ui:VisualElement name="Data" style="flex-grow: 1; flex-direction: row; align-items: flex-end; justify-content: space-evenly; border-bottom-width: 20px; display: flex; height: auto; max-height: none;">
@@ -64,7 +65,7 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="BoardSide" style="flex-grow: 1; justify-content: flex-end; align-items: flex-start; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px; flex-direction: row-reverse;" />
                 <ui:VisualElement name="BottomSide" style="flex-grow: 1; background-image: none; -unity-background-scale-mode: stretch-to-fill; background-position-y: bottom 0; justify-content: flex-end; align-items: center; height: 72px; max-height: 72px;">
-                    <ui:Button text="End Turn" name="EndTurnButton" style="width: 274px; height: 72px; max-width: 274px; max-height: 72px; background-image: resource(&apos;GUI/MatchBottomButtonGUI&apos;); background-color: rgba(255, 255, 255, 0); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-SemiBold&apos;); font-size: 22px; color: rgb(255, 255, 255); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0;" />
+                    <ui:Button text="End Turn" name="EndTurnButton" class="interactive" style="width: 274px; height: 72px; max-width: 274px; max-height: 72px; background-image: resource(&apos;GUI/MatchBottomButtonGUI&apos;); background-color: rgba(255, 255, 255, 0); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-SemiBold&apos;); font-size: 22px; color: rgb(255, 255, 255); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0;" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

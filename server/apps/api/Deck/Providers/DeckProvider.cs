@@ -69,19 +69,24 @@ namespace VortexTCG.Api.Deck.Providers
 
         public async Task UpdateDeckAsync(DeckModel deck, List<UpdateDeckCardDto> newCards)
         {
-            deck.DeckCard.Clear();
 
-            foreach (var card in newCards)
+            await _db.DeckCards
+                .Where(dc => dc.DeckId == deck.Id)
+                .ExecuteDeleteAsync();
+
+            var newDeckCards = newCards.Select(card => new DeckCardModel
             {
-                deck.DeckCard.Add(new DeckCardModel
-                {
-                    Id = Guid.NewGuid(),
-                    DeckId = deck.Id,
-                    CardId = card.CollectionCardId,
-                    Quantity = card.Quantity
-                });
-            }
+                Id = Guid.NewGuid(),
+                DeckId = deck.Id,
+                CardId = card.CollectionCardId,
+                Quantity = card.Quantity,
+                CreatedAtUtc = DateTime.UtcNow,
+                CreatedBy = "System",
+                UpdatedAtUtc = null,
+                UpdatedBy = null
+            }).ToList();
 
+            await _db.DeckCards.AddRangeAsync(newDeckCards);
             await _db.SaveChangesAsync();
         }
         public async Task<List<DeckModel>> GetDecksByUserIdAsync(Guid userId)

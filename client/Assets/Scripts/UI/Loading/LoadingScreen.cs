@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.IO;
 
 public static class LoadingScreen
 {
@@ -9,7 +10,7 @@ public static class LoadingScreen
 
     public static void Load(string sceneName, bool loadMenu = false, bool unloadMenu = false)
     {
-        Req.targetScene  = sceneName;
+        Req.targetScene  = NormalizeSceneName(sceneName);
         Req.loadMenu     = loadMenu;
         Req.unloadMenu   = unloadMenu;
 
@@ -22,6 +23,14 @@ public static class LoadingScreen
             Debug.LogWarning($"[TODO] Scène menu ‘{Req.menuSceneName}’ introuvable / non ajoutée.");
     #endif
         SceneManager.LoadScene("LoadingScene");
+    }
+
+    private static string NormalizeSceneName(string sceneName)
+    {
+        if (string.IsNullOrWhiteSpace(sceneName))
+            return sceneName;
+
+        return Path.GetFileNameWithoutExtension(sceneName).Replace("\\", "/").Split('/')[^1];
     }
 
     public static LoadingRequest GetRequest() => Req;

@@ -21,7 +21,8 @@ namespace VortexTCG.Tests.Api.Collection.Services
         private static CollectionService CreateService(VortexDbContext db)
         {
             CollectionProvider provider = new CollectionProvider(db);
-            return new CollectionService(provider);
+            VortexTCG.Api.Deck.Providers.DeckProvider deckProvider = new VortexTCG.Api.Deck.Providers.DeckProvider(db);
+            return new CollectionService(provider, deckProvider);
         }
 
         [Fact]

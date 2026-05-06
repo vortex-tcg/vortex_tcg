@@ -4,16 +4,19 @@ using VortexTCG.Api.Collection.Providers;
 using VortexTCG.Common.DTO;
 using VortexTCG.DataAccess.Models;
 using CollectionModel = VortexTCG.DataAccess.Models.Collection;
+using DeckModel = VortexTCG.DataAccess.Models.Deck;
 
 namespace VortexTCG.Api.Collection.Services
 {
     public class CollectionService
     {
         private readonly CollectionProvider _provider;
+        private readonly VortexTCG.Api.Deck.Providers.DeckProvider _deckProvider;
 
-        public CollectionService(CollectionProvider provider)
+        public CollectionService(CollectionProvider provider, VortexTCG.Api.Deck.Providers.DeckProvider deckProvider)
         {
             _provider = provider;
+            _deckProvider = deckProvider;
         }
 
         private static CollectionDto Map(CollectionModel e) => new()
@@ -102,6 +105,7 @@ namespace VortexTCG.Api.Collection.Services
                 .Where(cc => cc.Card != null)
                 .Select(cc => new UserCollectionCardDto
                 {
+                    CollectionCardId = cc.Id,
                     Card = new CardDto
                     {
                         Id = cc.Card.Id,
@@ -136,6 +140,27 @@ namespace VortexTCG.Api.Collection.Services
                 Faction = new List<UserCollectionFactionDto>(),
                 Cards = cards
             };
+
+            // Try to populate user's decks
+            try
+            {
+                List<DeckModel> decks = await _deckProvider.GetDecksByUserIdAsync(id);
+                if (decks != null && decks.Count > 0)
+                {
+                    dto.Decks = decks.Select(d => new UserCollectionDeckDto
+                    {
+                        DeckId = d.Id,
+                        ChampionId = d.ChampionId,
+                        FactionId = d.FactionId,
+                        DeckName = string.IsNullOrWhiteSpace(d.Label) ? "Deck" : d.Label,
+                        ChampionImage = d.Champion?.Picture ?? string.Empty
+                    }).ToList();
+                }
+            }
+            catch
+            {
+                // ignore deck population errors
+            }
 
             return new ResultDTO<UserCollectionDto>
             {

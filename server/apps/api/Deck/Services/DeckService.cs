@@ -33,9 +33,14 @@ namespace VortexTCG.Api.Deck.Services
                 };
             }
 
-            deck.Label = dto.Name;
-            deck.ChampionId = dto.ChampionId;
-            deck.FactionId = dto.FactionId;
+            if (!string.IsNullOrWhiteSpace(dto.Name))
+                deck.Label = dto.Name;
+
+            if (dto.ChampionId != Guid.Empty)
+                deck.ChampionId = dto.ChampionId;
+
+            if (dto.FactionId != Guid.Empty)
+                deck.FactionId = dto.FactionId;
 
             await _deckProvider.UpdateDeckAsync(deck, dto.Cards);
 
