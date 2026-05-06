@@ -1,20 +1,21 @@
-version: "3.8"
-
 services:
   sonarqube:
     image: sonarqube:community
-    environment:
-      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonar
-      SONAR_JDBC_USERNAME: ${SONARQUBE_USER}
-      SONAR_JDBC_PASSWORD: ${SONARQUBE_PASSWORD}
-    volumes:
-      - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_logs:/opt/sonarqube/logs
+    user: "1000:1000"
     networks:
-      - sonarqube_internal
+      - sonarqube-internal
       - vortex_traefik-network
-    depends_on:
-      - sonarqube-db
+    environment:
+      - SONAR_JDBC_URL=jdbc:postgresql://sonarqube-db:5432/sonar
+      - SONAR_JDBC_USERNAME=${SONARQUBE_USER}
+      - SONAR_JDBC_PASSWORD=${SONARQUBE_PASSWORD}
+      - SONAR_WEB_JAVAADDITIONALOPTS=-Xmx512m -Xms128m
+      - SONAR_CE_JAVAADDITIONALOPTS=-Xmx256m -Xms128m
+      - SONAR_SEARCH_JAVAADDITIONALOPTS=-Xmx256m -Xms256m -XX:MaxDirectMemorySize=128m
+    volumes:
+      - /var/sonarqube/data:/opt/sonarqube/data
+      - /var/sonarqube/logs:/opt/sonarqube/logs
+      - /var/sonarqube/extensions:/opt/sonarqube/extensions
     deploy:
       replicas: 1
       placement:
@@ -22,41 +23,44 @@ services:
           - node.role == manager
       labels:
         - "traefik.enable=true"
+        - "traefik.docker.network=vortex_traefik-network"
         - "traefik.http.routers.sonarqube.rule=Host(`sonarqube.vortex-tcg.online`)"
         - "traefik.http.routers.sonarqube.entrypoints=websecure"
         - "traefik.http.routers.sonarqube.tls=true"
         - "traefik.http.routers.sonarqube.tls.certresolver=le"
         - "traefik.http.services.sonarqube.loadbalancer.server.port=9000"
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
       resources:
         limits:
-          memory: 4G
-        reservations:
           memory: 2G
+        reservations:
+          memory: 1G
 
   sonarqube-db:
     image: postgres:15
-    environment:
-      POSTGRES_USER: ${SONARQUBE_USER}
-      POSTGRES_PASSWORD: ${SONARQUBE_PASSWORD}
-      POSTGRES_DB: sonar
-    volumes:
-      - sonarqube_db:/var/lib/postgresql/data
     networks:
-      - sonarqube_internal
+      - sonarqube-internal
+    environment:
+      - POSTGRES_USER=${SONARQUBE_USER}
+      - POSTGRES_PASSWORD=${SONARQUBE_PASSWORD}
+      - POSTGRES_DB=sonar
+    volumes:
+      - /var/sonarqube/postgresql/data:/var/lib/postgresql/data
     deploy:
       replicas: 1
       placement:
         constraints:
           - node.role == manager
-
-volumes:
-  sonarqube_data:
-  sonarqube_logs:
-  sonarqube_extensions:
-  sonarqube_db:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
 
 networks:
-  sonarqube_internal:
+  sonarqube-internal:
     driver: overlay
     internal: true
   vortex_traefik-network:
