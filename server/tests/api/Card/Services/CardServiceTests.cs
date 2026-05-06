@@ -21,6 +21,34 @@ namespace VortexTCG.Tests.Api.Card.Services
         }
 
         [Fact]
+        public async Task GetAll_ReturnsEmpty_WhenNoCards()
+        {
+            using VortexDbContext db = CreateDb();
+            CardService service = CreateService(db);
+
+            ResultDTO<CardDto[]> result = await service.GetAllAsync();
+
+            Assert.True(result.success);
+            Assert.Equal(200, result.statusCode);
+            Assert.Empty(result.data!);
+        }
+
+        [Fact]
+        public async Task GetAll_ReturnsItems_WhenCardsExist()
+        {
+            using VortexDbContext db = CreateDb();
+            db.Cards.Add(new CardModel { Id = Guid.NewGuid(), Name = "Alpha", Price = 1, Description = "d", Picture = "p" });
+            db.Cards.Add(new CardModel { Id = Guid.NewGuid(), Name = "Beta", Price = 2, Description = "d", Picture = "p" });
+            await db.SaveChangesAsync();
+            CardService service = CreateService(db);
+
+            ResultDTO<CardDto[]> result = await service.GetAllAsync();
+
+            Assert.True(result.success);
+            Assert.Equal(2, result.data!.Length);
+        }
+
+        [Fact]
         public async Task Create_Returns400_WhenNameMissing()
         {
             using VortexDbContext db = CreateDb();

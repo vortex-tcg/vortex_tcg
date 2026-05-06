@@ -34,6 +34,51 @@ namespace VortexTCG.Tests.Api.Rank.Controllers
         }
 
         [Fact]
+        public async Task GetAll_ReturnsEmpty_WhenNoRanks()
+        {
+            using VortexDbContext db = CreateDb();
+            RankController controller = CreateController(db);
+
+            IActionResult result = await controller.GetAll();
+
+            ObjectResult ok = Assert.IsType<ObjectResult>(result);
+            ResultDTO<RankDTO[]> payload = Assert.IsType<ResultDTO<RankDTO[]>>(ok.Value);
+            Assert.True(payload.success);
+            Assert.Equal(200, payload.statusCode);
+            Assert.Empty(payload.data!);
+        }
+
+        [Fact]
+        public async Task GetAll_ReturnsAll_WhenRanksExist()
+        {
+            using VortexDbContext db = CreateDb();
+            RankController controller = CreateController(db);
+            await controller.Add(new RankCreateDTO { Label = "Bronze", nbVictory = 0 });
+            await controller.Add(new RankCreateDTO { Label = "Silver", nbVictory = 10 });
+
+            IActionResult result = await controller.GetAll();
+
+            ObjectResult ok = Assert.IsType<ObjectResult>(result);
+            ResultDTO<RankDTO[]> payload = Assert.IsType<ResultDTO<RankDTO[]>>(ok.Value);
+            Assert.True(payload.success);
+            Assert.Equal(2, payload.data!.Length);
+        }
+
+        [Fact]
+        public async Task GetById_Returns404_WhenNotFound()
+        {
+            using VortexDbContext db = CreateDb();
+            RankController controller = CreateController(db);
+
+            IActionResult result = await controller.GetById(Guid.NewGuid());
+
+            ObjectResult notFound = Assert.IsType<ObjectResult>(result);
+            ResultDTO<RankDTO> payload = Assert.IsType<ResultDTO<RankDTO>>(notFound.Value);
+            Assert.False(payload.success);
+            Assert.Equal(404, payload.statusCode);
+        }
+
+        [Fact]
         public async Task CreateRank_ReturnsCreated()
         {
             using VortexDbContext db = CreateDb();
