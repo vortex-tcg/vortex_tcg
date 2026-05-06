@@ -140,6 +140,19 @@ jobs:
             fi
           EOF
 
+      - name: Deploy SonarQube stack (never redeployed)
+        run: |
+          $SSH_CMD bash << 'EOF'
+            if ! docker stack ls | grep -q "^sonar "; then
+              cd /var/www/vortex_tcg
+              docker stack deploy \
+                -c infra/sonarqube/sonarqube-stack.yml sonar
+              echo "SonarQube stack deployed"
+            else
+              echo "SonarQube stack already running, skipping"
+            fi
+          EOF
+
       - name: Run database migrations
         run: |
           $SSH_CMD bash << 'EOF'
