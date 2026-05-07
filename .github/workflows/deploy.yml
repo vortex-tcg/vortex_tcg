@@ -141,10 +141,14 @@ jobs:
       - name: Deploy SonarQube stack (if requested)
         run: |
           $SSH_CMD bash << 'EOF'
-            # If sonar stack already exists on the server, skip deployment
             if docker stack ls | grep -q "^sonar\b"; then
-              echo "Stack 'sonar' already running, nothing to do."
-              exit 0
+              echo "sonar stack present — checking task states..."
+              if docker stack ps sonar --no-trunc --format "{{.CurrentState}}" | grep -q "Running"; then
+                echo "Stack 'sonar' already running with running tasks, nothing to do."
+                exit 0
+              else
+                echo "Stack 'sonar' exists but has no running tasks — will (re)deploy."
+              fi
             fi
 
             mkdir -p /var/www/vortex_tcg/sonarqube
