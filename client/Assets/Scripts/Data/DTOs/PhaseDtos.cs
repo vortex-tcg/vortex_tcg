@@ -4,10 +4,10 @@ namespace VortexTCG.Scripts.DTOs
 {
     public enum GamePhase
     {
-        PLACEMENT = 0,
-        ATTACK = 1,
-        DEFENSE = 2,
-        END_TURN = 3
+        STAND_BY = 1,
+        ATTACK = 2,
+        DEFENSE = 3,
+        END_TURN = 4
     }
 
     [Serializable]
@@ -17,9 +17,10 @@ namespace VortexTCG.Scripts.DTOs
         public Guid ActivePlayerId { get; set; }
         public int TurnNumber { get; set; }
         public bool AutoChanged { get; set; }
-        public string AutoChangeReason { get; set; }
+        public string? AutoChangeReason { get; set; }
         public bool CanAct { get; set; }
         public long? TimerEndTime { get; set; } // Unix timestamp (ms) de fin du timer
+        public DrawnCardDto DrawnCard { get; set; }
     }
 
     [Serializable]

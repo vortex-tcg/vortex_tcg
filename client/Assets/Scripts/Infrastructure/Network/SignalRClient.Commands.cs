@@ -78,6 +78,13 @@ public partial class SignalRClient
         await SafeInvoke("ChangePhase");
     }
 
+    public async Task Surrender()
+    {
+        RequireConnectedOrThrow();
+        Debug.Log("[SignalRClient] -> Surrender()");
+        await SafeInvoke("Surrender");
+    }
+
     public async Task DrawCards(int playerPosition, int amount)
     {
         RequireConnectedOrThrow();
@@ -105,10 +112,57 @@ public partial class SignalRClient
         await _conn.InvokeAsync("HandleAttackPos", cardId);
     }
 
+    public async Task ToggleAttackCard(int position)
+    {
+        RequireConnectedOrThrow();
+        if (_conn == null)
+            throw new InvalidOperationException("Not connected to hub.");
+
+        await _conn.InvokeAsync("ToggleAttackCard", position);
+    }
+
+    public async Task<bool> ToggleAttackCardCompat(int position, int gameCardId)
+    {
+        RequireConnectedOrThrow();
+
+        if (_conn == null)
+            return false;
+
+        // Prefer the clean hub contract ToggleAttackCard(position).
+        try
+        {
+            await _conn.InvokeAsync("ToggleAttackCard", position);
+            Debug.Log($"[SignalRClient] Attack toggle sent via ToggleAttackCard position={position} gameCardId={gameCardId}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[SignalRClient] ToggleAttackCard(position={position}) failed, trying legacy HandleAttackPos: {ex.Message}");
+        }
+
+        // Fallback to legacy hub method.
+        try
+        {
+            await _conn.InvokeAsync("HandleAttackPos", gameCardId);
+            Debug.Log($"[SignalRClient] Attack toggle sent via HandleAttackPos gameCardId={gameCardId}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[SignalRClient] Attack toggle failed via HandleAttackPos: {ex.Message}");
+            return false;
+        }
+    }
+
     public async Task HandleDefensePos(int cardId, int opponentCardId)
     {
-        if (_conn == null) return;
-        await _conn.InvokeAsync("HandleDefensePos", cardId, opponentCardId);
+        await ToggleDefenseCard(cardId, opponentCardId);
+    }
+
+    public async Task ToggleDefenseCard(int defensePosition, int attackPosition)
+    {
+        RequireConnectedOrThrow();
+        await SafeInvoke("ToggleDefenseCard", defensePosition, attackPosition);
     }
 
     public bool IsConnected => _conn != null && _conn.State == HubConnectionState.Connected;

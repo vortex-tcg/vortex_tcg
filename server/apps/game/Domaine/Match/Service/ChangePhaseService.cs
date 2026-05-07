@@ -12,6 +12,41 @@ public static class ChangePhaseService
 
         PhaseFlowService.NextStep step = PhaseFlowService.ComputeNext(match);
         actual.OnEndPhase(match, ct);
+
+        if (step.NextPhase.Type == Entity.MatchPhaseType.EndTurn)
+        {
+            match.SetPhase(step.NextPhase);
+            match.SetCurrentPlayerPosition(step.NextCurrentPlayerPosition);
+
+            match.AddEvent(new DomainEvent(
+                MatchEvent.PHASE_CHANGED,
+                new DomainEvent.PhaseChangedData(
+                    match.MatchId.Value,
+                    match.CurrentPlayerPosition,
+                    step.NextPhase.Type
+                )
+            ));
+
+            step.NextPhase.OnStartPhase(match, ct);
+            step.NextPhase.OnEndPhase(match, ct);
+
+            IPhase standBy = new Entity.StandByPhase();
+            match.SetPhase(standBy);
+            standBy.OnStartPhase(match, ct);
+
+            match.AddEvent(new DomainEvent(
+                MatchEvent.PHASE_CHANGED,
+                new DomainEvent.PhaseChangedData(
+                    match.MatchId.Value,
+                    match.CurrentPlayerPosition,
+                    standBy.Type
+                )
+            ));
+
+            match.ResetTurnFlags();
+            return;
+        }
+
         match.SetPhase(step.NextPhase);
         step.NextPhase.OnStartPhase(match, ct);
         match.SetCurrentPlayerPosition(step.NextCurrentPlayerPosition);

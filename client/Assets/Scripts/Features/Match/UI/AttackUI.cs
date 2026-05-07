@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Linq;
 using UnityEngine;
 using VortexTCG.Scripts.Features.Match.Services;
 using VortexTCG.Scripts.Features.Match.Events;
@@ -30,6 +30,7 @@ namespace VortexTCG.Scripts.MatchScene
         private AttackService attackLogic;
         private CardUI selectedAttacker;
         private List<CardUI> attackingCards = new List<CardUI>();
+        private bool _attackSlotsAreOneBased;
 
         private void Awake()
         {
@@ -44,7 +45,7 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 PhaseService.Instance.OnEnterAttack += OnEnterAttackPhase;
                 PhaseService.Instance.OnEnterDefense += OnEnterDefensePhase;
-                PhaseService.Instance.OnEnterStandBy += OnEndDefensePhase;
+                PhaseService.Instance.OnEnterEndTurn += OnEnterEndTurnPhase;
             }
             if (SignalRClient.Instance != null)
                 SignalRClient.Instance.OnAttackEngage += OnAttackEngage;
@@ -54,6 +55,7 @@ namespace VortexTCG.Scripts.MatchScene
 
             attackLogic.RegisterExistingCardsFromSlots();
             ClearAttackStatesFromSlots();
+            DetectAttackSlotIndexBase();
         }
 
         private void OnDestroy()
@@ -62,7 +64,7 @@ namespace VortexTCG.Scripts.MatchScene
             {
                 PhaseService.Instance.OnEnterAttack -= OnEnterAttackPhase;
                 PhaseService.Instance.OnEnterDefense -= OnEnterDefensePhase;
-                PhaseService.Instance.OnEnterStandBy -= OnEndDefensePhase;
+                PhaseService.Instance.OnEnterEndTurn -= OnEnterEndTurnPhase;
             }
 
             if (SignalRClient.Instance != null)
@@ -74,15 +76,20 @@ namespace VortexTCG.Scripts.MatchScene
 
         private void OnEnterAttackPhase()
         {
-            attackLogic.ClearSelections();
-            attackLogic.ResetAllCardAttackStates();
-            attackingCards.Clear(); // Clear the attacking cards list
         }
         private void OnEnterDefensePhase() { }
-        private void OnEndDefensePhase()
+        private void OnEnterEndTurnPhase()
         {
+            ResetAllAttackStates();
+        }
+
+        public void ResetAllAttackStates()
+        {
+            selectedAttacker = null;
             attackLogic.ClearSelections();
-            attackingCards.Clear(); // Clear the attacking cards list at the end of defense phase
+            attackLogic.ResetAllCardAttackStates();
+            attackingCards.Clear();
+            ClearAttackStatesFromSlots();
         }
 
         public void RegisterCard(CardUI card)
@@ -132,11 +139,15 @@ namespace VortexTCG.Scripts.MatchScene
                 return;
             }
 
-            if (!int.TryParse(card.cardId, out int cardIdInt))
+            CardSlotUI slot = card.GetComponentInParent<CardSlotUI>();
+            if (slot == null)
             {
-                Debug.LogError($"[AttackUI] card.cardId not int! value='{card.cardId}'");
+                Debug.LogError($"[AttackUI] Cannot resolve board slot for card '{card.cardName}'");
                 return;
             }
+
+            int rawAttackPosition = slot.slotIndex;
+            int attackPosition = ResolveAttackPosition(slot, card);
 
             SignalRClient client = SignalRClient.Instance;
             if (client == null)
@@ -145,24 +156,79 @@ namespace VortexTCG.Scripts.MatchScene
                 return;
             }
 
-            Debug.Log($"[AttackUI] -> calling Hub HandleAttackPos(cardId={cardIdInt})");
-            ToggleCard(card);
-
-            _ = SendAttackToServer(client, cardIdInt, card);
+            Debug.Log($"[AttackUI] -> sending attack toggle through AttackService rawPosition={rawAttackPosition} normalizedPosition={attackPosition} oneBased={_attackSlotsAreOneBased}");
+            // Server is authoritative for attack selection state.
+            _ = attackLogic.ToggleCardAttackOnServer(client, attackPosition, card);
         }
 
-        private async Task SendAttackToServer(SignalRClient client, int cardIdInt, CardUI card)
+        private int ResolveAttackPosition(CardSlotUI slot, CardUI card)
         {
-            try
+            if (slot == null)
+                return 0;
+
+            if (P1BoardSlots != null)
             {
-                await client.HandleAttackPos(cardIdInt);
-                Debug.Log($"[AttackUI] Hub call HandleAttackPos DONE cardId={cardIdInt}");
+                for (int i = 0; i < P1BoardSlots.Count; i++)
+                {
+                    CardSlotUI configured = P1BoardSlots[i];
+                    if (configured == null)
+                        continue;
+
+                    if (configured == slot || configured.CurrentCard == card)
+                        return i;
+                }
             }
-            catch (Exception ex)
+
+            return NormalizeAttackPosition(slot);
+        }
+
+        private void DetectAttackSlotIndexBase()
+        {
+            if (P1BoardSlots == null || P1BoardSlots.Count == 0)
             {
-                ToggleCard(card);
-                Debug.LogError($"[AttackUI] Hub call HandleAttackPos FAILED cardId={cardIdInt} ex={ex}");
+                _attackSlotsAreOneBased = false;
+                return;
             }
+
+            List<int> indices = P1BoardSlots
+                .Where(s => s != null)
+                .Select(s => s.slotIndex)
+                .Distinct()
+                .OrderBy(i => i)
+                .ToList();
+
+            bool hasZero = indices.Contains(0);
+            bool looksOneBasedRange = indices.Count > 0 && indices.First() == 1 && indices.Last() == indices.Count;
+            _attackSlotsAreOneBased = !hasZero && looksOneBasedRange;
+
+            Debug.Log($"[AttackUI] Slot index base detection: indices=[{string.Join(",", indices)}] oneBased={_attackSlotsAreOneBased}");
+        }
+
+        private int NormalizeAttackPosition(CardSlotUI slot)
+        {
+            if (slot == null)
+                return 0;
+
+            int position = slot.slotIndex;
+            if (_attackSlotsAreOneBased)
+            {
+                position = Mathf.Max(0, position - 1);
+            }
+
+            // Fallback safety: if scene slot index is out of server board range,
+            // convert from one-based to zero-based for the last slot edge case.
+            if (P1BoardSlots != null && P1BoardSlots.Count > 0)
+            {
+                int maxServerIndex = P1BoardSlots.Count - 1;
+                if (position > maxServerIndex && slot.slotIndex > 0)
+                {
+                    position = slot.slotIndex - 1;
+                }
+
+                position = Mathf.Clamp(position, 0, maxServerIndex);
+            }
+
+            return position;
         }
 
         private void ToggleCard(CardUI card)
@@ -186,7 +252,55 @@ namespace VortexTCG.Scripts.MatchScene
 
         public void ClearSelections() => attackLogic.ClearSelections();
 
-        private void OnAttackEngage(List<int> attackIds) => attackLogic.ApplyAttackStateFromServer(attackIds);
+        private void OnAttackEngage(List<int> attackIds)
+        {
+            attackLogic.ApplyAttackStateFromServer(attackIds);
+            SyncAttackingCardsFromServer(attackIds);
+        }
+
+        private void SyncAttackingCardsFromServer(List<int> attackIds)
+        {
+            attackingCards.Clear();
+
+            if (attackIds == null || attackIds.Count == 0)
+            {
+                selectedAttacker = null;
+                return;
+            }
+
+            for (int i = 0; i < attackIds.Count; i++)
+            {
+                int id = attackIds[i];
+                CardUI card = FindBoardCardById(id);
+                if (card != null)
+                {
+                    attackingCards.Add(card);
+                }
+            }
+
+            if (selectedAttacker != null && !attackingCards.Contains(selectedAttacker))
+            {
+                selectedAttacker = null;
+            }
+        }
+
+        private CardUI FindBoardCardById(int id)
+        {
+            if (P1BoardSlots == null)
+                return null;
+
+            for (int i = 0; i < P1BoardSlots.Count; i++)
+            {
+                CardSlotUI slot = P1BoardSlots[i];
+                if (slot == null || slot.CurrentCard == null)
+                    continue;
+
+                if (int.TryParse(slot.CurrentCard.cardId, out int cardId) && cardId == id)
+                    return slot.CurrentCard;
+            }
+
+            return null;
+        }
 
         private void ClearAttackStatesFromSlots()
         {
@@ -199,7 +313,11 @@ namespace VortexTCG.Scripts.MatchScene
                 if (slot == null || slot.CurrentCard == null)
                     continue;
 
-                SetAttackState(slot.CurrentCard, false);
+                CardUI card = slot.CurrentCard;
+                SetAttackState(card, false);
+                card.SetSelected(false);
+                card.ClearAttackOrder();
+                card.ResetAttackState();
             }
         }
 
@@ -256,36 +374,7 @@ namespace VortexTCG.Scripts.MatchScene
 
         private void OnCardClickedHandler(CardUI card)
         {
-            if (card == null)
-                return;
-
-            if (PhaseService.Instance == null)
-                return;
-            
-            if (PhaseService.Instance.CurrentPhase != GamePhase.ATTACK)
-                return;
-
-            // Check if card is on the player's board
-            CardSlotUI slot = card.GetComponentInParent<CardSlotUI>();
-            if (slot == null)
-            {
-                Debug.LogWarning($"[AttackUI] Card '{card.cardName}' is not in a CardSlotUI - likely in hand or elsewhere");
-                return;
-            }
-
-            bool isOnP1Board = IsCardOnP1Board(card);
-            
-            Debug.Log($"[AttackUI] OnCardClickedHandler: card='{card.cardName}' isOnP1Board={isOnP1Board} slot={slot.name}");
-
-            // Only allow selecting cards from the player's board for attack
-            if (isOnP1Board)
-            {
-                SelectAttacker(card);
-            }
-            else
-            {
-                Debug.LogWarning($"[AttackUI] ❌ Card '{card.cardName}' is not on your board - cannot attack with it");
-            }
+            HandleCardClicked(card);
         }
 
         private void SelectAttacker(CardUI card)
