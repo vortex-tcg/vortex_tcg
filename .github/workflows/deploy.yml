@@ -138,6 +138,72 @@ jobs:
               vortextcg/vortex_repository:migrations
           EOF
 
+      - name: Deploy SonarQube stack (if requested)
+        if: github.ref_name == 'main' || github.event_name == 'workflow_dispatch'
+        run: |
+          $SSH_CMD bash << 'EOF'
+            mkdir -p /var/www/vortex_tcg/sonarqube
+            cat > /var/www/vortex_tcg/sonarqube/docker-compose.sonarqube.yml <<'YAML'
+            version: '3.8'
+
+            services:
+              db:
+                image: postgres:14
+                environment:
+                  POSTGRES_USER: sonar
+                  POSTGRES_PASSWORD: ${SONAR_DB_PASSWORD}
+                  POSTGRES_DB: sonarqube
+                volumes:
+                  - postgres_data:/var/lib/postgresql/data
+                deploy:
+                  replicas: 1
+                  placement:
+                    constraints:
+                      - node.role == manager
+
+              sonarqube:
+                image: sonarqube:9.9-community
+                environment:
+                  SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonarqube
+                  SONAR_JDBC_USERNAME: sonar
+                  SONAR_JDBC_PASSWORD: ${SONAR_DB_PASSWORD}
+                  ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+                ports:
+                  - "9000:9000"
+                volumes:
+                  - sonarqube_data:/opt/sonarqube/data
+                  - sonarqube_extensions:/opt/sonarqube/extensions
+                  - sonarqube_logs:/opt/sonarqube/logs
+                  - sonarqube_temp:/opt/sonarqube/temp
+                depends_on:
+                  - db
+                deploy:
+                  replicas: 1
+                  restart_policy:
+                    condition: on-failure
+                  resources:
+                    limits:
+                      memory: 1G
+
+            volumes:
+              sonarqube_data:
+              sonarqube_extensions:
+              sonarqube_logs:
+              sonarqube_temp:
+              postgres_data:
+
+            networks:
+              vortex_traefik:
+                external: true
+            YAML
+
+            # Ensure ES maps count
+            sudo sysctl -w vm.max_map_count=262144 || true
+
+            # Deploy sonar stack separately
+            docker stack deploy -c /var/www/vortex_tcg/sonarqube/docker-compose.sonarqube.yml --with-registry-auth sonar || true
+          EOF
+
       - name: Deploy stack
         run: |
           $SSH_CMD bash << 'EOF'
@@ -253,7 +319,7 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
 
-          cd ${{ github.workspace }}
+          cd ${{ github.workspace }}\server
 
           Write-Host "Repertoire de travail : $((Get-Location).Path)"
 
@@ -263,7 +329,8 @@ jobs:
             /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" `
             /d:sonar.scanner.skipJreProvisioning=true
 
-          dotnet build ./server/server.sln
+          dotnet restore
+          dotnet build ./server.sln
 
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
