@@ -13,6 +13,7 @@ namespace VortexTCG.Scripts.Features.Collection.UI
     {
         [Header("UI")]
         [SerializeField] private UIDocument uiDocument;
+        [SerializeField] private UIDocument deleteModalDocument;
         [SerializeField] public VisualTreeAsset cardTemplate;
 
         [Header("Cost Colors")]
@@ -34,9 +35,14 @@ namespace VortexTCG.Scripts.Features.Collection.UI
         private VisualElement deckNameContainer;
         private Label deckNameLabel;
         private Button editDeckNameButton;
+        private Button deleteDeckButton;
         private TextField deckNameTextField;
         private Button selectedDeckButton;
         private VisualElement selectedDeckCardsContainer;
+        private VisualElement deleteModalHUD;
+        private Label deleteModalDeckNameLabel;
+        private Button deleteModalConfirmButton;
+        private Button deleteModalCancelButton;
         private Label cardNameLabel;
         private Label cardLoreLabel;
         private Label attackPointsLabel;
@@ -74,6 +80,13 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             if (uiDocument == null)
                 uiDocument = GetComponent<UIDocument>();
 
+            if (deleteModalDocument == null)
+            {
+                GameObject deleteModalGameObject = GameObject.Find("DeleteModalHUD");
+                if (deleteModalGameObject != null)
+                    deleteModalDocument = deleteModalGameObject.GetComponent<UIDocument>();
+            }
+
             if (uiDocument == null)
             {
                 Debug.LogError("[CollectionUI] UIDocument non assigne");
@@ -96,10 +109,16 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             deckNameContainer = rootVisualElement.Q<VisualElement>("DeckNameContainer");
             deckNameLabel = rootVisualElement.Q<Label>("DeckName");
             editDeckNameButton = rootVisualElement.Q<Button>("EditDeckName");
+            deleteDeckButton = rootVisualElement.Q<Button>("DeleteDeck");
             selectedDeckCardsContainer = rootVisualElement.Q<VisualElement>("SelectedCardsContainer");
             deckDropZone = rootVisualElement.Q<VisualElement>("DragAndDropZone");
+            deleteModalHUD = deleteModalDocument != null ? deleteModalDocument.rootVisualElement : null;
+            deleteModalDeckNameLabel = deleteModalHUD?.Q<Label>("DeckName");
+            deleteModalConfirmButton = deleteModalHUD?.Q<Button>("ConfirmButton");
+            deleteModalCancelButton = deleteModalHUD?.Q<Button>("CancelButton");
 
             InitializeDeckNameEditor();
+            InitializeDeleteDeckModal();
 
             if (deckDropZone == null)
                 deckDropZone = selectedDeckCardsContainer;
