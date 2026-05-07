@@ -7,13 +7,6 @@ http:
         - websecure
       tls:
         certResolver: le
-    sonarqube:
-      rule: "Host(`sonarqube.vortex-tcg.online`)"
-      service: sonar-service
-      entryPoints:
-        - websecure
-      tls:
-        certResolver: le
 
   services:
     vault-service:

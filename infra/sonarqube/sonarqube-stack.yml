@@ -1,75 +1,123 @@
-version: "3.8"
+name: SonarQube – Setup
 
-services:
-  sonarqube:
-    image: sonarqube:community
-    environment:
-      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonar
-      SONAR_JDBC_USERNAME: ${SONARQUBE_USER}
-      SONAR_JDBC_PASSWORD: ${SONARQUBE_PASSWORD}
-    volumes:
-      - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_logs:/opt/sonarqube/logs
-    secrets:
-      - sonar_db_user
-      - sonar_db_password
-    networks:
-      - sonarqube_internal
-      - vortex_traefik-network
-    depends_on:
-      - sonarqube-db
-    deploy:
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.sonarqube.rule=Host(`sonarqube.vortex-tcg.online`)"
-        - "traefik.http.routers.sonarqube.entrypoints=websecure"
-        - "traefik.http.routers.sonarqube.tls=true"
-        - "traefik.http.routers.sonarqube.tls.certresolver=le"
-        - "traefik.http.services.sonarqube.loadbalancer.server.port=9000"
-      resources:
-        limits:
-          memory: 4G
-        reservations:
-          memory: 2G
+on:
+  workflow_dispatch:
 
-  sonarqube-db:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: ${SONARQUBE_USER}
-      POSTGRES_PASSWORD: ${SONARQUBE_PASSWORD}
-      POSTGRES_DB: sonar
-    volumes:
-      - sonarqube_db:/var/lib/postgresql/data
-    secrets:
-      - sonar_db_user
-      - sonar_db_password
-    networks:
-      - sonarqube_internal
-    deploy:
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
+permissions:
+  contents: read
 
-secrets:
-  sonar_db_user:
-    external: true
-  sonar_db_password:
-    external: true
+jobs:
+  setup-sonarqube:
+    name: Deploy SonarQube stack
+    runs-on: ubuntu-latest
+    environment: production
 
-volumes:
-  sonarqube_data:
-  sonarqube_logs:
-  sonarqube_extensions:
-  sonarqube_db:
+    steps:
+      - uses: actions/checkout@v4
 
-networks:
-  sonarqube_internal:
-    driver: overlay
-    internal: true
-  vortex_traefik-network:
-    external: true
+      - name: Setup SSH via Vault
+        run: |
+          export VAULT_ADDR=${{ secrets.VAULT_URL }}
+          export VAULT_TOKEN=${{ secrets.VAULT_TOKEN }}
+          export VAULT_SKIP_VERIFY=true
+
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+          sudo apt-get update -qq
+          sudo apt-get install -y gpg
+
+          wget -qO- https://apt.releases.hashicorp.com/gpg | \
+            gpg --dearmor | \
+            sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
+
+          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
+            https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
+            sudo tee /etc/apt/sources.list.d/hashicorp.list
+
+          sudo apt-get update -qq
+          sudo apt-get install -y vault=1.21.3-1
+
+          ssh-keygen -t ed25519 -f /tmp/pipeline_key -N ""
+
+          vault write -field=signed_key ssh/sign/ssh-ubuntu-user \
+            public_key=@/tmp/pipeline_key.pub \
+            valid_principals="ubuntu" \
+            > /tmp/pipeline_key-cert.pub
+
+          chmod 600 /tmp/pipeline_key
+
+          ssh -i /tmp/pipeline_key \
+            -o CertificateFile=/tmp/pipeline_key-cert.pub \
+            -o StrictHostKeyChecking=no \
+            ubuntu@${{ secrets.EC2_HOST }} \
+            echo "Connected"
+
+      - name: Export SSH helper
+        run: |
+          echo 'SSH_CMD=ssh -i /tmp/pipeline_key -o CertificateFile=/tmp/pipeline_key-cert.pub -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }}' >> $GITHUB_ENV
+
+      - name: Prepare SonarQube directories
+        run: |
+          $SSH_CMD bash << 'EOF'
+            mkdir -p /var/sonarqube/data
+            mkdir -p /var/sonarqube/logs
+            mkdir -p /var/sonarqube/extensions
+            mkdir -p /var/sonarqube/postgresql/data
+
+            sudo chown -R 1000:1000 /var/sonarqube/data
+            sudo chown -R 1000:1000 /var/sonarqube/logs
+            sudo chown -R 1000:1000 /var/sonarqube/extensions
+            sudo chown -R 999:999  /var/sonarqube/postgresql/data
+            sudo chmod 750 /var/sonarqube/postgresql/data
+          EOF
+
+      - name: Create env file for SonarQube
+        run: |
+          $SSH_CMD bash << 'EOF'
+            cat > /var/www/vortex_tcg/infra/sonarqube/.env << 'ENVEOF'
+            SONARQUBE_USER=${{ secrets.SONARQUBE_USER }}
+            SONARQUBE_PASSWORD=${{ secrets.SONARQUBE_PASSWORD }}
+            ENVEOF
+          EOF
+
+      - name: Deploy SonarQube stack
+        run: |
+          $SSH_CMD bash << 'EOF'
+            if docker stack ls | grep -q "^sonar "; then
+              echo "Stack sonar already running, nothing to do."
+              exit 0
+            fi
+
+            cd /var/www/vortex_tcg
+            docker stack deploy \
+              --with-registry-auth \
+              -c infra/sonarqube/sonarqube-stack.yml sonar
+
+            echo "SonarQube stack deployed."
+          EOF
+
+      - name: Wait for SonarQube to be healthy
+        run: |
+          $SSH_CMD bash << 'EOF'
+            echo "Waiting for SonarQube..."
+            for i in $(seq 1 30); do
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+                http://localhost:9000/api/system/status || true)
+              if [ "$STATUS" = "200" ]; then
+                echo "SonarQube is up."
+                exit 0
+              fi
+              echo "  attempt $i/30 – HTTP $STATUS"
+              sleep 10
+            done
+            echo "SonarQube did not come up in time."
+            docker service logs sonar_sonarqube --tail 50 || true
+            exit 1
+          EOF
+
+      - name: Cleanup ephemeral SSH key
+        if: always()
+        run: |
+          rm -f /tmp/pipeline_key /tmp/pipeline_key.pub /tmp/pipeline_key-cert.pub
