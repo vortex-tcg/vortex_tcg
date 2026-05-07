@@ -164,5 +164,4 @@ services:
 
 networks:
   traefik-network:
-    driver: overlay
-    attachable: true
+    external: true
