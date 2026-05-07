@@ -11,45 +11,35 @@ services:
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ../certs:/certs:ro
-      - ../traefik/dynamic:/dynamic:ro
-      - ./letsencrypt:/letsencrypt
+      - /var/www/vortex_tcg/certs:/certs:ro
+      - /var/www/vortex_tcg/infra/traefik/dynamic:/dynamic:ro
+      - /var/www/vortex_tcg/server/letsencrypt:/letsencrypt
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
     command:
-      # EntryPoints
       - "--entrypoints.web.address=:80"
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.websecure.http.tls=true"
-
-      # Attach the static configuration tls.yml file that contains the tls configuration settings
       - "--providers.file.filename=/dynamic/tls.yml"
-
-      # Providers - Swarm Provider pour Traefik v3
       - "--providers.swarm=true"
       - "--providers.swarm.exposedbydefault=false"
-      # Comment for now to check if network is the issue
       - "--providers.swarm.network=traefik-network"
       - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
       - "--providers.file.directory=/dynamic"
       - "--providers.file.watch=true"
-
-      # API & Dashboard
       - "--api.dashboard=true"
       - "--api.insecure=false"
-
-      # Observability
       - "--log.level=INFO"
       - "--accesslog=true"
       - "--metrics.prometheus=true"
-
       - "--certificatesresolvers.le.acme.email=vortex-tcg.aws@gmail.com"
       - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
       - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+      - "--serversTransport.insecureSkipVerify=true"
 
     env_file:
       - .env
@@ -64,9 +54,6 @@ services:
         - "traefik.http.routers.dashboard.service=api@internal"
         - "traefik.http.routers.dashboard.tls=true"
         - "traefik.http.routers.dashboard.tls.certresolver=le"
-        #- "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_PASSWORD}"
-        #- "traefik.http.routers.dashboard.middlewares=dashboard-auth@swarm"
-        # Todo, if time check for vault to secure password
         - "traefik.http.services.vortex-traefik.loadbalancer.server.port=8080"
       placement:
         constraints:
@@ -106,10 +93,10 @@ services:
       resources:
         limits:
           cpus: "0.5"
-          memory: 512M
-        reservations:
-          cpus: "0.25"
           memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
 
   game:
     image: vortextcg/vortex_repository:game
@@ -137,11 +124,11 @@ services:
         failure_action: rollback
       resources:
         limits:
-          cpus: "1"
-          memory: 1G
-        reservations:
           cpus: "0.5"
           memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 256M
 
   api:
     image: vortextcg/vortex_repository:api
@@ -170,37 +157,10 @@ services:
       resources:
         limits:
           cpus: "0.5"
-          memory: 512M
-        reservations:
-          cpus: "0.25"
           memory: 256M
-
-  sonarqube:
-    image: sonarqube:lts
-    networks:
-      - traefik-network
-    volumes:
-      - /var/sonarqube/data:/opt/sonarqube/data
-      - /var/sonarqube/logs:/opt/sonarqube/logs
-      - /var/sonarqube/extensions:/opt/sonarqube/extensions
-    deploy:
-      mode: replicated
-      replicas: 1
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.sonarqube.rule=Host(`sonarqube.vortex-tcg.online`)"
-        - "traefik.http.routers.sonarqube.entrypoints=websecure"
-        - "traefik.http.routers.sonarqube.tls=true"
-        - "traefik.http.routers.sonarqube.tls.certresolver=le"
-        - "traefik.http.services.sonarqube.loadbalancer.server.port=9000"
-      update_config:
-        parallelism: 1
-        delay: 10s
-        order: start-first
-      restart_policy:
-        condition: on-failure
-        delay: 10s
-        max_attempts: 3
+        reservations:
+          cpus: "0.1"
+          memory: 128M
 
 networks:
   traefik-network:
