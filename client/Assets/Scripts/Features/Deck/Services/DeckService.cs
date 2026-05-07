@@ -119,5 +119,35 @@ namespace VortexTCG.Scripts.Features.Deck.Services
 
             onSuccess?.Invoke();
         }
+
+        public IEnumerator DeleteDeckAsync(Guid deckId, Action onSuccess, Action<string> onError)
+        {
+            AppConfig cfg = ConfigLoader.Load();
+            if (cfg == null || string.IsNullOrWhiteSpace(cfg.baseUrl))
+            {
+                onError?.Invoke("[DeckService] Config API manquante");
+                yield break;
+            }
+
+            string apiBase = cfg.baseUrl.TrimEnd('/');
+            string url = apiBase.EndsWith("/api", StringComparison.OrdinalIgnoreCase)
+                ? $"{apiBase}/deck/{deckId}"
+                : $"{apiBase}/api/deck/{deckId}";
+
+            using UnityWebRequest req = UnityWebRequest.Delete(url);
+
+            if (Jwt.I != null)
+                Jwt.I.AttachAuthHeader(req);
+
+            yield return req.SendWebRequest();
+
+            if (req.result != UnityWebRequest.Result.Success)
+            {
+                onError?.Invoke($"[DeckService] Suppression du deck echouee : {req.error}");
+                yield break;
+            }
+
+            onSuccess?.Invoke();
+        }
     }
 }
