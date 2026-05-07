@@ -112,18 +112,6 @@ jobs:
             mkdir -p ../certs
             mkdir -p ../traefik/dynamic
             mkdir -p ./letsencrypt
-            mkdir -p /var/sonarqube/data
-            mkdir -p /var/sonarqube/logs
-            mkdir -p /var/sonarqube/extensions
-            mkdir -p /var/sonarqube/postgresql/data
-
-            sudo chown -R 1000:1000 /var/sonarqube/data
-            sudo chown -R 1000:1000 /var/sonarqube/logs
-            sudo chown -R 1000:1000 /var/sonarqube/extensions
-            sudo chown -R 999:999 /var/sonarqube/postgresql/data
-            sudo chmod 750 /var/sonarqube/postgresql/data
-
-            sudo rm -rf /var/sonarqube/data/es8
 
             if [ ! -f ./letsencrypt/acme.json ]; then
               touch ./letsencrypt/acme.json
@@ -137,19 +125,6 @@ jobs:
             if grep -q "migrations:" docker-compose.prod.yaml; then
               echo "migrations still present after git checkout"
               exit 1
-            fi
-          EOF
-
-      - name: Deploy SonarQube stack (never redeployed)
-        run: |
-          $SSH_CMD bash << 'EOF'
-            if ! docker stack ls | grep -q "^sonar "; then
-              cd /var/www/vortex_tcg
-              docker stack deploy \
-                -c infra/sonarqube/sonarqube-stack.yml sonar
-              echo "SonarQube stack deployed"
-            else
-              echo "SonarQube stack already running, skipping"
             fi
           EOF
 
