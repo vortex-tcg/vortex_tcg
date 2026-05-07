@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using VortexTCG.Scripts.DTOs;
 namespace VortexTCG.Scripts.DTOs
 {
@@ -19,6 +20,9 @@ namespace VortexTCG.Scripts.DTOs
     [Serializable]
     public class DrawResultForPlayerDto
     {
+        [JsonPropertyName("playerId")]
+        public string PlayerId { get; set; }
+
         public List<DrawnCardDto> DrawnCards { get; set; } = new();
         public int FatigueCount { get; set; }
         public int BaseFatigue { get; set; }

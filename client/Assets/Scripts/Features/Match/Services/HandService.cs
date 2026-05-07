@@ -37,7 +37,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
                 GamePhase currentPhase = PhaseService.Instance.CurrentPhase;
                 Debug.Log($"[HandService] Current phase: {currentPhase}");
                 
-                if (currentPhase != GamePhase.PLACEMENT)
+                if (currentPhase != GamePhase.STAND_BY)
                 {
                     Debug.LogWarning($"[HandService] Impossible de placer une carte pendant la phase {currentPhase}.");
                     OnPlayCancelled?.Invoke($"Wrong phase: {currentPhase}");
@@ -47,9 +47,12 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
             if (!int.TryParse(card.cardId, out int gameCardId))
             {
+                Debug.LogError($"[HandService] Failed to parse card.cardId='{card.cardId}'");
                 OnPlayCancelled?.Invoke("Invalid card ID");
                 return false;
             }
+            
+            Debug.Log($"[HandService] 🎴 Attempting to play card: cardId={card.cardId} (parsed={gameCardId}), cardName={card.cardName}, slotIndex={slot.slotIndex}");
 
             _playRequestInFlight = true;
             _pendingCard = card;
@@ -100,7 +103,14 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (!HasPendingPlay) return false;
 
             return message.Contains("Can't play", StringComparison.OrdinalIgnoreCase) ||
-                   message.Contains("play the card", StringComparison.OrdinalIgnoreCase);
+                   message.Contains("play the card", StringComparison.OrdinalIgnoreCase) ||
+                   message.Contains("card not found in hand", StringComparison.OrdinalIgnoreCase) ||
+                   message.Contains("not your turn", StringComparison.OrdinalIgnoreCase) ||
+                   message.Contains("allowed only in standby phase", StringComparison.OrdinalIgnoreCase) ||
+                   message.Contains("invoke playcard a échoué", StringComparison.OrdinalIgnoreCase) ||
+                   message.Contains("invoke playcard failed", StringComparison.OrdinalIgnoreCase) ||
+                   message.Contains("hubexception", StringComparison.OrdinalIgnoreCase) ||
+                   message.Contains("impossible", StringComparison.OrdinalIgnoreCase);
         }
 
         private void StartPendingTimeout(int delayMs)

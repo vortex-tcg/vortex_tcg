@@ -20,7 +20,7 @@ namespace VortexTCG.Api.Logs.ActionType.Providers
 
 		public async Task<ActionTypeModel?> GetByIdAsync(Guid id)
 		{
-			return await _db.Actions.Include(a => a.Childs).Include(a => a.Parent).FirstOrDefaultAsync(a => a.Id == id);
+			return await _db.Actions.Include(a => a.Childs).FirstOrDefaultAsync(a => a.Id == id);
 		}
 
 		public async Task AddAsync(ActionTypeModel actionType)

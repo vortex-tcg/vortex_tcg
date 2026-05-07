@@ -31,12 +31,31 @@ public static class HandleDefenseService
 
             if (defenseCard != null)
             {
-          
-
-                if (CanBeDefendedWith(defenseCard))
+                // Explicit removal flow from client (second click on defending card).
+                if (attackPosition < 0)
                 {
-              
-                    if (match.DefenseHandler.IsDefenseEngagedOnAttack(defensePosition, attackPosition))
+                    if (match.DefenseHandler.IsDefenseEngaged(defensePosition))
+                    {
+                        match.DefenseHandler.RemoveDefenseByPosition(defensePosition);
+                        defenseCard.States = CardStates.Active;
+                    }
+                }
+                else
+                {
+                    if (!CanBeDefendedWith(defenseCard))
+                    {
+                        throw new InvalidOperationException("Cette carte ne peut pas défendre pour le moment.");
+                    }
+
+                    bool alreadyDefendingThisAttack = match.DefenseHandler.IsDefenseEngagedOnAttack(defensePosition, attackPosition);
+                    bool anotherCardAlreadyDefendsThisAttack = match.DefenseHandler.HasDefenseOnAttack(attackPosition) && !alreadyDefendingThisAttack;
+
+                    if (anotherCardAlreadyDefendsThisAttack)
+                    {
+                        throw new InvalidOperationException("Impossible de défendre cette carte: une autre carte prend déjà les dégâts.");
+                    }
+
+                    if (alreadyDefendingThisAttack)
                     {
                         match.DefenseHandler.RemoveDefenseByPosition(defensePosition);
                         defenseCard.States = CardStates.Active;

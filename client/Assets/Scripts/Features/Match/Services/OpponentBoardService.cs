@@ -35,16 +35,38 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
         public void ApplyOpponentAttackState(List<int> attackIds)
         {
-            lastOpponentAttackIds = attackIds;
-            lastOpponentDefenseState = null;
+            List<int> previousAttackIds = lastOpponentAttackIds != null
+                ? new List<int>(lastOpponentAttackIds)
+                : new List<int>();
+            lastOpponentAttackIds = attackIds != null ? new List<int>(attackIds) : null;
             Debug.Log("[OpponentBoardService] ApplyOpponentAttackState ids=" +
                       (attackIds == null ? "NULL" : string.Join(",", attackIds)));
             Debug.Log("[OpponentBoardService] Current registered cards count: " + opponentCardsById.Count);
             Debug.Log("[OpponentBoardService] Registered IDs: " + string.Join(",", opponentCardsById.Keys));
 
-            ClearOpponentAttackOutline();
+            if (attackIds == null || attackIds.Count == 0)
+            {
+                for (int i = 0; i < previousAttackIds.Count; i++)
+                {
+                    if (opponentCardsById.TryGetValue(previousAttackIds[i], out CardUI previousCard) && previousCard != null)
+                        ClearAttackVisualState(previousCard);
+                }
+                return;
+            }
 
-            if (attackIds == null || attackIds.Count == 0) return;
+            HashSet<int> nextAttackIds = new HashSet<int>(attackIds);
+
+            for (int i = 0; i < previousAttackIds.Count; i++)
+            {
+                int previousId = previousAttackIds[i];
+                if (nextAttackIds.Contains(previousId))
+                    continue;
+
+                if (opponentCardsById.TryGetValue(previousId, out CardUI previousCard) && previousCard != null)
+                {
+                    ClearAttackVisualState(previousCard);
+                }
+            }
 
             int found = 0;
             int missing = 0;
@@ -53,12 +75,21 @@ namespace VortexTCG.Scripts.Features.Match.Services
             {
                 int id = attackIds[i];
 
-                if (opponentCardsById.TryGetValue(id, out CardUI card) && card != null)
+                if ((!opponentCardsById.TryGetValue(id, out CardUI card) || card == null) && OpponentBoardUI.Instance != null)
                 {
-                    card.SetSelected(true);
-                    card.SetAttackedThisPhase(true);
-                    card.ShowAttackOrder(i + 1);
-                    card.SetOpponentAttacking(true);
+                    CardUI recovered = OpponentBoardUI.Instance.FindOpponentCardByGameCardId(id)
+                                       ?? OpponentBoardUI.Instance.GetCardAtSlotIndex(id);
+                    if (recovered != null)
+                    {
+                        opponentCardsById[id] = recovered;
+                        card = recovered;
+                        Debug.Log("[OpponentBoardService] Recovered opponent card from board for id=" + id);
+                    }
+                }
+
+                if (card != null)
+                {
+                    ApplyAttackVisualState(card, i + 1);
                     found++;
                 }
                 else
@@ -73,37 +104,65 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
         public void ApplyOpponentDefenseState(DefenseDataResponseDto data)
         {
-            lastOpponentDefenseState = data;
-
             Debug.Log("[OpponentBoardService] ApplyOpponentDefenseState defenses=" +
                       (data?.DefenseCards == null ? "NULL" : data.DefenseCards.Count.ToString()));
 
-            ClearOpponentAttackOutline();
+            DefenseDataResponseDto previousDefenseState = lastOpponentDefenseState;
+            lastOpponentDefenseState = data;
 
-            if (data == null || data.AttackCardsId == null || data.AttackCardsId.Count == 0)
+            if (previousDefenseState?.DefenseCards != null)
+            {
+                for (int i = 0; i < previousDefenseState.DefenseCards.Count; i++)
+                {
+                    DefenseCardDataDto previousDefense = previousDefenseState.DefenseCards[i];
+                    if (previousDefense == null)
+                        continue;
+
+                    CardUI previousDefender = null;
+                    if (!opponentCardsById.TryGetValue(previousDefense.cardId, out previousDefender) || previousDefender == null)
+                    {
+                        previousDefender = OpponentBoardUI.Instance != null
+                            ? OpponentBoardUI.Instance.FindOpponentCardByGameCardId(previousDefense.cardId)
+                            : null;
+                    }
+
+                    if (previousDefender != null)
+                    {
+                        previousDefender.SetDefenseSelected(false);
+                        previousDefender.SetDefendingState(false);
+                    }
+                }
+            }
+
+            if (data?.DefenseCards == null || data.DefenseCards.Count == 0)
                 return;
 
             int found = 0;
             int missing = 0;
 
-            for (int i = 0; i < data.AttackCardsId.Count; i++)
+            for (int i = 0; i < data.DefenseCards.Count; i++)
             {
-                int id = data.AttackCardsId[i];
+                DefenseCardDataDto defense = data.DefenseCards[i];
+                if (defense == null)
+                    continue;
 
-                if (opponentCardsById.TryGetValue(id, out CardUI card) && card != null)
+                CardUI defenderCard = null;
+                if (!opponentCardsById.TryGetValue(defense.cardId, out defenderCard) || defenderCard == null)
                 {
-                    card.SetOpponentAttacking(true);
-                    card.SetSelected(true);
-                    card.SetAttackedThisPhase(true);
-                    card.ShowAttackOrder(i + 1);
-                    found++;
-                    Debug.Log("[OpponentBoardService] (Defense) Attack OUTLINE ON for opponent card id=" + id + " name=" + card.name + " order=" + (i + 1));
+                    defenderCard = OpponentBoardUI.Instance != null
+                        ? OpponentBoardUI.Instance.FindOpponentCardByGameCardId(defense.cardId)
+                        : null;
                 }
-                else
+
+                if (defenderCard == null)
                 {
                     missing++;
-                    Debug.LogWarning("[OpponentBoardService] (Defense) attack card id not found on opponent board: " + id);
+                    Debug.LogWarning("[OpponentBoardService] (Defense) defender card not found on opponent board: cardId=" + defense.cardId);
+                    continue;
                 }
+
+                ApplyDefenseVisualState(defenderCard);
+                found++;
             }
 
             Debug.Log("[OpponentBoardService] ApplyOpponentDefenseState done found=" + found + " missing=" + missing);
@@ -113,16 +172,21 @@ namespace VortexTCG.Scripts.Features.Match.Services
         {
             Debug.Log("[OpponentBoardService] ClearOpponentAttackOutline()");
 
-            foreach (var kvp in opponentCardsById)
+            foreach (KeyValuePair<int, CardUI> kvp in opponentCardsById)
             {
                 if (kvp.Value != null)
                 {
-                    kvp.Value.SetOpponentAttacking(false);
-                    kvp.Value.SetSelected(false);
-                    kvp.Value.ClearAttackOrder();
-                    kvp.Value.ResetAttackState();
+                    ClearAttackVisualState(kvp.Value);
                 }
             }
+        }
+
+        public void ClearCombatState()
+        {
+            // End turn resolution is authoritative: clear cached combat payloads so outlines are not re-applied.
+            lastOpponentAttackIds = null;
+            lastOpponentDefenseState = null;
+            ClearOpponentAttackOutline();
         }
 
         public void UpdateOpponentCardSnapshot(GameCardDto dto)
@@ -176,13 +240,47 @@ namespace VortexTCG.Scripts.Features.Match.Services
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("[OpponentBoardService] BoardState " + label + ": opponentCardsById.Count=" + opponentCardsById.Count);
-            foreach (var kvp in opponentCardsById)
+            foreach (KeyValuePair<int, CardUI> kvp in opponentCardsById)
             {
                 CardUI card = kvp.Value;
                 string cardInfo = card != null ? $"'{card.name}'" : "null";
                 sb.AppendLine($"  Card id={kvp.Key} {cardInfo}");
             }
             Debug.Log(sb.ToString());
+        }
+
+        private void ApplyAttackVisualState(CardUI card, int attackOrder)
+        {
+            if (card == null)
+                return;
+
+            card.SetSelected(true);
+            card.SetAttackedThisPhase(true);
+            card.ShowAttackOrder(attackOrder);
+            card.SetOpponentAttacking(true);
+        }
+
+        private void ClearAttackVisualState(CardUI card)
+        {
+            if (card == null)
+                return;
+
+            card.SetOpponentAttacking(false);
+            card.SetSelected(false);
+            card.ClearAttackOrder();
+            card.ResetAttackState();
+        }
+
+        private void ApplyDefenseVisualState(CardUI card)
+        {
+            if (card == null)
+                return;
+
+            card.SetSelected(false);
+            card.ClearAttackOrder();
+            card.ResetAttackState();
+            card.SetDefenseSelected(true);
+            card.SetDefendingState(true);
         }
     }
 }

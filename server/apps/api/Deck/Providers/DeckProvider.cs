@@ -1,14 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using VortexTCG.Api.Deck.DTOs;
-using VortexTCG.Api.Champion.DTOs;
 using VortexTCG.DataAccess;
-using VortexTCG.DataAccess.Models;
 using DeckModel = VortexTCG.DataAccess.Models.Deck;
-using CardModel = VortexTCG.DataAccess.Models.Card;
 using DeckCardModel = VortexTCG.DataAccess.Models.DeckCard;
 using CollectionCardModel = VortexTCG.DataAccess.Models.CollectionCard;
 using ClassCardModel = VortexTCG.DataAccess.Models.ClassCard;
-
 
 namespace VortexTCG.Api.Deck.Providers
 {
@@ -20,46 +16,25 @@ namespace VortexTCG.Api.Deck.Providers
         {
             _db = db;
         }
-        public DeckDTO GetMockDeck(string deckId)
+
+        public async Task<DeckModel?> GetByIdAsync(Guid deckId)
+            => await _db.Decks.AsNoTracking().FirstOrDefaultAsync(d => d.Id == deckId);
+
+        public async Task<DeckModel> AddAsync(DeckModel deck)
         {
-            List<VortexTCG.Api.Card.DTOs.CardDto> cards = new List<VortexTCG.Api.Card.DTOs.CardDto>();
-            Random random = new Random();
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-            DeckChampionDto champion = new DeckChampionDto {
-                ChampionID = new Guid(),
-                Name = "Emporio PingChilling",
-                Description = "Le premier empereur berzerkouin",
-                HP = 30,
-            };
-
-            for (int i = 0; i < 30; i++)
-            {
-                VortexTCG.Api.Card.DTOs.CardDto card = new VortexTCG.Api.Card.DTOs.CardDto
-                {
-                    Id = Guid.NewGuid(),
-                    Name = new string(Enumerable.Repeat(chars, 8).Select(s => s[random.Next(s.Length)]).ToArray()),
-                    Description = new string(Enumerable.Repeat(chars, 50).Select(s => s[random.Next(s.Length)]).ToArray()),
-                    Hp = random.Next(1, 10),
-                    Attack = random.Next(1, 10),
-                    Cost = random.Next(1, 10),
-                    Price = random.Next(1, 10),
-                    Picture = "mock.png",
-                    Extension = "BASIC",
-                    CardType = "GUARD",
-                    Class = new List<string> { "guerrier" },
-                    Factions = new List<Guid>()
-                };
-                cards.Add(card);
-            }
-            DeckDTO deck = new DeckDTO
-            {
-                Id = deckId,
-                Name = $"Mock Deck {deckId}",
-                Cards = cards,
-                Champion = champion
-            };
+            await _db.Decks.AddAsync(deck);
+            await _db.SaveChangesAsync();
             return deck;
+        }
+
+        public async Task<bool> DeleteAsync(Guid deckId)
+        {
+            DeckModel? deck = await _db.Decks.FindAsync(deckId);
+            if (deck == null) return false;
+
+            _db.Decks.Remove(deck);
+            await _db.SaveChangesAsync();
+            return true;
         }
 
         public async Task<DeckModel?> GetDeckWithCardsAndChampionAsync(Guid deckId)
@@ -71,7 +46,9 @@ namespace VortexTCG.Api.Deck.Providers
                 .ThenInclude((CollectionCardModel cc) => cc.Card)
                 .Include(d => d.Champion)
                 .FirstOrDefaultAsync(d => d.Id == deckId);
-        } public async Task<List<(Guid CardId, string Label)>> GetClassRowsByCardIdsAsync(List<Guid> cardIds)
+        }
+
+        public async Task<List<(Guid CardId, string Label)>> GetClassRowsByCardIdsAsync(List<Guid> cardIds)
         {
             return await _db.Set<ClassCardModel>()
                 .AsNoTracking()
@@ -81,6 +58,44 @@ namespace VortexTCG.Api.Deck.Providers
                     x.CardId,
                     x.Class != null ? x.Class.Label : ""
                 ))
+                .ToListAsync();
+        }
+        public async Task<DeckModel?> GetDeckForUpdateAsync(Guid deckId)
+        {
+            return await _db.Decks
+                .Include(d => d.DeckCard)
+                .FirstOrDefaultAsync(d => d.Id == deckId);
+        }
+
+        public async Task UpdateDeckAsync(DeckModel deck, List<UpdateDeckCardDto> newCards)
+        {
+
+            await _db.DeckCards
+                .Where(dc => dc.DeckId == deck.Id)
+                .ExecuteDeleteAsync();
+
+            var newDeckCards = newCards.Select(card => new DeckCardModel
+            {
+                Id = Guid.NewGuid(),
+                DeckId = deck.Id,
+                CardId = card.CollectionCardId,
+                Quantity = card.Quantity,
+                CreatedAtUtc = DateTime.UtcNow,
+                CreatedBy = "System",
+                UpdatedAtUtc = null,
+                UpdatedBy = null
+            }).ToList();
+
+            await _db.DeckCards.AddRangeAsync(newDeckCards);
+            await _db.SaveChangesAsync();
+        }
+        public async Task<List<DeckModel>> GetDecksByUserIdAsync(Guid userId)
+        {
+            return await _db.Decks
+                .AsNoTracking()
+                .Include(d => d.Champion)
+                .Include(d => d.Faction)
+                .Where(d => d.UserId == userId)
                 .ToListAsync();
         }
     }

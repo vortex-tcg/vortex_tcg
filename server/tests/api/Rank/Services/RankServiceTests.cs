@@ -90,6 +90,23 @@ namespace VortexTCG.Tests.Api.Rank.Services
         }
 
         [Fact]
+        public async Task GetById_ReturnsData_WhenFound()
+        {
+            using VortexDbContext db = CreateDb();
+            RankModel entity = new RankModel { Id = Guid.NewGuid(), Label = "Gold", nbVictory = 25 };
+            db.Ranks.Add(entity);
+            await db.SaveChangesAsync();
+            RankService service = CreateService(db);
+
+            ResultDTO<RankDTO> dto = await service.GetByIdAsync(entity.Id);
+
+            Assert.True(dto.success);
+            Assert.Equal(200, dto.statusCode);
+            Assert.Equal("Gold", dto.data!.Label);
+            Assert.Equal(25, dto.data.nbVictory);
+        }
+
+        [Fact]
         public async Task Update_Returns404_WhenMissing()
         {
             using VortexDbContext db = CreateDb();
