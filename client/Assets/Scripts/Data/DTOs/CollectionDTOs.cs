@@ -21,6 +21,8 @@ namespace VortexTCG.Scripts.DTOs
     public class UserCollectionDeckDto
     {
         public Guid DeckId { get; set; }
+        public Guid ChampionId { get; set; }
+        public Guid FactionId { get; set; }
         public string DeckName { get; set; } = "";
         public string ChampionImage { get; set; } = "";
     }
@@ -35,6 +37,7 @@ namespace VortexTCG.Scripts.DTOs
     [Serializable] 
     public class UserCollectionCardDto
     {
+        public Guid CollectionCardId { get; set; }
         public CardDto Card { get; set; } = default!;
         public List<UserCollectionCardOwnDto> OwnData { get; set; } = new List<UserCollectionCardOwnDto>();
     }

@@ -19,6 +19,10 @@ public static class ResolveEndPhaseService
         BattleResolveDTOs result = new BattleResolveDTOs();
 
         IReadOnlyList<AttackCard> attacks = match.AttackHandler.GetAttackers();
+        if (attacks.Count == 0)
+        {
+            attacks = BuildFallbackAttackersFromBoard(attackingPlayer);
+        }
 
         foreach (AttackCard attack in attacks)
         {
@@ -48,6 +52,30 @@ public static class ResolveEndPhaseService
         ));
 
         return result;
+    }
+
+    private static IReadOnlyList<AttackCard> BuildFallbackAttackersFromBoard(Player attackingPlayer)
+    {
+        List<AttackCard> fallback = new List<AttackCard>();
+
+        foreach (KeyValuePair<int, GameCardDto> entry in attackingPlayer.Board.EnumerateSlots())
+        {
+            int position = entry.Key;
+            GameCardDto card = entry.Value;
+
+            if (card.States.Value == CardStates.Attacking.Value)
+            {
+                fallback.Add(new AttackCard
+                {
+                    Position = position,
+                    GameCardId = card.GameCardId
+                });
+            }
+        }
+
+        // Keep deterministic order for client-side battle sequence.
+        fallback.Sort((a, b) => a.Position.CompareTo(b.Position));
+        return fallback;
     }
 
     private static void ResolveSingleAttack(
@@ -95,6 +123,8 @@ public static class ResolveEndPhaseService
             attack.Position,
             defenderCard,
             defense.Position,
+            defendingPlayer,
+            match,
             result
         );
     }
@@ -104,6 +134,8 @@ public static class ResolveEndPhaseService
         int attackerPosition,
         GameCardDto defenderCard,
         int defenderPosition,
+        Player defendingPlayer,
+        Match match,
         BattleResolveDTOs result)
     {
         int attackerDamage = attackerCard.Attack.Value;
@@ -114,9 +146,27 @@ public static class ResolveEndPhaseService
 
         int attackerRemainingHp = attackerCurrentHp - defenderDamage;
         int defenderRemainingHp = defenderCurrentHp - attackerDamage;
+        int overflowToChampion = Math.Max(0, attackerDamage - defenderCurrentHp);
 
         attackerCard.Hp = new CardHpValue(attackerRemainingHp);
         defenderCard.Hp = new CardHpValue(defenderRemainingHp);
+
+        if (overflowToChampion > 0)
+        {
+            int championRemainingHp = defendingPlayer.Champion.Hp.Value - overflowToChampion;
+            defendingPlayer.Champion.Hp = new ChampionHp(championRemainingHp);
+            new ChampionDeathService().CheckChampionDeath(match, defendingPlayer);
+
+            DirectChampionDamageDto dto = new DirectChampionDamageDto
+            {
+                AttackerCardId = attackerCard.GameCardId,
+                AttackerPosition = attackerPosition,
+                Damage = overflowToChampion,
+                ChampionRemainingHp = championRemainingHp
+            };
+
+            result.DirectChampionDamages.Add(dto);
+        }
 
         bool attackerDied = attackerRemainingHp <= 0;
         bool defenderDied = defenderRemainingHp <= 0;

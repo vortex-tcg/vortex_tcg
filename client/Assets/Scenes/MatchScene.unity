@@ -302,13 +302,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &68313134 stripped
 GameObject:
@@ -333,6 +343,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1218190134}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -7.1400003
@@ -555,6 +569,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1218190134}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -9.54
@@ -693,6 +711,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1218190134}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.4099998
@@ -868,13 +890,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &264149735 stripped
 GameObject:
@@ -947,6 +979,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1615186288}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -4.78531
@@ -1016,6 +1052,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1615186288}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -7.1400003
@@ -1117,13 +1157,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &347979653
 PrefabInstance:
@@ -1232,13 +1282,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &461632685
 PrefabInstance:
@@ -1248,6 +1308,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1218190134}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 4.82
@@ -1423,13 +1487,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &620190789 stripped
 GameObject:
@@ -1550,13 +1624,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &737667414 stripped
 GameObject:
@@ -1588,8 +1672,8 @@ Transform:
   m_GameObject: {fileID: 738405641}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -2.3034873, y: 0.7947961, z: -1.265078}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -2.65, y: 0.7947961, z: -2.18}
+  m_LocalScale: {x: 0.8851, y: 0.8851, z: 0.8851}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 199839230}
@@ -1647,13 +1731,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &776513355
 GameObject:
@@ -1667,6 +1761,8 @@ GameObject:
   - component: {fileID: 776513356}
   - component: {fileID: 776513360}
   - component: {fileID: 776513361}
+  - component: {fileID: 776513362}
+  - component: {fileID: 776513363}
   m_Layer: 5
   m_Name: HUD
   m_TagString: Untagged
@@ -1721,6 +1817,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiDocument: {fileID: 776513356}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
 --- !u!114 &776513361
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1734,6 +1835,39 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiDoc: {fileID: 776513356}
+--- !u!114 &776513362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 776513355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0feb2a82edd3144b991c3838bccd27d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 1471669114}
+  startHidden: 1
+--- !u!114 &776513363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 776513355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59b7c238a5b2078409e6d4a08bf05864, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 776513356}
+  buttonName: EndTurnButton
+  buttonNames: []
+  pressedVisibleDuration: 0.08
+  debugLogs: 0
+  normalBackground: {fileID: 2800000, guid: 6b44f130c75fded4cb8e4dc99614633e, type: 3}
+  pressedBackground: {fileID: 2800000, guid: 76b4720ae5bd59b4a8dd6a465b8cad05, type: 3}
 --- !u!1001 &824804803
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1742,6 +1876,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1218190134}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -4.78531
@@ -1843,13 +1981,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &835679977 stripped
 GameObject:
@@ -1896,13 +2044,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &889923923
 PrefabInstance:
@@ -1912,6 +2070,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1218190134}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.38
@@ -2013,13 +2175,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &891603984 stripped
 GameObject:
@@ -2066,13 +2238,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &931078889
 PrefabInstance:
@@ -2082,6 +2264,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1615186288}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 4.82
@@ -2183,13 +2369,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &967252606
 GameObject:
@@ -2368,13 +2564,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &1076761479
 PrefabInstance:
@@ -2621,13 +2827,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1218190133
 GameObject:
@@ -2741,13 +2957,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1410990565 stripped
 GameObject:
@@ -2759,6 +2985,143 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
   m_PrefabInstance: {fileID: 2011053240}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1451464459
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1451464461}
+  - component: {fileID: 1451464460}
+  m_Layer: 0
+  m_Name: CursorManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1451464460
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1451464459}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a98bee937a9b7fc4e84c9a699df46da6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 776513356}
+  normalCursor: {fileID: 2800000, guid: 1ae6e2f3e6b1c4b488fee54f29666ecc, type: 3}
+  normalCursorClicked: {fileID: 2800000, guid: 7db97b6c3a82daf4ca73030626fa5a18, type: 3}
+  pointerCursor: {fileID: 2800000, guid: ef555f55ed04f484686c92ee08e820b2, type: 3}
+  pointerCursorClicked: {fileID: 2800000, guid: f1689b5c514d0d64f950e1614af3aece, type: 3}
+--- !u!4 &1451464461
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1451464459}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 960, y: 540, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1471669114
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1471669118}
+  - component: {fileID: 1471669117}
+  - component: {fileID: 1471669119}
+  - component: {fileID: 1471669120}
+  m_Layer: 5
+  m_Name: Menu HUD
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &1471669117
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1471669114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_PanelSettings: {fileID: 11400000, guid: 6b8f574547f18cc4682f6730d2676290, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: 8733b7c209e05e443ad2825e785b441f, type: 3}
+  m_SortingOrder: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+--- !u!4 &1471669118
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1471669114}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1471669119
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1471669114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 768b186b4ebdf1d4794fcb5e10f34f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 1471669117}
+  quitButtonName: QuitButton
+  loadHomeAfterSurrender: 1
+  homeSceneName: HomeScene
+--- !u!114 &1471669120
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1471669114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59b7c238a5b2078409e6d4a08bf05864, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 1471669117}
+  buttonName: QuitButton
+  buttonNames: []
+  pressedVisibleDuration: 0.08
+  debugLogs: 0
+  normalBackground: {fileID: 2800000, guid: 2d2d0b8ccfc3b394eb94f07ddab2dc3a, type: 3}
+  pressedBackground: {fileID: 2800000, guid: 29c6b53755cb1704680e3f47c24f9e81, type: 3}
 --- !u!1 &1486313202 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
@@ -2804,13 +3167,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1552452903 stripped
 GameObject:
@@ -2857,13 +3230,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &1558615408
 PrefabInstance:
@@ -2873,6 +3256,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1615186288}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.38
@@ -2974,13 +3361,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1615186287
 GameObject:
@@ -3120,6 +3517,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1615186288}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -3295,13 +3696,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1795709451 stripped
 GameObject:
@@ -3348,13 +3759,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1803225860 stripped
 GameObject:
@@ -3401,13 +3822,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1833318994
 GameObject:
@@ -3445,7 +3876,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.3886792, g: 0.3886792, b: 0.3886792, a: 0}
+  m_BackGroundColor: {r: 0.25796545, g: 0.26141852, b: 0.2924528, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -3495,7 +3926,7 @@ Transform:
   m_GameObject: {fileID: 1833318994}
   serializedVersion: 2
   m_LocalRotation: {x: 0.46073893, y: -0, z: -0, w: 0.88753575}
-  m_LocalPosition: {x: -6.9, y: 12.74, z: -12}
+  m_LocalPosition: {x: -7.46, y: 12.74, z: -11.79}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3676,13 +4107,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1 &1909179011 stripped
 GameObject:
@@ -3729,13 +4170,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &1940300476
 PrefabInstance:
@@ -3745,6 +4196,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1615186288}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -9.54
@@ -3846,13 +4301,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &1946076882
 PrefabInstance:
@@ -3862,6 +4327,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1218190134}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -3963,13 +4432,23 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
 --- !u!1001 &2011053240
 PrefabInstance:
@@ -3979,6 +4458,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1615186288}
     m_Modifications:
+    - target: {fileID: 3581521355017076845, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4407910395997968700, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.4099998
@@ -4080,14 +4563,132 @@ MonoBehaviour:
   costText: {fileID: 0}
   atkText: {fileID: 0}
   hpText: {fileID: 0}
+  currentHpText: {fileID: 0}
   descriptionText: {fileID: 0}
+  costColor: {fileID: 0}
+  costGreen: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  costBlue: {r: 0.2, g: 0.4, b: 0.9, a: 1}
+  costOrange: {r: 1, g: 0.55, b: 0.1, a: 1}
+  costRed: {r: 0.9, g: 0.15, b: 0.15, a: 1}
+  costViolet: {r: 0.6, g: 0.2, b: 0.8, a: 1}
   faceDown: 0
   attackOrderText: {fileID: 0}
-  AttackOutline: {fileID: 0}
-  DefenseOutline: {fileID: 0}
+  AttackState: {fileID: 0}
+  DefenseState: {fileID: 0}
+  DefendingState: {fileID: 0}
   AttackOrder: {fileID: 0}
-  SelectedEffect: {fileID: 0}
+  SleepyState: {fileID: 0}
+  DamageReceivedState: {fileID: 0}
+  DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
+--- !u!1 &2094001917
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2094001922}
+  - component: {fileID: 2094001921}
+  - component: {fileID: 2094001920}
+  - component: {fileID: 2094001919}
+  - component: {fileID: 2094001918}
+  m_Layer: 5
+  m_Name: Ending Screen HUD
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &2094001918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2094001917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 899ec052ee06a254693a24f07dfc16ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 2094001921}
+  fadeDuration: 0.8
+  quitButtonFadeDuration: 2
+  victoryTexture: {fileID: 2800000, guid: 0d233b1246c930541a5e1be1c7605b82, type: 3}
+  defeatTexture: {fileID: 2800000, guid: f4598f3610155374f8749b57569e845a, type: 3}
+  victoryResourcePath: GUI/VictoryScreen
+  defeatResourcePath: GUI/DefeatScreen
+--- !u!114 &2094001919
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2094001917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59b7c238a5b2078409e6d4a08bf05864, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 2094001921}
+  buttonName: QuitButton
+  buttonNames: []
+  pressedVisibleDuration: 0.08
+  debugLogs: 0
+  normalBackground: {fileID: 2800000, guid: 2d2d0b8ccfc3b394eb94f07ddab2dc3a, type: 3}
+  pressedBackground: {fileID: 2800000, guid: 29c6b53755cb1704680e3f47c24f9e81, type: 3}
+--- !u!114 &2094001920
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2094001917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 768b186b4ebdf1d4794fcb5e10f34f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 2094001921}
+  quitButtonName: QuitButton
+  loadHomeAfterSurrender: 1
+  homeSceneName: HomeScene
+--- !u!114 &2094001921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2094001917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_PanelSettings: {fileID: 11400000, guid: 6b8f574547f18cc4682f6730d2676290, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: 1bd1015070867fe4585eb68484a5e12a, type: 3}
+  m_SortingOrder: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+--- !u!4 &2094001922
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2094001917}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -4096,3 +4697,6 @@ SceneRoots:
   - {fileID: 967252609}
   - {fileID: 738405642}
   - {fileID: 776513357}
+  - {fileID: 2094001922}
+  - {fileID: 1471669118}
+  - {fileID: 1451464461}

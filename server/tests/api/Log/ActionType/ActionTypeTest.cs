@@ -28,6 +28,51 @@ namespace VortexTCG.Tests.Api.Log.ActionType
         }
 
         [Fact]
+        public async Task GetAll_ReturnsEmpty_WhenNoData()
+        {
+            using VortexDbContext db = CreateDb();
+            ActionTypeController controller = CreateController(db);
+
+            IActionResult result = await controller.GetAll();
+
+            ObjectResult ok = Assert.IsType<ObjectResult>(result);
+            ResultDTO<ActionTypeDTO[]> payload = Assert.IsType<ResultDTO<ActionTypeDTO[]>>(ok.Value);
+            Assert.True(payload.success);
+            Assert.Equal(200, payload.statusCode);
+            Assert.Empty(payload.data!);
+        }
+
+        [Fact]
+        public async Task GetAll_ReturnsData_WhenExists()
+        {
+            using VortexDbContext db = CreateDb();
+            db.Actions.Add(new VortexTCG.DataAccess.Models.ActionType { Id = Guid.NewGuid(), actionDescription = "Act1" });
+            await db.SaveChangesAsync();
+            ActionTypeController controller = CreateController(db);
+
+            IActionResult result = await controller.GetAll();
+
+            ObjectResult ok = Assert.IsType<ObjectResult>(result);
+            ResultDTO<ActionTypeDTO[]> payload = Assert.IsType<ResultDTO<ActionTypeDTO[]>>(ok.Value);
+            Assert.True(payload.success);
+            Assert.Single(payload.data!);
+        }
+
+        [Fact]
+        public async Task GetById_Returns404_WhenNotFound()
+        {
+            using VortexDbContext db = CreateDb();
+            ActionTypeController controller = CreateController(db);
+
+            IActionResult result = await controller.GetById(Guid.NewGuid());
+
+            ObjectResult notFound = Assert.IsType<ObjectResult>(result);
+            ResultDTO<ActionTypeDTO> payload = Assert.IsType<ResultDTO<ActionTypeDTO>>(notFound.Value);
+            Assert.False(payload.success);
+            Assert.Equal(404, payload.statusCode);
+        }
+
+        [Fact]
         public async Task CreateActionType_ReturnsCreated()
         {
             using VortexDbContext db = CreateDb();

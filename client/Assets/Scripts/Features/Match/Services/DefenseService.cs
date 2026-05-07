@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using VortexTCG.Scripts.DTOs;
@@ -53,12 +54,19 @@ namespace VortexTCG.Scripts.Features.Match.Services
             return IsP2BoardSlot(slot);
         }
 
+        public bool IsDefenseLocked(CardUI defender)
+        {
+            return defender != null && defenseAssignments.ContainsKey(defender);
+        }
+
         public void SelectDefender(CardUI defender)
         {
             if (defender == null) return;
+            if (IsDefenseLocked(defender)) return;
             if (currentDefender == defender) return;
 
-            if (currentDefender != null)
+            // Keep already-assigned defenders highlighted when switching selection.
+            if (currentDefender != null && !defenseAssignments.ContainsKey(currentDefender))
                 currentDefender.SetDefenseSelected(false);
 
             currentDefender = defender;
@@ -69,55 +77,86 @@ namespace VortexTCG.Scripts.Features.Match.Services
         {
             if (currentDefender == null) return;
             if (targetAttacker == null) return;
-            if (!targetAttacker.IsAttackingOutlineActive()) return;
 
-            if (!int.TryParse(currentDefender.cardId, out int defenderId)) return;
-            if (!int.TryParse(targetAttacker.cardId, out int attackerId)) return;
+            bool attackerIsInAttackMode = targetAttacker.HasAttackedThisPhase || targetAttacker.IsAttackingOutlineActive();
+            if (!attackerIsInAttackMode)
+            {
+                Debug.LogWarning("[DefenseService] Impossible d'assigner la defense: la carte cible n'est plus en mode attaque.");
+                return;
+            }
+
+            CardSlotUI defenderSlot = currentDefender.GetComponentInParent<CardSlotUI>();
+            CardSlotUI attackerSlot = targetAttacker.GetComponentInParent<CardSlotUI>();
+            if (defenderSlot == null || attackerSlot == null) return;
+
+            int defenderPosition = defenderSlot.slotIndex;
+            int attackerPosition = attackerSlot.slotIndex;
 
             SignalRClient client = SignalRClient.Instance;
             if (client == null) return;
 
-            if (defenseAssignments.ContainsKey(currentDefender))
-                defenseAssignments.Remove(currentDefender);
+            CardUI defender = currentDefender;
+            currentDefender = null;
 
-            defenseAssignments[currentDefender] = targetAttacker;
+            // Server is authoritative for defense assignments.
+            defender.SetDefenseSelected(false);
 
             try
             {
-                await client.HandleDefensePos(defenderId, attackerId);
+                await client.ToggleDefenseCard(defenderPosition, attackerPosition);
             }
             catch (Exception)
             {
-                if (defenseAssignments.ContainsKey(currentDefender) && defenseAssignments[currentDefender] == targetAttacker)
-                    defenseAssignments.Remove(currentDefender);
+                Debug.LogWarning("[DefenseService] ToggleDefenseCard failed; waiting for next authoritative sync.");
+            }
+        }
+
+        public async Task RemoveDefenseAndSend(CardUI defender)
+        {
+            if (defender == null) return;
+
+            CardSlotUI defenderSlot = defender.GetComponentInParent<CardSlotUI>();
+            if (defenderSlot == null) return;
+
+            int defenderPosition = defenderSlot.slotIndex;
+
+            if (currentDefender == defender)
+                currentDefender = null;
+
+            bool hadAssignment = defenseAssignments.ContainsKey(defender);
+
+            if (!hadAssignment)
+                return;
+
+            // Optimistically remove the assignment and clear visual state before sending.
+            CardUI previousAttacker = defenseAssignments[defender];
+            defenseAssignments.Remove(defender);
+            defender.SetDefenseSelected(false);
+            defender.SetDefendingState(false);
+
+            SignalRClient client = SignalRClient.Instance;
+            if (client == null) return;
+
+            try
+            {
+                await client.ToggleDefenseCard(defenderPosition, -1);
+            }
+            catch (Exception)
+            {
+                // Restore optimistic update on failure; next server sync will be authoritative.
+                defenseAssignments[defender] = previousAttacker;
+                defender.SetDefenseSelected(true);
+                defender.SetDefendingState(true);
             }
         }
 
         public void ApplyDefenseStateFromServer(DefenseDataResponseDto dto)
         {
-            ClearAllDefense();
-
             if (dto == null) return;
             if (dto.DefenseCards == null) return;
 
-            for (int i = 0; i < dto.DefenseCards.Count; i++)
-            {
-                DefenseCardDataDto pair = dto.DefenseCards[i];
-                CardUI defenderCard = FindBoardCardById(pair.cardId);
-                CardUI attackerCard = FindBoardCardById(pair.opponentCardId);
+            Dictionary<int, (CardUI defenderCard, CardUI attackerCard)> uniqueAssignmentsByAttack = new();
 
-                if (defenderCard == null) continue;
-                if (attackerCard == null) continue;
-
-                defenderCard.SetDefenseSelected(true);
-                defenseAssignments[defenderCard] = attackerCard;
-            }
-
-            currentDefender = null;
-        }
-
-        public void ClearAllDefense()
-        {
             if (currentDefender != null)
             {
                 currentDefender.SetDefenseSelected(false);
@@ -127,7 +166,52 @@ namespace VortexTCG.Scripts.Features.Match.Services
             foreach (KeyValuePair<CardUI, CardUI> kvp in defenseAssignments)
             {
                 if (kvp.Key != null)
+                {
                     kvp.Key.SetDefenseSelected(false);
+                    kvp.Key.SetDefendingState(false);
+                }
+            }
+            defenseAssignments.Clear();
+
+            for (int i = 0; i < dto.DefenseCards.Count; i++)
+            {
+                DefenseCardDataDto pair = dto.DefenseCards[i];
+                CardUI defenderCard = FindBoardCardById(pair.cardId);
+                CardUI attackerCard = FindBoardCardByIdOrSlotIndex(pair.opponentCardId);
+
+                if (defenderCard == null || attackerCard == null)
+                {
+                    Debug.LogWarning("[DefenseService] Ignoring unresolved defense pair from server payload.");
+                    continue;
+                }
+
+                uniqueAssignmentsByAttack[pair.opponentCardId] = (defenderCard, attackerCard);
+            }
+
+            foreach ((CardUI defenderCard, CardUI attackerCard) in uniqueAssignmentsByAttack.Values)
+            {
+                defenderCard.SetDefenseSelected(true);
+                defenderCard.SetDefendingState(true);
+                defenseAssignments[defenderCard] = attackerCard;
+            }
+        }
+
+        public void ClearAllDefense()
+        {
+            if (currentDefender != null)
+            {
+                currentDefender.SetDefenseSelected(false);
+                currentDefender.SetDefendingState(false);
+                currentDefender = null;
+            }
+
+            foreach (KeyValuePair<CardUI, CardUI> kvp in defenseAssignments)
+            {
+                if (kvp.Key != null)
+                {
+                    kvp.Key.SetDefenseSelected(false);
+                    kvp.Key.SetDefendingState(false);
+                }
             }
 
             defenseAssignments.Clear();
@@ -192,6 +276,37 @@ namespace VortexTCG.Scripts.Features.Match.Services
                         RegisterCard(slot.CurrentCard);
                         return slot.CurrentCard;
                     }
+                }
+            }
+
+            return null;
+        }
+
+        private CardUI FindBoardCardByIdOrSlotIndex(int value)
+        {
+            CardUI byId = FindBoardCardById(value);
+            if (byId != null)
+                return byId;
+
+            if (p1BoardSlots != null)
+            {
+                for (int i = 0; i < p1BoardSlots.Count; i++)
+                {
+                    CardSlotUI slot = p1BoardSlots[i];
+                    if (slot == null || slot.CurrentCard == null) continue;
+                    if (slot.slotIndex == value)
+                        return slot.CurrentCard;
+                }
+            }
+
+            if (p2BoardSlots != null)
+            {
+                for (int i = 0; i < p2BoardSlots.Count; i++)
+                {
+                    CardSlotUI slot = p2BoardSlots[i];
+                    if (slot == null || slot.CurrentCard == null) continue;
+                    if (slot.slotIndex == value)
+                        return slot.CurrentCard;
                 }
             }
 
