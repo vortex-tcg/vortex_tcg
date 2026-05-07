@@ -97,6 +97,112 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             }
         }
 
+        private void InitializeCreateDeckModal()
+        {
+            if (addDeckButton != null)
+            {
+                addDeckButton.clicked += OpenCreateDeckModal;
+            }
+
+            if (createModalHUD != null)
+                createModalHUD.style.display = DisplayStyle.None;
+
+            if (createModalConfirmButton != null)
+                createModalConfirmButton.clicked += ConfirmCreateDeck;
+
+            if (createModalCancelButton != null)
+                createModalCancelButton.clicked += CloseCreateDeckModal;
+
+            if (createDeckInput != null)
+            {
+                createDeckInput.isDelayed = false;
+                createDeckInput.RegisterCallback<KeyDownEvent>(OnCreateDeckInputKeyDown);
+            }
+        }
+
+        private void OpenCreateDeckModal()
+        {
+            if (createModalHUD == null)
+                return;
+
+            if (currentChampionId == Guid.Empty || currentFactionId == Guid.Empty)
+            {
+                Debug.LogError("[DeckUI] Impossible de creer un deck sans champion/faction selectionnes");
+                return;
+            }
+
+            if (createDeckInput != null)
+                createDeckInput.value = string.Empty;
+
+            createModalHUD.style.display = DisplayStyle.Flex;
+
+            if (createDeckInput != null)
+            {
+                createDeckInput.schedule.Execute(() =>
+                {
+                    createDeckInput.Focus();
+                    createDeckInput.SelectAll();
+                });
+            }
+        }
+
+        private void CloseCreateDeckModal()
+        {
+            if (createModalHUD != null)
+                createModalHUD.style.display = DisplayStyle.None;
+        }
+
+        private void OnCreateDeckInputKeyDown(KeyDownEvent evt)
+        {
+            if (evt == null)
+                return;
+
+            if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
+            {
+                evt.StopPropagation();
+                ConfirmCreateDeck();
+            }
+            else if (evt.keyCode == KeyCode.Escape)
+            {
+                evt.StopPropagation();
+                CloseCreateDeckModal();
+            }
+        }
+
+        private void ConfirmCreateDeck()
+        {
+            if (currentChampionId == Guid.Empty || currentFactionId == Guid.Empty)
+                return;
+
+            CloseCreateDeckModal();
+            StartCoroutine(CreateNewDeck());
+        }
+
+        private IEnumerator CreateNewDeck()
+        {
+            if (deckService == null)
+                deckService = new VortexTCG.Scripts.Features.Deck.Services.DeckService();
+
+            string deckName = createDeckInput != null ? createDeckInput.value?.Trim() : string.Empty;
+            string error = null;
+
+            yield return deckService.CreateDeckAsync(
+                deckName,
+                currentChampionId,
+                currentFactionId,
+                onSuccess: () => Debug.Log($"[DeckUI] CreateDeck succeeded Name='{deckName}'"),
+                onError: serviceError => error = serviceError
+            );
+
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                Debug.LogError(error);
+                yield break;
+            }
+
+            yield return LoadUserCollectionAndDecks();
+        }
+
         private void SelectDeck(UserCollectionDeckDto deck, Button selectedButton)
         {
             CommitDeckNameEditIfNeeded();
