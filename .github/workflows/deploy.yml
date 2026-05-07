@@ -139,9 +139,14 @@ jobs:
           EOF
 
       - name: Deploy SonarQube stack (if requested)
-        if: github.ref_name == 'main' || github.event_name == 'workflow_dispatch'
         run: |
           $SSH_CMD bash << 'EOF'
+            # If sonar stack already exists on the server, skip deployment
+            if docker stack ls | grep -q "^sonar\b"; then
+              echo "Stack 'sonar' already running, nothing to do."
+              exit 0
+            fi
+
             mkdir -p /var/www/vortex_tcg/sonarqube
             cat > /var/www/vortex_tcg/sonarqube/docker-compose.sonarqube.yml <<'YAML'
             version: '3.8'
