@@ -39,6 +39,8 @@
 /client/*.svd
 /client/*.opendb
 /client/*.VC.db
+/server/coveragereport
+/server/TestResults
 
 # Ignore les packages NuGet installés dans Assets
 /client/[Aa]ssets/Packages/

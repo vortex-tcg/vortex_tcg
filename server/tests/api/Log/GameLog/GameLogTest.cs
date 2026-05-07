@@ -27,6 +27,51 @@ namespace VortexTCG.Tests.Api.Log.GameLog
 		}
 
 		[Fact]
+		public async Task GetAll_ReturnsEmpty_WhenNoData()
+		{
+			using VortexDbContext db = CreateDb();
+			GameLogController controller = CreateController(db);
+
+			IActionResult result = await controller.GetAll();
+
+			ObjectResult ok = Assert.IsType<ObjectResult>(result);
+			ResultDTO<GameLogDTO[]> payload = Assert.IsType<ResultDTO<GameLogDTO[]>>(ok.Value);
+			Assert.True(payload.success);
+			Assert.Equal(200, payload.statusCode);
+			Assert.Empty(payload.data!);
+		}
+
+		[Fact]
+		public async Task GetAll_ReturnsData_WhenExists()
+		{
+			using VortexDbContext db = CreateDb();
+			db.Gamelogs.Add(new Gamelog { Id = Guid.NewGuid(), Label = "Log1", TurnNumber = 1 });
+			await db.SaveChangesAsync();
+			GameLogController controller = CreateController(db);
+
+			IActionResult result = await controller.GetAll();
+
+			ObjectResult ok = Assert.IsType<ObjectResult>(result);
+			ResultDTO<GameLogDTO[]> payload = Assert.IsType<ResultDTO<GameLogDTO[]>>(ok.Value);
+			Assert.True(payload.success);
+			Assert.Single(payload.data!);
+		}
+
+		[Fact]
+		public async Task GetById_Returns404_WhenNotFound()
+		{
+			using VortexDbContext db = CreateDb();
+			GameLogController controller = CreateController(db);
+
+			IActionResult result = await controller.GetById(Guid.NewGuid());
+
+			ObjectResult notFound = Assert.IsType<ObjectResult>(result);
+			ResultDTO<GameLogDTO> payload = Assert.IsType<ResultDTO<GameLogDTO>>(notFound.Value);
+			Assert.False(payload.success);
+			Assert.Equal(404, payload.statusCode);
+		}
+
+		[Fact]
 		public async Task CreateGameLog_ReturnsCreated()
 		{
 			using VortexDbContext db = CreateDb();

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
 using System.Collections;
+using System.IO;
 
 public class LoadingController : MonoBehaviour
 {
@@ -22,7 +23,8 @@ public class LoadingController : MonoBehaviour
     IEnumerator LoadNext()
     {
         yield return null; 
-        var op = SceneManager.LoadSceneAsync(req.targetScene);
+        string sceneName = NormalizeSceneName(req.targetScene);
+        AsyncOperation op = SceneManager.LoadSceneAsync(sceneName);
         if (op == null) { Debug.LogError("LoadSceneAsync null. Nom de scène invalide ?"); yield break; }
         op.allowSceneActivation = false;
 
@@ -42,7 +44,7 @@ public class LoadingController : MonoBehaviour
 
         if (req.unloadMenu)
         {
-            var menu = SceneManager.GetSceneByName(req.menuSceneName);
+            Scene menu = SceneManager.GetSceneByName(req.menuSceneName);
             if (menu.IsValid() && menu.isLoaded)
                 yield return SceneManager.UnloadSceneAsync(req.menuSceneName);
         }
@@ -58,7 +60,7 @@ public class LoadingController : MonoBehaviour
 
         #endif
             {
-                var add = SceneManager.LoadSceneAsync(req.menuSceneName, LoadSceneMode.Additive);
+                SceneManager.LoadSceneAsync(NormalizeSceneName(req.menuSceneName), LoadSceneMode.Additive);
             }
         }
 
@@ -71,5 +73,13 @@ public class LoadingController : MonoBehaviour
         float t = 0f;
         while (t < d) { t += Time.unscaledDeltaTime; g.alpha = Mathf.Lerp(a, b, t / d); yield return null; }
         g.alpha = b;
+    }
+
+    private static string NormalizeSceneName(string sceneName)
+    {
+        if (string.IsNullOrWhiteSpace(sceneName))
+            return sceneName;
+
+        return Path.GetFileNameWithoutExtension(sceneName).Replace("\\", "/").Split('/')[^1];
     }
 }

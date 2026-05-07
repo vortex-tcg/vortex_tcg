@@ -33,6 +33,32 @@ public partial class SignalRClient : MonoBehaviour
     private string _mode;
     private bool _startGameRequested;
     private int _playerPosition = -1;
+    private int _opponentHandSize;
+    private List<MatchInitCardDto> _initialDrawnCards;
+    private MatchInitChampionDto _playerChampion;
+    private int _playerGold;
+    private string _secondaryCurrencyName;
+    private int _playerSecondaryCurrency;
+    private MatchInitChampionDto _opponentChampion;
+    private MatchInitChampionDto _position1Champion;
+    private MatchInitChampionDto _position2Champion;
+    private int _opponentGold;
+    private string _opponentSecondaryCurrencyName;
+    private int _opponentSecondaryCurrency;
+
+    public List<MatchInitCardDto> InitialDrawnCards => _initialDrawnCards;
+    public int OpponentHandSize => _opponentHandSize;
+    public MatchInitChampionDto PlayerChampion => _playerChampion;
+    public int PlayerGold => _playerGold;
+    public string SecondaryCurrencyName => _secondaryCurrencyName;
+    public int PlayerSecondaryCurrency => _playerSecondaryCurrency;
+    public MatchInitChampionDto OpponentChampion => _opponentChampion;
+    public MatchInitChampionDto Position1Champion => _position1Champion;
+    public MatchInitChampionDto Position2Champion => _position2Champion;
+    public int OpponentGold => _opponentGold;
+    public string OpponentSecondaryCurrencyName => _opponentSecondaryCurrencyName;
+    public int OpponentSecondaryCurrency => _opponentSecondaryCurrency;
+    public int PlayerPosition => _playerPosition;
 
     public event Action<BattlesDataDto, bool> OnBattleResolution;
     public event Action<string> OnStatus;
@@ -41,6 +67,7 @@ public partial class SignalRClient : MonoBehaviour
     public event Action OnOpponentLeft;
     public event Action<PhaseChangeResultDTO> OnGameStarted;
     public event Action<PhaseChangeResultDTO> OnPhaseChanged;
+    public event Action<EndPhaseResolutionDto, bool> OnEndPhaseResolved;
     public event Action<DrawResultForPlayerDto> OnCardsDrawn;
     public event Action<DrawResultForOpponentDto> OnOpponentCardsDrawn;
     public event Action<PlayCardPlayerResultDto> OnPlayCardResult;
@@ -97,7 +124,7 @@ public partial class SignalRClient : MonoBehaviour
     private void EnsureMatchServiceExists()
     {
         // Check if MatchService already exists
-        var matchService = FindObjectOfType<VortexTCG.Scripts.Features.Match.Services.MatchService>();
+        VortexTCG.Scripts.Features.Match.Services.MatchService matchService = FindObjectOfType<VortexTCG.Scripts.Features.Match.Services.MatchService>();
         
         if (matchService == null)
         {
@@ -182,7 +209,7 @@ public partial class SignalRClient : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogException(ex);
-            OnStatus?.Invoke($"Invoke {method} a échoué.");
+            OnStatus?.Invoke($"Invoke {method} a échoué: {ex.Message}");
         }
     }
 }

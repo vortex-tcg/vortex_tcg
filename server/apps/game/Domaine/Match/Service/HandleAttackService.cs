@@ -25,14 +25,14 @@ public static class HandleAttackService
             {
                 GameCardDto? card = currentPlayer.Board.GetCardAtPosition(position);
 
-                if (card != null && CanBeEngaged(card))
+                if (card != null)
                 {
                     if (match.AttackHandler.IsEngaged(position))
                     {
                         match.AttackHandler.RemoveAttackByPosition(position);
                         card.States = CardStates.Active;
                     }
-                    else
+                    else if (CanBeEngaged(card))
                     {
                         match.AttackHandler.AddAttack(position, card.GameCardId);
                         match.SetPendingDefense(true);

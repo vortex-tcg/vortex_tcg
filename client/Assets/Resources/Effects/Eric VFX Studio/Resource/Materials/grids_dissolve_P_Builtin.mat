@@ -76,7 +76,7 @@ Material:
     - _VertexAlphaRef: 1
     m_Colors:
     - _Color: {r: 0.6745098, g: 0.9254902, b: 1, a: 0.27058825}
-    - _DissolveEdgeColor: {r: 2.2766974, g: 0, b: 8.362491, a: 1}
+    - _DissolveEdgeColor: {r: 4.2980394, g: 0.123713315, b: 0, a: 1}
     - _DistortionSpeedXYPowerZ: {r: 0, g: 0, b: 0, a: 0}
     - _FlowSpeed: {r: 0, g: 0, b: 0, a: 0}
     - _FresnelColor: {r: 1, g: 1, b: 1, a: 1}
@@ -85,3 +85,4 @@ Material:
     - _SpeedMainTexUVNoiseZW: {r: 0, g: 0, b: 0, a: 0}
     - _TintColor: {r: 0.93207544, g: 0.93207544, b: 0.93207544, a: 0.74509805}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1

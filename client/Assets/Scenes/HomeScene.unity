@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 580204058}
   - component: {fileID: 580204060}
   - component: {fileID: 580204061}
+  - component: {fileID: 580204062}
   m_Layer: 5
   m_Name: HUD
   m_TagString: Untagged
@@ -187,10 +188,11 @@ MonoBehaviour:
   uiDocument: {fileID: 580204058}
   searchOpponentButtonName: PlayButton
   inviteFriendButtonName: PlayWithFriendsButton
+  collectionButtonName: CollectionButton
   statusTextName: StatusText
   searchingPanelName: SearchingPanel
   networkRef: {fileID: 0}
-  deckId: d3b07384-d9a1-4d3b-92d8-4f5c6e7a8b9c
+  deckId: fa90d8bf-cd58-4a32-bd0d-61a8597934e8
   connectHereIfNeeded: 1
   verboseLogs: 1
   matchSceneName: MatchScene
@@ -208,6 +210,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   uiDocument: {fileID: 580204058}
   menuParams: {fileID: 0}
+--- !u!114 &580204062
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 580204056}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59b7c238a5b2078409e6d4a08bf05864, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 580204058}
+  buttonName: PlayButton
+  buttonNames:
+  - ProfileButton
+  - CollectionButton
+  - ShopButton
+  - QuitButton
+  pressedVisibleDuration: 0.08
+  debugLogs: 0
+  normalBackground: {fileID: 2800000, guid: 2d2d0b8ccfc3b394eb94f07ddab2dc3a, type: 3}
+  pressedBackground: {fileID: 2800000, guid: 29c6b53755cb1704680e3f47c24f9e81, type: 3}
 --- !u!1 &689827792
 GameObject:
   m_ObjectHideFlags: 0
@@ -271,6 +296,55 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1172476165
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1172476167}
+  - component: {fileID: 1172476166}
+  m_Layer: 0
+  m_Name: CursorManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1172476166
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1172476165}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a98bee937a9b7fc4e84c9a699df46da6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 580204058}
+  normalCursor: {fileID: 2800000, guid: 1ae6e2f3e6b1c4b488fee54f29666ecc, type: 3}
+  normalCursorClicked: {fileID: 2800000, guid: 7db97b6c3a82daf4ca73030626fa5a18, type: 3}
+  pointerCursor: {fileID: 2800000, guid: ef555f55ed04f484686c92ee08e820b2, type: 3}
+  pointerCursorClicked: {fileID: 2800000, guid: f1689b5c514d0d64f950e1614af3aece, type: 3}
+--- !u!4 &1172476167
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1172476165}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 960, y: 540, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -512,3 +586,4 @@ SceneRoots:
   - {fileID: 580204059}
   - {fileID: 689827795}
   - {fileID: 2050529290}
+  - {fileID: 1172476167}
