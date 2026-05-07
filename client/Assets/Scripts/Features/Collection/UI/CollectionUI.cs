@@ -38,6 +38,8 @@ namespace VortexTCG.Scripts.Features.Collection.UI
         private Label deckNameLabel;
         private Button editDeckNameButton;
         private Button deleteDeckButton;
+        private Label deckLengthLabel;
+        private Button backButton;
         private TextField deckNameTextField;
         private Button selectedDeckButton;
         private VisualElement selectedDeckCardsContainer;
@@ -124,6 +126,8 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             deckNameLabel = rootVisualElement.Q<Label>("DeckName");
             editDeckNameButton = rootVisualElement.Q<Button>("EditDeckName");
             deleteDeckButton = rootVisualElement.Q<Button>("DeleteDeck");
+            deckLengthLabel = rootVisualElement.Q<Label>("DeckLength");
+            backButton = rootVisualElement.Q<Button>("BackButton");
             selectedDeckCardsContainer = rootVisualElement.Q<VisualElement>("SelectedCardsContainer");
             deckDropZone = rootVisualElement.Q<VisualElement>("DragAndDropZone");
             deleteModalHUD = deleteModalDocument != null ? deleteModalDocument.rootVisualElement : null;
@@ -138,6 +142,7 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             InitializeDeckNameEditor();
             InitializeDeleteDeckModal();
             InitializeCreateDeckModal();
+            InitializeBackButton();
 
             if (deckDropZone == null)
                 deckDropZone = selectedDeckCardsContainer;
@@ -536,6 +541,19 @@ namespace VortexTCG.Scripts.Features.Collection.UI
                 return texture;
 
             return Resources.Load<Texture2D>(picture.TrimStart('/'));
+        }
+
+        private void InitializeBackButton()
+        {
+            if (backButton != null)
+            {
+                backButton.clicked += OnBackClicked;
+            }
+        }
+
+        private void OnBackClicked()
+        {
+            LoadingScreen.Load("HomeScene", loadMenu: true, unloadMenu: false);
         }
     }
 }

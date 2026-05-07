@@ -10,6 +10,8 @@ namespace VortexTCG.Scripts.Features.Collection.UI
 {
     public partial class CollectionUI
     {
+        private const int MaxDeckCards = 30;
+
         private void DisplayDecks(List<UserCollectionDeckDto> decks)
         {
             if (deckButtonsContainer == null) return;
@@ -256,6 +258,7 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             currentFactionId = Guid.Empty;
             currentDeckCards.Clear();
             ClearSelectedDeckCards();
+            RefreshDeckLengthLabel();
             selectedDeckButton = null;
             SetDeckNameEditMode(false);
             CloseDeleteDeckModal();
@@ -287,6 +290,7 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             currentDeckCards = NormalizeDeckCards(deckData?.Cards);
 
             ShowSelectedDeckCards(currentDeckCards);
+            RefreshDeckLengthLabel();
             RefreshDeleteDeckButtonState();
         }
 
@@ -314,12 +318,21 @@ namespace VortexTCG.Scripts.Features.Collection.UI
                     selectedDeckCardsContainer.Add(cardElement);
                 }
             }
+
+            RefreshDeckLengthLabel();
         }
 
         private void AddCardToSelectedDeck(UserCollectionCardDto cardData)
         {
             if (cardData?.Card == null || cardData.CollectionCardId == Guid.Empty || currentDeckId == Guid.Empty)
                 return;
+
+            if (GetCurrentDeckCardCount() >= MaxDeckCards)
+            {
+                Debug.Log("[DeckUI] Limite de 30 cartes atteinte pour ce deck.");
+                RefreshDeckLengthLabel();
+                return;
+            }
 
             DeckCardDto existing = currentDeckCards.Find(card => card.CollectionCardId == cardData.CollectionCardId);
             if (existing != null)
@@ -367,6 +380,23 @@ namespace VortexTCG.Scripts.Features.Collection.UI
 
             ShowSelectedDeckCards(currentDeckCards);
             PersistDeckChanges();
+        }
+
+        private int GetCurrentDeckCardCount()
+        {
+            if (currentDeckCards == null || currentDeckCards.Count == 0)
+                return 0;
+
+            return currentDeckCards.Sum(card => Math.Max(card?.Quantity ?? 0, 1));
+        }
+
+        private void RefreshDeckLengthLabel()
+        {
+            if (deckLengthLabel == null)
+                return;
+
+            int count = GetCurrentDeckCardCount();
+            deckLengthLabel.text = $"({count}/{MaxDeckCards})";
         }
 
         private void PersistDeckChanges()
