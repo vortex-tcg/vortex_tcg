@@ -286,6 +286,13 @@ jobs:
           New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
           dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
 
+      - name: Debug token
+        shell: powershell
+        run: |
+          $token = "${{ secrets.SONAR_TOKEN }}"
+          Write-Host "Token length: $($token.Length)"
+          Write-Host "Token starts with: $($token.Substring(0, [Math]::Min(4, $token.Length)))"
+
       - name: Build and analyze
         shell: powershell
         run: |
