@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: ${SONAR_DB_PASSWORD}
       POSTGRES_DB: sonarqube
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - sonarqube_postgres_data:/var/lib/postgresql/data
     deploy:
       replicas: 1
 
@@ -36,17 +36,18 @@ services:
         - "traefik.http.routers.sonar.entrypoints=websecure"
         - "traefik.http.routers.sonar.tls=true"
         - "traefik.http.routers.sonar.tls.certresolver=le"
-        - "traefik.http.services.sonar.loadbalancer.server.port=9000"
         - "traefik.http.routers.sonar.service=sonar"
-        - "traefik.docker.network=vortex_traefik-network"
+        - "traefik.http.services.sonar.loadbalancer.server.port=9000"
+        - "traefik.swarm.network=vortex_traefik-network"
 
 volumes:
   sonarqube_data:
   sonarqube_extensions:
   sonarqube_logs:
-  postgres_data:
+  sonarqube_postgres_data:
 
 networks:
   sonar-internal:
+    driver: overlay
   vortex_traefik-network:
     external: true
