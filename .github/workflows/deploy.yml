@@ -321,7 +321,7 @@ jobs:
 
           Write-Host "Repertoire de travail : $((Get-Location).Path)"
 
-          $exclusions = "**/Program.cs,**/*.csproj,**/Migrations/**,**/Seeds/**,**/DTOs/**,**/DTO/**"
+          $exclusions = "**/Program.cs,**/*.csproj,**/Migrations/**,**/Seeds/**,**/DTOs/**,**/DTO/**,**/Dto/**,**/Pages/**"
 
           ${{ runner.temp }}\scanner\dotnet-sonarscanner begin `
             /k:"vortex-tcg_vortex_tcg_AZ4McMpwnjkoUS9wsyUn" `
