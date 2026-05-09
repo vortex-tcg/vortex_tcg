@@ -251,6 +251,7 @@ jobs:
     runs-on: windows-latest
     needs: deploy
     if: needs.deploy.result == 'success'
+    environment: production
 
     steps:
       - uses: actions/checkout@v4
@@ -289,7 +290,6 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
-
           cd ${{ github.workspace }}\server
 
           Write-Host "Repertoire de travail : $((Get-Location).Path)"
