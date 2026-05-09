@@ -32,12 +32,13 @@ services:
       replicas: 1
       labels:
         - "traefik.enable=true"
-        - "traefik.swarm.http.routers.sonar.rule=Host(`sonar.vortex-tcg.online`)"
-        - "traefik.swarm.http.routers.sonar.entrypoints=websecure"
-        - "traefik.swarm.http.routers.sonar.tls=true"
-        - "traefik.swarm.http.routers.sonar.tls.certresolver=le"
-        - "traefik.swarm.http.services.sonar.loadbalancer.server.port=9000"
-        - "traefik.swarm.network=vortex_traefik-network"
+        - "traefik.http.routers.sonar.rule=Host(`sonarqube.vortex-tcg.online`)"
+        - "traefik.http.routers.sonar.entrypoints=websecure"
+        - "traefik.http.routers.sonar.tls=true"
+        - "traefik.http.routers.sonar.tls.certresolver=le"
+        - "traefik.http.services.sonar.loadbalancer.server.port=9000"
+        - "traefik.http.routers.sonar.service=sonar"
+        - "traefik.docker.network=vortex_traefik-network"
 
 volumes:
   sonarqube_data:
