@@ -325,10 +325,15 @@ jobs:
             /k:"vortex-tcg_vortex_tcg_AZ4McMpwnjkoUS9wsyUn" `
             /d:sonar.token="$env:SONAR_TOKEN" `
             /d:sonar.host.url="$env:SONAR_HOST_URL" `
-            /d:sonar.scanner.skipJreProvisioning=true
+            /d:sonar.scanner.skipJreProvisioning=true `
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
 
           dotnet restore
           dotnet build ./server.sln
+
+          dotnet test ./server.sln `
+            --collect:"XPlat Code Coverage" `
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end `
             /d:sonar.token="$env:SONAR_TOKEN"
