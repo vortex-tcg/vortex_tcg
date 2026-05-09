@@ -264,6 +264,30 @@ jobs:
           java-version: 17
           distribution: "zulu"
 
+      - name: Wait for SonarQube to be ready
+        shell: powershell
+        run: |
+          $url = "${{ secrets.SONAR_HOST_URL }}/api/system/status"
+          $maxAttempts = 20
+          $attempt = 0
+          do {
+            $attempt++
+            Write-Host "Attempt $attempt/$maxAttempts - Checking SonarQube status..."
+            try {
+              $response = Invoke-RestMethod -Uri $url -TimeoutSec 10
+              if ($response.status -eq "UP") {
+                Write-Host "SonarQube is UP!"
+                exit 0
+              }
+              Write-Host "Status: $($response.status) - waiting..."
+            } catch {
+              Write-Host "Not reachable yet: $_"
+            }
+            Start-Sleep -Seconds 15
+          } while ($attempt -lt $maxAttempts)
+          Write-Host "SonarQube did not become ready in time."
+          exit 1
+
       - name: Cache SonarQube packages
         uses: actions/cache@v4
         with:
@@ -286,15 +310,11 @@ jobs:
           New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
           dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
 
-      - name: Debug token
-        shell: powershell
-        run: |
-          $token = "${{ secrets.SONAR_TOKEN }}"
-          Write-Host "Token length: $($token.Length)"
-          Write-Host "Token starts with: $($token.Substring(0, [Math]::Min(4, $token.Length)))"
-
       - name: Build and analyze
         shell: powershell
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           $ErrorActionPreference = "Stop"
           cd ${{ github.workspace }}\server
@@ -303,12 +323,12 @@ jobs:
 
           ${{ runner.temp }}\scanner\dotnet-sonarscanner begin `
             /k:"vortex-tcg_vortex_tcg_f104a55f-7ac5-40e2-a98e-d7418f556229" `
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
-            /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" `
+            /d:sonar.token="$env:SONAR_TOKEN" `
+            /d:sonar.host.url="$env:SONAR_HOST_URL" `
             /d:sonar.scanner.skipJreProvisioning=true
 
           dotnet restore
           dotnet build ./server.sln
 
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end `
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+            /d:sonar.token="$env:SONAR_TOKEN"
