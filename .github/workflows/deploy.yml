@@ -322,7 +322,7 @@ jobs:
           Write-Host "Repertoire de travail : $((Get-Location).Path)"
 
           ${{ runner.temp }}\scanner\dotnet-sonarscanner begin `
-            /k:"vortex-tcg_vortex_tcg_f104a55f-7ac5-40e2-a98e-d7418f556229" `
+            /k:"vortex-tcg_vortex_tcg_AZ4McMpwnjkoUS9wsyUn" `
             /d:sonar.token="$env:SONAR_TOKEN" `
             /d:sonar.host.url="$env:SONAR_HOST_URL" `
             /d:sonar.scanner.skipJreProvisioning=true
