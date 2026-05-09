@@ -321,13 +321,15 @@ jobs:
 
           Write-Host "Repertoire de travail : $((Get-Location).Path)"
 
+          $exclusions = "**/Program.cs,**/*.csproj,**/Migrations/**,**/Seeds/**,**/DTOs/**,**/DTO/**"
+
           ${{ runner.temp }}\scanner\dotnet-sonarscanner begin `
             /k:"vortex-tcg_vortex_tcg_AZ4McMpwnjkoUS9wsyUn" `
             /d:sonar.token="$env:SONAR_TOKEN" `
             /d:sonar.host.url="$env:SONAR_HOST_URL" `
             /d:sonar.scanner.skipJreProvisioning=true `
-            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
-            /d:sonar.coverage.exclusions="**/Program.cs,**/*.csproj,**/Migrations/**,**/Seeds/**,**/DTOs/**,**/DTO/**"
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" `
+            /d:sonar.coverage.exclusions="$exclusions"
 
           dotnet restore
           dotnet build ./server.sln
