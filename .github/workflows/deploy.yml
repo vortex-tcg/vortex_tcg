@@ -327,6 +327,7 @@ jobs:
             /d:sonar.host.url="$env:SONAR_HOST_URL" `
             /d:sonar.scanner.skipJreProvisioning=true `
             /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+            /d:sonar.coverage.exclusions="**/Program.cs,**/*.csproj,**/Migrations/**,**/Seeds/**,**/DTOs/**,**/DTO/**"
 
           dotnet restore
           dotnet build ./server.sln
