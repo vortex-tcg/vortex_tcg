@@ -1,6 +1,9 @@
 using Xunit;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Configuration;
 using VortexTCG.Auth.Controllers;
 using VortexTCG.DataAccess;
@@ -414,6 +417,46 @@ namespace VortexTCG.Tests.Auth.Controllers
 
             ObjectResult statusResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(409, statusResult.StatusCode);
+        }
+
+        [Fact]
+        public async Task Register_ReturnsValidationProblem_WhenModelStateIsInvalid()
+        {
+            using VortexDbContext db = CreateDb();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
+            AuthController controller = new AuthController(db, config);
+            controller.ProblemDetailsFactory = new StubProblemDetailsFactory();
+
+            controller.ModelState.AddModelError("email", "The email field is not a valid e-mail address.");
+
+            RegisterDTO dto = new RegisterDTO
+            {
+                first_name = "Test",
+                last_name = "User",
+                username = "testuser",
+                email = "not-an-email",
+                password = "P@ssw0rd1!",
+                password_confirmation = "P@ssw0rd1!"
+            };
+
+            IActionResult result = await controller.register(dto, CancellationToken.None);
+
+            BadRequestObjectResult badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal(400, badRequest.StatusCode);
+        }
+
+        private sealed class StubProblemDetailsFactory : ProblemDetailsFactory
+        {
+            public override ProblemDetails CreateProblemDetails(
+                HttpContext httpContext, int? statusCode = null, string? title = null,
+                string? type = null, string? detail = null, string? instance = null)
+                => new ProblemDetails { Status = statusCode ?? 500 };
+
+            public override ValidationProblemDetails CreateValidationProblemDetails(
+                HttpContext httpContext, ModelStateDictionary modelStateDictionary,
+                int? statusCode = null, string? title = null, string? type = null,
+                string? detail = null, string? instance = null)
+                => new ValidationProblemDetails(modelStateDictionary) { Status = statusCode ?? 400 };
         }
     }
 }

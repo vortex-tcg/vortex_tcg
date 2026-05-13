@@ -106,5 +106,71 @@ namespace VortexTCG.Tests.Auth.Services
                 password = "CorrectPassword1!"
             }));
         }
+
+        [Fact]
+        public async Task Login_ReturnsRoleSuperAdmin_WhenUserIsSuperAdmin()
+        {
+            using VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
+            await SeedUserAsync(db, "superadmin@example.com", "CorrectPassword1!", Role.SUPER_ADMIN);
+            LoginService service = new LoginService(db, config);
+
+            ResultDTO<LoginResponseDTO> result = await service.login(new LoginDTO
+            {
+                email = "superadmin@example.com",
+                password = "CorrectPassword1!"
+            });
+
+            Assert.True(result.success);
+            Assert.Equal("SUPER_ADMIN", result.data!.role);
+        }
+
+        [Fact]
+        public async Task Login_ReturnsRoleUnknown_WhenRoleIsUnrecognized()
+        {
+            using VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
+            await SeedUserAsync(db, "unknown@example.com", "CorrectPassword1!", (Role)99);
+            LoginService service = new LoginService(db, config);
+
+            ResultDTO<LoginResponseDTO> result = await service.login(new LoginDTO
+            {
+                email = "unknown@example.com",
+                password = "CorrectPassword1!"
+            });
+
+            Assert.True(result.success);
+            Assert.Equal("UNKNOWN", result.data!.role);
+        }
+
+        [Fact]
+        public async Task Login_Returns401_WhenPasswordHashIsMalformed()
+        {
+            using VortexDbContext db = VortexDbCoontextFactory.getInMemoryDbContext();
+            IConfiguration config = TestConfigurationBuilder.getTestConfiguration();
+            db.Users.Add(new UserModel
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Bad",
+                LastName = "Hash",
+                Username = "badhash",
+                Email = "badhash@example.com",
+                Password = "not-a-valid-scrypt-hash",
+                Role = Role.USER,
+                Language = "fr",
+                CurrencyQuantity = 0
+            });
+            await db.SaveChangesAsync();
+            LoginService service = new LoginService(db, config);
+
+            ResultDTO<LoginResponseDTO> result = await service.login(new LoginDTO
+            {
+                email = "badhash@example.com",
+                password = "AnyPassword1!"
+            });
+
+            Assert.False(result.success);
+            Assert.Equal(401, result.statusCode);
+        }
     }
 }
