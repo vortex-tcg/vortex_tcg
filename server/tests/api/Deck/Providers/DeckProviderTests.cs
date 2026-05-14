@@ -1,3 +1,6 @@
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using VortexTCG.Api.Deck.DTOs;
 using VortexTCG.Api.Deck.Providers;
 using VortexTCG.Common.Services;
 using VortexTCG.DataAccess;
@@ -16,6 +19,23 @@ namespace VortexTCG.Tests.Api.Deck.Providers
     public class DeckProviderTests
     {
         private static VortexDbContext CreateDb() => VortexDbCoontextFactory.getInMemoryDbContext();
+
+        private static VortexDbContext CreateSqliteDb()
+        {
+            SqliteConnection connection = new SqliteConnection("DataSource=:memory:");
+            connection.Open();
+            using (SqliteCommand cmd = connection.CreateCommand())
+            {
+                cmd.CommandText = "PRAGMA foreign_keys = OFF;";
+                cmd.ExecuteNonQuery();
+            }
+            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
+                .UseSqlite(connection)
+                .Options;
+            VortexDbContext db = new VortexDbContext(options);
+            db.Database.EnsureCreated();
+            return db;
+        }
 
         [Fact]
         public async Task GetDeckWithCardsAndChampionAsync_ReturnsNull_WhenNotFound()
@@ -156,6 +176,97 @@ namespace VortexTCG.Tests.Api.Deck.Providers
             Assert.Single(result);
             Assert.Equal(card.Id, result[0].CardId);
             Assert.Equal("Warrior", result[0].Label);
+        }
+
+        [Fact]
+        public async Task GetDeckForUpdateAsync_ReturnsNull_WhenNotFound()
+        {
+            using VortexDbContext db = CreateDb();
+            DeckProvider provider = new DeckProvider(db);
+
+            DeckModel? result = await provider.GetDeckForUpdateAsync(Guid.NewGuid());
+
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task GetDeckForUpdateAsync_ReturnsDeck_WithDeckCards()
+        {
+            using VortexDbContext db = CreateDb();
+
+            CardModel card = new CardModel { Id = Guid.NewGuid(), Name = "Card", Price = 1, Description = "d", Picture = "p", CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            CollectionCardModel collCard = new CollectionCardModel { Id = Guid.NewGuid(), CardId = card.Id, Quantity = 2, Rarity = Rarity.NORMAL, CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            DeckModel deck = new DeckModel { Id = Guid.NewGuid(), Label = "UpdateDeck", ChampionId = Guid.NewGuid(), CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            DeckCardModel deckCard = new DeckCardModel { Id = Guid.NewGuid(), DeckId = deck.Id, CardId = collCard.Id, Quantity = 2, CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+
+            db.Cards.Add(card);
+            db.CollectionCards.Add(collCard);
+            db.Decks.Add(deck);
+            db.DeckCards.Add(deckCard);
+            await db.SaveChangesAsync();
+
+            DeckProvider provider = new DeckProvider(db);
+            DeckModel? result = await provider.GetDeckForUpdateAsync(deck.Id);
+
+            Assert.NotNull(result);
+            Assert.Equal(deck.Id, result!.Id);
+            Assert.Single(result.DeckCard);
+            Assert.Equal(2, result.DeckCard.First().Quantity);
+        }
+
+        [Fact]
+        public async Task UpdateDeckAsync_ReplacesOldCardsWithNew()
+        {
+            using VortexDbContext db = CreateSqliteDb();
+
+            CardModel card = new CardModel { Id = Guid.NewGuid(), Name = "OldCard", Price = 1, Description = "d", Picture = "p", CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            CollectionCardModel oldCollCard = new CollectionCardModel { Id = Guid.NewGuid(), CardId = card.Id, Quantity = 1, Rarity = Rarity.NORMAL, CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            CollectionCardModel newCollCard = new CollectionCardModel { Id = Guid.NewGuid(), CardId = card.Id, Quantity = 3, Rarity = Rarity.NORMAL, CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            DeckModel deck = new DeckModel { Id = Guid.NewGuid(), Label = "Deck", ChampionId = Guid.NewGuid(), CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            DeckCardModel oldDeckCard = new DeckCardModel { Id = Guid.NewGuid(), DeckId = deck.Id, CardId = oldCollCard.Id, Quantity = 1, CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+
+            db.Cards.Add(card);
+            db.CollectionCards.Add(oldCollCard);
+            db.CollectionCards.Add(newCollCard);
+            db.Decks.Add(deck);
+            db.DeckCards.Add(oldDeckCard);
+            await db.SaveChangesAsync();
+
+            DeckProvider provider = new DeckProvider(db);
+            List<UpdateDeckCardDto> newCards = new List<UpdateDeckCardDto>
+            {
+                new UpdateDeckCardDto { CollectionCardId = newCollCard.Id, Quantity = 3 }
+            };
+
+            await provider.UpdateDeckAsync(deck, newCards);
+
+            List<DeckCardModel> remaining = await db.DeckCards.Where(dc => dc.DeckId == deck.Id).ToListAsync();
+            Assert.Single(remaining);
+            Assert.Equal(newCollCard.Id, remaining[0].CardId);
+            Assert.Equal(3, remaining[0].Quantity);
+        }
+
+        [Fact]
+        public async Task UpdateDeckAsync_RemovesAllCards_WhenNewListIsEmpty()
+        {
+            using VortexDbContext db = CreateSqliteDb();
+
+            CardModel card = new CardModel { Id = Guid.NewGuid(), Name = "Card", Price = 1, Description = "d", Picture = "p", CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            CollectionCardModel collCard = new CollectionCardModel { Id = Guid.NewGuid(), CardId = card.Id, Quantity = 1, Rarity = Rarity.NORMAL, CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            DeckModel deck = new DeckModel { Id = Guid.NewGuid(), Label = "Deck", ChampionId = Guid.NewGuid(), CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            DeckCardModel deckCard = new DeckCardModel { Id = Guid.NewGuid(), DeckId = deck.Id, CardId = collCard.Id, Quantity = 2, CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+
+            db.Cards.Add(card);
+            db.CollectionCards.Add(collCard);
+            db.Decks.Add(deck);
+            db.DeckCards.Add(deckCard);
+            await db.SaveChangesAsync();
+
+            DeckProvider provider = new DeckProvider(db);
+            await provider.UpdateDeckAsync(deck, new List<UpdateDeckCardDto>());
+
+            bool anyRemaining = await db.DeckCards.AnyAsync(dc => dc.DeckId == deck.Id);
+            Assert.False(anyRemaining);
         }
     }
 }

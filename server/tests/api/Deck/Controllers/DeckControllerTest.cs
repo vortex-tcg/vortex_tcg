@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using VortexTCG.Api.Deck.Controllers;
 using VortexTCG.Api.Deck.DTOs;
+using VortexTCG.Api.Deck.Interface;
 using VortexTCG.Api.Deck.Providers;
 using VortexTCG.Api.Deck.Services;
 using VortexTCG.Common.DTO;
@@ -125,6 +127,69 @@ namespace VortexTCG.Tests.Api.Deck.Controllers
 
             bool stillExists = await db.Decks.AnyAsync(d => d.Id == deck.Id);
             Assert.False(stillExists);
+        }
+
+        [Fact]
+        public async Task CreateDeck_Returns400_WhenChampionIdEmpty()
+        {
+            using VortexDbContext db = CreateDb();
+            DeckController controller = CreateController(db);
+
+            IActionResult result = await controller.CreateDeck(new CreateDeckDto { Label = "Deck", UserId = Guid.NewGuid(), ChampionId = Guid.Empty });
+
+            ObjectResult response = Assert.IsType<ObjectResult>(result);
+            ResultDTO<DeckResponseDto> payload = Assert.IsType<ResultDTO<DeckResponseDto>>(response.Value);
+            Assert.False(payload.success);
+            Assert.Equal(400, payload.statusCode);
+        }
+
+        [Fact]
+        public async Task GetDecksByUserId_Returns200_WithEmptyList()
+        {
+            Mock<IDeckService> mockService = new Mock<IDeckService>();
+            mockService.Setup(s => s.GetDecksByUserIdAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(new ResultDTO<List<DeckDTO>> { success = true, statusCode = 200, data = new List<DeckDTO>() });
+            DeckController controller = new DeckController(mockService.Object);
+
+            IActionResult result = await controller.GetDecksByUserId(Guid.NewGuid());
+
+            ObjectResult ok = Assert.IsType<ObjectResult>(result);
+            ResultDTO<List<DeckDTO>> payload = Assert.IsType<ResultDTO<List<DeckDTO>>>(ok.Value);
+            Assert.True(payload.success);
+            Assert.Equal(200, payload.statusCode);
+            Assert.Empty(payload.data!);
+        }
+
+        [Fact]
+        public async Task UpdateDeck_Returns404_WhenNotFound()
+        {
+            Mock<IDeckService> mockService = new Mock<IDeckService>();
+            mockService.Setup(s => s.UpdateDeckAsync(It.IsAny<Guid>(), It.IsAny<UpdateDeckDto>()))
+                .ReturnsAsync(new ResultDTO<bool> { success = false, statusCode = 404, message = "Deck not found" });
+            DeckController controller = new DeckController(mockService.Object);
+
+            IActionResult result = await controller.UpdateDeck(Guid.NewGuid(), new UpdateDeckDto());
+
+            ObjectResult response = Assert.IsType<ObjectResult>(result);
+            ResultDTO<bool> payload = Assert.IsType<ResultDTO<bool>>(response.Value);
+            Assert.False(payload.success);
+            Assert.Equal(404, payload.statusCode);
+        }
+
+        [Fact]
+        public async Task UpdateDeck_Returns200_WhenSuccess()
+        {
+            Mock<IDeckService> mockService = new Mock<IDeckService>();
+            mockService.Setup(s => s.UpdateDeckAsync(It.IsAny<Guid>(), It.IsAny<UpdateDeckDto>()))
+                .ReturnsAsync(new ResultDTO<bool> { success = true, statusCode = 200, data = true });
+            DeckController controller = new DeckController(mockService.Object);
+
+            IActionResult result = await controller.UpdateDeck(Guid.NewGuid(), new UpdateDeckDto());
+
+            ObjectResult ok = Assert.IsType<ObjectResult>(result);
+            ResultDTO<bool> payload = Assert.IsType<ResultDTO<bool>>(ok.Value);
+            Assert.True(payload.success);
+            Assert.Equal(200, payload.statusCode);
         }
 
         [Fact]
