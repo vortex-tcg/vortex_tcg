@@ -13,6 +13,8 @@ namespace VortexTCG.Scripts.Features.Collection.UI
     {
         [Header("UI")]
         [SerializeField] private UIDocument uiDocument;
+        [SerializeField] private UIDocument deleteModalDocument;
+        [SerializeField] private UIDocument createModalDocument;
         [SerializeField] public VisualTreeAsset cardTemplate;
 
         [Header("Cost Colors")]
@@ -31,12 +33,24 @@ namespace VortexTCG.Scripts.Features.Collection.UI
         private VisualElement deckDropZone;
         private VisualElement allDecksContainer;
         private VisualElement deckButtonsContainer;
+        private Button addDeckButton;
         private VisualElement deckNameContainer;
         private Label deckNameLabel;
         private Button editDeckNameButton;
+        private Button deleteDeckButton;
+        private Label deckLengthLabel;
+        private Button backButton;
         private TextField deckNameTextField;
         private Button selectedDeckButton;
         private VisualElement selectedDeckCardsContainer;
+        private VisualElement deleteModalHUD;
+        private Label deleteModalDeckNameLabel;
+        private Button deleteModalConfirmButton;
+        private Button deleteModalCancelButton;
+        private VisualElement createModalHUD;
+        private TextField createDeckInput;
+        private Button createModalConfirmButton;
+        private Button createModalCancelButton;
         private Label cardNameLabel;
         private Label cardLoreLabel;
         private Label attackPointsLabel;
@@ -74,6 +88,20 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             if (uiDocument == null)
                 uiDocument = GetComponent<UIDocument>();
 
+            if (deleteModalDocument == null)
+            {
+                GameObject deleteModalGameObject = GameObject.Find("DeleteModalHUD");
+                if (deleteModalGameObject != null)
+                    deleteModalDocument = deleteModalGameObject.GetComponent<UIDocument>();
+            }
+
+            if (createModalDocument == null)
+            {
+                GameObject createModalGameObject = GameObject.Find("CreateModalHUD");
+                if (createModalGameObject != null)
+                    createModalDocument = createModalGameObject.GetComponent<UIDocument>();
+            }
+
             if (uiDocument == null)
             {
                 Debug.LogError("[CollectionUI] UIDocument non assigne");
@@ -93,13 +121,28 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             costPointsLabel = rootVisualElement.Q<Label>("CostPoints");
             allDecksContainer = rootVisualElement.Q<VisualElement>("AllDecks");
             deckButtonsContainer = rootVisualElement.Q<VisualElement>("DeckButtonsContainer");
+            addDeckButton = rootVisualElement.Q<Button>("Add");
             deckNameContainer = rootVisualElement.Q<VisualElement>("DeckNameContainer");
             deckNameLabel = rootVisualElement.Q<Label>("DeckName");
             editDeckNameButton = rootVisualElement.Q<Button>("EditDeckName");
+            deleteDeckButton = rootVisualElement.Q<Button>("DeleteDeck");
+            deckLengthLabel = rootVisualElement.Q<Label>("DeckLength");
+            backButton = rootVisualElement.Q<Button>("BackButton");
             selectedDeckCardsContainer = rootVisualElement.Q<VisualElement>("SelectedCardsContainer");
             deckDropZone = rootVisualElement.Q<VisualElement>("DragAndDropZone");
+            deleteModalHUD = deleteModalDocument != null ? deleteModalDocument.rootVisualElement : null;
+            deleteModalDeckNameLabel = deleteModalHUD?.Q<Label>("DeckName");
+            deleteModalConfirmButton = deleteModalHUD?.Q<Button>("ConfirmButton");
+            deleteModalCancelButton = deleteModalHUD?.Q<Button>("CancelButton");
+            createModalHUD = createModalDocument != null ? createModalDocument.rootVisualElement : null;
+            createDeckInput = createModalHUD?.Q<TextField>("CreateDeckInput");
+            createModalConfirmButton = createModalHUD?.Q<Button>("ConfirmButton");
+            createModalCancelButton = createModalHUD?.Q<Button>("CancelButton");
 
             InitializeDeckNameEditor();
+            InitializeDeleteDeckModal();
+            InitializeCreateDeckModal();
+            InitializeBackButton();
 
             if (deckDropZone == null)
                 deckDropZone = selectedDeckCardsContainer;
@@ -498,6 +541,19 @@ namespace VortexTCG.Scripts.Features.Collection.UI
                 return texture;
 
             return Resources.Load<Texture2D>(picture.TrimStart('/'));
+        }
+
+        private void InitializeBackButton()
+        {
+            if (backButton != null)
+            {
+                backButton.clicked += OnBackClicked;
+            }
+        }
+
+        private void OnBackClicked()
+        {
+            LoadingScreen.Load("HomeScene", loadMenu: true, unloadMenu: false);
         }
     }
 }

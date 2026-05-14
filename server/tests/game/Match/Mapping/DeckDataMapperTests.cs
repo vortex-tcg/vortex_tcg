@@ -195,4 +195,47 @@ public class DeckDataMapperTests
 
         Assert.Empty(result.Cards);
     }
+
+    [Fact]
+    public void ApiDeckCardDto_AllPropertiesCanBeSetAndRead()
+    {
+        Guid deckCardId = Guid.NewGuid();
+        Guid collectionCardId = Guid.NewGuid();
+        Guid cardId = Guid.NewGuid();
+
+        ApiDeckCardDto dto = new ApiDeckCardDto
+        {
+            DeckCardId = deckCardId,
+            Quantity = 2,
+            CollectionCardId = collectionCardId,
+            Rarity = 3,
+            CardId = cardId,
+            Name = "Lance",
+            Hp = 4,
+            Attack = 2,
+            Cost = 1,
+            Description = "A sharp lance",
+            Picture = "lance.png",
+            Extension = 1,
+            CardType = 0,
+            Price = 50,
+            Classes = new List<string> { "Warrior" }
+        };
+
+        Assert.Equal(deckCardId, dto.DeckCardId);
+        Assert.Equal(2, dto.Quantity);
+        Assert.Equal(collectionCardId, dto.CollectionCardId);
+        Assert.Equal(3, dto.Rarity);
+        Assert.Equal(cardId, dto.CardId);
+        Assert.Equal("Lance", dto.Name);
+        Assert.Equal(4, dto.Hp);
+        Assert.Equal(2, dto.Attack);
+        Assert.Equal(1, dto.Cost);
+        Assert.Equal("A sharp lance", dto.Description);
+        Assert.Equal("lance.png", dto.Picture);
+        Assert.Equal(1, dto.Extension);
+        Assert.Equal(0, dto.CardType);
+        Assert.Equal(50, dto.Price);
+        Assert.Single(dto.Classes);
+    }
 }
