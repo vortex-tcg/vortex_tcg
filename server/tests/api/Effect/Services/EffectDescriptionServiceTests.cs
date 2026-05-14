@@ -362,6 +362,26 @@ namespace VortexTCG.Tests.Api.Effect.Services
         }
 
         [Fact]
+        public async Task Create_Returns400_WhenLabelIsNull()
+        {
+            using VortexDbContext db = CreateDb();
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
+
+            EffectDescriptionInputDto dto = new EffectDescriptionInputDto
+            {
+                Label = null!,
+                Description = "Some description",
+                Parameter = null
+            };
+
+            ResultDTO<EffectDescriptionDto> result = await service.createAsync(dto);
+
+            Assert.False(result.success);
+            Assert.Equal(400, result.statusCode);
+        }
+
+        [Fact]
         public async Task Delete_Returns_409_When_In_Use()
         {
             using VortexDbContext db = CreateDb();

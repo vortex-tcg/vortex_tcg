@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using VortexTCG.Api.Collection.DTOs;
 using VortexTCG.Api.Collection.Providers;
 using VortexTCG.Api.Collection.Services;
@@ -10,6 +11,9 @@ using CollectionCardModel = VortexTCG.DataAccess.Models.CollectionCard;
 using CardModel = VortexTCG.DataAccess.Models.Card;
 using UserModel = VortexTCG.DataAccess.Models.User;
 using RarityEnum = VortexTCG.DataAccess.Models.Rarity;
+using DeckModel = VortexTCG.DataAccess.Models.Deck;
+using ChampionModel = VortexTCG.DataAccess.Models.Champion;
+using FactionModel = VortexTCG.DataAccess.Models.Faction;
 using Xunit;
 
 namespace VortexTCG.Tests.Api.Collection.Services
@@ -327,6 +331,160 @@ namespace VortexTCG.Tests.Api.Collection.Services
 
             Assert.True(result.success);
             Assert.Equal(2, result.data!.Cards.Count);
+        }
+
+        [Fact]
+        public async Task Update_Returns500_WhenProviderUpdateFails()
+        {
+            using VortexDbContext db = CreateDb();
+            CollectionModel entity = new CollectionModel { Id = Guid.NewGuid() };
+            db.Collections.Add(entity);
+            await db.SaveChangesAsync();
+
+            Mock<CollectionProvider> mockProvider = new Mock<CollectionProvider>(db) { CallBase = true };
+            mockProvider.Setup(p => p.UpdateAsync(It.IsAny<CollectionModel>())).ReturnsAsync(false);
+            CollectionService service = new CollectionService(
+                mockProvider.Object,
+                new VortexTCG.Api.Deck.Providers.DeckProvider(db));
+
+            ResultDTO<CollectionDto> result = await service.UpdateAsync(entity.Id, new CollectionCreateDto { UserId = Guid.NewGuid() });
+
+            Assert.False(result.success);
+            Assert.Equal(500, result.statusCode);
+            Assert.Contains("mise à jour", result.message);
+        }
+
+        private static (ChampionModel champion, FactionModel faction) SeedChampionAndFaction(
+            VortexDbContext db, string picture = "hero.png")
+        {
+            FactionModel faction = new FactionModel
+            {
+                Id = Guid.NewGuid(), Label = "Test Faction",
+                Currency = "Gold", Condition = "None",
+                CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test"
+            };
+            ChampionModel champion = new ChampionModel
+            {
+                Id = Guid.NewGuid(), Name = "Hero", Description = "desc",
+                HP = 30, Picture = picture, FactionId = faction.Id,
+                CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test"
+            };
+            db.Factions.Add(faction);
+            db.Champions.Add(champion);
+            return (champion, faction);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_PopulatesDecks_WhenUserHasDecks()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            CollectionModel collection = new CollectionModel { Id = Guid.NewGuid(), User = user };
+            db.Collections.Add(collection);
+            (ChampionModel champion, FactionModel faction) = SeedChampionAndFaction(db, "hero.png");
+            DeckModel deck = new DeckModel
+            {
+                Id = Guid.NewGuid(), UserId = user.Id, Label = "My Deck",
+                ChampionId = champion.Id, FactionId = faction.Id,
+                CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test"
+            };
+            db.Decks.Add(deck);
+            await db.SaveChangesAsync();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.True(result.success);
+            Assert.Equal(200, result.statusCode);
+            Assert.Single(result.data!.Decks);
+            UserCollectionDeckDto deckDto = result.data.Decks[0];
+            Assert.Equal(deck.Id, deckDto.DeckId);
+            Assert.Equal(champion.Id, deckDto.ChampionId);
+            Assert.Equal(faction.Id, deckDto.FactionId);
+            Assert.Equal("My Deck", deckDto.DeckName);
+            Assert.Equal("hero.png", deckDto.ChampionImage);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_UsesFallbackDeckName_WhenLabelIsEmpty()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            CollectionModel collection = new CollectionModel { Id = Guid.NewGuid(), User = user };
+            db.Collections.Add(collection);
+            (ChampionModel champion, FactionModel faction) = SeedChampionAndFaction(db);
+            DeckModel deck = new DeckModel
+            {
+                Id = Guid.NewGuid(), UserId = user.Id, Label = "",
+                ChampionId = champion.Id, FactionId = faction.Id,
+                CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test"
+            };
+            db.Decks.Add(deck);
+            await db.SaveChangesAsync();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.Single(result.data!.Decks);
+            Assert.Equal("Deck", result.data.Decks[0].DeckName);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_ChampionImageIsEmpty_WhenChampionHasNoImage()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            CollectionModel collection = new CollectionModel { Id = Guid.NewGuid(), User = user };
+            db.Collections.Add(collection);
+            (ChampionModel champion, FactionModel faction) = SeedChampionAndFaction(db, picture: "");
+            DeckModel deck = new DeckModel
+            {
+                Id = Guid.NewGuid(), UserId = user.Id, Label = "No Pic Deck",
+                ChampionId = champion.Id, FactionId = faction.Id,
+                CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test"
+            };
+            db.Decks.Add(deck);
+            await db.SaveChangesAsync();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.Single(result.data!.Decks);
+            Assert.Equal(string.Empty, result.data.Decks[0].ChampionImage);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_Returns200WithEmptyDecks_WhenDeckProviderThrows()
+        {
+            VortexDbContext db1 = VortexDbCoontextFactory.getInMemoryDbContext();
+            VortexDbContext db2 = VortexDbCoontextFactory.getInMemoryDbContext();
+            try
+            {
+                UserModel user = CreateTestUser(Guid.NewGuid());
+                db1.Users.Add(user);
+                CollectionModel collection = new CollectionModel { Id = Guid.NewGuid(), User = user };
+                db1.Collections.Add(collection);
+                await db1.SaveChangesAsync();
+
+                db2.Dispose(); // make deck provider throw on any query
+
+                CollectionProvider collectionProvider = new CollectionProvider(db1);
+                VortexTCG.Api.Deck.Providers.DeckProvider deckProvider = new VortexTCG.Api.Deck.Providers.DeckProvider(db2);
+                CollectionService service = new CollectionService(collectionProvider, deckProvider);
+
+                ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+                Assert.True(result.success);
+                Assert.Equal(200, result.statusCode);
+                Assert.Empty(result.data!.Decks);
+            }
+            finally
+            {
+                db1.Dispose();
+            }
         }
 
         private static UserModel CreateTestUser(Guid id) => new UserModel

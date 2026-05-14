@@ -445,6 +445,104 @@ namespace VortexTCG.Tests.Api.Faction.Services
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
         }
+
+        [Fact]
+        public async Task GetAllFactions_Returns500_WhenDbThrows()
+        {
+            VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
+            db.Dispose();
+
+            ResultDTO<List<FactionDto>> result = await service.GetAllFactions();
+
+            Assert.False(result.success);
+            Assert.Equal(500, result.statusCode);
+        }
+
+        [Fact]
+        public async Task GetFactionById_Returns500_WhenDbThrows()
+        {
+            VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
+            db.Dispose();
+
+            ResultDTO<FactionDto> result = await service.GetFactionById(Guid.NewGuid());
+
+            Assert.False(result.success);
+            Assert.Equal(500, result.statusCode);
+        }
+
+        [Fact]
+        public async Task GetFactionWithCardsById_Returns500_WhenDbThrows()
+        {
+            VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
+            db.Dispose();
+
+            ResultDTO<FactionWithCardsDto> result = await service.GetFactionWithCardsById(Guid.NewGuid());
+
+            Assert.False(result.success);
+            Assert.Equal(500, result.statusCode);
+        }
+
+        [Fact]
+        public async Task GetFactionWithChampionById_Returns500_WhenDbThrows()
+        {
+            VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
+            db.Dispose();
+
+            ResultDTO<FactionWithChampionDto> result = await service.GetFactionWithChampionById(Guid.NewGuid());
+
+            Assert.False(result.success);
+            Assert.Equal(500, result.statusCode);
+        }
+
+        [Fact]
+        public async Task CreateFaction_Returns500_WhenDbThrows()
+        {
+            VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
+            db.Dispose();
+
+            ResultDTO<FactionDto> result = await service.CreateFaction(new CreateFactionDto { Label = "X", Currency = "G", Condition = "C" });
+
+            Assert.False(result.success);
+            Assert.Equal(500, result.statusCode);
+        }
+
+        [Fact]
+        public async Task UpdateFaction_Returns500_WhenDbThrows()
+        {
+            VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
+            db.Dispose();
+
+            ResultDTO<FactionDto> result = await service.UpdateFaction(Guid.NewGuid(), new UpdateFactionDto { Label = "X" });
+
+            Assert.False(result.success);
+            Assert.Equal(500, result.statusCode);
+        }
+
+        [Fact]
+        public async Task DeleteFaction_Returns500_WhenDbThrows()
+        {
+            VortexDbContext db = CreateDb();
+            IConfiguration configuration = CreateConfiguration();
+            FactionService service = new FactionService(db, configuration);
+            db.Dispose();
+
+            ResultDTO<object> result = await service.DeleteFaction(Guid.NewGuid());
+
+            Assert.False(result.success);
+            Assert.Equal(500, result.statusCode);
+        }
     }
 }
 

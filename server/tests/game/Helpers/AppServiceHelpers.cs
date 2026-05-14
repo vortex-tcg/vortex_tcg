@@ -25,6 +25,20 @@ public static class AppServiceHelpers
         lock (list) { list.Clear(); }
     }
 
+    public static void ClearMatchmakerQueue()
+    {
+        object matchmaker = RoomManager.Instance.Matchmaker;
+        Type type = matchmaker.GetType();
+
+        FieldInfo? queueField = type.GetField("_queue", BindingFlags.NonPublic | BindingFlags.Instance);
+        if (queueField?.GetValue(matchmaker) is System.Collections.IDictionary queue)
+            queue.Clear();
+
+        FieldInfo? eventsField = type.GetField("_events", BindingFlags.NonPublic | BindingFlags.Instance);
+        if (eventsField?.GetValue(matchmaker) is System.Collections.IList events)
+            events.Clear();
+    }
+
     public static Mock<IClientProxy> ConfigureCallManager()
     {
         Mock<IHubContext<GameHubClean>> mockHub = new Mock<IHubContext<GameHubClean>>();
