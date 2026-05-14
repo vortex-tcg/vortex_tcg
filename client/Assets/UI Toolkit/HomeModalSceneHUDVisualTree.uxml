@@ -1,0 +1,17 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI%20Toolkit/Stylesheet/HUD.uss?fileID=7433441132597879392&amp;guid=81b04aa871a624441bed15942152a858&amp;type=3#HUD" />
+    <ui:VisualElement style="flex-grow: 1; background-image: resource(&apos;GUI/CollectionModalGUI&apos;); background-color: rgba(0, 0, 0, 0.69);">
+        <ui:VisualElement style="flex-grow: 1; background-image: resource(&apos;GUI/HomeBottomBanner&apos;); background-position-x: left 0; background-position-y: top 0; -unity-background-scale-mode: stretch-to-fill; height: 53px; max-height: 53px;" />
+        <ui:VisualElement name="Container" style="flex-grow: 1; flex-direction: column; justify-content: center; align-items: center; background-color: rgba(0, 0, 0, 0.46);">
+            <ui:VisualElement name="Text" style="flex-grow: 1; flex-direction: column; align-items: center; justify-content: center; height: 140px; max-height: 140px; width: 333px; flex-wrap: wrap; margin-top: 20px;">
+                <ui:Label text="Sélection du deck&#10;" name="WantToCreateDeckLabel" style="background-color: rgba(0, 0, 0, 0); color: rgb(255, 255, 255); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-SemiBold&apos;); font-size: 22px;" />
+                <ui:VisualElement name="DeckDropdownContainer" style="width: 330px; max-width: 330px; height: 46px; max-height: 46px; background-image: resource(&apos;GUI/AuthenticationInput&apos;); -unity-text-align: middle-center; justify-content: center; align-items: stretch;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="Buttons" style="flex-grow: 1; flex-direction: row; max-height: 100px; max-width: none; margin-bottom: 0; margin-top: 0; margin-right: 0; margin-left: 0; justify-content: space-evenly; height: 100px; align-items: center;">
+                <ui:Button text="Valider" name="ConfirmButton" class="button" style="width: 193px; -unity-text-align: middle-center; font-size: 25px; height: 52px; -unity-background-image-tint-color: rgb(255, 255, 255); background-color: rgba(255, 255, 255, 0); color: rgb(255, 255, 255); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-ExtraBold&apos;); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0; background-image: resource(&apos;GUI/MenuButton&apos;);" />
+                <ui:Button text="Annuler" name="CancelButton" class="button" style="width: 193px; -unity-text-align: middle-center; font-size: 25px; height: 52px; -unity-background-image-tint-color: rgb(255, 255, 255); background-color: rgba(255, 255, 255, 0); color: rgb(255, 255, 255); -unity-font-definition: resource(&apos;Fonts/Rubik/static/Rubik-ExtraBold&apos;); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0; background-image: resource(&apos;GUI/MenuButton&apos;);" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement style="flex-grow: 1; max-height: 53px; height: 53px; background-image: resource(&apos;GUI/HomeBottomBanner&apos;);" />
+    </ui:VisualElement>
+</ui:UXML>

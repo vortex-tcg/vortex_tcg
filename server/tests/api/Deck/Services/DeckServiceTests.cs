@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using VortexTCG.Api.Deck.DTOs;
 using VortexTCG.Api.Deck.Providers;
@@ -12,12 +13,30 @@ using CardModel = VortexTCG.DataAccess.Models.Card;
 using CollectionCardModel = VortexTCG.DataAccess.Models.CollectionCard;
 using DeckCardModel = VortexTCG.DataAccess.Models.DeckCard;
 using ChampionModel = VortexTCG.DataAccess.Models.Champion;
+using FactionModel = VortexTCG.DataAccess.Models.Faction;
 
 namespace VortexTCG.Tests.Api.Deck.Services
 {
     public class DeckServiceTests
     {
         private static VortexDbContext CreateDb() => VortexDbCoontextFactory.getInMemoryDbContext();
+
+        private static VortexDbContext CreateSqliteDb()
+        {
+            SqliteConnection connection = new SqliteConnection("DataSource=:memory:");
+            connection.Open();
+            using (SqliteCommand cmd = connection.CreateCommand())
+            {
+                cmd.CommandText = "PRAGMA foreign_keys = OFF;";
+                cmd.ExecuteNonQuery();
+            }
+            DbContextOptions<VortexDbContext> options = new DbContextOptionsBuilder<VortexDbContext>()
+                .UseSqlite(connection)
+                .Options;
+            VortexDbContext db = new VortexDbContext(options);
+            db.Database.EnsureCreated();
+            return db;
+        }
 
         private static DeckService CreateService(VortexDbContext db)
         {
@@ -170,6 +189,108 @@ namespace VortexTCG.Tests.Api.Deck.Services
 
             bool stillExists = await db.Decks.AnyAsync(d => d.Id == deck.Id);
             Assert.False(stillExists);
+        }
+
+        [Fact]
+        public async Task UpdateDeckAsync_Returns404_WhenDeckNotFound()
+        {
+            using VortexDbContext db = CreateDb();
+            DeckService service = CreateService(db);
+
+            ResultDTO<bool> result = await service.UpdateDeckAsync(Guid.NewGuid(), new UpdateDeckDto());
+
+            Assert.False(result.success);
+            Assert.Equal(404, result.statusCode);
+        }
+
+        [Fact]
+        public async Task UpdateDeckAsync_UpdatesFields_AndReturns200()
+        {
+            using VortexDbContext db = CreateSqliteDb();
+
+            DeckModel deck = new DeckModel { Id = Guid.NewGuid(), Label = "Old", ChampionId = Guid.NewGuid(), FactionId = Guid.NewGuid(), CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            db.Decks.Add(deck);
+            await db.SaveChangesAsync();
+
+            DeckService service = CreateService(db);
+
+            ResultDTO<bool> result = await service.UpdateDeckAsync(deck.Id, new UpdateDeckDto
+            {
+                Name = "New Name",
+                ChampionId = Guid.NewGuid(),
+                FactionId = Guid.NewGuid(),
+                Cards = new List<UpdateDeckCardDto>()
+            });
+
+            Assert.True(result.success);
+            Assert.Equal(200, result.statusCode);
+        }
+
+        [Fact]
+        public async Task UpdateDeckAsync_SkipsEmptyFields_WhenNotProvided()
+        {
+            using VortexDbContext db = CreateSqliteDb();
+
+            Guid originalChampion = Guid.NewGuid();
+            Guid originalFaction = Guid.NewGuid();
+            DeckModel deck = new DeckModel { Id = Guid.NewGuid(), Label = "Original", ChampionId = originalChampion, FactionId = originalFaction, CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            db.Decks.Add(deck);
+            await db.SaveChangesAsync();
+
+            DeckService service = CreateService(db);
+
+            ResultDTO<bool> result = await service.UpdateDeckAsync(deck.Id, new UpdateDeckDto
+            {
+                Name = "   ",
+                ChampionId = Guid.Empty,
+                FactionId = Guid.Empty,
+                Cards = new List<UpdateDeckCardDto>()
+            });
+
+            Assert.True(result.success);
+            Assert.Equal(200, result.statusCode);
+            DeckModel? updated = await db.Decks.FindAsync(deck.Id);
+            Assert.Equal("Original", updated!.Label);
+            Assert.Equal(originalChampion, updated.ChampionId);
+            Assert.Equal(originalFaction, updated.FactionId);
+        }
+
+        [Fact]
+        public async Task GetDecksByUserIdAsync_ReturnsEmpty_WhenNoDecks()
+        {
+            using VortexDbContext db = CreateDb();
+            DeckService service = CreateService(db);
+
+            ResultDTO<List<DeckDTO>> result = await service.GetDecksByUserIdAsync(Guid.NewGuid());
+
+            Assert.True(result.success);
+            Assert.Equal(200, result.statusCode);
+            Assert.Empty(result.data!);
+        }
+
+        [Fact]
+        public async Task GetDecksByUserIdAsync_ReturnsMappedDecks_WithChampion()
+        {
+            using VortexDbContext db = CreateDb();
+
+            Guid userId = Guid.NewGuid();
+            ChampionModel champion = new ChampionModel { Id = Guid.NewGuid(), Name = "Hero", Description = "d", HP = 30, Picture = "p", CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            FactionModel faction = new FactionModel { Id = Guid.NewGuid(), Label = "F", Currency = "G", Condition = "C", CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+            DeckModel deck = new DeckModel { Id = Guid.NewGuid(), Label = "MyDeck", UserId = userId, ChampionId = champion.Id, FactionId = faction.Id, CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" };
+
+            db.Champions.Add(champion);
+            db.Factions.Add(faction);
+            db.Decks.Add(deck);
+            await db.SaveChangesAsync();
+
+            DeckService service = CreateService(db);
+            ResultDTO<List<DeckDTO>> result = await service.GetDecksByUserIdAsync(userId);
+
+            Assert.True(result.success);
+            Assert.Single(result.data!);
+            Assert.Equal("MyDeck", result.data![0].Name);
+            Assert.NotNull(result.data[0].Champion);
+            Assert.Equal("Hero", result.data[0].Champion!.Name);
         }
 
         [Fact]

@@ -10,11 +10,29 @@ namespace VortexTCG.Scripts.Features.Collection.UI
 {
     public partial class CollectionUI
     {
+        private const int MaxDeckCards = 30;
+
         private void DisplayDecks(List<UserCollectionDeckDto> decks)
         {
             if (deckButtonsContainer == null) return;
 
+            HashSet<Guid> deckIds = decks != null
+                ? new HashSet<Guid>(decks.Where(deck => deck != null).Select(deck => deck.DeckId))
+                : new HashSet<Guid>();
+
             Dictionary<Guid, Button> existingButtons = deckButtonsContainer
+                .Children()
+                .OfType<Button>()
+                .Where(button => button.userData is Guid)
+                .ToDictionary(button => (Guid)button.userData, button => button);
+
+            foreach (KeyValuePair<Guid, Button> pair in existingButtons)
+            {
+                if (!deckIds.Contains(pair.Key))
+                    pair.Value.RemoveFromHierarchy();
+            }
+
+            existingButtons = deckButtonsContainer
                 .Children()
                 .OfType<Button>()
                 .Where(button => button.userData is Guid)
@@ -73,10 +91,118 @@ namespace VortexTCG.Scripts.Features.Collection.UI
                 }
             }
 
-            if (!hasExistingButtons && firstDeck != null && firstCreatedButton != null)
+            bool selectedButtonStillExists = selectedDeckButton != null && selectedDeckButton.parent != null;
+
+            if (firstDeck != null && firstCreatedButton != null && !selectedButtonStillExists)
             {
                 SelectDeck(firstDeck, firstCreatedButton);
             }
+        }
+
+        private void InitializeCreateDeckModal()
+        {
+            if (addDeckButton != null)
+            {
+                addDeckButton.clicked += OpenCreateDeckModal;
+            }
+
+            if (createModalHUD != null)
+                createModalHUD.style.display = DisplayStyle.None;
+
+            if (createModalConfirmButton != null)
+                createModalConfirmButton.clicked += ConfirmCreateDeck;
+
+            if (createModalCancelButton != null)
+                createModalCancelButton.clicked += CloseCreateDeckModal;
+
+            if (createDeckInput != null)
+            {
+                createDeckInput.isDelayed = false;
+                createDeckInput.RegisterCallback<KeyDownEvent>(OnCreateDeckInputKeyDown);
+            }
+        }
+
+        private void OpenCreateDeckModal()
+        {
+            if (createModalHUD == null)
+                return;
+
+            if (currentChampionId == Guid.Empty || currentFactionId == Guid.Empty)
+            {
+                Debug.LogError("[DeckUI] Impossible de creer un deck sans champion/faction selectionnes");
+                return;
+            }
+
+            if (createDeckInput != null)
+                createDeckInput.value = string.Empty;
+
+            createModalHUD.style.display = DisplayStyle.Flex;
+
+            if (createDeckInput != null)
+            {
+                createDeckInput.schedule.Execute(() =>
+                {
+                    createDeckInput.Focus();
+                    createDeckInput.SelectAll();
+                });
+            }
+        }
+
+        private void CloseCreateDeckModal()
+        {
+            if (createModalHUD != null)
+                createModalHUD.style.display = DisplayStyle.None;
+        }
+
+        private void OnCreateDeckInputKeyDown(KeyDownEvent evt)
+        {
+            if (evt == null)
+                return;
+
+            if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
+            {
+                evt.StopPropagation();
+                ConfirmCreateDeck();
+            }
+            else if (evt.keyCode == KeyCode.Escape)
+            {
+                evt.StopPropagation();
+                CloseCreateDeckModal();
+            }
+        }
+
+        private void ConfirmCreateDeck()
+        {
+            if (currentChampionId == Guid.Empty || currentFactionId == Guid.Empty)
+                return;
+
+            CloseCreateDeckModal();
+            StartCoroutine(CreateNewDeck());
+        }
+
+        private IEnumerator CreateNewDeck()
+        {
+            if (deckService == null)
+                deckService = new VortexTCG.Scripts.Features.Deck.Services.DeckService();
+
+            string deckName = createDeckInput != null ? createDeckInput.value?.Trim() : string.Empty;
+            string error = null;
+
+            yield return deckService.CreateDeckAsync(
+                deckName,
+                currentChampionId,
+                currentFactionId,
+                onSuccess: () => Debug.Log($"[DeckUI] CreateDeck succeeded Name='{deckName}'"),
+                onError: serviceError => error = serviceError
+            );
+
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                Debug.LogError(error);
+                yield break;
+            }
+
+            yield return LoadUserCollectionAndDecks();
         }
 
         private void SelectDeck(UserCollectionDeckDto deck, Button selectedButton)
@@ -132,8 +258,11 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             currentFactionId = Guid.Empty;
             currentDeckCards.Clear();
             ClearSelectedDeckCards();
+            RefreshDeckLengthLabel();
             selectedDeckButton = null;
             SetDeckNameEditMode(false);
+            CloseDeleteDeckModal();
+            RefreshDeleteDeckButtonState();
         }
 
         private IEnumerator LoadAndShowDeck(Guid deckId, string deckName)
@@ -161,6 +290,8 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             currentDeckCards = NormalizeDeckCards(deckData?.Cards);
 
             ShowSelectedDeckCards(currentDeckCards);
+            RefreshDeckLengthLabel();
+            RefreshDeleteDeckButtonState();
         }
 
         private void ShowSelectedDeckCards(List<DeckCardDto> cards)
@@ -187,12 +318,21 @@ namespace VortexTCG.Scripts.Features.Collection.UI
                     selectedDeckCardsContainer.Add(cardElement);
                 }
             }
+
+            RefreshDeckLengthLabel();
         }
 
         private void AddCardToSelectedDeck(UserCollectionCardDto cardData)
         {
             if (cardData?.Card == null || cardData.CollectionCardId == Guid.Empty || currentDeckId == Guid.Empty)
                 return;
+
+            if (GetCurrentDeckCardCount() >= MaxDeckCards)
+            {
+                Debug.Log("[DeckUI] Limite de 30 cartes atteinte pour ce deck.");
+                RefreshDeckLengthLabel();
+                return;
+            }
 
             DeckCardDto existing = currentDeckCards.Find(card => card.CollectionCardId == cardData.CollectionCardId);
             if (existing != null)
@@ -240,6 +380,23 @@ namespace VortexTCG.Scripts.Features.Collection.UI
 
             ShowSelectedDeckCards(currentDeckCards);
             PersistDeckChanges();
+        }
+
+        private int GetCurrentDeckCardCount()
+        {
+            if (currentDeckCards == null || currentDeckCards.Count == 0)
+                return 0;
+
+            return currentDeckCards.Sum(card => Math.Max(card?.Quantity ?? 0, 1));
+        }
+
+        private void RefreshDeckLengthLabel()
+        {
+            if (deckLengthLabel == null)
+                return;
+
+            int count = GetCurrentDeckCardCount();
+            deckLengthLabel.text = $"({count}/{MaxDeckCards})";
         }
 
         private void PersistDeckChanges()
@@ -301,6 +458,83 @@ namespace VortexTCG.Scripts.Features.Collection.UI
 
             editDeckNameButton.clicked += ToggleDeckNameEditMode;
             RefreshDeckNameDisplay();
+        }
+
+        private void InitializeDeleteDeckModal()
+        {
+            if (deleteDeckButton != null)
+            {
+                deleteDeckButton.text = string.Empty;
+                deleteDeckButton.SetEnabled(currentDeckId != Guid.Empty);
+                deleteDeckButton.clicked += OpenDeleteDeckModal;
+            }
+
+            if (deleteModalHUD != null)
+                deleteModalHUD.style.display = DisplayStyle.None;
+
+            if (deleteModalConfirmButton != null)
+                deleteModalConfirmButton.clicked += ConfirmDeleteDeck;
+
+            if (deleteModalCancelButton != null)
+                deleteModalCancelButton.clicked += CloseDeleteDeckModal;
+
+            RefreshDeleteDeckButtonState();
+        }
+
+        private void OpenDeleteDeckModal()
+        {
+            if (currentDeckId == Guid.Empty || deleteModalHUD == null)
+                return;
+
+            if (deleteModalDeckNameLabel != null)
+                deleteModalDeckNameLabel.text = string.IsNullOrWhiteSpace(currentDeckName) ? "Deck" : currentDeckName;
+
+            deleteModalHUD.style.display = DisplayStyle.Flex;
+        }
+
+        private void CloseDeleteDeckModal()
+        {
+            if (deleteModalHUD != null)
+                deleteModalHUD.style.display = DisplayStyle.None;
+        }
+
+        private void ConfirmDeleteDeck()
+        {
+            if (currentDeckId == Guid.Empty)
+                return;
+
+            CloseDeleteDeckModal();
+            StartCoroutine(DeleteCurrentDeck());
+        }
+
+        private IEnumerator DeleteCurrentDeck()
+        {
+            if (deckService == null)
+                deckService = new VortexTCG.Scripts.Features.Deck.Services.DeckService();
+
+            Guid deckIdToDelete = currentDeckId;
+            string error = null;
+
+            yield return deckService.DeleteDeckAsync(
+                deckIdToDelete,
+                onSuccess: () => Debug.Log($"[DeckUI] DeleteDeck succeeded deckId={deckIdToDelete}"),
+                onError: serviceError => error = serviceError
+            );
+
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                Debug.LogError(error);
+                yield break;
+            }
+
+            ResetCurrentDeckState();
+            yield return LoadUserCollectionAndDecks();
+        }
+
+        private void RefreshDeleteDeckButtonState()
+        {
+            if (deleteDeckButton != null)
+                deleteDeckButton.SetEnabled(currentDeckId != Guid.Empty);
         }
 
         private void ToggleDeckNameEditMode()
@@ -387,6 +621,7 @@ namespace VortexTCG.Scripts.Features.Collection.UI
         {
             currentDeckName = string.IsNullOrWhiteSpace(deckName) ? "Deck" : deckName;
             RefreshDeckNameDisplay();
+            RefreshDeleteDeckButtonState();
 
             if (deckNameContainer != null)
                 deckNameContainer.style.display = DisplayStyle.Flex;

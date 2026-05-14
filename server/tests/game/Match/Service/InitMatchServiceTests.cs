@@ -104,4 +104,17 @@ public class InitMatchServiceTests
         Assert.Equal(6, data.Player1DrawnCards.Count);
         Assert.Equal(5, data.Player2DrawnCards.Count);
     }
+
+    [Fact]
+    public void Init_ReturnsChampionDataForBothPlayers()
+    {
+        MatchAggregate match = BuildMatchWithDecks();
+
+        MatchInitData data = InitMatchService.Init(match);
+
+        Assert.NotNull(data.Player1Champion);
+        Assert.NotNull(data.Player2Champion);
+        Assert.Equal(match.Player1.Champion.Hp.Value, data.Player1Champion.Hp.Value);
+        Assert.Equal(match.Player2.Champion.Hp.Value, data.Player2Champion.Hp.Value);
+    }
 }
