@@ -86,6 +86,25 @@ namespace VortexTCG.Tests.Api.Log.ActionType.Services
         }
 
         [Fact]
+        public async Task GetById_ReturnsChildIds_WhenParentHasChildren()
+        {
+            using VortexDbContext db = CreateDb();
+            Guid parentId = Guid.NewGuid();
+            Guid childId = Guid.NewGuid();
+            ActionTypeModel parent = new ActionTypeModel { Id = parentId, actionDescription = "Parent", ParentId = parentId };
+            ActionTypeModel child = new ActionTypeModel { Id = childId, actionDescription = "Child", ParentId = parentId };
+            db.Actions.AddRange(parent, child);
+            await db.SaveChangesAsync();
+            ActionTypeService service = CreateService(db);
+
+            ActionTypeDTO? dto = await service.GetByIdAsync(parentId);
+
+            Assert.NotNull(dto);
+            Assert.NotNull(dto!.ChildIds);
+            Assert.Contains(childId, dto.ChildIds!);
+        }
+
+        [Fact]
         public async Task Create_ReturnsCreatedDto()
         {
             using VortexDbContext db = CreateDb();

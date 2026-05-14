@@ -73,7 +73,7 @@ namespace VortexTCG.Api.Collection.Providers
             await _db.SaveChangesAsync();
             return collection;
         }
-        public async Task<bool> UpdateAsync(CollectionModel collection)
+        public virtual async Task<bool> UpdateAsync(CollectionModel collection)
         {
             CollectionModel? existing = await _db.Collections
                 .Include(c => c.User)

@@ -213,6 +213,19 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         }
 
         [Fact]
+        public async Task UpdateFaction_ReturnsError_WhenFactionNotFound()
+        {
+            using VortexDbContext db = CreateDb();
+            FactionProvider provider = new FactionProvider(db);
+
+            (bool success, FactionDto? result, string error) = await provider.UpdateFaction(Guid.NewGuid(), new UpdateFactionDto { Label = "X" });
+
+            Assert.False(success);
+            Assert.Null(result);
+            Assert.Equal("Faction non trouvée", error);
+        }
+
+        [Fact]
         public async Task UpdateFaction_InvalidCardIds_ReturnsError()
         {
             using VortexDbContext db = CreateDb();
