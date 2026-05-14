@@ -1,5 +1,7 @@
 using game.Domaine.Match.Entity;
+using game.Domaine.Match.ValueObject;
 using game.Tests.Helpers;
+using MatchAggregate = game.Domaine.Match.Agregate.Match;
 
 namespace game.Tests.Domain.Entity;
 
@@ -206,5 +208,110 @@ public class GraveyardTests
         IReadOnlyList<GameCardDto> cards = yard.GetCards();
 
         Assert.Equal(2, cards.Count);
+    }
+}
+
+public class BoardExtendedTests
+{
+    [Fact]
+    public void HasCardAtPosition_ReturnsTrueWhenOccupied()
+    {
+        Board board = new Board();
+        board.Place(1, MatchHelpers.MakeCard(1));
+
+        Assert.True(board.HasCardAtPosition(1));
+    }
+
+    [Fact]
+    public void HasCardAtPosition_ReturnsFalseWhenEmpty()
+    {
+        Board board = new Board();
+
+        Assert.False(board.HasCardAtPosition(1));
+    }
+
+    [Fact]
+    public void TryGet_ReturnsTrueAndCard_WhenSlotOccupied()
+    {
+        Board board = new Board();
+        GameCardDto card = MatchHelpers.MakeCard(1);
+        board.Place(1, card);
+
+        bool result = board.TryGet(1, out GameCardDto? retrieved);
+
+        Assert.True(result);
+        Assert.Equal(1, retrieved!.GameCardId.Value);
+    }
+
+    [Fact]
+    public void TryGet_ReturnsFalse_WhenSlotEmpty()
+    {
+        Board board = new Board();
+
+        bool result = board.TryGet(99, out GameCardDto? retrieved);
+
+        Assert.False(result);
+        Assert.Null(retrieved);
+    }
+}
+
+public class StandByPhaseTests
+{
+    [Fact]
+    public void OnStartPhase_WithDeckCard_DrawsCardToHand()
+    {
+        GameCardDto card = MatchHelpers.MakeCard(1);
+        Player p1 = MatchHelpers.MakePlayer(deck: new[] { card });
+        MatchAggregate match = MatchHelpers.MakeMatch(p1: p1);
+        StandByPhase phase = new StandByPhase();
+
+        phase.OnStartPhase(match, CancellationToken.None);
+
+        Assert.Equal(1, match.Player1.Hand.Count);
+    }
+
+    [Fact]
+    public void OnStartPhase_WithEmptyDeck_HandRemainsEmpty()
+    {
+        Player p1 = MatchHelpers.MakePlayer(deck: Array.Empty<GameCardDto>());
+        MatchAggregate match = MatchHelpers.MakeMatch(p1: p1);
+        StandByPhase phase = new StandByPhase();
+
+        phase.OnStartPhase(match, CancellationToken.None);
+
+        Assert.Equal(0, match.Player1.Hand.Count);
+    }
+}
+
+public class DefensePhaseTests
+{
+    [Fact]
+    public void Type_IsDefense()
+    {
+        DefensePhase phase = new DefensePhase();
+
+        Assert.Equal(MatchPhaseType.Defense, phase.Type);
+    }
+
+    [Fact]
+    public void OnStartPhase_DoesNotThrow()
+    {
+        DefensePhase phase = new DefensePhase();
+        MatchAggregate match = MatchHelpers.MakeMatch();
+
+        Exception? ex = Record.Exception(() => phase.OnStartPhase(match, CancellationToken.None));
+
+        Assert.Null(ex);
+    }
+
+    [Fact]
+    public void OnEndPhase_DoesNotThrow()
+    {
+        DefensePhase phase = new DefensePhase();
+        MatchAggregate match = MatchHelpers.MakeMatch();
+
+        Exception? ex = Record.Exception(() => phase.OnEndPhase(match, CancellationToken.None));
+
+        Assert.Null(ex);
     }
 }

@@ -66,6 +66,25 @@ namespace VortexTCG.Tests.Api.Log.GameLog.Services
         }
 
         [Fact]
+        public async Task GetById_ReturnsActionIds_WhenGameLogHasActions()
+        {
+            using VortexDbContext db = CreateDb();
+            Guid logId = Guid.NewGuid();
+            Guid actionId = Guid.NewGuid();
+            GameLogModel log = new GameLogModel { Id = logId, Label = "WithActions", TurnNumber = 1 };
+            db.Gamelogs.Add(log);
+            db.Actions.Add(new VortexTCG.DataAccess.Models.ActionType { Id = actionId, actionDescription = "Act", GameLogId = logId });
+            await db.SaveChangesAsync();
+            GameLogService service = CreateService(db);
+
+            GameLogDTO? dto = await service.GetByIdAsync(logId);
+
+            Assert.NotNull(dto);
+            Assert.NotNull(dto!.ActionIds);
+            Assert.Contains(actionId, dto.ActionIds!);
+        }
+
+        [Fact]
         public async Task Create_ReturnsCreatedDto()
         {
             using VortexDbContext db = CreateDb();

@@ -29,7 +29,7 @@ namespace VortexTCG.Api.Rank.Providers
             return rank;
         }
 
-        public async Task<bool> UpdateAsync(RankModel rank)
+        public virtual async Task<bool> UpdateAsync(RankModel rank)
         {
             var existing = await _db.Ranks.FindAsync(rank.Id);
             if (existing == null) return false;

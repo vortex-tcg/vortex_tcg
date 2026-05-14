@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using VortexTCG.Api.Rank.DTOs;
 using VortexTCG.Api.Rank.Providers;
 using VortexTCG.Api.Rank.Services;
@@ -134,6 +135,24 @@ namespace VortexTCG.Tests.Api.Rank.Services
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
             Assert.Equal("New", result.data!.Label);
+        }
+
+        [Fact]
+        public async Task Update_Returns500_WhenProviderUpdateFails()
+        {
+            using VortexDbContext db = CreateDb();
+            RankModel entity = new RankModel { Id = Guid.NewGuid(), Label = "Old", nbVictory = 1 };
+            db.Ranks.Add(entity);
+            await db.SaveChangesAsync();
+
+            Mock<RankProvider> mockProvider = new Mock<RankProvider>(db) { CallBase = true };
+            mockProvider.Setup(p => p.UpdateAsync(It.IsAny<RankModel>())).ReturnsAsync(false);
+            RankService service = new RankService(mockProvider.Object);
+
+            ResultDTO<RankDTO> result = await service.UpdateAsync(entity.Id, new RankCreateDTO { Label = "New", nbVictory = 2 });
+
+            Assert.False(result.success);
+            Assert.Equal(500, result.statusCode);
         }
 
         [Fact]
