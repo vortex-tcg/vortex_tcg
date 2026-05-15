@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using game.Application.Dto;
 using game.Application.Enum;
 using game.Domaine.Interface;
@@ -16,6 +17,8 @@ public class QueueService
     public static async Task JoinQueueAsync(UserId userId, DeckId deckId, CancellationToken ct = default)
     {
         RoomManager rm = RoomManager.Instance;
+
+        Debug.WriteLine($"Joining queue for user {userId} with deck {deckId}");
 
         await rm.Matchmaker.JoinQueueAsync(userId, deckId, ct);
         IReadOnlyList<IEvent> events = rm.MatchmakerEventContainer.PullEvents(ct);
