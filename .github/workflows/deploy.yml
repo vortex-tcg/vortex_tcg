@@ -138,6 +138,43 @@ jobs:
               vortextcg/vortex_repository:migrations
           EOF
 
+      - name: Check and deploy SonarQube stack
+        run: |
+          $SSH_CMD bash << 'EOF'
+            SONAR_RUNNING=$(docker service ls \
+              --filter "name=sonarqube_sonarqube" \
+              --format "{{.Replicas}}" 2>/dev/null | grep -v "^0/" | wc -l)
+
+            if [ "$SONAR_RUNNING" -gt 0 ]; then
+              echo "SonarQube is already running — skipping deployment."
+              exit 0
+            fi
+
+            echo "SonarQube not detected — deploying sonarqube stack..."
+
+            export SONAR_DB_PASSWORD=${{ secrets.SONAR_DB_PASSWORD }}
+
+            docker stack deploy \
+              -c /var/www/vortex_tcg/server/sonarqube/docker-compose.sonarqube.yml \
+              --with-registry-auth \
+              sonarqube
+
+            echo "Waiting for SonarQube service to stabilise (60 s)..."
+            sleep 60
+
+            REPLICAS=$(docker service ls \
+              --filter "name=sonarqube_sonarqube" \
+              --format "{{.Replicas}}")
+
+            echo "sonarqube replicas: $REPLICAS"
+
+            echo "$REPLICAS" | grep -v "^0/" || {
+              echo "SonarQube failed to start."
+              docker service ps sonarqube_sonarqube --no-trunc
+              exit 1
+            }
+          EOF
+
       - name: Deploy stack
         run: |
           $SSH_CMD bash << 'EOF'
@@ -214,6 +251,7 @@ jobs:
     runs-on: windows-latest
     needs: deploy
     if: needs.deploy.result == 'success'
+    environment: production
 
     steps:
       - uses: actions/checkout@v4
@@ -225,6 +263,30 @@ jobs:
         with:
           java-version: 17
           distribution: "zulu"
+
+      - name: Wait for SonarQube to be ready
+        shell: powershell
+        run: |
+          $url = "${{ secrets.SONAR_HOST_URL }}/api/system/status"
+          $maxAttempts = 20
+          $attempt = 0
+          do {
+            $attempt++
+            Write-Host "Attempt $attempt/$maxAttempts - Checking SonarQube status..."
+            try {
+              $response = Invoke-RestMethod -Uri $url -TimeoutSec 10
+              if ($response.status -eq "UP") {
+                Write-Host "SonarQube is UP!"
+                exit 0
+              }
+              Write-Host "Status: $($response.status) - waiting..."
+            } catch {
+              Write-Host "Not reachable yet: $_"
+            }
+            Start-Sleep -Seconds 15
+          } while ($attempt -lt $maxAttempts)
+          Write-Host "SonarQube did not become ready in time."
+          exit 1
 
       - name: Cache SonarQube packages
         uses: actions/cache@v4
@@ -250,20 +312,31 @@ jobs:
 
       - name: Build and analyze
         shell: powershell
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           $ErrorActionPreference = "Stop"
-
-          cd ${{ github.workspace }}
+          cd ${{ github.workspace }}\server
 
           Write-Host "Repertoire de travail : $((Get-Location).Path)"
 
-          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin `
-            /k:"vortex-tcg_vortex_tcg_f104a55f-7ac5-40e2-a98e-d7418f556229" `
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
-            /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" `
-            /d:sonar.scanner.skipJreProvisioning=true
+          $exclusions = "**/Program.cs,**/*.csproj,**/Migrations/**,**/Seeds/**,**/DTOs/**,**/DTO/**,**/Dto/**,**/Pages/**"
 
-          dotnet build ./server/server.sln
+          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin `
+            /k:"vortex-tcg_vortex_tcg_AZ4McMpwnjkoUS9wsyUn" `
+            /d:sonar.token="$env:SONAR_TOKEN" `
+            /d:sonar.host.url="$env:SONAR_HOST_URL" `
+            /d:sonar.scanner.skipJreProvisioning=true `
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" `
+            /d:sonar.coverage.exclusions="$exclusions"
+
+          dotnet restore
+          dotnet build ./server.sln
+
+          dotnet test ./server.sln `
+            --collect:"XPlat Code Coverage" `
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end `
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+            /d:sonar.token="$env:SONAR_TOKEN"
