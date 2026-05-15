@@ -17,6 +17,8 @@ public class QueueService
     {
         RoomManager rm = RoomManager.Instance;
 
+        Debug.WriteLine($"Joining queue for user {userId} with deck {deckId}");
+
         await rm.Matchmaker.JoinQueueAsync(userId, deckId, ct);
         IReadOnlyList<IEvent> events = rm.MatchmakerEventContainer.PullEvents(ct);
 
