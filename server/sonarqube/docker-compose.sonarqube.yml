@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:14
+    networks:
+      - sonar-internal
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: ${SONAR_DB_PASSWORD}
+      POSTGRES_DB: sonarqube
+    volumes:
+      - sonarqube_postgres_data:/var/lib/postgresql/data
+    deploy:
+      replicas: 1
+
+  sonarqube:
+    image: sonarqube:lts-community
+    networks:
+      - sonar-internal
+      - vortex_traefik-network
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonarqube
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: ${SONAR_DB_PASSWORD}
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.sonar.rule=Host(`sonarqube.vortex-tcg.online`)"
+        - "traefik.http.routers.sonar.entrypoints=websecure"
+        - "traefik.http.routers.sonar.tls=true"
+        - "traefik.http.routers.sonar.tls.certresolver=le"
+        - "traefik.http.routers.sonar.service=sonar"
+        - "traefik.http.services.sonar.loadbalancer.server.port=9000"
+        - "traefik.swarm.network=vortex_traefik-network"
+
+volumes:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  sonarqube_postgres_data:
+
+networks:
+  sonar-internal:
+    driver: overlay
+  vortex_traefik-network:
+    external: true
