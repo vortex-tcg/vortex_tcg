@@ -5,8 +5,8 @@
     "baseUrl": "http://localhost:6006"
   },
   "prod": {
-    "apiBaseUrl": "https://vortex-tcg.online/auth",
-    "gameHubUrl": "https://vortex-tcg.online/game/hubs/game",
-    "baseUrl": "https://vortex-tcg.online/api"
-  }  
+    "apiBaseUrl": "https://auth.vortex-tcg.online/api/auth",
+    "gameHubUrl": "https://game.vortex-tcg.online/hubs/game",
+    "baseUrl": "https://api.vortex-tcg.online/api"
+  } 
 }
