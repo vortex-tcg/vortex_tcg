@@ -2,7 +2,7 @@ services:
   traefik:
     image: traefik:v3.4
     networks:
-      - traefik-network
+      - vortex_traefik-network
 
     ports:
       - "80:80"
@@ -27,7 +27,7 @@ services:
       - "--providers.file.filename=/dynamic/tls.yml"
       - "--providers.swarm=true"
       - "--providers.swarm.exposedbydefault=false"
-      - "--providers.swarm.network=traefik-network"
+      - "--providers.swarm.network=vortex_traefik-network"
       - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
       - "--providers.file.directory=/dynamic"
       - "--providers.file.watch=true"
@@ -69,7 +69,7 @@ services:
   auth:
     image: vortextcg/vortex_repository:auth
     networks:
-      - traefik-network
+      - vortex_traefik-network
     env_file:
       - .env
     deploy:
@@ -101,7 +101,7 @@ services:
   game:
     image: vortextcg/vortex_repository:game
     networks:
-      - traefik-network
+      - vortex_traefik-network
     env_file:
       - .env
     deploy:
@@ -133,7 +133,7 @@ services:
   api:
     image: vortextcg/vortex_repository:api
     networks:
-      - traefik-network
+      - vortex_traefik-network
     env_file:
       - .env
     deploy:
@@ -163,6 +163,5 @@ services:
           memory: 128M
 
 networks:
-  traefik-network:
-    driver: overlay
-    attachable: true
+  vortex_traefik-network:
+    external: true
