@@ -1,6 +1,9 @@
 using game.Application.Service;
 using game.Domaine.Match.Entity;
+using game.Domaine.Match.Service;
 using game.Domaine.Match.ValueObject;
+using game.Infrastructure;
+using game.Infrastructure.Manager;
 using game.Tests.Helpers;
 using Microsoft.AspNetCore.SignalR;
 using Moq;
@@ -71,7 +74,6 @@ public class AttackServiceTests : IDisposable
     [Fact]
     public async Task ToggleAttackCardAsync_SendsSignalR_EvenWhenNoCardAtPosition()
     {
-        // HandleAttackService always emits an ATTACK_ORDER_UPDATED event (even for empty board state)
         (MatchAggregate match, UserId p1Id) = BuildAttackMatch();
         AppServiceHelpers.AddMatchToRoom(match);
 
@@ -81,5 +83,48 @@ public class AttackServiceTests : IDisposable
             It.IsAny<string>(),
             It.IsAny<object[]>(),
             It.IsAny<CancellationToken>()), Times.AtLeastOnce());
+    }
+
+    [Fact]
+    public void ToggleAttackCard_AlwaysProducesEvent_GuardIsNeverTriggered()
+    {
+        (MatchAggregate match, UserId p1Id) = BuildAttackMatch();
+        match.PullEvents(); 
+        HandleAttackService.ToggleAttackCard(match, p1Id, 1, default);
+
+        Assert.NotEmpty(match.PullEvents());
+    }
+
+    [Fact]
+    public async Task ToggleAttackCardAsync_WhenCallerIsP2_SetsOtherToP1()
+    {
+        UserId p1Id = new UserId(Guid.NewGuid());
+        UserId p2Id = new UserId(Guid.NewGuid());
+        GameCardDto card = MatchHelpers.MakeCard(1, state: VCardState.Active);
+        Player p1 = MatchHelpers.MakePlayer(userId: p1Id);
+        Player p2 = MatchHelpers.MakePlayer(userId: p2Id);
+        p2.Board.Place(1, card);
+        MatchAggregate match = MatchHelpers.MakeMatchInPhase<AttackPhase>(p1: p1, p2: p2);
+        match.SetCurrentPlayerPosition(2);
+        AppServiceHelpers.AddMatchToRoom(match);
+
+        List<string> calledUserIds = new();
+        Mock<IHubContext<GameHubClean>> mockHub = new();
+        Mock<IHubClients> mockClients = new();
+        Mock<IClientProxy> mockProxy = new();
+        mockHub.Setup(h => h.Clients).Returns(mockClients.Object);
+        mockClients
+            .Setup(c => c.User(It.IsAny<string>()))
+            .Callback<string>(id => calledUserIds.Add(id))
+            .Returns(mockProxy.Object);
+        mockProxy
+            .Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        CallManager.Configure(mockHub.Object);
+
+        await AttackService.ToggleAttackCardAsync(p2Id, 1);
+
+        Assert.Contains(((Guid)p2Id).ToString(), calledUserIds);
+        Assert.Contains(((Guid)p1Id).ToString(), calledUserIds);
     }
 }

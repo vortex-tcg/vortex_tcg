@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using game.Application.Dto;
@@ -43,22 +43,7 @@ public class QueueService
 
         IReadOnlyList<IEvent> matchEvents = match.PullEvents();
 
-        IEvent? initEvent = null;
-        foreach (IEvent me in matchEvents)
-        {
-            if (me.Name == MatchEvent.MATCH_INIT)
-            {
-                initEvent = me;
-                break;
-            }
-        }
-
-        if (initEvent == null)
-        {
-            return;
-        }
-
-        MatchInitData init = initEvent.GetData<MatchInitData>();
+        MatchInitData init = matchEvents.First(me => me.Name == MatchEvent.MATCH_INIT).GetData<MatchInitData>();
 
         UserId p1 = data.players[0].userId;
         UserId p2 = data.players[1].userId;
