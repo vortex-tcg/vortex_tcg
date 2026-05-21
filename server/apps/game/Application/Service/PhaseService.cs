@@ -113,6 +113,9 @@ public static class PhaseService
                 case PhaseEvent.STANDBY_STARTED:
                 {
                     StandByPhaseData d = ev.GetData<StandByPhaseData>();
+                    Guid standByActivePlayer = d.CurrentPlayerUserId;
+                    Guid standByOpponent = standByActivePlayer == p1 ? p2 : p1;
+
                     StandByPhaseData opponentView = new StandByPhaseData(
                         matchId: d.MatchId,
                         currentPlayerUserId: d.CurrentPlayerUserId,
@@ -122,12 +125,11 @@ public static class PhaseService
                         opponentHandCount: d.OpponentHandCount,
                         drawnCard: null
                     );
-                    
 
                     responseDTO<StandByPhaseData, StandByPhaseData> payload = new responseDTO<StandByPhaseData, StandByPhaseData>
                     {
-                        userId = caller,
-                        opponentId = other,
+                        userId = standByActivePlayer,
+                        opponentId = standByOpponent,
                         success = true,
                         code = ResponseCode.SUCCESS_STANDBY_STARTED,
 
