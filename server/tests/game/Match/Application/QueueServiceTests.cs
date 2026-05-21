@@ -12,6 +12,7 @@ using game.Infrastructure.Interface;
 using game.Infrastructure.Manager;
 using game.Tests.Helpers;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using MatchAggregate = game.Domaine.Match.Agregate.Match;
 
@@ -41,7 +42,7 @@ public class QueueServiceTests : IDisposable
         mockClient
             .Setup(c => c.GetDeckDataAsync(It.IsAny<DeckId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(BuildApiDeck());
-        RoomManager.Configure(new CreateMatchFactory(mockClient.Object));
+        RoomManager.Configure(new CreateMatchFactory(mockClient.Object, NullLogger<CreateMatchFactory>.Instance));
     }
 
     private static ApiDeckDataDto BuildApiDeck() => new ApiDeckDataDto
@@ -157,7 +158,7 @@ public class QueueServiceTests : IDisposable
         mockClient
             .Setup(c => c.GetDeckDataAsync(It.IsAny<DeckId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(BuildApiDeckWithMultipleCards(15));
-        RoomManager.Configure(new CreateMatchFactory(mockClient.Object));
+        RoomManager.Configure(new CreateMatchFactory(mockClient.Object, NullLogger<CreateMatchFactory>.Instance));
 
         List<object[]> capturedArgs = new();
         _mockProxy
