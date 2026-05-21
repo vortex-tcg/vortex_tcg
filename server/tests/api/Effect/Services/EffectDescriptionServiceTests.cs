@@ -382,6 +382,111 @@ namespace VortexTCG.Tests.Api.Effect.Services
         }
 
         [Fact]
+        public async Task Create_StoresNullParameter_WhenParameterIsNull()
+        {
+            using VortexDbContext db = CreateDb();
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
+
+            ResultDTO<EffectDescriptionDto> result = await service.createAsync(new EffectDescriptionInputDto
+            {
+                Label = "NoParam",
+                Description = "A description",
+                Parameter = null
+            });
+
+            Assert.True(result.success);
+            Assert.Equal(201, result.statusCode);
+            Assert.Null(result.data!.Parameter);
+        }
+
+        [Fact]
+        public async Task Create_StoresNullParameter_WhenParameterIsWhitespace()
+        {
+            using VortexDbContext db = CreateDb();
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
+
+            ResultDTO<EffectDescriptionDto> result = await service.createAsync(new EffectDescriptionInputDto
+            {
+                Label = "WhitespaceParam",
+                Description = "A description",
+                Parameter = "   "
+            });
+
+            Assert.True(result.success);
+            Assert.Null(result.data!.Parameter);
+        }
+
+        [Fact]
+        public async Task Update_Returns400_WhenDescriptionIsEmpty()
+        {
+            using VortexDbContext db = CreateDb();
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
+
+            Guid id = Guid.NewGuid();
+            await provider.addAsync(new EffectDescription { Id = id, Label = "Valid", Description = "Desc" });
+
+            ResultDTO<EffectDescriptionDto> result = await service.updateAsync(id, new EffectDescriptionInputDto
+            {
+                Label = "ValidLabel",
+                Description = "   ",
+                Parameter = null
+            });
+
+            Assert.False(result.success);
+            Assert.Equal(400, result.statusCode);
+            Assert.Contains("Description", result.message!);
+        }
+
+        [Fact]
+        public async Task Update_SetsNullParameter_WhenParameterIsNull()
+        {
+            using VortexDbContext db = CreateDb();
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
+
+            Guid id = Guid.NewGuid();
+            db.EffectDescriptions.Add(new EffectDescription { Id = id, Label = "P", Description = "D", Parameter = "old" });
+            await db.SaveChangesAsync();
+            db.ChangeTracker.Clear();
+
+            ResultDTO<EffectDescriptionDto> result = await service.updateAsync(id, new EffectDescriptionInputDto
+            {
+                Label = "P",
+                Description = "D",
+                Parameter = null
+            });
+
+            Assert.True(result.success);
+            Assert.Null(result.data!.Parameter);
+        }
+
+        [Fact]
+        public async Task Update_SetsNullParameter_WhenParameterIsWhitespace()
+        {
+            using VortexDbContext db = CreateDb();
+            EffectDescriptionProvider provider = new EffectDescriptionProvider(db);
+            EffectDescriptionService service = new EffectDescriptionService(provider);
+
+            Guid id = Guid.NewGuid();
+            db.EffectDescriptions.Add(new EffectDescription { Id = id, Label = "Q", Description = "D", Parameter = "old" });
+            await db.SaveChangesAsync();
+            db.ChangeTracker.Clear();
+
+            ResultDTO<EffectDescriptionDto> result = await service.updateAsync(id, new EffectDescriptionInputDto
+            {
+                Label = "Q",
+                Description = "D",
+                Parameter = "   "
+            });
+
+            Assert.True(result.success);
+            Assert.Null(result.data!.Parameter);
+        }
+
+        [Fact]
         public async Task Delete_Returns_409_When_In_Use()
         {
             using VortexDbContext db = CreateDb();

@@ -1,6 +1,9 @@
+using System.Reflection;
 using game.Application.Service;
 using game.Domaine.Match.Entity;
 using game.Domaine.Match.ValueObject;
+using game.Infrastructure;
+using game.Infrastructure.Manager;
 using game.Tests.Helpers;
 using Microsoft.AspNetCore.SignalR;
 using Moq;
@@ -72,5 +75,23 @@ public class SurrenderServiceTests : IDisposable
             It.IsAny<string>(),
             It.IsAny<object[]>(),
             It.IsAny<CancellationToken>()), Times.AtLeastOnce());
+    }
+
+    [Fact]
+    public async Task SurrenderAsync_ReturnsEarly_WhenMatchIsAlreadyFinished()
+    {
+        MatchAggregate match = MatchHelpers.MakeMatchInPhase<StandByPhase>();
+        UserId p1Id = match.Player1.UserId;
+        typeof(MatchAggregate)
+            .GetField("<IsFinished>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .SetValue(match, true);
+        AppServiceHelpers.AddMatchToRoom(match);
+
+        await SurrenderService.SurrenderAsync(p1Id);
+
+        _mockProxy.Verify(p => p.SendCoreAsync(
+            It.IsAny<string>(),
+            It.IsAny<object[]>(),
+            It.IsAny<CancellationToken>()), Times.Never());
     }
 }

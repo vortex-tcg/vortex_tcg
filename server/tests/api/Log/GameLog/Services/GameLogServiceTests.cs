@@ -6,6 +6,7 @@ using VortexTCG.Common.DTO;
 using VortexTCG.Common.Services;
 using VortexTCG.DataAccess;
 using GameLogModel = VortexTCG.DataAccess.Models.Gamelog;
+using GameModel = VortexTCG.DataAccess.Models.Game;
 using Xunit;
 
 namespace VortexTCG.Tests.Api.Log.GameLog.Services
@@ -82,6 +83,33 @@ namespace VortexTCG.Tests.Api.Log.GameLog.Services
             Assert.NotNull(dto);
             Assert.NotNull(dto!.ActionIds);
             Assert.Contains(actionId, dto.ActionIds!);
+        }
+
+        [Fact]
+        public async Task GetById_SetsUserId_WhenGameIsLinked()
+        {
+            // gamelog.User is a Game? navigation; when loaded → UserId = game.Id
+            using VortexDbContext db = CreateDb();
+            Guid logId = Guid.NewGuid();
+            Guid gameId = Guid.NewGuid();
+            GameLogModel log = new GameLogModel { Id = logId, Label = "WithUser", TurnNumber = 2 };
+            db.Gamelogs.Add(log);
+            // Game.GamelogId → Gamelog: provider includes g.User which resolves to this Game
+            db.Games.Add(new GameModel
+            {
+                Id = gameId,
+                GamelogId = logId,
+                Status = VortexTCG.DataAccess.Models.GameEndStatus.WIN,
+                CreatedAtUtc = DateTime.UtcNow,
+                CreatedBy = "test"
+            });
+            await db.SaveChangesAsync();
+            GameLogService service = CreateService(db);
+
+            GameLogDTO? dto = await service.GetByIdAsync(logId);
+
+            Assert.NotNull(dto);
+            Assert.Equal(gameId, dto!.UserId);
         }
 
         [Fact]

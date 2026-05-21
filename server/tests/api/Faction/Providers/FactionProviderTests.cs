@@ -49,6 +49,18 @@ namespace VortexTCG.Tests.Api.Faction.Providers
         };
 
         [Fact]
+        public async Task ValidateCardIds_NullList_IsValid()
+        {
+            using VortexDbContext db = CreateDb();
+            FactionProvider provider = new FactionProvider(db);
+
+            (bool isValid, List<Guid> invalid) = await provider.ValidateCardIds(null!);
+
+            Assert.True(isValid);
+            Assert.Empty(invalid);
+        }
+
+        [Fact]
         public async Task ValidateCardIds_EmptyList_IsValid()
         {
             using VortexDbContext db = CreateDb();
