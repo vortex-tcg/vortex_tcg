@@ -232,11 +232,10 @@ public partial class SignalRClient
         }
         catch (Exception ex)
         {
-            Enqueue(() =>
-            {
-                OnStatus?.Invoke("Erreur de connexion (voir Console).");
-                Debug.LogError("[SignalR] StartAsync FAILED: " + ex);
-            });
+            Debug.LogError($"[SignalR] StartAsync FAILED — url={hubUrl} type={ex.GetType().Name} msg={ex.Message}");
+            if (ex.InnerException != null)
+                Debug.LogError($"[SignalR]  InnerException: {ex.InnerException.GetType().Name} — {ex.InnerException.Message}");
+            Enqueue(() => OnStatus?.Invoke("Erreur de connexion (voir Console)."));
         }
     }
 

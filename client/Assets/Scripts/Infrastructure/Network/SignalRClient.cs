@@ -164,7 +164,14 @@ public partial class SignalRClient : MonoBehaviour
                 };
 
                 if (forceLongPolling)
+                {
                     options.Transports = HttpTransportType.LongPolling;
+                    Debug.Log("[SignalR] Transport forcé: LongPolling");
+                }
+                else
+                {
+                    Debug.Log("[SignalR] Transport: auto (WebSocket → SSE → LongPolling)");
+                }
             })
             .WithAutomaticReconnect();
 
