@@ -51,6 +51,9 @@ builder.Configuration.AddEnvironmentVariables();
 
 
 var jwtSecret = builder.Configuration["JwtSettings:SecretKey"];
+if (string.IsNullOrEmpty(jwtSecret))
+    throw new InvalidOperationException("[JWT] JwtSettings:SecretKey est manquant ou vide dans la configuration.");
+
 string deckApiBaseUrl = builder.Configuration["DeckApi:BaseUrl"]
                         ?? throw new InvalidOperationException("Missing DeckApi:BaseUrl in configuration");
 builder.Services.AddHttpClient<IDeckApiClient, DeckApiClientManager>(client =>
@@ -76,11 +79,60 @@ builder.Services
         {
             OnMessageReceived = context =>
             {
+                var jwtLogger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>().CreateLogger("JWT");
                 var accessToken = context.Request.Query["access_token"];
                 var path = context.HttpContext.Request.Path;
-                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/game")) {
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/game"))
+                {
                     context.Token = accessToken;
+                    jwtLogger.LogDebug("[JWT] Token reçu via query string — path={Path} tokenLength={Len}",
+                        path, accessToken.ToString().Length);
                 }
+                else if (path.StartsWithSegments("/hubs/game"))
+                {
+                    jwtLogger.LogWarning("[JWT] Connexion au hub sans token — path={Path} ip={IP}",
+                        path, context.HttpContext.Connection.RemoteIpAddress);
+                }
+                return Task.CompletedTask;
+            },
+
+            OnTokenValidated = context =>
+            {
+                var jwtLogger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>().CreateLogger("JWT");
+                var userId = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "inconnu";
+                jwtLogger.LogInformation("[JWT] Token validé — userId={UserId} path={Path}",
+                    userId, context.Request.Path);
+                return Task.CompletedTask;
+            },
+
+            OnAuthenticationFailed = context =>
+            {
+                var jwtLogger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>().CreateLogger("JWT");
+                jwtLogger.LogWarning(context.Exception,
+                    "[JWT] Échec validation token — path={Path} erreur={Error}",
+                    context.Request.Path, context.Exception.GetType().Name);
+                return Task.CompletedTask;
+            },
+
+            OnChallenge = context =>
+            {
+                var jwtLogger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>().CreateLogger("JWT");
+                jwtLogger.LogWarning("[JWT] Challenge 401 — path={Path} error={Error} description={Desc}",
+                    context.Request.Path, context.Error ?? "none", context.ErrorDescription ?? "none");
+                return Task.CompletedTask;
+            },
+
+            OnForbidden = context =>
+            {
+                var jwtLogger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>().CreateLogger("JWT");
+                var userId = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "inconnu";
+                jwtLogger.LogWarning("[JWT] Accès refusé 403 — userId={UserId} path={Path}",
+                    userId, context.HttpContext.Request.Path);
                 return Task.CompletedTask;
             }
         };
