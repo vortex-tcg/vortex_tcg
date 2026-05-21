@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
 using game.Application.Factory;
+using game.Application.Service;
 using game.Infrastructure;
 using game.Infrastructure.Interface;
 using game.Infrastructure.Manager;
@@ -160,9 +161,13 @@ app.MapGet("/health/db", async (VortexDbContext db) =>
     }
 });
 {
+    var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
     var factory = app.Services.GetRequiredService<CreateMatchFactory>();
     RoomManager.Configure(factory);
+    RoomManager.SetLogger(loggerFactory);
     var hubContext = app.Services.GetRequiredService<IHubContext<GameHubClean>>();
     CallManager.Configure(hubContext);
+    CallManager.SetLogger(loggerFactory.CreateLogger<CallManager>());
+    QueueService.SetLogger(loggerFactory.CreateLogger<QueueService>());
 }
 app.Run();
