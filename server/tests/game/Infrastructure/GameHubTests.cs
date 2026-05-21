@@ -2,6 +2,7 @@ using System.Security.Claims;
 using game.Infrastructure;
 using game.Tests.Helpers;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace game.Tests.Infrastructure;
@@ -20,7 +21,7 @@ public class GameHubTests : IDisposable
         AppServiceHelpers.ClearMatchmakerQueue();
         AppServiceHelpers.ConfigureCallManager();
 
-        _hub = new GameHubClean();
+        _hub = new GameHubClean(NullLogger<GameHubClean>.Instance);
         _mockClients = new Mock<IHubCallerClients>();
         _mockCaller = new Mock<ISingleClientProxy>();
         _mockContext = new Mock<HubCallerContext>();
