@@ -106,7 +106,7 @@ services:
       - .env
     deploy:
       mode: replicated
-      replicas: 2
+      replicas: 1
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.game.rule=Host(`game.vortex-tcg.online`)"
