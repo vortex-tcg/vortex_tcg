@@ -75,6 +75,29 @@ public class DefenseHandlerTests
     }
 
     [Fact]
+    public void GetDefenseByDefensePosition_ReturnsCorrectCard()
+    {
+        DefenseHandler handler = new DefenseHandler();
+        handler.AddOrReplaceDefense(1, 10, 2);
+
+        DefenseCard? card = handler.GetDefenseByDefensePosition(1);
+
+        Assert.NotNull(card);
+        Assert.Equal(1, card!.Position);
+        Assert.Equal(10, card.GameCardId);
+    }
+
+    [Fact]
+    public void GetDefenseByDefensePosition_ReturnsNullWhenNotFound()
+    {
+        DefenseHandler handler = new DefenseHandler();
+
+        DefenseCard? card = handler.GetDefenseByDefensePosition(99);
+
+        Assert.Null(card);
+    }
+
+    [Fact]
     public void GetDefenseByAttackPosition_ReturnsCorrectCard()
     {
         DefenseHandler handler = new DefenseHandler();
