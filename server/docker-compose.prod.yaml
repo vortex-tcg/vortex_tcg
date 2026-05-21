@@ -114,6 +114,11 @@ services:
         - "traefik.http.routers.game.tls=true"
         - "traefik.http.routers.game.tls.certresolver=le"
         - "traefik.http.services.game.loadbalancer.server.port=8000"
+        # Test updating traefik
+        - "traefik.http.services.game.loadbalancer.sticky.cookie=true"
+        - "traefik.http.services.game.loadbalancer.sticky.cookie.name=vortex_game_sticky"
+        - "traefik.http.services.game.loadbalancer.sticky.cookie.secure=true"
+        - "traefik.http.services.game.loadbalancer.sticky.cookie.httpOnly=true"
       restart_policy:
         condition: on-failure
         delay: 5s
