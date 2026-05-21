@@ -28,8 +28,9 @@ public class AuthWatcher : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         if (jwtStore == null)
-            jwtStore = Resources.Load<JwtStore>("JwtStore") ?? FindFirstObjectByType<JwtStore>();
-        
+            jwtStore = Jwt.I ?? FindFirstObjectByType<JwtStore>();
+
+        Debug.Log($"[AuthWatcher] Awake — jwtStore={(jwtStore != null ? "OK" : "NULL")} state={jwtStore?.GetAuthenticationState()}");
         SceneManager.activeSceneChanged += OnSceneChanged;
     }
 
@@ -53,8 +54,13 @@ public class AuthWatcher : MonoBehaviour
 
     private void OnAuthenticationStatusChanged(AuthenticationStatus status)
     {
+        if (status.State == AuthenticationState.Authenticated)
+        {
+            _redirecting = false;
+            return;
+        }
 
-        if (status.State == AuthenticationState.TokenExpired || 
+        if (status.State == AuthenticationState.TokenExpired ||
             status.State == AuthenticationState.AuthenticationFailed)
         {
             if (!IsUnguarded(SceneManager.GetActiveScene().name))
@@ -94,7 +100,8 @@ public class AuthWatcher : MonoBehaviour
         string current = SceneManager.GetActiveScene().name;
         if (IsUnguarded(current)) return;
         AuthenticationState authState = jwtStore.GetAuthenticationState();
-        if (authState == AuthenticationState.Unauthenticated || 
+        Debug.Log($"[AuthWatcher] CheckAuthNow — scene={current} state={authState}");
+        if (authState == AuthenticationState.Unauthenticated ||
             authState == AuthenticationState.TokenExpired ||
             authState == AuthenticationState.AuthenticationFailed)
         {
@@ -109,7 +116,8 @@ public class AuthWatcher : MonoBehaviour
 
         if (jwtStore != null)
             jwtStore.Clear();
-        
+
         Debug.Log("[AuthWatcher] Déconnexion forcée - redirection vers LoginScene");
+        SceneManager.LoadScene("LoginScene");
     }
 }
