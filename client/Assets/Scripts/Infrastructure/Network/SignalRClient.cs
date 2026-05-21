@@ -24,8 +24,8 @@ public partial class SignalRClient : MonoBehaviour
     [Header("Options")]
     public bool autoConnectOnStart = false;
     public string defaultPlayerName = "UnityPlayer";
-    [Tooltip("En dev, LongPolling contourne la plupart des soucis WS/SSL/proxy.")]
-    public bool forceLongPollingInEditor = true;
+    [Tooltip("Force LongPolling (contourne les soucis WebSocket/SSL/proxy).")]
+    public bool forceLongPolling = true;
 
     private HubConnection _conn;
     private string _accessToken;
@@ -156,7 +156,6 @@ public partial class SignalRClient : MonoBehaviour
                 if (!string.IsNullOrEmpty(_accessToken))
                     options.AccessTokenProvider = () => Task.FromResult(_accessToken);
 
-#if UNITY_EDITOR
                 options.HttpMessageHandlerFactory = (handler) =>
                 {
                     if (handler is HttpClientHandler h)
@@ -164,9 +163,8 @@ public partial class SignalRClient : MonoBehaviour
                     return handler;
                 };
 
-                if (forceLongPollingInEditor)
+                if (forceLongPolling)
                     options.Transports = HttpTransportType.LongPolling;
-#endif
             })
             .WithAutomaticReconnect();
 
