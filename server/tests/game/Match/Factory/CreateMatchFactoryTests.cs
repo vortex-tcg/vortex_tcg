@@ -3,6 +3,7 @@ using game.Domaine.Match.Agregate;
 using game.Domaine.Match.ValueObject;
 using game.Infrastructure.DTO;
 using game.Infrastructure.Interface;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using MatchAggregate = game.Domaine.Match.Agregate.Match;
 
@@ -55,7 +56,7 @@ public class CreateMatchFactoryTests
             .ReturnsAsync(deck1)
             .ReturnsAsync(deck2);
 
-        return new CreateMatchFactory(mockClient.Object);
+        return new CreateMatchFactory(mockClient.Object, NullLogger<CreateMatchFactory>.Instance);
     }
 
     private static ((UserId, DeckId), (UserId, DeckId)) MakePlayers()
@@ -173,7 +174,7 @@ public class CreateMatchFactoryTests
             .ReturnsAsync(MakeApiDeck())
             .ReturnsAsync(MakeApiDeck());
 
-        CreateMatchFactory factory = new CreateMatchFactory(mockClient.Object);
+        CreateMatchFactory factory = new CreateMatchFactory(mockClient.Object, NullLogger<CreateMatchFactory>.Instance);
         var (p1, p2) = MakePlayers();
 
         await factory.CreateMatchAsync(p1, p2);

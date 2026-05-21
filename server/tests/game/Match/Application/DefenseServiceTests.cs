@@ -1,6 +1,9 @@
 using game.Application.Service;
 using game.Domaine.Match.Entity;
+using game.Domaine.Match.Service;
 using game.Domaine.Match.ValueObject;
+using game.Infrastructure;
+using game.Infrastructure.Manager;
 using game.Tests.Helpers;
 using Microsoft.AspNetCore.SignalR;
 using Moq;
@@ -75,5 +78,45 @@ public class DefenseServiceTests : IDisposable
             It.IsAny<string>(),
             It.IsAny<object[]>(),
             It.IsAny<CancellationToken>()), Times.AtLeastOnce());
+    }
+
+    [Fact]
+    public void ToggleDefenseCard_AlwaysProducesEvent_GuardIsNeverTriggered()
+    { 
+        (MatchAggregate match, UserId defenderId) = BuildDefenseMatch();
+        match.PullEvents(); 
+        HandleDefenseService.ToggleDefenseCard(match, defenderId, 2, 1, default);
+        Assert.NotEmpty(match.PullEvents());
+    }
+
+    [Fact]
+    public async Task ToggleDefenseCardAsync_WhenCallerIsP1_SetsOtherToP2()
+    {
+        UserId p1Id = new UserId(Guid.NewGuid());
+        UserId p2Id = new UserId(Guid.NewGuid());
+        Player p1 = MatchHelpers.MakePlayer(userId: p1Id);
+        Player p2 = MatchHelpers.MakePlayer(userId: p2Id);
+        MatchAggregate match = new MatchAggregate(p1, p2, new DefensePhase());
+        match.SetCurrentPlayerPosition(1);
+        AppServiceHelpers.AddMatchToRoom(match);
+
+        List<string> calledUserIds = new();
+        Mock<IHubContext<GameHubClean>> mockHub = new();
+        Mock<IHubClients> mockClients = new();
+        Mock<IClientProxy> mockProxy = new();
+        mockHub.Setup(h => h.Clients).Returns(mockClients.Object);
+        mockClients
+            .Setup(c => c.User(It.IsAny<string>()))
+            .Callback<string>(id => calledUserIds.Add(id))
+            .Returns(mockProxy.Object);
+        mockProxy
+            .Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        CallManager.Configure(mockHub.Object);
+
+        await DefenseService.ToggleDefenseCardAsync(p1Id, 99, 99);
+
+        Assert.Contains(((Guid)p1Id).ToString(), calledUserIds);
+        Assert.Contains(((Guid)p2Id).ToString(), calledUserIds);
     }
 }

@@ -123,6 +123,65 @@ namespace VortexTCG.Tests.Api.Log.ActionType.Services
         }
 
         [Fact]
+        public async Task Create_SetsParentIdToNull_WhenParentIdIsNull()
+        {
+            // dto.ParentId ?? Guid.Empty → Guid.Empty → ToDTO maps Guid.Empty back to null
+            using VortexDbContext db = CreateDb();
+            ActionTypeService service = CreateService(db);
+
+            ResultDTO<ActionTypeDTO> result = await service.CreateAsync(new ActionTypeCreateDTO
+            {
+                ActionDescription = "Act",
+                GameLogId = Guid.NewGuid(),
+                ParentId = null
+            });
+
+            Assert.True(result.success);
+            Assert.Null(result.data!.ParentId);
+        }
+
+        [Fact]
+        public async Task Create_SetsParentId_WhenParentIdIsProvided()
+        {
+            // dto.ParentId ?? Guid.Empty → the provided Guid → ToDTO returns it as non-null
+            using VortexDbContext db = CreateDb();
+            ActionTypeService service = CreateService(db);
+            Guid parentId = Guid.NewGuid();
+
+            ResultDTO<ActionTypeDTO> result = await service.CreateAsync(new ActionTypeCreateDTO
+            {
+                ActionDescription = "Child",
+                GameLogId = Guid.NewGuid(),
+                ParentId = parentId
+            });
+
+            Assert.True(result.success);
+            Assert.Equal(parentId, result.data!.ParentId);
+        }
+
+        [Fact]
+        public async Task Update_SetsParentId_WhenParentIdIsProvided()
+        {
+            // Same ?? branch in updateAsync: non-null ParentId stored and round-tripped through DTO
+            using VortexDbContext db = CreateDb();
+            Guid id = Guid.NewGuid();
+            db.Actions.Add(new ActionTypeModel { Id = id, actionDescription = "Old" });
+            await db.SaveChangesAsync();
+            ActionTypeService service = CreateService(db);
+            Guid parentId = Guid.NewGuid();
+
+            ResultDTO<ActionTypeDTO> result = await service.UpdateAsync(id, new ActionTypeCreateDTO
+            {
+                ActionDescription = "New",
+                GameLogId = Guid.NewGuid(),
+                ParentId = parentId
+            });
+
+            Assert.True(result.success);
+            Assert.Equal(parentId, result.data!.ParentId);
+        }
+
+        [Fact]
         public async Task Update_Returns404_WhenMissing()
         {
             using VortexDbContext db = CreateDb();

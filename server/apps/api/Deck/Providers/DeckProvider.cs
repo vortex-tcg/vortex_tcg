@@ -89,7 +89,7 @@ namespace VortexTCG.Api.Deck.Providers
             await _db.DeckCards.AddRangeAsync(newDeckCards);
             await _db.SaveChangesAsync();
         }
-        public async Task<List<DeckModel>> GetDecksByUserIdAsync(Guid userId)
+        public virtual async Task<List<DeckModel>> GetDecksByUserIdAsync(Guid userId)
         {
             return await _db.Decks
                 .AsNoTracking()
