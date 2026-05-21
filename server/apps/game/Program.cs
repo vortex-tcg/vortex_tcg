@@ -89,9 +89,9 @@ builder.Services
                     jwtLogger.LogDebug("[JWT] Token reçu via query string — path={Path} tokenLength={Len}",
                         path, accessToken.ToString().Length);
                 }
-                else if (path.StartsWithSegments("/hubs/game"))
+                else if (path.StartsWithSegments("/hubs/game") && !path.StartsWithSegments("/hubs/game/negotiate"))
                 {
-                    jwtLogger.LogWarning("[JWT] Connexion au hub sans token — path={Path} ip={IP}",
+                    jwtLogger.LogDebug("[JWT] Connexion hub sans token query string — path={Path} ip={IP}",
                         path, context.HttpContext.Connection.RemoteIpAddress);
                 }
                 return Task.CompletedTask;
