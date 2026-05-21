@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using VortexTCG.Api.Deck.DTOs;
 using VortexTCG.Api.Deck.Providers;
 using VortexTCG.Api.Deck.Services;
@@ -291,6 +292,108 @@ namespace VortexTCG.Tests.Api.Deck.Services
             Assert.Equal("MyDeck", result.data![0].Name);
             Assert.NotNull(result.data[0].Champion);
             Assert.Equal("Hero", result.data[0].Champion!.Name);
+        }
+
+        [Fact]
+        public async Task GetDecksByUserIdAsync_SetsChampionToNull_WhenDeckHasNoChampion()
+        {
+            // EF Core 9 InMemory inner-joins required navigations, so Champion = null
+            // can only be produced by bypassing the DB layer via mock.
+            using VortexDbContext db = CreateDb();
+            Guid userId = Guid.NewGuid();
+            DeckModel deck = new DeckModel
+            {
+                Id = Guid.NewGuid(), Label = "No Champ", UserId = userId,
+                Champion = null!
+            };
+
+            Mock<DeckProvider> mockProvider = new Mock<DeckProvider>(db) { CallBase = false };
+            mockProvider
+                .Setup(p => p.GetDecksByUserIdAsync(userId))
+                .ReturnsAsync(new List<DeckModel> { deck });
+
+            DeckService service = new DeckService(mockProvider.Object);
+            ResultDTO<List<DeckDTO>> result = await service.GetDecksByUserIdAsync(userId);
+
+            Assert.True(result.success);
+            Assert.Single(result.data!);
+            Assert.Null(result.data[0].Champion);
+        }
+
+        [Fact]
+        public async Task GetDecksByUserIdAsync_MapsAllChampionFields()
+        {
+            using VortexDbContext db = CreateDb();
+            Guid userId = Guid.NewGuid();
+            FactionModel faction = new FactionModel
+            {
+                Id = Guid.NewGuid(), Label = "Fire", Currency = "Gold", Condition = "None",
+                CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test"
+            };
+            ChampionModel champion = new ChampionModel
+            {
+                Id = Guid.NewGuid(), Name = "Paladin", Description = "Holy warrior",
+                HP = 40, Picture = "paladin.png", FactionId = faction.Id,
+                CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test"
+            };
+            DeckModel deck = new DeckModel
+            {
+                Id = Guid.NewGuid(), Label = "Holy Deck", UserId = userId,
+                ChampionId = champion.Id, FactionId = faction.Id,
+                CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test"
+            };
+            db.Factions.Add(faction);
+            db.Champions.Add(champion);
+            db.Decks.Add(deck);
+            await db.SaveChangesAsync();
+            DeckService service = CreateService(db);
+
+            ResultDTO<List<DeckDTO>> result = await service.GetDecksByUserIdAsync(userId);
+
+            Assert.True(result.success);
+            DeckDTO dto = Assert.Single(result.data!);
+            Assert.Equal(deck.Id.ToString(), dto.Id);
+            Assert.Equal("Holy Deck", dto.Name);
+            Assert.NotNull(dto.Champion);
+            Assert.Equal(champion.Id, dto.Champion!.ChampionID);
+            Assert.Equal("Paladin", dto.Champion.Name);
+            Assert.Equal("Holy warrior", dto.Champion.Description);
+            Assert.Equal(40, dto.Champion.HP);
+            Assert.Equal("paladin.png", dto.Champion.Picture);
+            Assert.Equal(faction.Id, dto.Champion.FactionId);
+        }
+
+        [Fact]
+        public async Task GetDecksByUserIdAsync_ReturnsAllDecks_WhenUserHasMultiple()
+        {
+            using VortexDbContext db = CreateDb();
+            Guid userId = Guid.NewGuid();
+            // Champion and Faction must exist — EF Core 9 InMemory inner-joins required navigations
+            FactionModel faction = new FactionModel
+            {
+                Id = Guid.NewGuid(), Label = "F", Currency = "G", Condition = "C",
+                CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test"
+            };
+            ChampionModel champion = new ChampionModel
+            {
+                Id = Guid.NewGuid(), Name = "Hero", Description = "d", HP = 30, Picture = "p",
+                CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test"
+            };
+            db.Factions.Add(faction);
+            db.Champions.Add(champion);
+            db.Decks.AddRange(
+                new DeckModel { Id = Guid.NewGuid(), Label = "Deck A", UserId = userId, ChampionId = champion.Id, FactionId = faction.Id, CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" },
+                new DeckModel { Id = Guid.NewGuid(), Label = "Deck B", UserId = userId, ChampionId = champion.Id, FactionId = faction.Id, CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" },
+                new DeckModel { Id = Guid.NewGuid(), Label = "Other", UserId = Guid.NewGuid(), ChampionId = champion.Id, FactionId = faction.Id, CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test" }
+            );
+            await db.SaveChangesAsync();
+            DeckService service = CreateService(db);
+
+            ResultDTO<List<DeckDTO>> result = await service.GetDecksByUserIdAsync(userId);
+
+            Assert.True(result.success);
+            Assert.Equal(2, result.data!.Count);
+            Assert.All(result.data, d => Assert.NotNull(d.Id));
         }
 
         [Fact]

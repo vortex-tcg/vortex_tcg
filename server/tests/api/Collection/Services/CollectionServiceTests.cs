@@ -14,6 +14,9 @@ using RarityEnum = VortexTCG.DataAccess.Models.Rarity;
 using DeckModel = VortexTCG.DataAccess.Models.Deck;
 using ChampionModel = VortexTCG.DataAccess.Models.Champion;
 using FactionModel = VortexTCG.DataAccess.Models.Faction;
+using FactionCardModel = VortexTCG.DataAccess.Models.FactionCard;
+using ClassCardModel = VortexTCG.DataAccess.Models.ClassCard;
+using ClassModel = VortexTCG.DataAccess.Models.Class;
 using Xunit;
 
 namespace VortexTCG.Tests.Api.Collection.Services
@@ -485,6 +488,205 @@ namespace VortexTCG.Tests.Api.Collection.Services
             {
                 db1.Dispose();
             }
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_FiltersOutCard_WhenCardNavigationIsNull()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            CollectionModel collection = new CollectionModel { Id = Guid.NewGuid(), User = user };
+            db.Collections.Add(collection);
+            await db.SaveChangesAsync();
+
+            // CollectionCard with a CardId that has no matching Card in DB — Card nav will be null after Include
+            db.CollectionCards.Add(new CollectionCardModel
+            {
+                Id = Guid.NewGuid(),
+                CardId = Guid.NewGuid(),
+                CollectionId = collection.Id,
+                Quantity = 1,
+                Rarity = RarityEnum.NORMAL
+            });
+            await db.SaveChangesAsync();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.True(result.success);
+            Assert.Empty(result.data!.Cards);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_MapsClasses_WhenCardHasClassCards()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            CardModel card = new CardModel
+            {
+                Id = Guid.NewGuid(), Name = "Knight", Cost = 2,
+                Description = "desc", Picture = "pic.png"
+            };
+            db.Cards.Add(card);
+            ClassModel cls = new ClassModel
+            {
+                Id = Guid.NewGuid(), Label = "Warrior",
+                CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test"
+            };
+            db.Set<ClassModel>().Add(cls);
+            db.Set<ClassCardModel>().Add(new ClassCardModel
+            {
+                Id = Guid.NewGuid(), CardId = card.Id, ClassId = cls.Id,
+                CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test"
+            });
+            CollectionModel collection = new CollectionModel
+            {
+                Id = Guid.NewGuid(), User = user,
+                Cards = new List<CollectionCardModel>
+                {
+                    new CollectionCardModel { Id = Guid.NewGuid(), Card = card, Quantity = 1, Rarity = RarityEnum.NORMAL }
+                }
+            };
+            db.Collections.Add(collection);
+            await db.SaveChangesAsync();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.True(result.success);
+            Assert.Single(result.data!.Cards);
+            Assert.Single(result.data.Cards[0].Card.Class);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_FiltersOutClassCard_WhenClassNavigationIsNull()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            CardModel card = new CardModel
+            {
+                Id = Guid.NewGuid(), Name = "Mage", Cost = 3,
+                Description = "desc", Picture = "pic.png"
+            };
+            db.Cards.Add(card);
+            // ClassCard with a ClassId that has no matching Class in DB — Class nav stays null
+            db.Set<ClassCardModel>().Add(new ClassCardModel
+            {
+                Id = Guid.NewGuid(), CardId = card.Id, ClassId = Guid.NewGuid(),
+                CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test"
+            });
+            CollectionModel collection = new CollectionModel
+            {
+                Id = Guid.NewGuid(), User = user,
+                Cards = new List<CollectionCardModel>
+                {
+                    new CollectionCardModel { Id = Guid.NewGuid(), Card = card, Quantity = 1, Rarity = RarityEnum.NORMAL }
+                }
+            };
+            db.Collections.Add(collection);
+            await db.SaveChangesAsync();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.True(result.success);
+            Assert.Single(result.data!.Cards);
+            Assert.Empty(result.data.Cards[0].Card.Class);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_MapsFactionIds_WhenCardHasFactionCards()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            CardModel card = new CardModel
+            {
+                Id = Guid.NewGuid(), Name = "Archer", Cost = 1,
+                Description = "desc", Picture = "pic.png"
+            };
+            db.Cards.Add(card);
+            FactionModel faction = new FactionModel
+            {
+                Id = Guid.NewGuid(), Label = "Forest", Currency = "Wood", Condition = "None",
+                CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test"
+            };
+            db.Factions.Add(faction);
+            db.FactionCards.Add(new FactionCardModel
+            {
+                Id = Guid.NewGuid(), CardId = card.Id, FactionId = faction.Id,
+                CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test"
+            });
+            CollectionModel collection = new CollectionModel
+            {
+                Id = Guid.NewGuid(), User = user,
+                Cards = new List<CollectionCardModel>
+                {
+                    new CollectionCardModel { Id = Guid.NewGuid(), Card = card, Quantity = 1, Rarity = RarityEnum.NORMAL }
+                }
+            };
+            db.Collections.Add(collection);
+            await db.SaveChangesAsync();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.True(result.success);
+            Assert.Single(result.data!.Cards);
+            Guid factionId = Assert.Single(result.data.Cards[0].Card.Factions);
+            Assert.Equal(faction.Id, factionId);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_ReturnsEmptyFactions_WhenCardHasNoFactionCards()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            CardModel card = new CardModel
+            {
+                Id = Guid.NewGuid(), Name = "Rogue", Cost = 2,
+                Description = "desc", Picture = "pic.png"
+            };
+            db.Cards.Add(card);
+            CollectionModel collection = new CollectionModel
+            {
+                Id = Guid.NewGuid(), User = user,
+                Cards = new List<CollectionCardModel>
+                {
+                    new CollectionCardModel { Id = Guid.NewGuid(), Card = card, Quantity = 1, Rarity = RarityEnum.NORMAL }
+                }
+            };
+            db.Collections.Add(collection);
+            await db.SaveChangesAsync();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.True(result.success);
+            Assert.Single(result.data!.Cards);
+            Assert.Empty(result.data.Cards[0].Card.Factions);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_KeepsDecksEmpty_WhenUserHasNoDecks()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            CollectionModel collection = new CollectionModel { Id = Guid.NewGuid(), User = user };
+            db.Collections.Add(collection);
+            await db.SaveChangesAsync();
+            CollectionService service = CreateService(db);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.True(result.success);
+            Assert.Equal(200, result.statusCode);
+            Assert.Empty(result.data!.Decks);
         }
 
         private static UserModel CreateTestUser(Guid id) => new UserModel

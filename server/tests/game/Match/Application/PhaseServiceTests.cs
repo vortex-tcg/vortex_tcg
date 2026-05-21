@@ -1,6 +1,8 @@
 using game.Application.Service;
 using game.Domaine.Match.Entity;
 using game.Domaine.Match.ValueObject;
+using game.Infrastructure;
+using game.Infrastructure.Manager;
 using game.Tests.Helpers;
 using Microsoft.AspNetCore.SignalR;
 using Moq;
@@ -96,5 +98,47 @@ public class PhaseServiceTests : IDisposable
         await PhaseService.ChangePhaseAsync(p1Id);
 
         Assert.Equal(MatchPhaseType.Attack, match.CurrentPhase.Type);
+    }
+
+    [Fact]
+    public void NextPhase_AlwaysProducesEvent_GuardIsNeverTriggered()
+    {
+        MatchAggregate match = MatchHelpers.MakeMatchInPhase<StandByPhase>();
+        match.PullEvents(); 
+
+        match.NextPhase();
+
+        Assert.NotEmpty(match.PullEvents());
+    }
+
+    [Fact]
+    public async Task ChangePhaseAsync_WhenCallerIsP2_SetsOtherToP1()
+    {
+        UserId p1Id = new UserId(Guid.NewGuid());
+        UserId p2Id = new UserId(Guid.NewGuid());
+        Player p1 = MatchHelpers.MakePlayer(userId: p1Id);
+        Player p2 = MatchHelpers.MakePlayer(userId: p2Id);
+        MatchAggregate match = MatchHelpers.MakeMatchInPhase<StandByPhase>(p1: p1, p2: p2);
+        match.SetCurrentPlayerPosition(2);
+        AppServiceHelpers.AddMatchToRoom(match);
+
+        List<string> calledUserIds = new();
+        Mock<IHubContext<GameHubClean>> mockHub = new();
+        Mock<IHubClients> mockClients = new();
+        Mock<IClientProxy> mockProxy = new();
+        mockHub.Setup(h => h.Clients).Returns(mockClients.Object);
+        mockClients
+            .Setup(c => c.User(It.IsAny<string>()))
+            .Callback<string>(id => calledUserIds.Add(id))
+            .Returns(mockProxy.Object);
+        mockProxy
+            .Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        CallManager.Configure(mockHub.Object);
+
+        await PhaseService.ChangePhaseAsync(p2Id);
+
+        Assert.Contains(((Guid)p2Id).ToString(), calledUserIds);
+        Assert.Contains(((Guid)p1Id).ToString(), calledUserIds);
     }
 }

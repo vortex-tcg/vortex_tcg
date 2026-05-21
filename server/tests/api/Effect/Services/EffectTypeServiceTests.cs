@@ -276,5 +276,38 @@ namespace VortexTCG.Tests.Api.Effect.Services
             Assert.False(result.success);
             Assert.Equal(404, result.statusCode);
         }
+
+        [Fact]
+        public async Task Create_Returns400_WhenLabelIsNull()
+        {
+            // Normalize(null) → null?.Trim() ?? string.Empty → "" → IsNullOrWhiteSpace → 400
+            using VortexDbContext db = CreateDb();
+            EffectTypeProvider provider = new EffectTypeProvider(db);
+            EffectTypeService service = new EffectTypeService(provider);
+
+            ResultDTO<EffectTypeDto> result = await service.createAsync(new EffectTypeCreateDto { Label = null! });
+
+            Assert.False(result.success);
+            Assert.Equal(400, result.statusCode);
+            Assert.Contains("Label", result.message!);
+        }
+
+        [Fact]
+        public async Task Update_Returns400_WhenLabelIsNull()
+        {
+            // Normalize(null) → "" → IsNullOrWhiteSpace → 400 in updateAsync
+            using VortexDbContext db = CreateDb();
+            EffectTypeProvider provider = new EffectTypeProvider(db);
+            EffectTypeService service = new EffectTypeService(provider);
+
+            Guid id = Guid.NewGuid();
+            await provider.addAsync(new EffectType { Id = id, Label = "Existing" });
+
+            ResultDTO<EffectTypeDto> result = await service.updateAsync(id, new EffectTypeUpdateDto { Label = null! });
+
+            Assert.False(result.success);
+            Assert.Equal(400, result.statusCode);
+            Assert.Contains("Label", result.message!);
+        }
     }
 }
