@@ -8,6 +8,7 @@ using game.Domaine.Match.Service;
 using game.Domaine.Match.ValueObject;
 using game.Infrastructure.Manager;
 using SurrenderService = game.Application.Service.SurrenderService;
+using DisconnectService = game.Application.Service.DisconnectService;
 
 namespace game.Infrastructure;
 public class GameHubClean : Hub
@@ -50,14 +51,27 @@ public class GameHubClean : Hub
         await base.OnConnectedAsync();
     }
 
-    public override Task OnDisconnectedAsync(Exception? exception)
+    public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        string userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "inconnu";
+        string rawUserId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "inconnu";
         if (exception != null)
-            _logger.LogWarning(exception, "[HUB] Déconnexion avec erreur — connectionId={ConnectionId} userId={UserId}", Context.ConnectionId, userId);
+            _logger.LogWarning(exception, "[HUB] Déconnexion avec erreur — connectionId={ConnectionId} userId={UserId}", Context.ConnectionId, rawUserId);
         else
-            _logger.LogInformation("[HUB] Déconnexion normale — connectionId={ConnectionId} userId={UserId}", Context.ConnectionId, userId);
-        return base.OnDisconnectedAsync(exception);
+            _logger.LogInformation("[HUB] Déconnexion normale — connectionId={ConnectionId} userId={UserId}", Context.ConnectionId, rawUserId);
+
+        if (Guid.TryParse(rawUserId, out Guid parsedId))
+        {
+            try
+            {
+                await DisconnectService.HandleDisconnectAsync(new UserId(parsedId));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[HUB] Erreur lors du HandleDisconnect — userId={UserId}", rawUserId);
+            }
+        }
+
+        await base.OnDisconnectedAsync(exception);
     }
 
     public Task Surrender()
