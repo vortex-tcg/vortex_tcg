@@ -220,6 +220,5 @@ app.MapGet("/health/db", async (VortexDbContext db) =>
     var hubContext = app.Services.GetRequiredService<IHubContext<GameHubClean>>();
     CallManager.Configure(hubContext);
     CallManager.SetLogger(loggerFactory.CreateLogger<CallManager>());
-    QueueService.SetLogger(loggerFactory.CreateLogger<QueueService>());
 }
 app.Run();

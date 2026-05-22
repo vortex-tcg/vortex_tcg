@@ -106,6 +106,17 @@ public class HandleDefenseServiceTests
     }
 
     [Fact]
+    public void ToggleDefenseCard_DisengagesCard_WhenAlreadyDefendingThisAttack()
+    {
+        (MatchAggregate match, UserId defenderId) = BuildDefensePhaseMatch();
+        GameCardDto? defCard = match.Player2.Board.GetCardAtPosition(2);
+        match.DefenseHandler.AddOrReplaceDefense(2, defCard!.GameCardId, 1);
+        DefenseUpdatedDto dto = HandleDefenseService.ToggleDefenseCard(match, defenderId, defensePosition: 2, attackPosition: 1);
+        Assert.Empty(dto.EngagedCards);
+        Assert.Equal(CardStates.Active.Value, defCard.States.Value);
+    }
+
+    [Fact]
     public void ToggleDefenseCard_DoesNothing_WhenNotDefensePhase()
     {
         UserId defenderId = new UserId(Guid.NewGuid());
