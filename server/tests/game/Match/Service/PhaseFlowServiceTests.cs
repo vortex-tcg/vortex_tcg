@@ -95,4 +95,37 @@ public class PhaseFlowServiceTests
         Assert.Equal(MatchPhaseType.StandBy, step.NextPhase.Type);
         Assert.Equal(2, step.NextCurrentPlayerPosition);
     }
+
+    [Fact]
+    public void ComputeNext_ReturnsStandBy_ForUnknownPhaseType()
+    {
+        MatchAggregate match = MatchHelpers.MakeMatch();
+        match.SetPhase(new UnknownPhase());
+
+        PhaseFlowService.NextStep step = PhaseFlowService.ComputeNext(match);
+
+        Assert.Equal(MatchPhaseType.StandBy, step.NextPhase.Type);
+        Assert.Equal(match.CurrentPlayerPosition, step.NextCurrentPlayerPosition);
+    }
+
+    [Fact]
+    public void NextPhase_ResetsFlags_WhenTransitioningToStandBy()
+    {
+        MatchAggregate match = MatchHelpers.MakeMatchInPhase<EndTurnPhase>();
+        match.MarkCardPlayedThisTurn();
+        match.SetPendingDefense(true);
+
+        ChangePhaseService.NextPhase(match);
+
+        Assert.Equal(MatchPhaseType.StandBy, match.CurrentPhase.Type);
+        Assert.False(match.HasPlayedCardThisTurn);
+        Assert.False(match.HasPendingDefense);
+    }
+}
+
+file sealed class UnknownPhase : game.Domaine.Match.Interface.IPhase
+{
+    public MatchPhaseType Type => (MatchPhaseType)999;
+    public void OnStartPhase(game.Domaine.Match.Agregate.Match match, CancellationToken ct = default) { }
+    public void OnEndPhase(game.Domaine.Match.Agregate.Match match, CancellationToken ct = default) { }
 }

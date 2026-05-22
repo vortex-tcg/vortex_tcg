@@ -200,6 +200,12 @@ public class ChampionFatigueCounterTests
 public class ChampionNameTests
 {
     [Fact]
+    public void Constructor_ThrowsOnNull()
+    {
+        Assert.Throws<ArgumentException>(() => new ChampionName(null!));
+    }
+
+    [Fact]
     public void Constructor_ThrowsOnEmpty()
     {
         Assert.Throws<ArgumentException>(() => new ChampionName(""));
