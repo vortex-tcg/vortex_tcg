@@ -127,6 +127,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         private void HandleGameStartedMinimal(PhaseChangeResultDTO r)
         {
             Debug.Log($"[MatchService] GameStarted phase={r.CurrentPhase} turn={r.TurnNumber}");
+            _isReturningHome = false;
             _gameStarted = true;
             AttackUI.Instance?.ResetBoard();
             DefenseUI.Instance?.ClearAllDefense();
