@@ -113,6 +113,16 @@ namespace VortexTCG.Scripts.Features.Match.UI
             OnDisableEvents();
         }
 
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+
+            HandService?.Reset();
+        }
+
         protected virtual void OnDisableEvents()
         {
             MatchEvents.OnGameStarted -= HandleGameStarted;
