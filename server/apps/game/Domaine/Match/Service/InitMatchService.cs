@@ -18,6 +18,10 @@
             match.Player2.Champion.BaseGold = new ChampionBaseGold(100);
             match.Player1.Champion.Gold = new ChampionGold(100);
             match.Player2.Champion.Gold = new ChampionGold(100);
+            match.Player1.Champion.Hp = new ChampionHp(3);
+            match.Player2.Champion.Hp = new ChampionHp(3);
+            match.Player1.Champion.BaseHp = new ChampionBaseHp(3);
+            match.Player2.Champion.BaseHp = new ChampionBaseHp(3);
             int p1Position = 1;
             int p2Position = 2;
 
