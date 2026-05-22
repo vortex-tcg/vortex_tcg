@@ -60,6 +60,11 @@ namespace VortexTCG.Scripts.MatchScene
 
             // Unsubscribe from card clicks
             MatchEvents.OnCardClicked -= OnCardClickedHandler;
+
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
 
         private void OnEnterDefense()
