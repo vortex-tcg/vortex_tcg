@@ -112,6 +112,7 @@ namespace VortexTCG.Scripts.MatchScene
                 SetSleepy(true);
             }
 
+            // currentHP display removed: ensure the currentHp UI is hidden at runtime
             UpdateCurrentHpDisplay();
             UpdateCurrentHpVisibility();
         }
@@ -215,7 +216,16 @@ namespace VortexTCG.Scripts.MatchScene
             if (currentHpText == null)
                 return;
 
-            currentHpText.text = Mathf.Max(0, hp).ToString();
+            // We stopped showing current HP. Hide the TMP element if present.
+            try
+            {
+                if (currentHpText.gameObject != null)
+                    currentHpText.gameObject.SetActive(false);
+            }
+            catch (System.Exception)
+            {
+                // swallow any exception related to destroyed objects in edit mode/runtime
+            }
         }
 
         private void UpdateCurrentHpVisibility()
@@ -223,15 +233,16 @@ namespace VortexTCG.Scripts.MatchScene
             if (currentHpText == null)
                 return;
 
-            CardSlotUI slot = GetComponentInParent<CardSlotUI>();
-            bool isOnPlayerBoard = AttackUI.Instance != null && AttackUI.Instance.IsCardOnP1Board(this);
-            bool isOnOpponentBoard = OpponentBoardUI.Instance != null && OpponentBoardUI.Instance.IsCardOnOpponentBoard(this);
-
-            bool isLikelyBoardByName = slot != null &&
-                                     (slot.name.Contains("BoardSlot") || slot.name.Contains("P1Board") || slot.name.Contains("P2Board"));
-
-            bool isOnBoardSlot = isOnPlayerBoard || isOnOpponentBoard || isLikelyBoardByName;
-            currentHpText.gameObject.SetActive(isOnBoardSlot);
+            // Always hide current HP display regardless of slot/board placement.
+            try
+            {
+                if (currentHpText.gameObject != null)
+                    currentHpText.gameObject.SetActive(false);
+            }
+            catch (System.Exception)
+            {
+                // ignore
+            }
         }
 
         private void UpdateCostColor()
