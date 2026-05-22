@@ -305,7 +305,8 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             foreach (CardUI card in _opponentBoardCards.Values)
             {
-                Destroy(card.gameObject);
+                if (card != null)
+                    Destroy(card.gameObject);
             }
             _opponentBoardCards.Clear();
 
@@ -314,6 +315,14 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 if (slot != null)
                     slot.ClearSlot();
             }
+
+            for (int i = _opponentHandCards.Count - 1; i >= 0; i--)
+            {
+                CardUI card = _opponentHandCards[i];
+                if (card != null)
+                    Destroy(card.gameObject);
+            }
+            _opponentHandCards.Clear();
         }
 
         public void PlaceCardOnBoard(int slotIndex, GameCardDto cardDto)
