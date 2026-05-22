@@ -8,7 +8,9 @@ using VortexTCG.Common.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using VortexTCG.Api.Deck.Interface;
 using VortexTCG.Api.Deck.Services;
-
+using Amazon;                                                                                                                                                                                                       
+using Amazon.Runtime;                                                                                                                                                                                               
+using Amazon.Extensions.NETCore.Setup;      
 var builder = WebApplication.CreateBuilder(args);
 
 // Ajout des variables d'environnement
