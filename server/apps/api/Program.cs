@@ -31,11 +31,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+var awsOptions = new AWSOptions
+{
+    Credentials = new BasicAWSCredentials(
+        Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID"),
+        Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY")
+    ),
+    Region = RegionEndpoint.GetBySystemName("eu-west-3")
+};
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddRazorPages();
 builder.Services.AddControllers();
-builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+builder.Services.AddDefaultAWSOptions(awsOptions);
 builder.Services.AddAWSService<IAmazonS3>();
 builder.Services.AddScoped<IDeckService, DeckService>();
 builder.Services.AddScoped<VortexTCG.Api.Deck.Providers.DeckProvider>();
