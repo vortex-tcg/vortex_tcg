@@ -37,7 +37,6 @@ public static class DefenseService
         HandleDefenseService.ToggleDefenseCard(match, userId, defensePosition, attackPosition, ct);
 
         IReadOnlyList<IEvent> events = match.PullEvents();
-        if (events.Count == 0) return;
 
         Guid p1 = (Guid)match.Player1.UserId;
         Guid p2 = (Guid)match.Player2.UserId;

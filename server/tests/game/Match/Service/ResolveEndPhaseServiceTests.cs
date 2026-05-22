@@ -110,6 +110,33 @@ public class ResolveEndPhaseServiceTests
     }
 
     [Fact]
+    public void Apply_SkipsAttack_WhenAttackerCardNotOnBoard()
+    {
+        MatchAggregate match = BuildMatchWithCards(attackerCard: null, defenderCard: null);
+        match.AttackHandler.AddAttack(1, 99);
+
+        BattleResolveDTOs result = ResolveEndPhaseService.Apply(match);
+
+        Assert.Empty(result.Battles);
+        Assert.Empty(result.DirectChampionDamages);
+    }
+
+    [Fact]
+    public void Apply_DirectChampionAttack_WhenDefenderCardNotOnBoard()
+    {
+        GameCardDto attCard = MatchHelpers.MakeCard(1, hp: 5, attack: 4);
+        MatchAggregate match = BuildMatchWithCards(attackerCard: attCard, defenderCard: null, defenderHp: 30);
+        match.AttackHandler.AddAttack(1, 1);
+        match.DefenseHandler.AddOrReplaceDefense(defensePosition: 2, gameCardId: 99, attackPosition: 1);
+
+        BattleResolveDTOs result = ResolveEndPhaseService.Apply(match);
+
+        Assert.Single(result.DirectChampionDamages);
+        Assert.Equal(4, result.DirectChampionDamages[0].Damage);
+        Assert.Equal(26, match.Player2.Champion.Hp.Value);
+    }
+
+    [Fact]
     public void Apply_ResetsHandlersAfterResolution()
     {
         GameCardDto attCard = MatchHelpers.MakeCard(1, hp: 5, attack: 3);
