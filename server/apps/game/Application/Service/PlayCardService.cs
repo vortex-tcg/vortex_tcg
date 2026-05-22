@@ -30,9 +30,7 @@ public static class PlayCardAppService
             }
         }
 
-        if (playedEvent == null) return;
-
-        PlayCardData data = playedEvent.GetData<PlayCardData>();
+        PlayCardData data = playedEvent!.GetData<PlayCardData>();
 
         var playerDto = new PlayCardUserDto
         {
