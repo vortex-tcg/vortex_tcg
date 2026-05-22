@@ -2,6 +2,10 @@ using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
+using VortexTCG.Scripts.Features.Match.Events;
+using VortexTCG.Scripts.Features.Match.Services;
+using VortexTCG.Scripts.Features.Match.UI;
+using VortexTCG.Scripts.MatchScene;
 
 public class MenuUI : MonoBehaviour
 {
@@ -45,6 +49,8 @@ public class MenuUI : MonoBehaviour
     {
         SignalRClient client = SignalRClient.Instance;
 
+        ResetLocalMatchState();
+
         if (client == null || !client.IsConnected)
         {
             Debug.LogWarning("[MenuUI] SignalRClient not connected, loading home scene directly.");
@@ -63,6 +69,17 @@ public class MenuUI : MonoBehaviour
         }
 
         LoadHomeIfConfigured();
+    }
+
+    private static void ResetLocalMatchState()
+    {
+        PhaseService.Instance?.ResetPhase();
+        AttackUI.Instance?.ResetBoard();
+        DefenseUI.Instance?.ClearAllDefense();
+        OpponentBoardUI.Instance?.ResetBoard();
+        OpponentUI.Instance?.ResetBoard();
+        HandUI.Instance?.ClearHand();
+        MatchEvents.ResetAll();
     }
 
     private void LoadHomeIfConfigured()
