@@ -41,14 +41,15 @@ public class InitMatchServiceTests
     }
 
     [Fact]
-    public void Init_SetsChampionGoldTo100ForBothPlayers()
+    public void Init_SetsChampionGoldToBaseGoldForBothPlayers()
     {
         MatchAggregate match = BuildMatchWithDecks();
+        int expectedGold = match.Player1.Champion.BaseGold.Value;
 
         InitMatchService.Init(match);
 
-        Assert.Equal(100, match.Player1.Champion.Gold.Value);
-        Assert.Equal(100, match.Player2.Champion.Gold.Value);
+        Assert.Equal(expectedGold, match.Player1.Champion.Gold.Value);
+        Assert.Equal(expectedGold, match.Player2.Champion.Gold.Value);
     }
 
     [Fact]
