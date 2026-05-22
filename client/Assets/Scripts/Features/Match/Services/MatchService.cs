@@ -42,6 +42,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         private int? _lastSyncedLocalChampionHp;
         private int? _lastSyncedOpponentChampionHp;
         private bool? _pendingEndScreenLocalWon;
+        private bool _isReturningHome;
 
         private void Awake()
         {
@@ -75,6 +76,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             client.OnEndPhaseResolved += HandleEndPhaseResolved;
             client.OnOpponentDefenseEngage += HandleOpponentDefenseEngage;
             client.OnOpponentLeft += HandleOpponentLeft;
+            client.OnMatchEnded += HandleMatchEnded;
             Debug.Log("[MatchService] Successfully subscribed to all SignalR events including OnOpponentAttackEngage");
         }
 
@@ -94,6 +96,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             client.OnEndPhaseResolved += HandleEndPhaseResolved;
             client.OnOpponentDefenseEngage += HandleOpponentDefenseEngage;
             client.OnOpponentLeft += HandleOpponentLeft;
+            client.OnMatchEnded += HandleMatchEnded;
             Debug.Log("[MatchService] Successfully subscribed to all SignalR events including OnOpponentAttackEngage");
         }
 
@@ -108,6 +111,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
                 client.OnOpponentAttackEngage -= HandleOpponentAttackEngage;
                 client.OnOpponentDefenseEngage -= HandleOpponentDefenseEngage;
                 client.OnOpponentLeft -= HandleOpponentLeft;
+                client.OnMatchEnded -= HandleMatchEnded;
             }
         }
 
@@ -171,7 +175,25 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
         private void HandleOpponentLeft()
         {
-            Debug.Log("[MatchService] Opponent left the match, returning to HomeScene");
+            ReturnToHomeScene("OpponentLeft");
+        }
+
+        private void HandleMatchEnded(MatchEndedDataDto data)
+        {
+            Debug.Log($"[MatchService] Match ended reason={(data != null ? data.Reason : "NULL")}");
+            ReturnToHomeScene("MatchEnded");
+        }
+
+        private void ReturnToHomeScene(string source)
+        {
+            if (_isReturningHome)
+            {
+                Debug.Log($"[MatchService] ReturnToHomeScene ignored (already returning) source={source}");
+                return;
+            }
+
+            _isReturningHome = true;
+            Debug.Log($"[MatchService] Returning to HomeScene from {source}");
 
             _gameStarted = false;
             _battleRoutine = null;
