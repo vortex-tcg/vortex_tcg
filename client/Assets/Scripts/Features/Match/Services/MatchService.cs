@@ -6,6 +6,7 @@ using VortexTCG.Scripts.DTOs;
 using System.Linq; 
 using System.Text;
 using VortexTCG.Scripts.Features.Match.Services;
+using VortexTCG.Scripts.Features.Match.Events;
 using VortexTCG.Scripts.Features.Match.UI;
 using VortexTCG.Scripts.MatchScene;
 
@@ -73,6 +74,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             client.OnBattleResolution += HandleBattleResolution;
             client.OnEndPhaseResolved += HandleEndPhaseResolved;
             client.OnOpponentDefenseEngage += HandleOpponentDefenseEngage;
+            client.OnOpponentLeft += HandleOpponentLeft;
             Debug.Log("[MatchService] Successfully subscribed to all SignalR events including OnOpponentAttackEngage");
         }
 
@@ -91,6 +93,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             client.OnBattleResolution += HandleBattleResolution;
             client.OnEndPhaseResolved += HandleEndPhaseResolved;
             client.OnOpponentDefenseEngage += HandleOpponentDefenseEngage;
+            client.OnOpponentLeft += HandleOpponentLeft;
             Debug.Log("[MatchService] Successfully subscribed to all SignalR events including OnOpponentAttackEngage");
         }
 
@@ -104,6 +107,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
                 client.OnEndPhaseResolved -= HandleEndPhaseResolved;
                 client.OnOpponentAttackEngage -= HandleOpponentAttackEngage;
                 client.OnOpponentDefenseEngage -= HandleOpponentDefenseEngage;
+                client.OnOpponentLeft -= HandleOpponentLeft;
             }
         }
 
@@ -163,6 +167,27 @@ namespace VortexTCG.Scripts.Features.Match.Services
         {
             Debug.Log($"[MatchService] HandleOpponentDefenseEngage defenses={(data?.DefenseCards?.Count ?? 0)}");
             OpponentBoardUI.Instance?.OpponentBoardService?.ApplyOpponentDefenseState(data);
+        }
+
+        private void HandleOpponentLeft()
+        {
+            Debug.Log("[MatchService] Opponent left the match, returning to HomeScene");
+
+            _gameStarted = false;
+            _battleRoutine = null;
+            _endPhaseRoutine = null;
+            _pendingEndScreenLocalWon = null;
+            _lastSyncedLocalChampionHp = null;
+            _lastSyncedOpponentChampionHp = null;
+
+            PhaseService.Instance?.ResetPhase();
+            AttackUI.Instance?.ResetBoard();
+            DefenseUI.Instance?.ClearAllDefense();
+            OpponentBoardUI.Instance?.ResetBoard();
+            OpponentUI.Instance?.ResetBoard();
+            MatchEvents.ResetAll();
+
+            LoadingScreen.Load("HomeScene", loadMenu: true, unloadMenu: false);
         }
 
         private void HandleBattleResolution(BattlesDataDto data, bool localIsAttacker)
