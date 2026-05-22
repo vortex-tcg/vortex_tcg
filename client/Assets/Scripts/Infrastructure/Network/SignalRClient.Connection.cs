@@ -106,6 +106,8 @@ public partial class SignalRClient
         // New backend contract (CallManager mappings)
         _conn.On<JsonElement>("successPoseCarte", payload => HandleSuccessPoseCarte(payload));
         _conn.On<JsonElement>("opponentPoseCarte", payload => HandleOpponentPoseCarte(payload));
+        _conn.On<JsonElement>("successMatchEnded", payload => HandleMatchEnded("successMatchEnded", payload));
+        _conn.On<JsonElement>("opponentMatchEnded", payload => HandleMatchEnded("opponentMatchEnded", payload));
 
         _conn.On<JsonElement>("GameStarted", payload => HandlePhaseEvent("GameStarted", payload, true));
         _conn.On<JsonElement>("PhaseChanged", payload => HandlePhaseEvent("PhaseChanged", payload, false));
@@ -540,6 +542,19 @@ public partial class SignalRClient
         });
     }
 
+    private void HandleMatchEnded(string eventName, JsonElement payload)
+    {
+        MatchEndedDataDto result = ParseMatchEndedPayload(payload);
+
+        Enqueue(() =>
+        {
+            Debug.Log($"[SignalRClient] ✅ {eventName} reçu - matchId={result.MatchId} winner={result.WinnerUserId} loser={result.LoserUserId} reason={result.Reason}");
+            OnMatchEnded?.Invoke(result);
+            OnOpponentLeft?.Invoke();
+            OnLog?.Invoke($"{eventName}: reason={result.Reason}");
+        });
+    }
+
     private static PlayCardSignalDto ParsePlayCardSignalPayload(JsonElement payload)
     {
         try
@@ -554,6 +569,36 @@ public partial class SignalRClient
             Debug.LogWarning($"[SignalRClient] Failed to parse play card payload: {ex.Message}");
             return new PlayCardSignalDto();
         }
+    }
+
+    private static MatchEndedDataDto ParseMatchEndedPayload(JsonElement payload)
+    {
+        MatchEndedDataDto dto = new MatchEndedDataDto();
+
+        if (TryGetPropertyInsensitive(payload, "matchId", out JsonElement matchIdEl) &&
+            Guid.TryParse(matchIdEl.ToString(), out Guid matchId))
+        {
+            dto.MatchId = matchId;
+        }
+
+        if (TryGetPropertyInsensitive(payload, "winnerUserId", out JsonElement winnerEl) &&
+            Guid.TryParse(winnerEl.ToString(), out Guid winnerUserId))
+        {
+            dto.WinnerUserId = winnerUserId;
+        }
+
+        if (TryGetPropertyInsensitive(payload, "loserUserId", out JsonElement loserEl) &&
+            Guid.TryParse(loserEl.ToString(), out Guid loserUserId))
+        {
+            dto.LoserUserId = loserUserId;
+        }
+
+        if (TryGetPropertyInsensitive(payload, "reason", out JsonElement reasonEl))
+        {
+            dto.Reason = reasonEl.GetString() ?? string.Empty;
+        }
+
+        return dto;
     }
 
     private PhaseChangeResultDTO ParsePhaseChangePayload(JsonElement payload)

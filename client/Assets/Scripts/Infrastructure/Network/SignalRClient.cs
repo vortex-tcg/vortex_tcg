@@ -65,6 +65,7 @@ public partial class SignalRClient : MonoBehaviour
     public event Action<string> OnLog;
     public event Action<string> OnMatched;
     public event Action OnOpponentLeft;
+    public event Action<MatchEndedDataDto> OnMatchEnded;
     public event Action<PhaseChangeResultDTO> OnGameStarted;
     public event Action<PhaseChangeResultDTO> OnPhaseChanged;
     public event Action<EndPhaseResolutionDto, bool> OnEndPhaseResolved;
