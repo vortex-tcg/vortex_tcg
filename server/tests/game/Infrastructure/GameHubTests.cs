@@ -203,4 +203,42 @@ public class GameHubTests : IDisposable
 
         await _hub.OnDisconnectedAsync(null);
     }
+
+    [Fact]
+    public async Task OnConnectedAsync_WhenUserHasNoIdentifierClaim_LogsUnauthenticated()
+    {
+        _mockContext.Setup(c => c.ConnectionId).Returns("conn-id");
+        _mockContext.Setup(c => c.User).Returns(new ClaimsPrincipal(new ClaimsIdentity()));
+
+        await _hub.OnConnectedAsync();
+
+        _mockCaller.Verify(p => p.SendCoreAsync(
+            "Connected",
+            It.IsAny<object[]>(),
+            It.IsAny<CancellationToken>()), Times.Once());
+    }
+
+    [Fact]
+    public async Task OnDisconnectedAsync_WhenUserHasNoIdentifierClaim_SkipsDisconnect()
+    {
+        _mockContext.Setup(c => c.ConnectionId).Returns("conn-id");
+        _mockContext.Setup(c => c.User).Returns(new ClaimsPrincipal(new ClaimsIdentity()));
+
+        await _hub.OnDisconnectedAsync(null);
+    }
+
+    [Fact]
+    public async Task ToggleDefenseCard_CompletesSuccessfully_WhenMatchIsInDefensePhase()
+    {
+        Guid userId = Guid.NewGuid();
+        Player p2 = MatchHelpers.MakePlayer(userId: new UserId(userId));
+        MatchAggregate match = MatchHelpers.MakeMatchInPhase<DefensePhase>(p2: p2);
+        match.SetCurrentPlayerPosition(2);
+        AppServiceHelpers.AddMatchToRoom(match);
+        SetAuthenticatedUser(userId);
+
+        Exception? ex = await Record.ExceptionAsync(() => _hub.ToggleDefenseCard(1, 1));
+
+        Assert.Null(ex);
+    }
 }

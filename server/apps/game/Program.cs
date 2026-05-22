@@ -213,12 +213,9 @@ app.MapGet("/health/db", async (VortexDbContext db) =>
     }
 });
 {
-    var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
     var factory = app.Services.GetRequiredService<CreateMatchFactory>();
     RoomManager.Configure(factory);
-    RoomManager.SetLogger(loggerFactory);
     var hubContext = app.Services.GetRequiredService<IHubContext<GameHubClean>>();
     CallManager.Configure(hubContext);
-    CallManager.SetLogger(loggerFactory.CreateLogger<CallManager>());
 }
 app.Run();
