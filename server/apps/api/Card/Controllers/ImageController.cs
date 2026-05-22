@@ -28,7 +28,7 @@ namespace VortexTCG.Api.Card.Controllers
                 obj = await _s3.GetObjectAsync(new GetObjectRequest
                 {
                     BucketName = _bucket,
-                    Key = key
+                    Key = "card/"+ key
                 }, ct);
             }
             catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)

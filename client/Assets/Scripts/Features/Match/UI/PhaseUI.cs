@@ -76,6 +76,8 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
             MatchEvents.OnPhaseChanged += HandlePhaseChanged;
             MatchEvents.OnGameStarted += HandleGameStarted;
+            MatchEvents.OnPlayerCardPlayed += HandlePlayerCardPlayed;
+            MatchEvents.OnOpponentCardPlayed += HandleOpponentCardPlayed;
 
             SignalRClient client = SignalRClient.Instance;
             if (client != null)
@@ -86,6 +88,8 @@ namespace VortexTCG.Scripts.Features.Match.UI
         {
             MatchEvents.OnPhaseChanged -= HandlePhaseChanged;
             MatchEvents.OnGameStarted -= HandleGameStarted;
+            MatchEvents.OnPlayerCardPlayed -= HandlePlayerCardPlayed;
+            MatchEvents.OnOpponentCardPlayed -= HandleOpponentCardPlayed;
 
             SignalRClient client = SignalRClient.Instance;
             if (client != null)
@@ -208,6 +212,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
             UpdateTurnStatusLabel();
             UpdateEndTurnButtonState();
             ShowSwitchingPhase(_currentPhase);
+            RefreshResourceDisplays();
             Debug.Log($"[PhaseUI] Game started - Phase: {_currentPhase}, TimerEndTime: {_timerEndTime}");
         }
 
@@ -220,7 +225,18 @@ namespace VortexTCG.Scripts.Features.Match.UI
             UpdateTurnStatusLabel();
             UpdateEndTurnButtonState();
             ShowSwitchingPhase(_currentPhase);
+            RefreshResourceDisplays();
             Debug.Log($"[PhaseUI] Phase changed - New phase: {_currentPhase}, TimerEndTime: {_timerEndTime}");
+        }
+
+        private void HandlePlayerCardPlayed(PlayCardPlayerResultDto result)
+        {
+            RefreshResourceDisplays();
+        }
+
+        private void HandleOpponentCardPlayed(PlayCardOpponentResultDto result)
+        {
+            RefreshResourceDisplays();
         }
 
         private void HandleMatched(string _)
@@ -599,6 +615,20 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 opponentSecondaryCurrencyLabel.text = $"{currencyName}: {amount}";
                 Debug.Log($"[PhaseUI] Opponent secondary currency updated: {currencyName} = {amount}");
             }
+        }
+
+        private void RefreshResourceDisplays()
+        {
+            SignalRClient client = SignalRClient.Instance;
+            if (client == null)
+            {
+                return;
+            }
+
+            UpdatePlayerGoldDisplay(client.PlayerGold);
+            UpdatePlayerSecondaryCurrencyDisplay(client.SecondaryCurrencyName, client.PlayerSecondaryCurrency);
+            UpdateOpponentGoldDisplay(client.OpponentGold);
+            UpdateOpponentSecondaryCurrencyDisplay(client.OpponentSecondaryCurrencyName, client.OpponentSecondaryCurrency);
         }
 
         // Public methods to update from external sources (like server events)

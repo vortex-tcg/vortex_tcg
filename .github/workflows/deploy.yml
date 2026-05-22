@@ -91,10 +91,20 @@ jobs:
 
       - name: Create env file on server
         run: |
-          $SSH_CMD bash << 'EOF'
+          export VAULT_ADDR=${{ secrets.VAULT_URL }}
+          export VAULT_TOKEN=${{ secrets.VAULT_TOKEN }}
+          export VAULT_SKIP_VERIFY=true
+
+          AWS_ACCESS_KEY_ID=$(vault kv get -mount="kv" -field=AWS_S3_KEY_ID AWS_S3)
+          AWS_SECRET_ACCESS_KEY=$(vault kv get -mount="kv" -field=AWS_S3_SECRET AWS_S3)
+
+          $SSH_CMD bash << EOF
           cd /var/www/vortex_tcg/server
           cat > .env << 'ENVEOF'
           CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}
+          AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+          AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+          AWS_REGION=eu-west-3
           ENVEOF
           EOF
 
