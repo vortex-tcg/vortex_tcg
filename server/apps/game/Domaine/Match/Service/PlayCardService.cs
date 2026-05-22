@@ -30,9 +30,7 @@ public static class PlayCardService
             throw new InvalidOperationException("Not enough gold.");
         if (!player.Board.IsSlotFree(boardPosition))
             throw new InvalidOperationException("Board position is not free.");
-        bool removed = player.Hand.Remove(card);
-        if (!removed)
-            throw new InvalidOperationException("Card not in hand."); 
+        player.Hand.Remove(card);
 
         player.Champion.Gold = new game.Domaine.Match.ValueObject.ChampionGold(gold - cost);
         card.States = CardStates.Sleeping; 
