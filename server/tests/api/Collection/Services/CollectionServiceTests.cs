@@ -768,6 +768,44 @@ namespace VortexTCG.Tests.Api.Collection.Services
             Assert.Equal(string.Empty, result.data.Decks[0].ChampionImage);
         }
 
+        [Fact]
+        public async Task GetCollectionByUserId_HandlesNullClassAndFactions_WhenCardNavigationsAreNull()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            await db.SaveChangesAsync();
+
+            CardModel card = new CardModel
+            {
+                Id = Guid.NewGuid(), Name = "Bare", Cost = 1,
+                Description = "desc", Picture = "pic.png"
+                // Class and Factions navigations are null (not set)
+            };
+            CollectionModel collection = new CollectionModel
+            {
+                Id = Guid.NewGuid(),
+                User = user,
+                Cards = new List<CollectionCardModel>
+                {
+                    new CollectionCardModel { Id = Guid.NewGuid(), Card = card, Quantity = 1, Rarity = RarityEnum.NORMAL }
+                }
+            };
+
+            Mock<CollectionProvider> mockProvider = new Mock<CollectionProvider>(db) { CallBase = true };
+            mockProvider.Setup(p => p.GetByUserIdAsync(user.Id)).ReturnsAsync(collection);
+            CollectionService service = new CollectionService(
+                mockProvider.Object,
+                new VortexTCG.Api.Deck.Providers.DeckProvider(db));
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.True(result.success);
+            Assert.Single(result.data!.Cards);
+            Assert.Empty(result.data.Cards[0].Card.Class);
+            Assert.Empty(result.data.Cards[0].Card.Factions);
+        }
+
         private static UserModel CreateTestUser(Guid id) => new UserModel
         {
             Id = id,
