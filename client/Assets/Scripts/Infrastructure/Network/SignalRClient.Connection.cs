@@ -244,6 +244,7 @@ public partial class SignalRClient
     private void HandlePhaseEvent(string eventName, JsonElement payload, bool isGameStarted)
     {
         PhaseChangeResultDTO result = ParsePhaseChangePayload(payload);
+        ApplyStandByGoldState(payload);
 
         Enqueue(() =>
         {
@@ -279,6 +280,38 @@ public partial class SignalRClient
 
             OnLog?.Invoke($"{eventName}: phase={result.CurrentPhase} turn={result.TurnNumber} canAct={result.CanAct} auto={result.AutoChanged}");
         });
+    }
+
+    private void ApplyStandByGoldState(JsonElement payload)
+    {
+        if (!TryReadInt(payload, "playerGold", out int playerGold) ||
+            !TryReadInt(payload, "opponentGold", out int opponentGold))
+        {
+            return;
+        }
+
+        Guid currentPlayerId = ReadGuid(payload, "currentPlayerUserId");
+        if (currentPlayerId == Guid.Empty)
+        {
+            return;
+        }
+
+        string localUserId = ResolveLocalUserIdFromJwt();
+        if (!Guid.TryParse(localUserId, out Guid localPlayerId))
+        {
+            return;
+        }
+
+        if (localPlayerId == currentPlayerId)
+        {
+            _playerGold = playerGold;
+            _opponentGold = opponentGold;
+        }
+        else
+        {
+            _playerGold = opponentGold;
+            _opponentGold = playerGold;
+        }
     }
 
     private void HandleEndPhaseResolved(string eventName, JsonElement payload, bool localIsAttacker)
