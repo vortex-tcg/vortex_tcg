@@ -32,7 +32,6 @@ public sealed class RoomManager : IRoomManager
     public static void SetLogger(ILoggerFactory loggerFactory)
     {
         _instance.Value._logger = loggerFactory.CreateLogger<RoomManager>();
-        (_instance.Value.Matchmaker as Matchmaker)?.SetLogger(loggerFactory.CreateLogger<Matchmaker>());
     }
 
     private void _setFactory(CreateMatchFactory factory)
