@@ -95,8 +95,8 @@ jobs:
           export VAULT_TOKEN=${{ secrets.VAULT_TOKEN }}
           export VAULT_SKIP_VERIFY=true
 
-          AWS_ACCESS_KEY_ID=$(vault kv get -mount="kv" -field=AWS_ACCESS_KEY_ID AWS_S3)
-          AWS_SECRET_ACCESS_KEY=$(vault kv get -mount="kv" -field=AWS_SECRET_ACCESS_KEY AWS_S3)
+          AWS_ACCESS_KEY_ID=$(vault kv get -mount="kv" -field=AWS_S3_KEY_ID AWS_S3)
+          AWS_SECRET_ACCESS_KEY=$(vault kv get -mount="kv" -field=AWS_S3_SECRET AWS_S3)
 
           $SSH_CMD bash << EOF
           cd /var/www/vortex_tcg/server
