@@ -1,3 +1,4 @@
+using System.Reflection;
 using game.Application.Dto;
 using game.Application.Enum;
 using game.Infrastructure;
@@ -116,6 +117,68 @@ public class CallManagerTests
         await CallManager.Instance.CallAsync(response);
 
         clients.Verify(c => c.User(It.IsAny<string>()), Times.Never());
+    }
+
+    [Fact]
+    public void Configure_SetsHubContext_ViaReflection()
+    {
+        Mock<IHubContext<GameHubClean>> hub = new Mock<IHubContext<GameHubClean>>();
+
+        CallManager.Configure(hub.Object);
+
+        FieldInfo field = typeof(CallManager)
+            .GetField("_hubContext", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        IHubContext<GameHubClean>? actual = (IHubContext<GameHubClean>?)field.GetValue(CallManager.Instance);
+        Assert.Same(hub.Object, actual);
+    }
+
+    [Fact]
+    public async Task CallAsync_ThrowsInvalidOperation_WhenHubContextIsNull()
+    {
+        FieldInfo field = typeof(CallManager)
+            .GetField("_hubContext", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        object? backup = field.GetValue(CallManager.Instance);
+        field.SetValue(CallManager.Instance, null);
+
+        try
+        {
+            responseDTO<string, string> response = new responseDTO<string, string>
+            {
+                userId = Guid.NewGuid(),
+                success = true,
+                code = ResponseCode.SUCCESS_PHASE_CHANGED
+            };
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                CallManager.Instance.CallAsync(response));
+        }
+        finally
+        {
+            field.SetValue(CallManager.Instance, backup);
+        }
+    }
+
+    [Fact]
+    public async Task CallAsync_SkipsPlayerAndOpponentSend_WhenCodeNotInSuccessMap()
+    {
+        Guid userId = Guid.NewGuid();
+        Guid opponentId = Guid.NewGuid();
+        (_, _, Mock<IClientProxy> proxy) = ConfigureHub();
+
+        responseDTO<string, string> response = new responseDTO<string, string>
+        {
+            userId = userId,
+            opponentId = opponentId,
+            success = true,
+            code = ResponseCode.CODE_TAKEN,
+            data = "data",
+            opponentData = "opponent-data"
+        };
+
+        await CallManager.Instance.CallAsync(response);
+
+        proxy.Verify(p => p.SendCoreAsync(
+            It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()), Times.Never());
     }
 
     [Fact]
