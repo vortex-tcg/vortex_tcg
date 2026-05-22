@@ -472,8 +472,7 @@ namespace VortexTCG.Tests.Api.Collection.Services
                 db1.Collections.Add(collection);
                 await db1.SaveChangesAsync();
 
-                db2.Dispose(); // make deck provider throw on any query
-
+                db2.Dispose();
                 CollectionProvider collectionProvider = new CollectionProvider(db1);
                 VortexTCG.Api.Deck.Providers.DeckProvider deckProvider = new VortexTCG.Api.Deck.Providers.DeckProvider(db2);
                 CollectionService service = new CollectionService(collectionProvider, deckProvider);
@@ -499,8 +498,6 @@ namespace VortexTCG.Tests.Api.Collection.Services
             CollectionModel collection = new CollectionModel { Id = Guid.NewGuid(), User = user };
             db.Collections.Add(collection);
             await db.SaveChangesAsync();
-
-            // CollectionCard with a CardId that has no matching Card in DB — Card nav will be null after Include
             db.CollectionCards.Add(new CollectionCardModel
             {
                 Id = Guid.NewGuid(),
@@ -572,7 +569,6 @@ namespace VortexTCG.Tests.Api.Collection.Services
                 Description = "desc", Picture = "pic.png"
             };
             db.Cards.Add(card);
-            // ClassCard with a ClassId that has no matching Class in DB — Class nav stays null
             db.Set<ClassCardModel>().Add(new ClassCardModel
             {
                 Id = Guid.NewGuid(), CardId = card.Id, ClassId = Guid.NewGuid(),
@@ -687,6 +683,89 @@ namespace VortexTCG.Tests.Api.Collection.Services
             Assert.True(result.success);
             Assert.Equal(200, result.statusCode);
             Assert.Empty(result.data!.Decks);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_ReturnsEmptyCards_WhenCollectionCardsIsNull()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            await db.SaveChangesAsync();
+
+            CollectionModel collectionWithNullCards = new CollectionModel
+            {
+                Id = Guid.NewGuid(),
+                User = user,
+                Cards = null!
+            };
+            Mock<CollectionProvider> mockProvider = new Mock<CollectionProvider>(db) { CallBase = true };
+            mockProvider.Setup(p => p.GetByUserIdAsync(user.Id)).ReturnsAsync(collectionWithNullCards);
+            CollectionService service = new CollectionService(
+                mockProvider.Object,
+                new VortexTCG.Api.Deck.Providers.DeckProvider(db));
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.True(result.success);
+            Assert.Empty(result.data!.Cards);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_ReturnsEmptyDecks_WhenDecksIsNull()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            CollectionModel collection = new CollectionModel { Id = Guid.NewGuid(), User = user };
+            db.Collections.Add(collection);
+            await db.SaveChangesAsync();
+
+            CollectionProvider collectionProvider = new CollectionProvider(db);
+            Mock<VortexTCG.Api.Deck.Providers.DeckProvider> mockDeckProvider =
+                new Mock<VortexTCG.Api.Deck.Providers.DeckProvider>(db) { CallBase = true };
+            mockDeckProvider
+                .Setup(p => p.GetDecksByUserIdAsync(It.IsAny<Guid>()))
+                .ReturnsAsync((List<DeckModel>)null!);
+            CollectionService service = new CollectionService(collectionProvider, mockDeckProvider.Object);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.True(result.success);
+            Assert.Equal(200, result.statusCode);
+            Assert.Empty(result.data!.Decks);
+        }
+
+        [Fact]
+        public async Task GetCollectionByUserId_ChampionImageIsEmpty_WhenChampionNavigationIsNull()
+        {
+            using VortexDbContext db = CreateDb();
+            UserModel user = CreateTestUser(Guid.NewGuid());
+            db.Users.Add(user);
+            CollectionModel collection = new CollectionModel { Id = Guid.NewGuid(), User = user };
+            db.Collections.Add(collection);
+            await db.SaveChangesAsync();
+
+            DeckModel deckWithNullChampion = new DeckModel
+            {
+                Id = Guid.NewGuid(), UserId = user.Id, Label = "No Champion Deck",
+                ChampionId = Guid.NewGuid(), FactionId = Guid.NewGuid(),
+                CreatedAtUtc = DateTime.UtcNow, CreatedBy = "test"
+            };
+
+            CollectionProvider collectionProvider = new CollectionProvider(db);
+            Mock<VortexTCG.Api.Deck.Providers.DeckProvider> mockDeckProvider =
+                new Mock<VortexTCG.Api.Deck.Providers.DeckProvider>(db) { CallBase = true };
+            mockDeckProvider
+                .Setup(p => p.GetDecksByUserIdAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(new List<DeckModel> { deckWithNullChampion });
+            CollectionService service = new CollectionService(collectionProvider, mockDeckProvider.Object);
+
+            ResultDTO<UserCollectionDto> result = await service.GetCollectionByUserId(user.Id);
+
+            Assert.True(result.success);
+            Assert.Single(result.data!.Decks);
+            Assert.Equal(string.Empty, result.data.Decks[0].ChampionImage);
         }
 
         private static UserModel CreateTestUser(Guid id) => new UserModel

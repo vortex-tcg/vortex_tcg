@@ -62,6 +62,26 @@ public class ChampionDeathServiceTests
     }
 
     [Fact]
+    public void CheckChampionDeath_WinnerIsCurrentPlayer_WhenOpponentDies()
+    {
+        MatchAggregate match = MatchHelpers.MakeMatch();
+        Player expectedWinner = match.Player1;
+        Player loser = match.Player2;
+        loser.Champion.Hp = new ChampionHp(0);
+
+        match.PullEvents();
+        new ChampionDeathService().CheckChampionDeath(match, loser);
+
+        IReadOnlyList<game.Domaine.Interface.IEvent> events = match.PullEvents();
+        DomainEvent endEvent = events.OfType<DomainEvent>()
+            .First(e => e.Name == MatchEvent.MATCH_ENDED);
+        MatchEndedData data = endEvent.GetData<MatchEndedData>();
+
+        Assert.Equal((Guid)expectedWinner.UserId, data.WinnerUserId);
+        Assert.Equal((Guid)loser.UserId, data.LoserUserId);
+    }
+
+    [Fact]
     public void CheckChampionDeath_Throws_WhenMatchIsNull()
     {
         Assert.Throws<ArgumentNullException>(() =>

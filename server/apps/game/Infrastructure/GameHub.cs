@@ -61,14 +61,7 @@ public class GameHubClean : Hub
 
         if (Guid.TryParse(rawUserId, out Guid parsedId))
         {
-            try
-            {
-                await DisconnectService.HandleDisconnectAsync(new UserId(parsedId));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[HUB] Erreur lors du HandleDisconnect — userId={UserId}", rawUserId);
-            }
+            await DisconnectService.HandleDisconnectAsync(new UserId(parsedId));
         }
 
         await base.OnDisconnectedAsync(exception);

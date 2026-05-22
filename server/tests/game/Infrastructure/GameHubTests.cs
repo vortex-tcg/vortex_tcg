@@ -1,9 +1,12 @@
 using System.Security.Claims;
+using game.Domaine.Match.Entity;
+using game.Domaine.Match.ValueObject;
 using game.Infrastructure;
 using game.Tests.Helpers;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using MatchAggregate = game.Domaine.Match.Agregate.Match;
 
 namespace game.Tests.Infrastructure;
 
@@ -134,5 +137,70 @@ public class GameHubTests : IDisposable
         SetAuthenticatedUser(Guid.NewGuid());
 
         await Assert.ThrowsAsync<HubException>(() => _hub.PlayCard(0, 0));
+    }
+
+    [Fact]
+    public async Task GetAuthenticatedUserId_ThrowsHubException_WhenNoIdentifierClaim()
+    {
+        ClaimsPrincipal principal = new ClaimsPrincipal(new ClaimsIdentity());
+        _mockContext.Setup(c => c.User).Returns(principal);
+        _mockContext.Setup(c => c.ConnectionId).Returns("conn-id");
+        _mockContext.Setup(c => c.ConnectionAborted).Returns(CancellationToken.None);
+
+        await Assert.ThrowsAsync<HubException>(() => _hub.JoinQueue(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task OnConnectedAsync_WithAuthenticatedUser_SendsConnectedEvent()
+    {
+        string connectionId = "auth-conn-id";
+        _mockContext.Setup(c => c.ConnectionId).Returns(connectionId);
+        SetAuthenticatedUser(Guid.NewGuid());
+
+        await _hub.OnConnectedAsync();
+
+        _mockCaller.Verify(p => p.SendCoreAsync(
+            "Connected",
+            It.Is<object[]>(args => args.Length == 1 && (string)args[0] == connectionId),
+            It.IsAny<CancellationToken>()), Times.Once());
+    }
+
+    [Fact]
+    public async Task PlayCard_FindsMatch_WhenMatchExistsForUser()
+    {
+        Guid userId = Guid.NewGuid();
+        Player p1 = MatchHelpers.MakePlayer(userId: new UserId(userId));
+        MatchAggregate match = MatchHelpers.MakeMatch(p1: p1);
+        AppServiceHelpers.AddMatchToRoom(match);
+        SetAuthenticatedUser(userId);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _hub.PlayCard(1, 1));
+    }
+
+    [Fact]
+    public async Task OnDisconnectedAsync_WhenExceptionProvided_LogsWarning()
+    {
+        _mockContext.Setup(c => c.ConnectionId).Returns("conn-id");
+        SetAuthenticatedUser(Guid.NewGuid());
+
+        await _hub.OnDisconnectedAsync(new Exception("test error"));
+    }
+
+    [Fact]
+    public async Task OnDisconnectedAsync_WhenNoException_CallsDisconnect()
+    {
+        _mockContext.Setup(c => c.ConnectionId).Returns("conn-id");
+        SetAuthenticatedUser(Guid.NewGuid());
+
+        await _hub.OnDisconnectedAsync(null);
+    }
+
+    [Fact]
+    public async Task OnDisconnectedAsync_WhenUserNotAuthenticated_SkipsDisconnect()
+    {
+        _mockContext.Setup(c => c.User).Returns((ClaimsPrincipal?)null);
+        _mockContext.Setup(c => c.ConnectionId).Returns("conn-id");
+
+        await _hub.OnDisconnectedAsync(null);
     }
 }
