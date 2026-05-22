@@ -1,6 +1,11 @@
+using System.Reflection;
+using game.Application.Factory;
 using game.Domaine.Match.ValueObject;
+using game.Infrastructure.Interface;
 using game.Infrastructure.Manager;
 using game.Tests.Helpers;
+using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 using MatchAggregate = game.Domaine.Match.Agregate.Match;
 
 namespace game.Tests.Infrastructure.Manager;
@@ -79,5 +84,21 @@ public class RoomManagerTests : IDisposable
 
         MatchAggregate? found = RoomManager.Instance.GetMatchByUserId(match.Player1.UserId);
         Assert.NotNull(found);
+    }
+
+    [Fact]
+    public void Configure_SetsCreateMatchFactory_ViaReflection()
+    {
+        Mock<IDeckApiClient> mockClient = new Mock<IDeckApiClient>();
+        CreateMatchFactory factory = new CreateMatchFactory(
+            mockClient.Object,
+            NullLogger<CreateMatchFactory>.Instance);
+
+        RoomManager.Configure(factory);
+
+        FieldInfo field = typeof(RoomManager)
+            .GetField("_createMatchFactory", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        CreateMatchFactory? actual = (CreateMatchFactory?)field.GetValue(RoomManager.Instance);
+        Assert.Same(factory, actual);
     }
 }
