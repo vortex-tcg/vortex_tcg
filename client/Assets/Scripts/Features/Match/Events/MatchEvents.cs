@@ -103,5 +103,27 @@ namespace VortexTCG.Scripts.Features.Match.Events
         public static void FireCardClicked(CardUI card) => OnCardClicked?.Invoke(card);
 
         public static void FireServerStatusMessage(string message) => OnServerStatusMessage?.Invoke(message);
+
+        public static void ResetAll()
+        {
+            OnGameStarted = null;
+            OnPhaseChanged = null;
+            OnPhaseChangeRequested = null;
+            OnPlayerCardsDrawn = null;
+            OnOpponentCardsDrawn = null;
+            OnPlayerCardPlayed = null;
+            OnOpponentCardPlayed = null;
+            OnPendingPlayCancelled = null;
+            OnPlayerAttackEngaged = null;
+            OnOpponentAttackEngaged = null;
+            OnPlayerDefenseEngaged = null;
+            OnOpponentDefenseEngaged = null;
+            OnBattleResolution = null;
+            OnCardSelected = null;
+            OnCardDeselected = null;
+            OnCardPlayRequested = null;
+            OnCardClicked = null;
+            OnServerStatusMessage = null;
+        }
     }
 }

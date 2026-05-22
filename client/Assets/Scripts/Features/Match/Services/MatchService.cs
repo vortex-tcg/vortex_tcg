@@ -120,6 +120,10 @@ namespace VortexTCG.Scripts.Features.Match.Services
         {
             Debug.Log($"[MatchService] GameStarted phase={r.CurrentPhase} turn={r.TurnNumber}");
             _gameStarted = true;
+            AttackUI.Instance?.ResetBoard();
+            DefenseUI.Instance?.ClearAllDefense();
+            OpponentBoardUI.Instance?.ResetBoard();
+            OpponentUI.Instance?.ResetBoard();
   			EnsureLocalSlots();
         }
 

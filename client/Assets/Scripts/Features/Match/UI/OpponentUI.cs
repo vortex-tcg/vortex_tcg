@@ -41,6 +41,14 @@ namespace VortexTCG.Scripts.Features.Match.UI
             Debug.Log($"[OpponentUI] Awake - Slots trouvés: {_opponentHandSlots.Count}");
         }
 
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+
         /// <summary>
         /// Cherche automatiquement les slots enfants de la main adversaire
         /// Si des slots sont déjà assignés, ne fait rien
