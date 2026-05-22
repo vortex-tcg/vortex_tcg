@@ -72,6 +72,11 @@ namespace VortexTCG.Scripts.MatchScene
 
             // Unsubscribe from card clicks
             MatchEvents.OnCardClicked -= OnCardClickedHandler;
+
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
 
         private void OnEnterAttackPhase()
@@ -90,6 +95,23 @@ namespace VortexTCG.Scripts.MatchScene
             attackLogic.ResetAllCardAttackStates();
             attackingCards.Clear();
             ClearAttackStatesFromSlots();
+        }
+
+        public void ResetBoard()
+        {
+            ResetAllAttackStates();
+
+            if (P1BoardSlots == null)
+                return;
+
+            for (int i = 0; i < P1BoardSlots.Count; i++)
+            {
+                CardSlotUI slot = P1BoardSlots[i];
+                if (slot == null)
+                    continue;
+
+                slot.ClearSlot();
+            }
         }
 
         public void RegisterCard(CardUI card)

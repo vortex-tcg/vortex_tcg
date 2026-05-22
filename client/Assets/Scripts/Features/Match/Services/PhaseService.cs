@@ -89,7 +89,6 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (_instance == this)
             {
                 _instance = null;
-                _isQuitting = true;
             }
         }
 
@@ -113,9 +112,10 @@ namespace VortexTCG.Scripts.Features.Match.Services
         private void HandleGameStarted(PhaseChangeResultDTO result)
         {
             Debug.Log($"[PhaseService] Game started with phase: {result.CurrentPhase} turn={result.TurnNumber}");
+            ResetPhase();
             CanAct = result.CanAct;
             UpdateTurn(result.TurnNumber);
-            ApplyServerPhase(result.CurrentPhase);
+            ApplyServerPhase(result.CurrentPhase, true);
         }
 
         private void HandlePhaseChanged(PhaseChangeResultDTO result)
@@ -125,9 +125,9 @@ namespace VortexTCG.Scripts.Features.Match.Services
             UpdateTurn(result.TurnNumber);
             ApplyServerPhase(result.CurrentPhase);
         }
-        public void ApplyServerPhase(GamePhase newPhase)
+        public void ApplyServerPhase(GamePhase newPhase, bool forceNotify = false)
         {
-            if (CurrentPhase == newPhase)
+            if (!forceNotify && CurrentPhase == newPhase)
             {
                 Debug.Log($"[PhaseService] Already in phase {newPhase}, skipping");
                 return;
