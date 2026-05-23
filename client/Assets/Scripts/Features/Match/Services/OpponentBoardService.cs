@@ -207,7 +207,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
                 dto.Attack,
                 dto.Cost,
                 dto.Description,
-                ""
+                dto.ImageUrl ?? ""
             );
 
             if (lastOpponentDefenseState != null)
