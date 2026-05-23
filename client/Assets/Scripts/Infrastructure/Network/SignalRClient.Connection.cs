@@ -561,7 +561,8 @@ public partial class SignalRClient
                         Attack = card.Attack,
                         Cost = card.Cost,
                         Description = card.Description,
-                        CardType = (CardType)card.CardType
+                        CardType = (CardType)card.CardType,
+                        ImageUrl = card.ImageUrl ?? string.Empty
                     },
                 Champion = new PlayCardChampionDto
                 {
