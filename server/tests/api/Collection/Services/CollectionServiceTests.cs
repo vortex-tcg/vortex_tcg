@@ -264,6 +264,7 @@ namespace VortexTCG.Tests.Api.Collection.Services
             Assert.Equal(card.Id, dto.Card.Id);
             Assert.Equal("Fireball", dto.Card.Name);
             Assert.Equal(50, dto.Card.Price);
+            Assert.Equal("img.png", dto.Card.Picture);
             Assert.Equal(3, dto.Card.Hp);
             Assert.Equal(5, dto.Card.Attack);
             Assert.Equal(2, dto.Card.Cost);
