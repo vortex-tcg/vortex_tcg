@@ -112,6 +112,7 @@ namespace VortexTCG.Api.Collection.Services
                         Name = cc.Card.Name,
                         Price = cc.Card.Price,
                         Description = cc.Card.Description,
+                        Picture = cc.Card.Picture,
                         Hp = cc.Card.Hp ?? 0,
                         Attack = cc.Card.Attack ?? 0,
                         Cost = cc.Card.Cost,
