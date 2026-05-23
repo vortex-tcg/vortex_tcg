@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace VortexTCG.Scripts.DTOs
 {
@@ -40,12 +41,28 @@ namespace VortexTCG.Scripts.DTOs
     [Serializable]
     public class GameCardDto
     {
+        [JsonPropertyName("gameCardId")]
         public int GameCardId { get; set; }
+
+        [JsonPropertyName("name")]
         public string Name { get; set; }
+
+        [JsonPropertyName("hp")]
         public int Hp { get; set; }
+
+        [JsonPropertyName("attack")]
         public int Attack { get; set; }
+
+        [JsonPropertyName("cost")]
         public int Cost { get; set; }
+
+        [JsonPropertyName("description")]
         public string Description { get; set; }
+
+        [JsonPropertyName("cardType")]
         public CardType CardType { get; set; }
+
+        [JsonPropertyName("imageUrl")]
+        public string ImageUrl { get; set; } = "";
     }
 }

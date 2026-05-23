@@ -15,6 +15,9 @@ namespace VortexTCG.Scripts.DTOs
         public int Cost { get; set; }
         public string Description { get; set; }
         public CardType CardType { get; set; }
+
+        [JsonPropertyName("imageUrl")]
+        public string ImageUrl { get; set; } = "";
     }
 
     [Serializable]
