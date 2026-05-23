@@ -542,7 +542,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
                         dto.Attack,
                         dto.Cost,
                         dto.Description,
-                        ""
+                        dto.ImageUrl
                     );
 
                     card.transform.localPosition = Vector3.zero;
