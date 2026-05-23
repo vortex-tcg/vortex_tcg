@@ -1,4 +1,8 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.Serialization;
 using TMPro;
 using UnityEngine.UI;
@@ -22,6 +26,8 @@ namespace VortexTCG.Scripts.MatchScene
 
         [TextArea(3, 6)] public string description;
         public string imageUrl;
+
+        [SerializeField] private SpriteRenderer illustration;
 
         [Header("UI")] public TMP_Text nameText;
         public TMP_Text costText;
@@ -63,10 +69,21 @@ namespace VortexTCG.Scripts.MatchScene
         private bool isSelected;
         private Vector3 selectionBaseScale;
         private bool hasAttackedThisPhase = false;
+        private Sprite illustrationPlaceholder;
+        private Coroutine illustrationLoadRoutine;
+        private int illustrationLoadVersion;
+
+        private static readonly Dictionary<string, Sprite> IllustrationCache = new Dictionary<string, Sprite>();
 
         void Awake()
         {
             selectionBaseScale = transform.localScale;
+
+            if (illustration == null)
+                TryResolveIllustration();
+
+            if (illustration != null && illustrationPlaceholder == null)
+                illustrationPlaceholder = illustration.sprite;
 
             if (currentHpText == null)
                 TryResolveCurrentHpText();
@@ -189,8 +206,42 @@ namespace VortexTCG.Scripts.MatchScene
             this.attack = attack;
             this.cost = cost;
             description = desc;
-            imageUrl = imgUrl;
+            SetIllustrationUrl(imgUrl);
             RefreshUI();
+        }
+
+        private void SetIllustrationUrl(string imgUrl)
+        {
+            imageUrl = imgUrl;
+
+            illustrationLoadVersion++;
+
+            if (illustrationLoadRoutine != null)
+            {
+                StopCoroutine(illustrationLoadRoutine);
+                illustrationLoadRoutine = null;
+            }
+
+            if (illustration == null)
+                TryResolveIllustration();
+
+            if (illustration == null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(imageUrl))
+            {
+                RestoreIllustrationPlaceholder();
+                return;
+            }
+
+            if (IllustrationCache.TryGetValue(imageUrl, out Sprite cachedSprite) && cachedSprite != null)
+            {
+                illustration.sprite = cachedSprite;
+                return;
+            }
+
+            RestoreIllustrationPlaceholder();
+            illustrationLoadRoutine = StartCoroutine(LoadIllustration(imageUrl, illustrationLoadVersion));
         }
 
         public void RefreshUI()
@@ -514,6 +565,89 @@ namespace VortexTCG.Scripts.MatchScene
         public bool IsDeathStateActive()
         {
             return DeathState != null && DeathState.activeSelf;
+        }
+
+        private IEnumerator LoadIllustration(string url, int version)
+        {
+            string resolvedUrl = ResolveIllustrationUrl(url);
+            if (string.IsNullOrWhiteSpace(resolvedUrl))
+                yield break;
+
+            using (UnityWebRequest request = UnityWebRequestTexture.GetTexture(resolvedUrl))
+            {
+                yield return request.SendWebRequest();
+
+                if (version != illustrationLoadVersion)
+                    yield break;
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning($"[CardUI] Illustration load failed for '{cardName}' ({resolvedUrl}): {request.error}");
+                    RestoreIllustrationPlaceholder();
+                    yield break;
+                }
+
+                Texture2D texture = DownloadHandlerTexture.GetContent(request);
+                if (texture == null)
+                {
+                    RestoreIllustrationPlaceholder();
+                    yield break;
+                }
+
+                Sprite sprite = Sprite.Create(
+                    texture,
+                    new Rect(0f, 0f, texture.width, texture.height),
+                    new Vector2(0.5f, 0.5f),
+                    100f
+                );
+
+                IllustrationCache[url] = sprite;
+
+                if (version == illustrationLoadVersion && illustration != null)
+                    illustration.sprite = sprite;
+            }
+        }
+
+        private void RestoreIllustrationPlaceholder()
+        {
+            if (illustration == null)
+                return;
+
+            if (illustrationPlaceholder != null)
+                illustration.sprite = illustrationPlaceholder;
+        }
+
+        private void TryResolveIllustration()
+        {
+            SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                SpriteRenderer sr = renderers[i];
+                if (sr != null && (sr.name == "Illustration" || sr.name == "illustration"))
+                {
+                    illustration = sr;
+                    if (illustrationPlaceholder == null)
+                        illustrationPlaceholder = illustration.sprite;
+                    return;
+                }
+            }
+        }
+
+        private static string ResolveIllustrationUrl(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return string.Empty;
+
+            if (Uri.TryCreate(url, UriKind.Absolute, out Uri absoluteUri))
+                return absoluteUri.ToString();
+
+            AppConfig cfg = ConfigLoader.Load();
+            if (cfg == null || string.IsNullOrWhiteSpace(cfg.baseUrl))
+                return $"images/{url.TrimStart('/')}";
+
+            string baseUrl = cfg.baseUrl.TrimEnd('/');
+            string normalizedPath = url.TrimStart('/');
+            return $"{baseUrl}/images/{normalizedPath}";
         }
 
         public bool IsSleepyStateActive()

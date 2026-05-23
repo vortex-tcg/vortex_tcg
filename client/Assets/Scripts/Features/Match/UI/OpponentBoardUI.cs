@@ -95,7 +95,7 @@ namespace VortexTCG.Scripts.MatchScene
                     playedCard.Attack,
                     playedCard.Cost,
                     playedCard.Description,
-                    ""
+                    playedCard.ImageUrl ?? ""
                 );
             }
 
