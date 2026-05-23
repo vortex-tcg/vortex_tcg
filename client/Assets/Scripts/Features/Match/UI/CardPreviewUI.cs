@@ -26,6 +26,7 @@ namespace VortexTCG.Scripts.MatchScene
         private Label healthPoints;
         private Label defensePoints;
         private Label costPoints;
+        private VisualElement illustrationElement;
 
         private void Awake()
         {
@@ -44,6 +45,7 @@ namespace VortexTCG.Scripts.MatchScene
             cardInformationsPreview = root.Q<VisualElement>("CardInformationsPreview");
             cardNameLabel = cardInformationsPreview.Q<Label>("CardName");
             cardLoreLabel = cardInformationsPreview.Q<Label>("CardLore");
+            illustrationElement = cardInformationsPreview.Q<VisualElement>("Illustration");
             dataSection = cardInformationsPreview.Q<VisualElement>("Data");
 
             VisualElement attackPointsContainer = dataSection?.Q<VisualElement>("CardAttackPoints");
@@ -100,12 +102,21 @@ namespace VortexTCG.Scripts.MatchScene
                     UpdateCostColor(card.cost); // ✅ appel ici
                 }
             }
+
+            if (illustrationElement != null)
+            {
+                Sprite sprite = card.CurrentIllustrationSprite;
+                illustrationElement.style.backgroundImage = sprite != null ? new StyleBackground(sprite) : StyleKeyword.None;
+            }
         }
 
         public void HidePreview()
         {
             if (cardInformationsPreview != null)
                 cardInformationsPreview.style.display = DisplayStyle.None;
+
+            if (illustrationElement != null)
+                illustrationElement.style.backgroundImage = StyleKeyword.None;
         }
 
         private void UpdateCostColor(int cost)
