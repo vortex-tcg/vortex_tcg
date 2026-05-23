@@ -74,6 +74,7 @@ namespace VortexTCG.Scripts.MatchScene
         private int illustrationLoadVersion;
 
         private static readonly Dictionary<string, Sprite> IllustrationCache = new Dictionary<string, Sprite>();
+        public Sprite CurrentIllustrationSprite => illustration != null ? illustration.sprite : null;
 
         void Awake()
         {
