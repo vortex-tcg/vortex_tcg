@@ -382,7 +382,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 cardDto.Attack,
                 cardDto.Cost,
                 cardDto.Description ?? "",
-                ""
+                cardDto.ImageUrl ?? ""
             );
 
             card.SetFaceDown(false);

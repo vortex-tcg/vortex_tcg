@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UIElements;
 using VortexTCG.Scripts.DTOs;
 using VortexTCG.Scripts.Features.Collection.Services;
@@ -82,6 +83,9 @@ namespace VortexTCG.Scripts.Features.Collection.UI
         private int activeDragPointerId = -1;
         private bool isDraggingCard;
         private bool isDeckDropZoneHighlighted;
+        private Coroutine cardIllustrationLoadRoutine;
+        private int cardIllustrationLoadVersion;
+        private static readonly Dictionary<string, Texture2D> CardIllustrationCache = new Dictionary<string, Texture2D>();
 
         private void OnEnable()
         {
@@ -446,6 +450,8 @@ namespace VortexTCG.Scripts.Features.Collection.UI
         {
             if (cardElement == null || card == null) return;
 
+            ApplyCardIllustration(cardElement, card.Picture);
+
             Label nameLabel = cardElement.Q<Label>("Name");
             if (nameLabel != null) nameLabel.text = card.Name;
 
@@ -474,6 +480,24 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             costCircle.style.unityBackgroundImageTintColor = new StyleColor(circleColor);
         }
 
+        private void ApplyCardIllustration(VisualElement cardElement, string picture)
+        {
+            if (cardElement == null || string.IsNullOrWhiteSpace(picture))
+                return;
+
+            VisualElement illustration = cardElement.Q<VisualElement>("Illustration");
+            if (illustration == null)
+                illustration = cardElement;
+
+            if (TryResolveCardTexture(picture, out Texture2D cachedTexture))
+            {
+                illustration.style.backgroundImage = new StyleBackground(cachedTexture);
+                return;
+            }
+
+            StartCoroutine(LoadCardIllustration(cardElement, picture));
+        }
+
         private void ShowCardPreview(CardDto card)
         {
             if (cardInformationsPreview == null || card == null) return;
@@ -496,12 +520,7 @@ namespace VortexTCG.Scripts.Features.Collection.UI
                 UpdateCostColor(card.Cost);
             }
 
-            if (cardIllustration != null)
-            {
-                Texture2D illustration = ResolveCardTexture(card.Picture);
-                if (illustration != null)
-                    cardIllustration.style.backgroundImage = new StyleBackground(illustration);
-            }
+            ApplyCardIllustration(card.Picture);
 
             cardInformationsPreview.style.display = DisplayStyle.Flex;
         }
@@ -510,6 +529,72 @@ namespace VortexTCG.Scripts.Features.Collection.UI
         {
             if (cardInformationsPreview != null)
                 cardInformationsPreview.style.display = DisplayStyle.None;
+
+            cardIllustrationLoadVersion++;
+
+            if (cardIllustrationLoadRoutine != null)
+            {
+                StopCoroutine(cardIllustrationLoadRoutine);
+                cardIllustrationLoadRoutine = null;
+            }
+        }
+
+        private void ApplyCardIllustration(string picture)
+        {
+            if (cardIllustration == null)
+                return;
+
+            cardIllustrationLoadVersion++;
+
+            if (cardIllustrationLoadRoutine != null)
+            {
+                StopCoroutine(cardIllustrationLoadRoutine);
+                cardIllustrationLoadRoutine = null;
+            }
+
+            if (string.IsNullOrWhiteSpace(picture))
+                return;
+
+            if (TryResolveCardTexture(picture, out Texture2D cachedTexture))
+            {
+                cardIllustration.style.backgroundImage = new StyleBackground(cachedTexture);
+                return;
+            }
+
+            cardIllustrationLoadRoutine = StartCoroutine(LoadCardIllustration(cardIllustration, picture));
+        }
+
+        private IEnumerator LoadCardIllustration(VisualElement targetElement, string picture)
+        {
+            string resolvedUrl = ResolveCardIllustrationUrl(picture);
+            if (string.IsNullOrWhiteSpace(resolvedUrl))
+                yield break;
+
+            using (UnityWebRequest request = UnityWebRequestTexture.GetTexture(resolvedUrl))
+            {
+                yield return request.SendWebRequest();
+
+                if (targetElement == null || targetElement.panel == null)
+                    yield break;
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning($"[CollectionUI] Illustration load failed for '{picture}' ({resolvedUrl}): {request.error}");
+                    yield break;
+                }
+
+                Texture2D texture = DownloadHandlerTexture.GetContent(request);
+                if (texture == null)
+                    yield break;
+
+                CardIllustrationCache[resolvedUrl] = texture;
+
+                VisualElement illustration = targetElement.Q<VisualElement>("Illustration");
+                if (illustration == null)
+                    illustration = targetElement;
+
+                illustration.style.backgroundImage = new StyleBackground(texture);
+            }
         }
 
         private void UpdateCostColor(int cost)
@@ -531,16 +616,57 @@ namespace VortexTCG.Scripts.Features.Collection.UI
             costPointsContainer.style.backgroundColor = target;
         }
 
-        private static Texture2D ResolveCardTexture(string picture)
+        private static bool TryResolveCardTexture(string picture, out Texture2D texture)
+        {
+            texture = null;
+
+            if (string.IsNullOrWhiteSpace(picture))
+                return false;
+
+            if (Uri.TryCreate(picture, UriKind.Absolute, out Uri absoluteUri))
+            {
+                string absoluteKey = absoluteUri.ToString();
+                if (CardIllustrationCache.TryGetValue(absoluteKey, out texture) && texture != null)
+                    return true;
+            }
+
+            if (CardIllustrationCache.TryGetValue(picture, out texture) && texture != null)
+                return true;
+
+            Texture2D loadedTexture = Resources.Load<Texture2D>(picture);
+            if (loadedTexture != null)
+            {
+                texture = loadedTexture;
+                CardIllustrationCache[picture] = texture;
+                return true;
+            }
+
+            loadedTexture = Resources.Load<Texture2D>(picture.TrimStart('/'));
+            if (loadedTexture != null)
+            {
+                texture = loadedTexture;
+                CardIllustrationCache[picture.TrimStart('/')] = texture;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static string ResolveCardIllustrationUrl(string picture)
         {
             if (string.IsNullOrWhiteSpace(picture))
-                return null;
+                return string.Empty;
 
-            Texture2D texture = Resources.Load<Texture2D>(picture);
-            if (texture != null)
-                return texture;
+            if (Uri.TryCreate(picture, UriKind.Absolute, out Uri absoluteUri))
+                return absoluteUri.ToString();
 
-            return Resources.Load<Texture2D>(picture.TrimStart('/'));
+            AppConfig cfg = ConfigLoader.Load();
+            if (cfg == null || string.IsNullOrWhiteSpace(cfg.baseUrl))
+                return $"images/{picture.TrimStart('/')}";
+
+            string baseUrl = cfg.baseUrl.TrimEnd('/');
+            string normalizedPath = picture.TrimStart('/');
+            return $"{baseUrl}/images/{normalizedPath}";
         }
 
         private void InitializeBackButton()
