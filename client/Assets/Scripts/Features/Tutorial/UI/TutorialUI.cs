@@ -9,10 +9,7 @@ public class TutorialUI : MonoBehaviour
     [SerializeField] private string backButtonName = "BackButton";
     [SerializeField] private string tutorialVideoElementName = "TutorialVideo";
     [SerializeField] private string tutorialVideoResourcePath = "Video/tuto-vortex";
-<<<<<<< HEAD
     [SerializeField] private string tutorialVideoUrl = "";
-=======
->>>>>>> 43d59c5 ([FEAT] Tutorial added in game)
     [SerializeField] private string tutorialRenderTextureResourcePath = "Video/TutorialRT";
     [SerializeField] private string homeSceneName = "HomeScene";
 
@@ -89,7 +86,6 @@ public class TutorialUI : MonoBehaviour
     {
         if (tutorialVideoPlayer != null)
             return;
-<<<<<<< HEAD
         VideoClip clip = null;
         bool useUrl = !string.IsNullOrWhiteSpace(tutorialVideoUrl);
         if (!useUrl)
@@ -102,16 +98,6 @@ public class TutorialUI : MonoBehaviour
             }
         }
         Debug.Log("[TutorialUI] StartTutorialVideo: creating VideoPlayer (useUrl=" + useUrl + ")");
-=======
-
-        VideoClip clip = Resources.Load<VideoClip>(tutorialVideoResourcePath);
-        if (clip == null)
-        {
-            Debug.LogWarning($"[TutorialUI] VideoClip introuvable dans Resources : {tutorialVideoResourcePath}");
-            return;
-        }
-
->>>>>>> 43d59c5 ([FEAT] Tutorial added in game)
         tutorialVideoPlayerObject = new GameObject("TutorialVideoPlayer");
         tutorialVideoPlayerObject.transform.SetParent(transform, false);
         tutorialVideoPlayer = tutorialVideoPlayerObject.AddComponent<VideoPlayer>();
@@ -119,7 +105,6 @@ public class TutorialUI : MonoBehaviour
         tutorialVideoPlayer.isLooping = true;
         tutorialVideoPlayer.audioOutputMode = VideoAudioOutputMode.None;
         tutorialVideoPlayer.renderMode = VideoRenderMode.RenderTexture;
-<<<<<<< HEAD
         // Ensure RenderTexture is created/allocated
         if (tutorialRenderTexture != null)
         {
@@ -169,26 +154,17 @@ public class TutorialUI : MonoBehaviour
 
         tutorialVideoPlayer.prepareCompleted += OnTutorialVideoPrepared;
         Debug.Log("[TutorialUI] Calling Prepare() on VideoPlayer...");
-=======
-        tutorialVideoPlayer.targetTexture = tutorialRenderTexture;
-        tutorialVideoPlayer.clip = clip;
-        tutorialVideoPlayer.prepareCompleted += OnTutorialVideoPrepared;
->>>>>>> 43d59c5 ([FEAT] Tutorial added in game)
         tutorialVideoPlayer.Prepare();
     }
 
     private void OnTutorialVideoPrepared(VideoPlayer source)
     {
         source.prepareCompleted -= OnTutorialVideoPrepared;
-<<<<<<< HEAD
         Debug.Log("[TutorialUI] Video prepared. isPrepared=" + source.isPrepared + " length=" + source.length);
-=======
->>>>>>> 43d59c5 ([FEAT] Tutorial added in game)
         isTutorialVideoPaused = false;
         source.Play();
     }
 
-<<<<<<< HEAD
     private void OnTutorialVideoError(VideoPlayer source, string message)
     {
         Debug.LogError($"[TutorialUI] VideoPlayer error: {message}");
@@ -204,8 +180,6 @@ public class TutorialUI : MonoBehaviour
         Debug.Log("[TutorialUI] VideoPlayer loopPointReached");
     }
 
-=======
->>>>>>> 43d59c5 ([FEAT] Tutorial added in game)
     private void OnTutorialVideoClicked(ClickEvent evt)
     {
         if (tutorialVideoPlayer == null)
@@ -226,12 +200,9 @@ public class TutorialUI : MonoBehaviour
         if (tutorialVideoPlayer != null)
         {
             tutorialVideoPlayer.prepareCompleted -= OnTutorialVideoPrepared;
-<<<<<<< HEAD
             tutorialVideoPlayer.errorReceived -= OnTutorialVideoError;
             tutorialVideoPlayer.started -= OnTutorialVideoStarted;
             tutorialVideoPlayer.loopPointReached -= OnTutorialVideoLoopPointReached;
-=======
->>>>>>> 43d59c5 ([FEAT] Tutorial added in game)
             tutorialVideoPlayer.Stop();
             Destroy(tutorialVideoPlayer);
             tutorialVideoPlayer = null;
