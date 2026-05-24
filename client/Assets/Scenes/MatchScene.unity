@@ -2432,7 +2432,7 @@ MonoBehaviour:
   m_PanelSettings: {fileID: 11400000, guid: 6b8f574547f18cc4682f6730d2676290, type: 2}
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 9197481963319205126, guid: b54682efc4461e643901971d838ed019, type: 3}
-  m_SortingOrder: 0
+  m_SortingOrder: 300
   m_WorldSpaceSizeMode: 1
   m_WorldSpaceWidth: 1920
   m_WorldSpaceHeight: 1080
@@ -4782,7 +4782,7 @@ MonoBehaviour:
   m_PanelSettings: {fileID: 11400000, guid: 6b8f574547f18cc4682f6730d2676290, type: 2}
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 9197481963319205126, guid: 1bd1015070867fe4585eb68484a5e12a, type: 3}
-  m_SortingOrder: 0
+  m_SortingOrder: 300
   m_WorldSpaceSizeMode: 1
   m_WorldSpaceWidth: 1920
   m_WorldSpaceHeight: 1080
@@ -4809,7 +4809,7 @@ SceneRoots:
   - {fileID: 967252609}
   - {fileID: 738405642}
   - {fileID: 964777881}
-  - {fileID: 776513357}
   - {fileID: 2094001922}
   - {fileID: 1471669118}
+  - {fileID: 776513357}
   - {fileID: 1451464461}

@@ -47,6 +47,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         private VisualElement _phaseElement;
         private VisualElement _phaseBackgroundElement;
+        private VisualElement _root;
         private float _elapsed;
         private bool _isVisible;
         private bool _hasKnownPhase;
@@ -142,12 +143,15 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
             Debug.Log($"[PhaseSwitchScreenUI] BindUI using UIDocument on '{gameObject.name}'");
 
-            VisualElement root = uiDocument.rootVisualElement;
-            _phaseElement = root.Q<VisualElement>(phaseElementName)
-                ?? root.Q<VisualElement>("PhaseName")
-                ?? root.Q<VisualElement>("SwitchingPhase");
-            _phaseBackgroundElement = root.Q<VisualElement>(phaseBackgroundElementName)
-                ?? root.Q<VisualElement>("Background");
+            _root = uiDocument.rootVisualElement;
+            _root.pickingMode = PickingMode.Ignore;
+            _root.style.display = DisplayStyle.None;
+
+            _phaseElement = _root.Q<VisualElement>(phaseElementName)
+                ?? _root.Q<VisualElement>("PhaseName")
+                ?? _root.Q<VisualElement>("SwitchingPhase");
+            _phaseBackgroundElement = _root.Q<VisualElement>(phaseBackgroundElementName)
+                ?? _root.Q<VisualElement>("Background");
 
             if (_phaseElement == null)
             {
@@ -203,8 +207,16 @@ namespace VortexTCG.Scripts.Features.Match.UI
             }
 
             _phaseElement.style.backgroundImage = new StyleBackground(texture);
+            if (_root != null)
+            {
+                _root.style.display = DisplayStyle.Flex;
+            }
             _phaseElement.style.display = DisplayStyle.Flex;
             _phaseElement.visible = true;
+            if (_root != null)
+            {
+                _root.pickingMode = PickingMode.Position;
+            }
             _phaseElement.style.opacity = 0f;
 
             if (_phaseBackgroundElement != null)
@@ -239,6 +251,11 @@ namespace VortexTCG.Scripts.Features.Match.UI
             _phaseElement.style.opacity = 0f;
             _phaseElement.style.display = DisplayStyle.None;
             _phaseElement.visible = false;
+            if (_root != null)
+            {
+                _root.pickingMode = PickingMode.Ignore;
+                _root.style.display = DisplayStyle.None;
+            }
 
             if (_phaseBackgroundElement != null)
             {

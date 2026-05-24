@@ -192,6 +192,14 @@ namespace VortexTCG.Scripts.Features.Match.Services
             _matchEndedReceived = true;
             _gameStarted = false;
 
+            string reason = data != null ? data.Reason : string.Empty;
+            if (ShouldBypassEndingScreen(reason))
+            {
+                Debug.Log($"[MatchService] Match ended by abandon/disconnect reason={reason} -> returning HomeScene directly");
+                ReturnToHomeScene("OpponentLeft");
+                return;
+            }
+
             bool? localWon = ResolveLocalOutcomeFromMatchEnded(data);
             Debug.Log($"[MatchService] Match ended reason={(data != null ? data.Reason : "NULL")} localWon={(localWon.HasValue ? localWon.Value.ToString() : "UNKNOWN")}");
 
@@ -271,6 +279,21 @@ namespace VortexTCG.Scripts.Features.Match.Services
             }
 
             return null;
+        }
+
+        private static bool ShouldBypassEndingScreen(string reason)
+        {
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                return false;
+            }
+
+            string normalized = reason.Trim().ToLowerInvariant();
+            return normalized.Contains("surrender")
+                || normalized.Contains("connectionlost")
+                || normalized.Contains("disconnect")
+                || normalized.Contains("quit")
+                || normalized.Contains("leave");
         }
 
         private bool TryShowEndingScreen(bool? localWon)
