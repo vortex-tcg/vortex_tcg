@@ -1,0 +1,9 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI%20Toolkit/Stylesheet/HUD.uss?fileID=7433441132597879392&amp;guid=81b04aa871a624441bed15942152a858&amp;type=3#HUD" />
+    <ui:VisualElement style="flex-grow: 1; background-image: resource(&apos;GUI/Background&apos;);">
+        <ui:VisualElement name="Container" style="flex-grow: 1; flex-direction: column; justify-content: center; align-items: center;">
+            <ui:VisualElement name="TutorialVideo" style="flex-grow: 1; width: 1920px; margin-bottom: 0; background-color: rgb(0, 0, 0); margin-top: 0; margin-right: 0; margin-left: 0; height: 1080px; max-width: 1920px; max-height: 1080px;" />
+        </ui:VisualElement>
+        <ui:Button name="BackButton" style="background-image: resource(&apos;GUI/BackButton&apos;); margin-top: 15px; margin-right: 15px; margin-bottom: 15px; margin-left: 15px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; width: 50px; height: 50px; max-height: 50px; max-width: 50px; -unity-background-image-tint-color: rgb(255, 255, 255); background-color: rgba(188, 188, 188, 0); border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0; position: absolute;" />
+    </ui:VisualElement>
+</ui:UXML>
