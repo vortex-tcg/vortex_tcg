@@ -15,6 +15,8 @@ public class HomeUI : MonoBehaviour
     [SerializeField] private string searchOpponentButtonName = "PlayButton";
     [SerializeField] private string inviteFriendButtonName = "PlayWithFriendsButton";
     [SerializeField] private string collectionButtonName = "CollectionButton";
+    [SerializeField] private string tutorialButtonName = "TutorialButton";
+    [SerializeField] private string quitButtonName = "QuitButton";
     [SerializeField] private string statusTextName = "StatusText";
     [SerializeField] private string searchingPanelName = "SearchingPanel";
     [SerializeField] private string deckSelectionModalName = "DeckSelectionModalHUD";
@@ -30,6 +32,8 @@ public class HomeUI : MonoBehaviour
     private Button searchOpponentButton;
     private Button inviteFriendButton;
     private Button collectionButton;
+    private Button tutorialButton;
+    private Button quitButton;
     private Label statusText;
     private VisualElement searchingPanel;
     private UIDocument deckSelectionModalDocument;
@@ -78,6 +82,8 @@ public class HomeUI : MonoBehaviour
         searchOpponentButton = root.Q<Button>(searchOpponentButtonName);
         inviteFriendButton = root.Q<Button>(inviteFriendButtonName);
         collectionButton = root.Q<Button>(collectionButtonName);
+        tutorialButton = root.Q<Button>(tutorialButtonName);
+        quitButton = root.Q<Button>(quitButtonName);
         statusText = root.Q<Label>(statusTextName);
         searchingPanel = root.Q<VisualElement>(searchingPanelName);
 
@@ -96,6 +102,15 @@ public class HomeUI : MonoBehaviour
         else
             Debug.LogWarning($"Bouton '{collectionButtonName}' introuvable dans l'UXML.");
 
+        if (tutorialButton != null)
+            tutorialButton.clicked += OnClickTutorial;
+        else
+            Debug.LogWarning($"Bouton '{tutorialButtonName}' introuvable dans l'UXML.");
+
+        if (quitButton != null)
+            quitButton.clicked += OnClickQuit;
+        else
+            Debug.LogWarning($"Bouton '{quitButtonName}' introuvable dans l'UXML.");
         SetVisible(searchingPanel, false);
     }
 
@@ -198,6 +213,11 @@ public class HomeUI : MonoBehaviour
         if (collectionButton != null)
             collectionButton.clicked -= OnClickCollection;
 
+        if (tutorialButton != null)
+            tutorialButton.clicked -= OnClickTutorial;
+
+        if (quitButton != null)
+            quitButton.clicked -= OnClickQuit;
         if (deckDropdown != null)
             deckDropdown.UnregisterValueChangedCallback(OnDeckDropdownChanged);
 
@@ -234,6 +254,23 @@ public class HomeUI : MonoBehaviour
     {
         Debug.Log("[HomeUI] Ouverture de la collection.");
         LoadingScreen.Load("CollectionScene", loadMenu: false, unloadMenu: false);
+    }
+
+    private void OnClickTutorial()
+    {
+        Debug.Log("[HomeUI] Ouverture du tutoriel.");
+        LoadingScreen.Load("TutorialScene", loadMenu: false, unloadMenu: false);
+    }
+
+    private void OnClickQuit()
+    {
+        Debug.Log("[HomeUI] Quitter l'application.");
+
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 
     private void OpenDeckSelectionModal()
@@ -503,6 +540,8 @@ public class HomeUI : MonoBehaviour
     {
         searchOpponentButton?.SetEnabled(enabled);
         inviteFriendButton?.SetEnabled(enabled);
+        tutorialButton?.SetEnabled(enabled);
+        quitButton?.SetEnabled(enabled);
     }
 
     private static void SetVisible(VisualElement ve, bool visible)
