@@ -24,6 +24,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
         private VisualElement _endingScreen;
         private Button _quitButton;
+        private VisualElement _root;
         private bool _isVisible;
         private bool _isQuitButtonFading;
         private float _fadeElapsed;
@@ -50,9 +51,11 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 return;
             }
 
-            VisualElement root = uiDocument.rootVisualElement;
-            _endingScreen = root.Q<VisualElement>("EndingScreen");
-            _quitButton = root.Q<Button>("QuitButton");
+            _root = uiDocument.rootVisualElement;
+            _root.pickingMode = PickingMode.Ignore;
+
+            _endingScreen = _root.Q<VisualElement>("EndingScreen");
+            _quitButton = _root.Q<Button>("QuitButton");
 
             if (_endingScreen == null)
             {
@@ -63,12 +66,14 @@ namespace VortexTCG.Scripts.Features.Match.UI
             _endingScreen.style.opacity = 0f;
             _endingScreen.style.display = DisplayStyle.None;
             _endingScreen.visible = false;
+            _endingScreen.pickingMode = PickingMode.Ignore;
 
             if (_quitButton != null)
             {
                 _quitButton.style.opacity = 0f;
                 _quitButton.style.display = DisplayStyle.None;
                 _quitButton.visible = false;
+                _quitButton.pickingMode = PickingMode.Ignore;
             }
         }
 
@@ -115,9 +120,11 @@ namespace VortexTCG.Scripts.Features.Match.UI
 
             _isVisible = true;
             _fadeElapsed = 0f;
+            _root.pickingMode = PickingMode.Position;
             _endingScreen.style.opacity = 0f;
             _endingScreen.style.display = DisplayStyle.Flex;
             _endingScreen.visible = true;
+            _endingScreen.pickingMode = PickingMode.Position;
 
             if (_quitButton != null)
             {
@@ -126,6 +133,7 @@ namespace VortexTCG.Scripts.Features.Match.UI
                 _quitButton.style.opacity = 0f;
                 _quitButton.style.display = DisplayStyle.Flex;
                 _quitButton.visible = true;
+                _quitButton.pickingMode = PickingMode.Position;
                 _quitButton.SetEnabled(false);
             }
 
@@ -143,15 +151,21 @@ namespace VortexTCG.Scripts.Features.Match.UI
             _isQuitButtonFading = false;
             _fadeElapsed = 0f;
             _quitButtonFadeElapsed = 0f;
+            if (_root != null)
+            {
+                _root.pickingMode = PickingMode.Ignore;
+            }
             _endingScreen.style.opacity = 0f;
             _endingScreen.style.display = DisplayStyle.None;
             _endingScreen.visible = false;
+            _endingScreen.pickingMode = PickingMode.Ignore;
 
             if (_quitButton != null)
             {
                 _quitButton.style.opacity = 0f;
                 _quitButton.style.display = DisplayStyle.None;
                 _quitButton.visible = false;
+                _quitButton.pickingMode = PickingMode.Ignore;
                 _quitButton.SetEnabled(true);
             }
         }

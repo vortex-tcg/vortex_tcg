@@ -298,6 +298,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -886,6 +887,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -1153,6 +1155,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -1278,6 +1281,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -1483,6 +1487,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -1620,6 +1625,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -1727,6 +1733,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -1784,8 +1791,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_PanelSettings: {fileID: 11400000, guid: 6b8f574547f18cc4682f6730d2676290, type: 2}
   m_ParentUI: {fileID: 0}
-  sourceAsset: {fileID: 9197481963319205126, guid: edd59582bc97bfe4ea1efc8a2a074938, type: 3}
-  m_SortingOrder: 0
+  sourceAsset: {fileID: 9197481963319205126, guid: a827856b77b16b040bde874d64c66f1f, type: 3}
+  m_SortingOrder: 200
   m_WorldSpaceSizeMode: 1
   m_WorldSpaceWidth: 1920
   m_WorldSpaceHeight: 1080
@@ -1977,6 +1984,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -2040,6 +2048,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -2171,6 +2180,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -2234,6 +2244,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -2365,6 +2376,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -2387,6 +2399,92 @@ MonoBehaviour:
   DamageReceivedState: {fileID: 0}
   DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
+--- !u!1 &964777879
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 964777881}
+  - component: {fileID: 964777880}
+  - component: {fileID: 964777883}
+  m_Layer: 5
+  m_Name: Phase HUD
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &964777880
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964777879}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_PanelSettings: {fileID: 11400000, guid: 6b8f574547f18cc4682f6730d2676290, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: b54682efc4461e643901971d838ed019, type: 3}
+  m_SortingOrder: 300
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+--- !u!4 &964777881
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964777879}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &964777883
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964777879}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fba92c0b038a4d843ac35838d93bbfbc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 964777880}
+  phaseElementName: PhaseScreen
+  phaseBackgroundElementName: PhaseBackground
+  standByTexture: {fileID: 2800000, guid: a4c7a71549f11254b863b7dd5249c36e, type: 3}
+  attackTexture: {fileID: 2800000, guid: 2e3f70d17c3bed94da8fef9dfa80e303, type: 3}
+  defenseTexture: {fileID: 2800000, guid: dbad5c782ba959c48a3d0d2571c8b265, type: 3}
+  endingTexture: {fileID: 2800000, guid: f39efd00e83144145b80cb510e9527b3, type: 3}
+  standByResourcePath: GUI/StandByPhase
+  attackResourcePath: GUI/AttackPhase
+  defenseResourcePath: GUI/DefensePhase
+  endingResourcePath: GUI/EndingPhase
+  standByBackgroundTexture: {fileID: 0}
+  attackBackgroundTexture: {fileID: 0}
+  defenseBackgroundTexture: {fileID: 0}
+  endingBackgroundTexture: {fileID: 0}
+  standByBackgroundResourcePath: GUI/StandByPhaseBackground
+  attackBackgroundResourcePath: GUI/AttackPhaseBackground
+  defenseBackgroundResourcePath: GUI/DefensePhaseBackground
+  endingBackgroundResourcePath: GUI/EndingPhaseBackground
+  fadeInSeconds: 0.2
+  holdSeconds: 1
+  fadeOutSeconds: 0.2
 --- !u!1 &967252606
 GameObject:
   m_ObjectHideFlags: 0
@@ -2560,6 +2658,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -2823,6 +2922,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -2953,6 +3053,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -3163,6 +3264,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -3226,6 +3328,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -3357,6 +3460,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -3692,6 +3796,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -3755,6 +3860,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -3818,6 +3924,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -4103,6 +4210,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -4166,6 +4274,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -4297,6 +4406,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -4428,6 +4538,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -4559,6 +4670,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 0}
   costText: {fileID: 0}
   atkText: {fileID: 0}
@@ -4670,7 +4782,7 @@ MonoBehaviour:
   m_PanelSettings: {fileID: 11400000, guid: 6b8f574547f18cc4682f6730d2676290, type: 2}
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 9197481963319205126, guid: 1bd1015070867fe4585eb68484a5e12a, type: 3}
-  m_SortingOrder: 0
+  m_SortingOrder: 300
   m_WorldSpaceSizeMode: 1
   m_WorldSpaceWidth: 1920
   m_WorldSpaceHeight: 1080
@@ -4696,7 +4808,8 @@ SceneRoots:
   - {fileID: 1833318997}
   - {fileID: 967252609}
   - {fileID: 738405642}
-  - {fileID: 776513357}
+  - {fileID: 964777881}
   - {fileID: 2094001922}
   - {fileID: 1471669118}
+  - {fileID: 776513357}
   - {fileID: 1451464461}
