@@ -1,6 +1,0 @@
-<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <ui:VisualElement name="Container" style="flex-grow: 1; align-items: flex-end;">
-        <ui:VisualElement name="Background" style="flex-grow: 1; background-image: none; width: 1570px; max-width: 1570px; background-color: rgba(0, 0, 0, 0.24);" />
-        <ui:VisualElement name="PhaseName" style="flex-grow: 1; background-image: resource(&apos;GUI/EndingPhase&apos;); width: 1570px; max-width: 1570px; position: absolute; height: 1080px; max-height: 1080px; display: flex;" />
-    </ui:VisualElement>
-</ui:UXML>

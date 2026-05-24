@@ -24,7 +24,6 @@
         </ui:VisualElement>
         <ui:VisualElement name="MatchSide" style="flex-grow: 1; flex-direction: row; justify-content: center; align-items: flex-start;">
             <ui:VisualElement name="PhaseChange" style="flex-grow: 1; width: 1570px; max-width: 1570px; position: absolute; height: 1080px; max-height: 1080px; display: none;">
-                <ui:VisualElement name="PhaseBackground" style="flex-grow: 1; width: 1570px; max-width: 1570px; height: 1080px; max-height: 1080px; position: absolute; background-color: rgba(0, 0, 0, 0.35);" />
                 <ui:VisualElement name="PhaseName" style="flex-grow: 1; width: 1570px; max-width: 1570px; position: absolute; height: 1080px; max-height: 1080px; background-image: resource(&apos;GUI/StandByPhase&apos;);">
                     <ui:VisualElement name="PhaseBackground" style="flex-grow: 1;" />
                 </ui:VisualElement>

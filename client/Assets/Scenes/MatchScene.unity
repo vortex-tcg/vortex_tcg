@@ -1515,71 +1515,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
   m_PrefabInstance: {fileID: 1946076882}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &661933605
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 661933607}
-  - component: {fileID: 661933606}
-  - component: {fileID: 661933608}
-  m_Layer: 5
-  m_Name: Defense Phase HUD
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &661933606
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 661933605}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_PanelSettings: {fileID: 11400000, guid: 6b8f574547f18cc4682f6730d2676290, type: 2}
-  m_ParentUI: {fileID: 0}
-  sourceAsset: {fileID: 9197481963319205126, guid: f2e4a3c81fa286e43976b337e3a7a8c6, type: 3}
-  m_SortingOrder: 0
-  m_WorldSpaceSizeMode: 1
-  m_WorldSpaceWidth: 1920
-  m_WorldSpaceHeight: 1080
---- !u!4 &661933607
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 661933605}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &661933608
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 661933605}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 47e9b25316d85fd4f92325c74b41c69a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  uiDoc: {fileID: 661933606}
 --- !u!1001 &691473916
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1857,7 +1792,7 @@ MonoBehaviour:
   m_PanelSettings: {fileID: 11400000, guid: 6b8f574547f18cc4682f6730d2676290, type: 2}
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 9197481963319205126, guid: edd59582bc97bfe4ea1efc8a2a074938, type: 3}
-  m_SortingOrder: 0
+  m_SortingOrder: 200
   m_WorldSpaceSizeMode: 1
   m_WorldSpaceWidth: 1920
   m_WorldSpaceHeight: 1080
@@ -2474,14 +2409,14 @@ GameObject:
   m_Component:
   - component: {fileID: 964777881}
   - component: {fileID: 964777880}
-  - component: {fileID: 964777882}
+  - component: {fileID: 964777883}
   m_Layer: 5
-  m_Name: Standby Phase HUD
+  m_Name: Phase HUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &964777880
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2516,7 +2451,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &964777882
+--- !u!114 &964777883
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2525,10 +2460,31 @@ MonoBehaviour:
   m_GameObject: {fileID: 964777879}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 47e9b25316d85fd4f92325c74b41c69a, type: 3}
+  m_Script: {fileID: 11500000, guid: fba92c0b038a4d843ac35838d93bbfbc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  uiDoc: {fileID: 964777880}
+  uiDocument: {fileID: 964777880}
+  phaseElementName: PhaseScreen
+  phaseBackgroundElementName: PhaseBackground
+  standByTexture: {fileID: 2800000, guid: a4c7a71549f11254b863b7dd5249c36e, type: 3}
+  attackTexture: {fileID: 2800000, guid: 2e3f70d17c3bed94da8fef9dfa80e303, type: 3}
+  defenseTexture: {fileID: 2800000, guid: dbad5c782ba959c48a3d0d2571c8b265, type: 3}
+  endingTexture: {fileID: 2800000, guid: f39efd00e83144145b80cb510e9527b3, type: 3}
+  standByResourcePath: GUI/StandByPhase
+  attackResourcePath: GUI/AttackPhase
+  defenseResourcePath: GUI/DefensePhase
+  endingResourcePath: GUI/EndingPhase
+  standByBackgroundTexture: {fileID: 0}
+  attackBackgroundTexture: {fileID: 0}
+  defenseBackgroundTexture: {fileID: 0}
+  endingBackgroundTexture: {fileID: 0}
+  standByBackgroundResourcePath: GUI/StandByPhaseBackground
+  attackBackgroundResourcePath: GUI/AttackPhaseBackground
+  defenseBackgroundResourcePath: GUI/DefensePhaseBackground
+  endingBackgroundResourcePath: GUI/EndingPhaseBackground
+  fadeInSeconds: 0.2
+  holdSeconds: 1
+  fadeOutSeconds: 0.2
 --- !u!1 &967252606
 GameObject:
   m_ObjectHideFlags: 0
@@ -4277,71 +4233,6 @@ MonoBehaviour:
   DamageReceivedState: {fileID: 0}
   DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
---- !u!1 &1893725677
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1893725679}
-  - component: {fileID: 1893725678}
-  - component: {fileID: 1893725680}
-  m_Layer: 5
-  m_Name: Attack Phase HUD
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &1893725678
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1893725677}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_PanelSettings: {fileID: 11400000, guid: 6b8f574547f18cc4682f6730d2676290, type: 2}
-  m_ParentUI: {fileID: 0}
-  sourceAsset: {fileID: 9197481963319205126, guid: 90f530eab245e0542be478b52dc9e912, type: 3}
-  m_SortingOrder: 0
-  m_WorldSpaceSizeMode: 1
-  m_WorldSpaceWidth: 1920
-  m_WorldSpaceHeight: 1080
---- !u!4 &1893725679
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1893725677}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1893725680
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1893725677}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 47e9b25316d85fd4f92325c74b41c69a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  uiDoc: {fileID: 1893725678}
 --- !u!1 &1909179011 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5518723600992688288, guid: 9c9fc1124fb5fc14f8f600477fd6a00b, type: 3}
@@ -4802,71 +4693,6 @@ MonoBehaviour:
   DamageReceivedState: {fileID: 0}
   DeathState: {fileID: 0}
   selectedScaleMultiplier: 1.08
---- !u!1 &2092523071
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2092523073}
-  - component: {fileID: 2092523072}
-  - component: {fileID: 2092523074}
-  m_Layer: 5
-  m_Name: Ending Phase HUD
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &2092523072
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2092523071}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_PanelSettings: {fileID: 11400000, guid: 6b8f574547f18cc4682f6730d2676290, type: 2}
-  m_ParentUI: {fileID: 0}
-  sourceAsset: {fileID: 9197481963319205126, guid: 758bbba7e21366d4d89469a5396314f0, type: 3}
-  m_SortingOrder: 0
-  m_WorldSpaceSizeMode: 1
-  m_WorldSpaceWidth: 1920
-  m_WorldSpaceHeight: 1080
---- !u!4 &2092523073
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2092523071}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2092523074
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2092523071}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 47e9b25316d85fd4f92325c74b41c69a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  uiDoc: {fileID: 2092523072}
 --- !u!1 &2094001917
 GameObject:
   m_ObjectHideFlags: 0
@@ -4982,11 +4808,8 @@ SceneRoots:
   - {fileID: 1833318997}
   - {fileID: 967252609}
   - {fileID: 738405642}
-  - {fileID: 776513357}
   - {fileID: 964777881}
-  - {fileID: 1893725679}
-  - {fileID: 661933607}
-  - {fileID: 2092523073}
+  - {fileID: 776513357}
   - {fileID: 2094001922}
   - {fileID: 1471669118}
   - {fileID: 1451464461}
