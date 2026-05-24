@@ -40404,6 +40404,7 @@ MonoBehaviour:
   UIRoot: {fileID: 0}
   description: 
   imageUrl: 
+  illustration: {fileID: 0}
   nameText: {fileID: 8424969657951677426}
   costText: {fileID: 3507123561524809914}
   atkText: {fileID: 360277878751768275}
