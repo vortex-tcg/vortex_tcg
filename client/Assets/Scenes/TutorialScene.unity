@@ -206,6 +206,8 @@ MonoBehaviour:
   uiDocument: {fileID: 580204058}
   backButtonName: BackButton
   tutorialVideoElementName: TutorialVideo
+  tutorialVideoResourcePath: Video/tuto-vortex
+  tutorialVideoUrl: https://rr3---sn-p5qlsnrr.googlevideo.com/videoplayback?expire=1779629027&ei=g6cSava0J6mz9fwP74Dl6Q8&ip=91.123.9.46&id=o-ANGRik46JcOTPLfKZCWYwwg9vg3DlcO7sK9VTZ997_J1&itag=18&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&rms=au%2Cau&bui=AbKmrwpvMpW_-Q7_yzm3fxhUbCp6e8n8U4mnjGvJQff-IHDa5Ck-2bna04EhQOimpjDNJIPRfPSjJjvh&spc=96Xrv1eni14-kWRnUajnALUgjDZyxwSY0nIz43Rytz0nwew09VGelvf-1jrFlwleTvQ&vprv=1&svpuc=1&mime=video%2Fmp4&rqh=1&gir=yes&clen=2634149&ratebypass=yes&dur=143.313&lmt=1779570133015016&fexp=51565116,51565682&c=ANDROID&txp=6219224&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cbui%2Cspc%2Cvprv%2Csvpuc%2Cmime%2Crqh%2Cgir%2Cclen%2Cratebypass%2Cdur%2Clmt&sig=AHEqNM4wRgIhALImngsz4ohJugQAQ0FPNZkI920UyvlBY4O0Gm6b4Pk5AiEA08ZHt41Jc0yGswiWGMHp13oJILpg0WEiJGLh0E-dZIw%3D&redirect_counter=1&rm=sn-ntqyyy7s&rrc=104&req_id=aa71fac80f6a3ee&cms_redirect=yes&cmsv=e&cps=0&ipbypass=yes&met=1779607472,&mh=jD&mip=2a01:e0a:104e:cc80:5857:fb58:11ed:be4e&mm=31&mn=sn-p5qlsnrr&ms=au&mt=1779606986&mv=u&mvi=3&pl=37&lsparams=cps,ipbypass,met,mh,mip,mm,mn,ms,mv,mvi,pl,rms&lsig=APaTxxMwRQIgSHtMDpdxfhsJI0SKt4Wjt2SYshwgRdyGi9TdqUI-fcICIQDhpe8DMDJsabIr4xyY0h-gDms6byWerR7ynQZAV3Lw9g%3D%3D
   tutorialRenderTextureResourcePath: Video/TutorialRT
   homeSceneName: HomeScene
 --- !u!1 &689827792
