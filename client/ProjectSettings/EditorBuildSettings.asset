@@ -30,6 +30,9 @@ EditorBuildSettings:
     path: Assets/Scenes/CollectionScene.unity
     guid: 728064a9004be7f478fc0b0d339b8eb6
   - enabled: 1
+    path: Assets/Scenes/TutorialScene.unity
+    guid: a4104b0dc3897ca46b45dc282b711695
+  - enabled: 1
     path: Assets/Scenes/MatchScene.unity
     guid: e2cb119f11b3f6141a3f0d41d96b8b94
   m_configObjects: {}
