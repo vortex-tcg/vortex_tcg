@@ -43,6 +43,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         private int? _lastSyncedOpponentChampionHp;
         private bool? _pendingEndScreenLocalWon;
         private bool _isReturningHome;
+        private bool _matchEndedReceived;
 
         private void Awake()
         {
@@ -128,6 +129,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
         {
             Debug.Log($"[MatchService] GameStarted phase={r.CurrentPhase} turn={r.TurnNumber}");
             _isReturningHome = false;
+            _matchEndedReceived = false;
             _gameStarted = true;
             AttackUI.Instance?.ResetBoard();
             DefenseUI.Instance?.ClearAllDefense();
@@ -176,13 +178,28 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
         private void HandleOpponentLeft()
         {
+            if (_matchEndedReceived)
+            {
+                Debug.Log("[MatchService] OpponentLeft ignored because match-end flow is already active");
+                return;
+            }
+
             ReturnToHomeScene("OpponentLeft");
         }
 
         private void HandleMatchEnded(MatchEndedDataDto data)
         {
-            Debug.Log($"[MatchService] Match ended reason={(data != null ? data.Reason : "NULL")}");
-            ReturnToHomeScene("MatchEnded");
+            _matchEndedReceived = true;
+            _gameStarted = false;
+
+            bool? localWon = ResolveLocalOutcomeFromMatchEnded(data);
+            Debug.Log($"[MatchService] Match ended reason={(data != null ? data.Reason : "NULL")} localWon={(localWon.HasValue ? localWon.Value.ToString() : "UNKNOWN")}");
+
+            if (!TryShowEndingScreen(localWon))
+            {
+                Debug.LogWarning("[MatchService] Ending screen unavailable, fallback to HomeScene");
+                ReturnToHomeScene("MatchEndedFallback");
+            }
         }
 
         private void ReturnToHomeScene(string source)
@@ -194,6 +211,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             }
 
             _isReturningHome = true;
+            _matchEndedReceived = false;
             Debug.Log($"[MatchService] Returning to HomeScene from {source}");
 
             _gameStarted = false;
@@ -211,6 +229,77 @@ namespace VortexTCG.Scripts.Features.Match.Services
             MatchEvents.ResetAll();
 
             LoadingScreen.Load("HomeScene", loadMenu: true, unloadMenu: false);
+        }
+
+        private static bool? ResolveLocalOutcomeFromMatchEnded(MatchEndedDataDto data)
+        {
+            if (data == null)
+            {
+                return null;
+            }
+
+            string[] claimKeys =
+            {
+                "id",
+                "userId",
+                "sub",
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+            };
+
+            Guid localUserId = Guid.Empty;
+            for (int i = 0; i < claimKeys.Length; i++)
+            {
+                if (Jwt.I != null && Jwt.I.TryGetClaim(claimKeys[i], out string value) && Guid.TryParse(value, out localUserId))
+                {
+                    break;
+                }
+            }
+
+            if (localUserId == Guid.Empty)
+            {
+                return null;
+            }
+
+            if (data.WinnerUserId != Guid.Empty)
+            {
+                return data.WinnerUserId == localUserId;
+            }
+
+            if (data.LoserUserId != Guid.Empty)
+            {
+                return data.LoserUserId != localUserId;
+            }
+
+            return null;
+        }
+
+        private bool TryShowEndingScreen(bool? localWon)
+        {
+            MatchEndingScreenUI endingScreen = MatchEndingScreenUI.Instance;
+            if (endingScreen == null)
+            {
+                endingScreen = FindFirstObjectByType<MatchEndingScreenUI>(FindObjectsInactive.Include);
+            }
+
+            if (endingScreen == null)
+            {
+                return false;
+            }
+
+            if (!endingScreen.gameObject.activeSelf)
+            {
+                endingScreen.gameObject.SetActive(true);
+            }
+
+            if (localWon.HasValue)
+            {
+                endingScreen.ShowEndingScreen(localWon.Value);
+                return true;
+            }
+
+            // If result payload has no winner/loser, fallback to HP-based outcome.
+            TryShowEndingScreen();
+            return true;
         }
 
         private void HandleBattleResolution(BattlesDataDto data, bool localIsAttacker)
