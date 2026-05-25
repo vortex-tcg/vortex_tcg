@@ -30,8 +30,8 @@ public sealed class RoomManager : IRoomManager
     private void _setFactory(CreateMatchFactory factory)
     {
         typeof(RoomManager)
-            .GetField("_createMatchFactory", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            ?.SetValue(this, factory);
+            .GetField("_createMatchFactory", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(this, factory);
     }
 
     private RoomManager(Matchmaker matchmaker, CreateMatchFactory factory)

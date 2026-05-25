@@ -129,6 +129,45 @@ namespace VortexTCG.Tests.DataAccess
         }
 
         [Fact]
+        public void SetAuditFields_FallsBackToSystem_WhenUserIsNull()
+        {
+            Mock<HttpContext> httpContext = new Mock<HttpContext>();
+            httpContext.Setup(c => c.User).Returns((ClaimsPrincipal)null!);
+
+            Mock<IHttpContextAccessor> accessor = new Mock<IHttpContextAccessor>();
+            accessor.Setup(a => a.HttpContext).Returns(httpContext.Object);
+
+            using VortexDbContext db = CreateDb(accessor.Object);
+            User user = BuildUser();
+
+            db.Users.Add(user);
+            db.SaveChanges();
+
+            Assert.Equal("System", db.Entry(user).Property("CreatedBy").CurrentValue);
+        }
+
+        [Fact]
+        public void SetAuditFields_FallsBackToSystem_WhenIdentityIsNull()
+        {
+            Mock<ClaimsPrincipal> principal = new Mock<ClaimsPrincipal>();
+            principal.Setup(p => p.Identity).Returns((IIdentity?)null);
+
+            Mock<HttpContext> httpContext = new Mock<HttpContext>();
+            httpContext.Setup(c => c.User).Returns(principal.Object);
+
+            Mock<IHttpContextAccessor> accessor = new Mock<IHttpContextAccessor>();
+            accessor.Setup(a => a.HttpContext).Returns(httpContext.Object);
+
+            using VortexDbContext db = CreateDb(accessor.Object);
+            User user = BuildUser();
+
+            db.Users.Add(user);
+            db.SaveChanges();
+
+            Assert.Equal("System", db.Entry(user).Property("CreatedBy").CurrentValue);
+        }
+
+        [Fact]
         public void SetAuditFields_UsesIdentityName_OnModifiedEntity()
         {
             Mock<IIdentity> identity = new Mock<IIdentity>();

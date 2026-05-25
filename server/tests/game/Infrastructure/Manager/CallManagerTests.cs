@@ -182,6 +182,35 @@ public class CallManagerTests
     }
 
     [Fact]
+    public async Task CallAsync_SkipsPlayerSend_WhenUserIdIsEmptyAndSuccessTrue()
+    {
+        Guid opponentId = Guid.NewGuid();
+        Mock<IClientProxy> opponentProxy = new Mock<IClientProxy>();
+        opponentProxy.Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        Mock<IHubClients> clients = new Mock<IHubClients>();
+        clients.Setup(c => c.User(opponentId.ToString())).Returns(opponentProxy.Object);
+
+        Mock<IHubContext<GameHubClean>> hub = new Mock<IHubContext<GameHubClean>>();
+        hub.Setup(h => h.Clients).Returns(clients.Object);
+        CallManager.Configure(hub.Object);
+
+        responseDTO<string, string> response = new responseDTO<string, string>
+        {
+            userId = Guid.Empty,
+            opponentId = opponentId,
+            success = true,
+            code = ResponseCode.SUCCESS_PHASE_CHANGED
+        };
+
+        await CallManager.Instance.CallAsync(response);
+
+        opponentProxy.Verify(p => p.SendCoreAsync(
+            "opponentPhaseChanged", It.IsAny<object[]>(), It.IsAny<CancellationToken>()), Times.Once());
+    }
+
+    [Fact]
     public async Task CallAsync_SkipsOpponent_WhenOpponentIdIsEmpty()
     {
         Guid userId = Guid.NewGuid();
