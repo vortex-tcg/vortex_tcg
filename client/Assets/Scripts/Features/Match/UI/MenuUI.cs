@@ -27,6 +27,9 @@ public class MenuUI : MonoBehaviour
             return;
         }
 
+        uiDocument.sortingOrder = 1000;
+        uiDocument.rootVisualElement.pickingMode = PickingMode.Position;
+
         VisualElement root = uiDocument.rootVisualElement;
         quitButton = root.Q<Button>(quitButtonName);
 
@@ -35,6 +38,8 @@ public class MenuUI : MonoBehaviour
             Debug.LogWarning($"[MenuUI] Button '{quitButtonName}' not found in UXML.");
             return;
         }
+
+        quitButton.pickingMode = PickingMode.Position;
 
         quitButton.clicked += OnQuitClicked;
     }
