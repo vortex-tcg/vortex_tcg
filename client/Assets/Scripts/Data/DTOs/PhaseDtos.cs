@@ -1,5 +1,7 @@
 using System;
 
+#nullable enable
+
 namespace VortexTCG.Scripts.DTOs
 {
     public enum GamePhase
@@ -20,7 +22,7 @@ namespace VortexTCG.Scripts.DTOs
         public string? AutoChangeReason { get; set; }
         public bool CanAct { get; set; }
         public long? TimerEndTime { get; set; } // Unix timestamp (ms) de fin du timer
-        public DrawnCardDto DrawnCard { get; set; }
+        public DrawnCardDto DrawnCard { get; set; } = new();
     }
 
     [Serializable]

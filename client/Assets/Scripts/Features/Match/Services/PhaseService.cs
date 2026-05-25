@@ -41,7 +41,6 @@ namespace VortexTCG.Scripts.Features.Match.Services
         public int CurrentTurn { get; private set; } = 0;
         public event Action<int> OnTurnChanged;
 
-        public event Action OnEnterPlacement;
         public event Action OnEnterAttack;
         public event Action OnEnterDefense;
         public event Action OnEnterEndTurn;
