@@ -54,8 +54,8 @@ public sealed class CallManager : ICallManager
     private void _setHubContext(IHubContext<GameHubClean> hubContext)
     {
         typeof(CallManager)
-            .GetField("_hubContext", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            ?.SetValue(this, hubContext);
+            .GetField("_hubContext", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(this, hubContext);
     }
 
     private CallManager(IHubContext<GameHubClean> hubContext)
@@ -105,7 +105,7 @@ public sealed class CallManager : ICallManager
         for (int i = 0; i < map.Length; i++)
         {
             string[] row = map[i];
-            if (row.Length >= 2 && row[0] == key)
+            if (row[0] == key)
                 return row[1];
         }
         return "";
