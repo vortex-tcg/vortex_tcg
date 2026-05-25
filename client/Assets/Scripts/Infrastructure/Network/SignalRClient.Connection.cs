@@ -141,7 +141,6 @@ public partial class SignalRClient
         {
             OnOpponentLeft?.Invoke();
             networkRef?.ResetMatch();
-            _startGameRequested = false;
             OnLog?.Invoke("L'adversaire a quitté.");
         }));
 

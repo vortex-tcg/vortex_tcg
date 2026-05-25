@@ -20,7 +20,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (Instance != null)
                 return;
 
-            MatchService existing = FindObjectOfType<MatchService>();
+            MatchService existing = FindFirstObjectByType<MatchService>();
             if (existing != null)
             {
                 Instance = existing;

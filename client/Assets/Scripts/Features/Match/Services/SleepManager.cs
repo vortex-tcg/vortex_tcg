@@ -20,7 +20,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             IsSleeping = true;
             Debug.Log("[SleepManager] Activating sleepy state for all cards");
 
-            CardUI[] cards = Object.FindObjectsOfType<CardUI>(true);
+            CardUI[] cards = Object.FindObjectsByType<CardUI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             foreach (CardUI card in cards)
             {
                 if (card != null)
@@ -34,7 +34,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             IsSleeping = false;
             Debug.Log("[SleepManager] Clearing sleepy state for all cards");
 
-            CardUI[] cards = Object.FindObjectsOfType<CardUI>(true);
+            CardUI[] cards = Object.FindObjectsByType<CardUI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             foreach (CardUI card in cards)
             {
                 if (card != null)

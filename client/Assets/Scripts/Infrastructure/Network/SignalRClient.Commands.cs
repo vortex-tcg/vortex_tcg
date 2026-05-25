@@ -20,7 +20,6 @@ public partial class SignalRClient
         await SafeSend("LeaveQueue");
         _currentKeyOrCode = null;
         OnLog?.Invoke("Quitte la file/room (matchmaking).");
-        _startGameRequested = false;
     }
 
     public async Task CreateRoom(Guid deckId, string preferredCode = null)
@@ -44,7 +43,6 @@ public partial class SignalRClient
         networkRef?.ResetMatch();
         _currentKeyOrCode = null;
         OnLog?.Invoke("Quitte la room (code).");
-        _startGameRequested = false;
     }
 
     public async Task SendMessageToPeer(string text)
