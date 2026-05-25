@@ -1,7 +1,5 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <ui:Template name="NavigationComponent" src="project://database/Assets/Scripts/UI/Shared/NavigationComponent.uxml?fileID=9197481963319205126&amp;guid=142c228b13f42d44e89e8cedfa0a3cd5&amp;type=3#NavigationComponent" />
     <Style src="project://database/Assets/ProfileView.uss?fileID=7433441132597879392&amp;guid=5c34d3c011bf19e44bb1036447ec721b&amp;type=3#ProfileView" />
-    <ui:Instance template="NavigationComponent" />
     <ui:VisualElement name="Container" class="root" style="flex-grow: 1; -unity-background-image-tint-color: rgb(228, 199, 199); padding-top: 10px; padding-right: 10px; padding-bottom: 10px; padding-left: 10px;">
         <ui:VisualElement name="LeftPanel" class="side-panel left" style="flex-grow: 1; flex-direction: row;">
             <ui:VisualElement name="Avatar" class="avatar" style="flex-grow: 0; width: 150px; height: 150px;" />
