@@ -20,7 +20,7 @@ namespace VortexTCG.Scripts.Features.Match.Services
             if (Instance != null)
                 return;
 
-            MatchService existing = FindObjectOfType<MatchService>();
+            MatchService existing = FindFirstObjectByType<MatchService>();
             if (existing != null)
             {
                 Instance = existing;
@@ -388,8 +388,8 @@ namespace VortexTCG.Scripts.Features.Match.Services
 
         private IEnumerator ResolveEndPhaseSequentially(EndPhaseResolutionDto data, bool localIsAttacker)
         {
-            bool attackerIsLocal = localIsAttacker;
-            bool defenderIsLocal = !localIsAttacker;
+            bool attackerIsLocal = !localIsAttacker;
+            bool defenderIsLocal = localIsAttacker;
             SyncChampionHpFromEndPhase(data, localIsAttacker);
             _pendingEndScreenLocalWon = ResolveOutcomeFromEndPhasePayload(data, localIsAttacker);
 
@@ -462,8 +462,8 @@ namespace VortexTCG.Scripts.Features.Match.Services
                 return;
             }
 
-            int currentHp = Mathf.Max(0, data.CurrentPlayerChampionHp);
-            int opponentHp = Mathf.Max(0, data.OpponentPlayerChampionHp);
+            int currentHp = Mathf.Max(0, localIsAttacker ? data.OpponentPlayerChampionHp : data.CurrentPlayerChampionHp);
+            int opponentHp = Mathf.Max(0, localIsAttacker ? data.CurrentPlayerChampionHp : data.OpponentPlayerChampionHp );
 
             // In this UI, P1 slot is local champion and P2 slot is opponent champion.
             MatchInitChampionDto championP1 = client.Position1Champion;
@@ -472,54 +472,30 @@ namespace VortexTCG.Scripts.Features.Match.Services
             MatchInitChampionDto localChampion = client.PlayerChampion;
             MatchInitChampionDto opponentChampion = client.OpponentChampion;
 
-            int baselineLocalHp = localChampion?.Hp ?? championP1?.Hp ?? currentHp;
-            int baselineRemoteHp = opponentChampion?.Hp ?? championP2?.Hp ?? opponentHp;
-
-            // Candidate A: payload already local/opponent.
-            int localHpAsIs = currentHp;
-            int remoteHpAsIs = opponentHp;
-
-            // Candidate B: payload is attacker/defender relative and needs swap for local view.
-            int localHpSwapped = opponentHp;
-            int remoteHpSwapped = currentHp;
-
-            int scoreAsIs = Mathf.Abs(baselineLocalHp - localHpAsIs) + Mathf.Abs(baselineRemoteHp - remoteHpAsIs);
-            int scoreSwapped = Mathf.Abs(baselineLocalHp - localHpSwapped) + Mathf.Abs(baselineRemoteHp - remoteHpSwapped);
-
-            bool useSwappedMapping = scoreSwapped < scoreAsIs;
-            if (scoreSwapped == scoreAsIs)
-            {
-                // Tie-breaker: keep previous behavior hint from event direction.
-                useSwappedMapping = !localIsAttacker;
-            }
-
-            int localHp = useSwappedMapping ? localHpSwapped : localHpAsIs;
-            int remoteHp = useSwappedMapping ? remoteHpSwapped : remoteHpAsIs;
-
             if (championP1 != null)
             {
-                championP1.Hp = localHp;
+                championP1.Hp = currentHp;
             }
 
             if (championP2 != null)
             {
-                championP2.Hp = remoteHp;
+                championP2.Hp = opponentHp;
             }
 
             if (localChampion != null)
             {
-                localChampion.Hp = localHp;
+                localChampion.Hp = currentHp;
             }
 
             if (opponentChampion != null)
             {
-                opponentChampion.Hp = remoteHp;
+                opponentChampion.Hp = opponentHp;
             }
 
-            Debug.Log($"[MatchService] SyncChampionHpFromEndPhase localIsAttacker={localIsAttacker} currentHp={currentHp} opponentHp={opponentHp} baselineLocal={baselineLocalHp} baselineRemote={baselineRemoteHp} scoreAsIs={scoreAsIs} scoreSwapped={scoreSwapped} useSwapped={useSwappedMapping} => localHp={localHp} remoteHp={remoteHp}");
+            // Debug.Log($"[MatchService] SyncChampionHpFromEndPhase localIsAttacker={localIsAttacker} currentHp={currentHp} opponentHp={opponentHp} baselineLocal={baselinecurrentHp} baselineRemote={baselineRemoteHp} scoreAsIs={scoreAsIs} scoreSwapped={scoreSwapped} useSwapped={useSwappedMapping} => currentHp={currentHp} remoteHp={remoteHp}");
 
-            _lastSyncedLocalChampionHp = localHp;
-            _lastSyncedOpponentChampionHp = remoteHp;
+            _lastSyncedLocalChampionHp = currentHp;
+            _lastSyncedOpponentChampionHp = opponentHp;
         }
 
         private static bool? ResolveOutcomeFromEndPhasePayload(EndPhaseResolutionDto data, bool localIsAttacker)

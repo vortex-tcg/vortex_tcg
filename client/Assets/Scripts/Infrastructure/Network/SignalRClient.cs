@@ -31,7 +31,6 @@ public partial class SignalRClient : MonoBehaviour
     private string _accessToken;
     private string _currentKeyOrCode;
     private string _mode;
-    private bool _startGameRequested;
     private int _playerPosition = -1;
     private int _opponentHandSize;
     private List<MatchInitCardDto> _initialDrawnCards;
@@ -125,7 +124,7 @@ public partial class SignalRClient : MonoBehaviour
     private void EnsureMatchServiceExists()
     {
         // Check if MatchService already exists
-        VortexTCG.Scripts.Features.Match.Services.MatchService matchService = FindObjectOfType<VortexTCG.Scripts.Features.Match.Services.MatchService>();
+        VortexTCG.Scripts.Features.Match.Services.MatchService matchService = FindFirstObjectByType<VortexTCG.Scripts.Features.Match.Services.MatchService>();
         
         if (matchService == null)
         {
